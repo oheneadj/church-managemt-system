@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\V1\Families\ListFamiliesController;
 use App\Http\Controllers\Api\V1\Families\ShowFamilyController;
 use App\Http\Controllers\Api\V1\Families\StoreFamilyController;
 use App\Http\Controllers\Api\V1\Families\UpdateFamilyController;
+use App\Http\Controllers\Api\V1\Members\EraseMemberController;
+use App\Http\Controllers\Api\V1\Members\ExportMemberDataController;
 use App\Http\Controllers\Api\V1\Members\ListMembersController;
 use App\Http\Controllers\Api\V1\Members\ShowMemberController;
 use App\Http\Controllers\Api\V1\Members\StoreMemberController;
@@ -49,6 +51,8 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('members', StoreMemberController::class)->name('members.store');
         Route::get('members/{member}', ShowMemberController::class)->name('members.show');
         Route::put('members/{member}', UpdateMemberController::class)->name('members.update');
+        Route::get('members/{member}/data-export', ExportMemberDataController::class)->name('members.data-export');
+        Route::post('members/{member}/erasure', EraseMemberController::class)->name('members.erase');
         Route::patch('members/{member}/status', UpdateMemberStatusController::class)->name('members.status');
         Route::post('members/{member}/photo', UploadMemberPhotoController::class)->middleware('throttle:uploads')->name('members.photo');
         Route::post('members/{member}/milestones', StoreMemberMilestoneController::class)->name('members.milestones.store');

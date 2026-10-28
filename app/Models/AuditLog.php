@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\AuditEvent;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\AuditLogFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,15 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 /**
  * One line of change history. Append-only: it is written once, never updated and never deleted, so it
  * has no updated_at and no soft deletes (the one deliberate exception to the soft-delete rule).
+ *
+ * @property string $id
+ * @property AuditEvent $event
+ * @property array<string, mixed>|null $old_values
+ * @property array<string, mixed>|null $new_values
+ * @property list<string>|null $changed_fields
+ * @property string|null $actor_name
+ * @property string|null $reason
+ * @property CarbonImmutable|null $created_at
  */
 class AuditLog extends Model
 {

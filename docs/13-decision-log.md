@@ -701,6 +701,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-039 — Subject access, erasure and retention
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36, `docs/05-data-safety.md` and the audit-trail pattern
+**Status:** Active
+
+**Decision:**
+1. **Export:** `GET /members/{id}/data-export` returns everything held about one member as JSON. It needs `members.export` and is itself recorded in the change log.
+2. **Erasure anonymises, it does not delete.** `POST /members/{id}/erasure` (new permission `members.erase`, church admin only) replaces the name with `[deleted]`, removes every other identifying detail, deletes the photo file, strips the phone and text from messages sent to the person, clears milestone notes, releases a family they head, archives the member and soft-deletes the row. The member number stays as the record's identifier. Records that point to the member (giving, attendance) keep working.
+3. **The change history is masked, never removed.** This is the one allowed change to the append-only audit log: every value in the member's history becomes `[deleted]` while the lines and field names stay, then an `erased` line is added. This follows the audit-trail pattern.
+4. **Giving records need the same treatment when they are built.** Any snapshot of a member's name inside a contribution must be masked by the erasure service (Sprint 4); financial records themselves are kept for 7 years.
+5. **Retention is automatic:** message logs are deleted after 12 months and webhook payloads after 90 days by a daily `model:prune` job at 03:00 UTC (`config/retention.php`). Audit logs and money records are not pruned.
+6. **Not built yet:** consent records with history (`consents` table), church-wide CSV exports (stories 5.8 and 5.9), the 90-day purge after a church cancels, and anonymising visitor records (Sprint 3).
+
+**Rationale:** The agreement requires erasure to anonymise rather than hard-delete (section 36), history to stay append-only, and retention to be enforced by a job.
+
+**Revisit when:** giving or visitor records are built, or consent history is needed for WhatsApp broadcasts.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

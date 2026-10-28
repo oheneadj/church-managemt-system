@@ -18,4 +18,12 @@ class EloquentMessageLogRepository implements MessageLogRepositoryInterface
     {
         return MessageLog::query()->create($attributes);
     }
+
+    /**
+     * Removes the phone number and text from every logged message to this person, keeping the line itself.
+     */
+    public function anonymiseRecipient(string $recipientId): void
+    {
+        MessageLog::query()->where('recipient_id', $recipientId)->update(['recipient_phone' => null, 'recipient_email' => null, 'content' => config('privacy.erased_marker')]);
+    }
 }

@@ -46,6 +46,7 @@ We ship in three major versions. Each version is a coherent, shippable product â
 | Edit a member record | Church Admin | All fields editable. Change log maintained. |
 | Mark a member as inactive | Church Admin | Inactive members excluded from default views but remain in DB. Reactivatable. |
 | Upload member photo | Church Admin | Photo stored in Cloudflare R2. Displayed on profile and directory. |
+| Export one member's data / erase a member's personal data | Church Admin | JSON export of everything held (`members.export`); erasure removes personal details but keeps the record (`members.erase`, D-039). |
 | Export member list | Church Admin, Finance Secretary | CSV export of filtered member list. `members.export` permission required. |
 
 **Out of scope for v1:** Biometric enrollment, member self-service profile editing.

@@ -40,6 +40,22 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     }
 
     /**
+     * Soft-deletes the member. The row stays, so records that point to it keep working.
+     */
+    public function delete(Member $member): void
+    {
+        $member->delete();
+    }
+
+    /**
+     * Loads everything held about the member that a data export lists: family, departments, milestones and history.
+     */
+    public function loadForExport(Member $member): Member
+    {
+        return $member->load(['family', 'departments', 'milestones', 'auditLogs']);
+    }
+
+    /**
      * Saves the member, new or changed.
      */
     public function save(Member $member): Member

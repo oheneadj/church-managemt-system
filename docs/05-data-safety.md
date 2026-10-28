@@ -192,7 +192,8 @@ Ghana does not yet have comprehensive data protection legislation equivalent to 
 **Specific GDPR-aligned practices we follow:**
 - Data minimisation — we only collect what we need
 - Purpose limitation — member data is used for church management, not sold or used for marketing
-- Right to erasure — a member can request deletion of their record (except where financial retention rules apply)
+- Right to erasure — a member can request deletion of their record (except where financial retention rules apply). Built (D-039): the church admin erases a member's personal data; the record stays, archived and soft-deleted, so money and attendance records keep working.
+- Right to access — built (D-039): the church admin can export everything held about a member as JSON.
 - Consent — WhatsApp broadcast opt-in is explicit, not assumed
 
 ---

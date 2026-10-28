@@ -6,6 +6,8 @@ namespace App\Listeners;
 
 use App\Enums\AuditEvent;
 use App\Events\MemberCreated;
+use App\Events\MemberDataExported;
+use App\Events\MemberErased;
 use App\Events\MemberStatusChanged;
 use App\Events\MemberUpdated;
 use App\Events\MemberViewed;
@@ -62,6 +64,22 @@ class RecordMemberAudit
     public function handleViewed(MemberViewed $event): void
     {
         $this->audit->record($event->member, AuditEvent::Viewed, $event->viewer, new: ['address' => '[viewed]']);
+    }
+
+    /**
+     * Records that all the data held about a member was exported. Nothing from the export is logged.
+     */
+    public function handleExported(MemberDataExported $event): void
+    {
+        $this->audit->record($event->member, AuditEvent::Exported, $event->actor);
+    }
+
+    /**
+     * Records that a member's personal data was erased, with the reason. No personal value is logged.
+     */
+    public function handleErased(MemberErased $event): void
+    {
+        $this->audit->record($event->member, AuditEvent::Erased, $event->actor, reason: $event->reason);
     }
 
     /**

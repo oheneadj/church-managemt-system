@@ -18,4 +18,12 @@ class EloquentMemberMilestoneRepository implements MemberMilestoneRepositoryInte
     {
         return MemberMilestone::query()->create($attributes);
     }
+
+    /**
+     * Removes the free-text notes of a member's milestones, which can name other people.
+     */
+    public function clearNotesFor(string $memberId): void
+    {
+        MemberMilestone::query()->where('member_id', $memberId)->update(['notes' => null]);
+    }
 }

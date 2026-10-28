@@ -17,4 +17,9 @@ interface MessageLogRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): MessageLog;
+
+    /**
+     * Removes the phone number and text from every logged message to this person, keeping the line itself.
+     */
+    public function anonymiseRecipient(string $recipientId): void;
 }

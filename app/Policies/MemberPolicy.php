@@ -57,6 +57,26 @@ class MemberPolicy
     }
 
     /**
+     * Whether the user may export everything held about this member (a subject access request).
+     */
+    public function export(User $user, Member $member): bool
+    {
+        return $user->church_id === $member->church_id
+            && $user->hasPermissionTo(StaffPermission::MembersExport)
+            && $this->view($user, $member);
+    }
+
+    /**
+     * Whether the user may erase this member's personal data. Only the church admin carries this permission.
+     */
+    public function erase(User $user, Member $member): bool
+    {
+        return $user->church_id === $member->church_id
+            && $user->hasPermissionTo(StaffPermission::MembersErase)
+            && $this->view($user, $member);
+    }
+
+    /**
      * Whether the user may move this member to the given status.
      */
     public function changeStatus(User $user, Member $member, MemberStatus $target): bool

@@ -54,4 +54,9 @@ interface FamilyRepositoryInterface
      * Reloads the family's own columns, for example after its head was set by a separate update.
      */
     public function fresh(Family $family): Family;
+
+    /**
+     * Clears the head of household in every family this member heads, so no family points at an erased person.
+     */
+    public function releaseHead(string $memberId): void;
 }

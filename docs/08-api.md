@@ -470,6 +470,28 @@ The photo is rotated to match the camera, cropped to a 512 pixel square and re-e
 
 ---
 
+### Export Member Data (subject access)
+```
+GET /api/v1/members/{id}/data-export
+```
+**Permission:** `members.export`, and the member must be visible to the caller. `403` otherwise; `404` for another church's member.
+
+**Response `200`:** `exported_at`, `member` (every personal field, with the encrypted address and ID number readable), `family` (name and role), `departments`, `milestones` and `history` (each change: event, field names, who, reason, when). The photo file is not part of the JSON. Each export is recorded in the member's change log (`exported`), without the data.
+
+---
+
+### Erase Member (right to erasure)
+```
+POST /api/v1/members/{id}/erasure
+```
+**Body:** `{ "reason": "Member asked in writing on 2026-10-20" }` (3 to 1000 characters; the reason is kept in the change log, so it must not contain personal details).
+
+**Permission:** `members.erase` (church admin only). **Response `204`.** It cannot be undone.
+
+The member's name becomes `[deleted]`, and their phone, birth date, email, address, landmark, GPS code, ID details, occupation, tribe, language, education, marital status, membership date and notes are removed. The photo file is deleted, the phone and text are removed from the messages sent to them, milestone notes are cleared and a family they head loses its head. The record stays: it is archived and soft-deleted, its member number is kept, and giving and attendance records that point to it keep working. In the member's history every line and field name stays, but the values become `[deleted]`, and an `erased` line is added. The phone number can be used by a new member straight away. A repeat call is `404`.
+
+---
+
 ### Add Member Milestone
 ```
 POST /api/v1/members/{id}/milestones

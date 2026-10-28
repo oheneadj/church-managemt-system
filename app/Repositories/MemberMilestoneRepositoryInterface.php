@@ -17,4 +17,9 @@ interface MemberMilestoneRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): MemberMilestone;
+
+    /**
+     * Removes the free-text notes of a member's milestones, which can name other people.
+     */
+    public function clearNotesFor(string $memberId): void;
 }

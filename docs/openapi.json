@@ -149,6 +149,97 @@
                 }
             }
         },
+        "/v1/members/{member}/erasure": {
+            "post": {
+                "operationId": "members.erase",
+                "summary": "Runs EraseMemberAction for this request and answers 204",
+                "tags": [
+                    "EraseMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EraseMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members/{member}/data-export": {
+            "get": {
+                "operationId": "members.data-export",
+                "summary": "Runs ExportMemberDataAction for this request and returns the MemberDataExportResource",
+                "tags": [
+                    "ExportMemberData"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberDataExportResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MemberDataExportResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health",
@@ -1537,6 +1628,21 @@
                 ],
                 "title": "EducationalLevel"
             },
+            "EraseMemberRequest": {
+                "type": "object",
+                "description": "Validates an erasure request. The reason is kept in the change log, so it must not contain personal details.",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "EraseMemberRequest"
+            },
             "FamilyCollection": {
                 "type": "array",
                 "items": {
@@ -1771,6 +1877,389 @@
                     "$ref": "#/components/schemas/MemberSummaryResource"
                 },
                 "title": "MemberCollection"
+            },
+            "MemberDataExportResource": {
+                "type": "object",
+                "properties": {
+                    "exported_at": {
+                        "type": "string"
+                    },
+                    "member": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "member_number": {
+                                "type": "string"
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "middle_name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last_name": {
+                                "type": "string"
+                            },
+                            "preferred_name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "gender": {
+                                "type": "string",
+                                "enum": [
+                                    "male",
+                                    "female"
+                                ]
+                            },
+                            "date_of_birth": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "phone_secondary": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "email": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "nearest_landmark": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "digital_address": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "national_id_type": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "national_id_number": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "marital_status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "single",
+                                    "married",
+                                    "widowed",
+                                    "divorced",
+                                    null
+                                ]
+                            },
+                            "occupation": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "tribe": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "language_preference": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "educational_level": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "creche",
+                                    "kg",
+                                    "primary_1",
+                                    "primary_2",
+                                    "primary_3",
+                                    "primary_4",
+                                    "primary_5",
+                                    "primary_6",
+                                    "jhs_1",
+                                    "jhs_2",
+                                    "jhs_3",
+                                    "shs_1",
+                                    "shs_2",
+                                    "shs_3",
+                                    "tertiary",
+                                    "graduate",
+                                    null
+                                ]
+                            },
+                            "membership_type": {
+                                "type": "string",
+                                "enum": [
+                                    "full",
+                                    "associate",
+                                    "affiliate"
+                                ]
+                            },
+                            "membership_date": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "prospect",
+                                    "active",
+                                    "inactive",
+                                    "transferred",
+                                    "deceased",
+                                    "archived"
+                                ]
+                            },
+                            "status_note": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "sms_opted_in": {
+                                "type": "boolean"
+                            },
+                            "whatsapp_opted_in": {
+                                "type": "boolean"
+                            },
+                            "created_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "member_number",
+                            "first_name",
+                            "middle_name",
+                            "last_name",
+                            "preferred_name",
+                            "gender",
+                            "date_of_birth",
+                            "phone",
+                            "phone_secondary",
+                            "email",
+                            "address",
+                            "nearest_landmark",
+                            "digital_address",
+                            "national_id_type",
+                            "national_id_number",
+                            "marital_status",
+                            "occupation",
+                            "tribe",
+                            "language_preference",
+                            "educational_level",
+                            "membership_type",
+                            "membership_date",
+                            "status",
+                            "status_note",
+                            "sms_opted_in",
+                            "whatsapp_opted_in",
+                            "created_at"
+                        ]
+                    },
+                    "family": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "head",
+                                    "spouse",
+                                    "child",
+                                    "dependent",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "role"
+                        ]
+                    },
+                    "departments": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "role": {},
+                                "joined_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "role",
+                                "joined_at"
+                            ]
+                        }
+                    },
+                    "milestones": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "dedication",
+                                        "baptism",
+                                        "confirmation",
+                                        "first_communion",
+                                        "membership_class"
+                                    ]
+                                },
+                                "occurred_at": {
+                                    "type": "string"
+                                },
+                                "officiant": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "cohort": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "occurred_at",
+                                "officiant",
+                                "cohort",
+                                "notes"
+                            ]
+                        }
+                    },
+                    "history": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "event": {
+                                    "type": "string",
+                                    "enum": [
+                                        "created",
+                                        "updated",
+                                        "status_changed",
+                                        "viewed",
+                                        "exported",
+                                        "erased"
+                                    ]
+                                },
+                                "changed_fields": {
+                                    "type": [
+                                        "array",
+                                        "null"
+                                    ],
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "by": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "reason": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "event",
+                                "changed_fields",
+                                "by",
+                                "reason",
+                                "at"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "exported_at",
+                    "member",
+                    "family",
+                    "departments",
+                    "milestones",
+                    "history"
+                ],
+                "title": "MemberDataExportResource"
             },
             "MemberDepartmentResource": {
                 "type": "object",

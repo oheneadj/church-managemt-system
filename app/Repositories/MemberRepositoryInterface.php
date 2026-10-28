@@ -45,4 +45,14 @@ interface MemberRepositoryInterface
      * Finds a member of the current church, or fails with a not-found error.
      */
     public function findOrFail(string $id): Member;
+
+    /**
+     * Soft-deletes the member. The row stays, so records that point to it keep working.
+     */
+    public function delete(Member $member): void;
+
+    /**
+     * Loads everything held about the member that a data export lists: family, departments, milestones and history.
+     */
+    public function loadForExport(Member $member): Member;
 }

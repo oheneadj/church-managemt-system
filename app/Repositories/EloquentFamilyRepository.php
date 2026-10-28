@@ -83,4 +83,12 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
     {
         Family::query()->whereKey($familyId)->update(['head_member_id' => $memberId]);
     }
+
+    /**
+     * Clears the head of household in every family this member heads, so no family points at an erased person.
+     */
+    public function releaseHead(string $memberId): void
+    {
+        Family::query()->where('head_member_id', $memberId)->update(['head_member_id' => null]);
+    }
 }

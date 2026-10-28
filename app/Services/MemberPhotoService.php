@@ -41,6 +41,16 @@ class MemberPhotoService
     }
 
     /**
+     * Deletes a stored photo. Used when a member is erased, so the file does not outlive the record.
+     */
+    public function delete(?string $path): void
+    {
+        if ($path !== null && $path !== '') {
+            Storage::delete($path);
+        }
+    }
+
+    /**
      * A signed link for a stored photo, or null when the member has none.
      */
     public function url(?string $path): ?string
