@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Removed "Other" from the gender list on both sides: the PHP `Gender` enum, the frontend `GENDERS` list, the data model doc and the committed OpenAPI spec. Added a test that the API rejects `gender: other`. The drift test that compares the two lists needed no change; it passes with both lists reduced. The unfinished edits that added a Visitor membership type and webp/avif photo types were reverted, because the server does not support them (a visitor is a separate record, docs/03; photos are jpg or png, D-032).
 - **Why:** Product decision from the project owner: gender is male or female. No stored member had "other", and the column is a plain string, so no migration is needed.
 - **Files:** `app/Enums/Gender.php`, `resources/js/constants/enums.ts`, `resources/js/constants/photo.ts` (reverted), `docs/07-data-model.md`, `docs/openapi.json`, `tests/Feature/Members/MemberApiTest.php`
-- **Commit:** pending
+- **Commit:** `4671e13` (2026-10-28)
 
 #### fix(members-ui): move the select caret off the border and add placeholders
 - **What:** Drop-downs now hide the browser's own arrow and draw a chevron 12px in from the right edge, with room reserved so long labels do not run under it. Added example placeholders to the member form's text boxes that had none (names, second phone, email, home address, occupation, tribe, ID number) and to the milestone and family notes boxes. Labels stay visible above every box. Added tests for the select field.
