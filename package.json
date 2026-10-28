@@ -9,10 +9,13 @@
         "lint": "eslint resources/js --fix",
         "lint:check": "eslint resources/js && prettier --check resources/js",
         "format": "prettier --write resources/js",
-        "test": "vitest run"
+        "test": "vitest run",
+        "e2e": "playwright test",
+        "e2e:typecheck": "tsc --noEmit -p e2e/tsconfig.json"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.5",
+        "@playwright/test": "^1.64.1",
         "@tailwindcss/vite": "^4.0.0",
         "@testing-library/jest-dom": "^7.0.1",
         "@testing-library/react": "^16.3.3",

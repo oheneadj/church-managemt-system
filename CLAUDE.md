@@ -237,6 +237,9 @@ php artisan migrate                 # Run pending migrations
 php artisan migrate:fresh --seed    # Reset + seed (dev/staging only)
 php artisan db:backup               # Manual backup
 
+# End-to-end tests (real Chrome against the running local sites; needs a `critical` queue worker, see playwright.config.ts)
+npm run e2e
+
 # Code quality
 ./vendor/bin/pint                   # Fix code style
 ./vendor/bin/pint --test            # Check without fixing
