@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### fix(retention): satisfy static analysis in the prune queries
+- **What:** The two prune queries now start from the model's own class, which gives PHPStan the exact type it expects.
+- **Why:** The retention commit was made while PHPStan still reported 2 errors, because the check result was not looked at before committing. Every check now has to pass before a commit (the lesson from the earlier drift-test slip).
+- **Files:** `app/Models/MessageLog.php`, `app/Models/WebhookLog.php`
+- **Commit:** pending
+
 #### feat(retention): delete old message logs and webhook payloads every day
 - **What:** Message logs older than 12 months and webhook payloads older than 90 days are now deleted by a daily job (Laravel's `model:prune`, scheduled at 03:00 UTC on one server). The periods live in `config/retention.php`. Money records and audit logs are not touched.
 - **Why:** docs/05 and docs/07 promise these retention periods, and the agreement requires retention to be enforced by an automated job, never by hand. The job looks across all churches on purpose (it is not a church's request).

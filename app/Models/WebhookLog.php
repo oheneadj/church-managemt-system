@@ -41,7 +41,7 @@ class WebhookLog extends Model
      */
     public function prunable(): Builder
     {
-        return static::query()->where('created_at', '<', now()->subDays(config('retention.webhook_logs_days')));
+        return self::query()->where('created_at', '<', now()->subDays(config('retention.webhook_logs_days')));
     }
 
     /**

@@ -50,7 +50,7 @@ class MessageLog extends Model
      */
     public function prunable(): Builder
     {
-        return static::query()->withoutGlobalScopes()->where('created_at', '<', now()->subMonths(config('retention.message_logs_months')));
+        return self::query()->withoutGlobalScopes()->where('created_at', '<', now()->subMonths(config('retention.message_logs_months')));
     }
 
     /**
