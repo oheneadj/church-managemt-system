@@ -541,19 +541,21 @@ All emails are dispatched via `Mail::to(...)->queue(...)` — never `send()`.
 
 ### Setup
 
-```php
-// config/filesystems.php
-'r2' => [
-    'driver'   => 's3',
-    'key'      => env('CLOUDFLARE_R2_ACCESS_KEY_ID'),
-    'secret'   => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
-    'region'   => 'auto',
-    'bucket'   => env('CLOUDFLARE_R2_BUCKET'),
-    'url'      => env('CLOUDFLARE_R2_URL'),
-    'endpoint' => env('CLOUDFLARE_R2_URL'),
-    'use_path_style_endpoint' => true,
-],
+Package: `league/flysystem-aws-s3-v3`. It pulls in `aws/aws-sdk-php`, which unpacks to about 1 GB because it ships every AWS service; `composer.json` therefore prunes it to S3 only (`extra["aws/aws-sdk-php"] = ["S3"]` plus `Aws\Script\Composer\Composer::removeUnusedServices` on `pre-autoload-dump`), leaving about 37 MB.
+
+The disks are defined in `config/filesystems.php`: `r2` for live files and `r2-backup` for database backups (separate bucket, separate key pair, D-029 in `05-data-safety.md`'s spirit). Both follow Cloudflare's own SDK example: region `auto`, endpoint `https://<account id>.r2.cloudflarestorage.com` (`CLOUDFLARE_R2_URL`), virtual-hosted style by default (`CLOUDFLARE_R2_USE_PATH_STYLE=true` to switch), `visibility` `private`, and `throw` `true` so a failed upload raises instead of returning `false`. There is deliberately **no `url`** setting: the bucket is never public, so `Storage::url()` must not be used.
+
+```env
+CLOUDFLARE_R2_URL=https://<account id>.r2.cloudflarestorage.com
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=
+CLOUDFLARE_R2_BACKUP_ACCESS_KEY_ID=
+CLOUDFLARE_R2_BACKUP_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BACKUP_BUCKET=
 ```
+
+> **R2 does not implement ACLs** (`x-amz-acl` is listed as unsupported on `PutObject`, Cloudflare's S3 API page, Oct 2026). Flysystem always sends an ACL on writes (`private` by default), and Cloudflare's page does not say whether R2 ignores or rejects it. Unverified until the first real write: the `storage` health check writes a file on every probe, so it will surface a rejection on the first staging deploy. Privacy comes from keeping the bucket non-public and using signed URLs, not from object ACLs.
 
 ### File Path Convention
 
@@ -569,11 +571,8 @@ public function uploadPhoto(Member $member, UploadedFile $file): string
 {
     $path = "churches/{$member->church_id}/members/{$member->id}/photo.jpg";
 
-    Storage::disk('r2')->put(
-        $path,
-        file_get_contents($file->getRealPath()),
-        'private'
-    );
+    // No visibility argument: R2 has no object ACLs. The bucket is private and access is by signed URL only.
+    Storage::disk('r2')->put($path, file_get_contents($file->getRealPath()));
 
     $member->update(['photo_url' => $path]);
     return $path;
