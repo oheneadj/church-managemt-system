@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The React catch-all route answered `/storage/...`, so a member photo's signed link returned the app's HTML page instead of the image. `storage` is now one of the paths the catch-all leaves alone. Added a test that a stored-file path reaches the file route (it is refused without a signature) rather than the shell.
 - **Why:** An uploaded photo was saved but could not be shown. Found by uploading a photo to the local API and following the link it returned (200 `text/html` instead of `image/jpeg`). The test fails without the fix.
 - **Files:** `routes/web.php`, `tests/Feature/Operations/SpaShellTest.php`
-- **Commit:** pending
+- **Commit:** `fe5c75e` (2026-10-28)
 
 #### feat(members-ui): add the family list and family view pages
 - **What:** Built story 2.13. A Families page lists the church's households with their member counts, searchable by name, paged, with the search and page in the URL, and a "New family" dialog for staff who may edit (it opens the new family afterwards). A family page shows the name, notes and members with the head first, each one tap from their profile, and staff who may edit can rename it. Added a Families item to the navigation. The member form's family picker now reads every page of families, so a church with more than 100 families is not cut off. The search box is now one shared component used by the member and family lists. Added direct tests of every API service function.
