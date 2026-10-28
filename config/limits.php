@@ -24,6 +24,10 @@ return [
     'checkin_otp_per_hour_per_ip' => 20,
     'checkin_verify_per_minute_per_ip' => 10,
 
+    // A write that carries an Idempotency-Key is remembered for this long, so a retry gets the first answer back. Two requests with one key wait for each other for up to the lock time.
+    'idempotency_ttl_minutes' => 1440,
+    'idempotency_lock_seconds' => 10,
+
     // Meta delivers every church's WhatsApp messages to one address, from many of its own servers, so this is per address and generous.
     'webhooks_per_minute' => 600,
 

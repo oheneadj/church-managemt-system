@@ -98,6 +98,9 @@ GET /api/v1/contributions?from=2026-01-01&to=2026-03-31&fund_type_id=ulid
 GET /api/v1/members?sort=last_name&direction=asc
 ```
 
+### Idempotency (writes that record money)
+Endpoints that record a gift or start a payment require an `Idempotency-Key` header (8 to 100 letters, digits, dashes or underscores): one new value for each thing the person means to do, for example a ULID made when the form opens. The first successful answer is kept for 24 hours and sent again, with the header `Idempotent-Replayed: true`, if the same key arrives again (a double click, a retry after a timeout), so nothing is recorded twice. The same key with a different request is `422`; two requests with one key at the same moment take turns, and one that waits too long is `409` (try again); a missing or badly shaped key is `400`. A failed request is not kept, so the corrected request can reuse its key. Keys are private to the person and the church.
+
 ### Authentication
 All authenticated endpoints accept **either**:
 

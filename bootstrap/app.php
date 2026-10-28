@@ -9,6 +9,7 @@ use App\Exceptions\MemberNumberPrefixMissingException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Http\Middleware\AddErrorMonitoringContext;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\EnsureStaffIsCurrent;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SecurityHeaders;
@@ -38,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Browser requests from a church's own host get session cookies; everything else keeps bearer tokens.
         $middleware->statefulApi();
         $middleware->throttleApi('api');
-        $middleware->alias(['tenant' => ResolveTenant::class, 'staff.current' => EnsureStaffIsCurrent::class, 'monitor.context' => AddErrorMonitoringContext::class, 'meta.signature' => VerifyMetaSignature::class]);
+        $middleware->alias(['tenant' => ResolveTenant::class, 'staff.current' => EnsureStaffIsCurrent::class, 'monitor.context' => AddErrorMonitoringContext::class, 'meta.signature' => VerifyMetaSignature::class, 'idempotent' => EnsureIdempotency::class]);
         // The church must be known before auth runs, so Sanctum can only find users of this church.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
