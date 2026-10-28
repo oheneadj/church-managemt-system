@@ -144,10 +144,11 @@ public function update(User $user, Member $member): bool
 
 ## Queues
 
-Five named queues, in priority order:
+Six named queues, in priority order:
 
 | Queue | Used for | Workers |
 |---|---|---|
+| `critical` | OTP SMS, nothing else (D-025) | 1 |
 | `payments` | Paystack webhook processing | 2 (high priority) |
 | `notifications` | SMS, WhatsApp, email sends | 2 |
 | `reports` | Report generation | 1 |

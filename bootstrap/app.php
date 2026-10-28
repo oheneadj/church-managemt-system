@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->throttleApi('api');
         $middleware->alias(['tenant' => ResolveTenant::class]);
         // The church must be known before auth runs, so Sanctum can only find users of this church.
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: ResolveTenant::class);

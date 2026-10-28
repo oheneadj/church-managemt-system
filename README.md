@@ -88,7 +88,7 @@ php artisan migrate
 php artisan db:seed   # Seeds demo church + admin user
 
 # 5. Queue workers (run in a separate terminal)
-php artisan queue:work redis --queue=notifications,payments,reports,exports,scheduled
+php artisan queue:work redis --queue=critical,payments,notifications,reports,exports,scheduled
 
 # 6. Start
 php artisan serve

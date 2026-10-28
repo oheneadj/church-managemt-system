@@ -122,7 +122,7 @@ POST /api/v1/auth/otp/request
 }
 ```
 
-**Rate limit:** 5 requests per phone per minute.
+**Rate limit:** 1 request per phone per minute and 5 per hour (D-025). Always returns `200`, whether or not the phone belongs to a staff member, so numbers cannot be enumerated.
 
 ---
 
@@ -926,9 +926,9 @@ Handled message types: `text` (for CHECKIN command parsing), `status` (delivery 
 
 | Endpoint group | Limit |
 |---|---|
-| `POST /api/auth/otp/request` | 5 per phone per minute |
-| `POST /api/auth/otp/verify` | 5 attempts per phone per window |
-| `POST /api/messages/broadcast` | 10 per hour per church |
+| `POST /api/v1/auth/otp/request` | 1 per phone per minute, 5 per phone per hour, 20 per IP per hour |
+| `POST /api/v1/auth/otp/verify` | 5 wrong codes per phone, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

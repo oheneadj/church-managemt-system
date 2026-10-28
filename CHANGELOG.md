@@ -18,6 +18,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 22 backed enums for every fixed-value column, Eloquent models (ULID keys, soft deletes, encrypted casts, `BelongsToChurch` tenancy trait) and factories
 - `ResolveTenant` middleware (subdomain or custom domain, 404 when unknown or suspended), run before auth so tokens only resolve within their own church
 - API is versioned from day one under `/api/v1` (D-024)
+- OTP sign-in: `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`. Codes are bcrypt-hashed in Redis per church, locked out after 5 misses, and sent by a queued `SendSmsJob` on the new `critical` queue (D-025)
+- `SmsProvider` contract with a development-only log driver; the PayPerlez and Africa's Talking adapters come next
+- Roles and permissions seeder, ULID-keyed `Role` and `Permission` models, `PhoneNumber` value object
 - Tenancy and database-constraint tests (cross-tenant, partial unique indexes, double check-in)
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
 

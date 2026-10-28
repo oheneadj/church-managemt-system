@@ -4,24 +4,32 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Church;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Seeds roles everywhere, plus a demo church and admin for local development only.
+ */
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(RolesAndPermissionsSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        if (! app()->environment('local')) {
+            return;
+        }
+
+        $church = Church::query()->firstOrCreate(
+            ['slug' => 'demo'],
+            ['name' => 'Demo Assembly', 'timezone' => 'Africa/Accra'],
+        );
+
+        $admin = User::query()->withoutGlobalScopes()->firstOrCreate(
+            ['church_id' => $church->id, 'phone' => '+233200000000'],
+            ['name' => 'Demo Admin'],
+        );
+        $admin->assignRole('church-admin');
     }
 }

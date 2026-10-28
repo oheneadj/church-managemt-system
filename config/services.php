@@ -37,4 +37,9 @@ return [
         ],
     ],
 
+    // Which SmsProvider implementation sends text messages (docs/09-engineering-principles.md).
+    'sms' => [
+        'primary' => env('SMS_PRIMARY_PROVIDER', 'log'),
+    ],
+
 ];

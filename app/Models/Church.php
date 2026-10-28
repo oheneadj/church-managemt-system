@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * The tenant root: one row per church. Every other tenant-owned table points back here.
+ *
+ * @property ChurchPlan $plan
  */
 class Church extends Model
 {

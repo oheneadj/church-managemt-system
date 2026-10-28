@@ -468,6 +468,21 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-025 — OTP sends use a `critical` queue and cost-based rate limits
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the Universal agreement, sections 16 and 18)
+**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`
+
+**Decision:**
+- A sixth queue, `critical`, carries OTP SMS so a slow broadcast can never delay a sign-in. It is listed first in the worker command.
+- Code requests are limited to **1 per minute and 5 per hour per phone per church**, plus 20 per hour per IP. Sending a code costs money, so this is separate from the security limit on verification (5 wrong codes, then a 15-minute lockout; 10 verify calls per minute per IP).
+- OTP SMS is not charged to the church's SMS credit balance. The message is stored in `message_logs` with the code redacted.
+- Redis keys for codes and attempts are namespaced by church id and use a hash of the phone number.
+
+**Rationale:** The Universal agreement requires cost-triggering endpoints to have their own limit and OTPs to be isolated from slow external-API work. The previous limits (5 a minute, 3 a minute) allowed an attacker to burn SMS budget quickly.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
