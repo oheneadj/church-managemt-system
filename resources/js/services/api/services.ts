@@ -1,6 +1,6 @@
 import { api } from '@/services';
 import type { Page } from '@/types/members';
-import type { Service, ServiceFilters, ServiceInput } from '@/types/services';
+import type { Service, ServiceFilters, ServiceInput, ServiceQrCode } from '@/types/services';
 
 export const servicesApi = {
     list: (filters: ServiceFilters): Promise<Page<Service>> =>
@@ -14,6 +14,9 @@ export const servicesApi = {
 
     update: (id: string, input: Partial<ServiceInput>): Promise<Service> =>
         api.put<{ data: Service }>(`/services/${id}`, input).then((r) => r.data.data),
+
+    /** A fresh code to show as a QR code. */
+    qr: (id: string): Promise<ServiceQrCode> => api.get<ServiceQrCode>(`/services/${id}/qr`).then((r) => r.data),
 
     /** Opens or closes the service for check-in. */
     setCheckin: (id: string, isOpen: boolean): Promise<Service> =>

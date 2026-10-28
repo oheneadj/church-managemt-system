@@ -71,9 +71,16 @@ export function ServiceDetailPage() {
     }
 
     const actions = canEdit ? (
-        <Button size="lg" variant={record.is_open ? 'outline' : 'default'} onClick={toggleCheckin} disabled={setCheckin.isPending}>
-            {record.is_open ? 'Close check-in' : 'Open check-in'}
-        </Button>
+        <>
+            {record.is_open && (
+                <Button asChild size="lg" variant="outline">
+                    <Link to={ROUTES.SERVICE_QR(record.id)}>Show QR code</Link>
+                </Button>
+            )}
+            <Button size="lg" variant={record.is_open ? 'outline' : 'default'} onClick={toggleCheckin} disabled={setCheckin.isPending}>
+                {record.is_open ? 'Close check-in' : 'Open check-in'}
+            </Button>
+        </>
     ) : undefined;
 
     return (

@@ -20,6 +20,7 @@ export const QUERY_KEYS = {
         all: ['services'] as const,
         list: (filters: { type: string; page: number }) => ['services', 'list', filters] as const,
         detail: (id: string) => ['services', 'detail', id] as const,
+        qr: (id: string) => ['services', 'qr', id] as const,
         attendance: (id: string, page: number) => ['services', 'attendance', id, page] as const,
     },
     departments: {

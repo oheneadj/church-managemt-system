@@ -1,5 +1,14 @@
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
-import type { AttendanceRecord, AttendanceRecorded, Service, ServiceAttendance, Visitor } from '@/types/services';
+import type {
+    AttendanceRecord,
+    AttendanceRecorded,
+    CheckinService,
+    QrCheckedIn,
+    Service,
+    ServiceAttendance,
+    ServiceQrCode,
+    Visitor,
+} from '@/types/services';
 
 /** A directory row, with sensible defaults a test can override. */
 export function memberSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
@@ -142,4 +151,23 @@ export function visitor(overrides: Partial<Visitor> = {}): Visitor {
         follow_up_status_label: 'Pending',
         ...overrides,
     };
+}
+
+export function qrCode(overrides: Partial<ServiceQrCode> = {}): ServiceQrCode {
+    return {
+        token: 'a'.repeat(32),
+        url: `http://grace.localhost/checkin/${'a'.repeat(32)}`,
+        expires_at: '2026-10-25T09:02:00+00:00',
+        expires_in: 120,
+        refresh_in: 60,
+        ...overrides,
+    };
+}
+
+export function checkinService(overrides: Partial<CheckinService> = {}): CheckinService {
+    return { name: 'Sunday Morning Service', type_label: 'Sunday', service_date: '2026-10-25', is_open: true, ...overrides };
+}
+
+export function qrCheckedIn(overrides: Partial<QrCheckedIn> = {}): QrCheckedIn {
+    return { checked_in: true, already_checked_in: false, service_name: 'Sunday Morning Service', first_name: 'Emmanuel', ...overrides };
 }

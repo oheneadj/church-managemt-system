@@ -12,6 +12,9 @@ export const ROUTES = {
     MEMBER_EDIT: (id: string) => `/members/${id}/edit`,
     SERVICES: '/services',
     SERVICE: (id: string) => `/services/${id}`,
+    SERVICE_QR: (id: string) => `/services/${id}/qr`,
+    /** The public page a member lands on after scanning the QR code. The server builds the same path (config/attendance.php). */
+    CHECKIN: (token: string) => `/checkin/${token}`,
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;
@@ -22,4 +25,6 @@ export const ROUTE_PATTERNS = {
     MEMBER_EDIT: '/members/:id/edit',
     FAMILY: '/families/:id',
     SERVICE: '/services/:id',
+    SERVICE_QR: '/services/:id/qr',
+    CHECKIN: '/checkin/:token',
 } as const;

@@ -3,7 +3,20 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { attendanceRecord, family, member, memberSummary, pageOf, recorded, service, serviceAttendance, visitor } from '@/test/fixtures';
+import {
+    attendanceRecord,
+    checkinService,
+    family,
+    qrCheckedIn,
+    qrCode,
+    member,
+    memberSummary,
+    pageOf,
+    recorded,
+    service,
+    serviceAttendance,
+    visitor,
+} from '@/test/fixtures';
 
 /**
  * Contract test (agreement section 35): the sample data this app's tests are built on must match what the API
@@ -99,6 +112,18 @@ describe('the sample data the app is tested with matches the API spec', () => {
 
     it('POST /services/{service}/visitors: a visitor', () => {
         expect(problemsWith({ data: visitor() }, 'post', '/v1/services/{service}/visitors', 201)).toEqual([]);
+    });
+
+    it('GET /services/{service}/qr: the code to draw', () => {
+        expect(problemsWith(qrCode(), 'get', '/v1/services/{service}/qr', 200)).toEqual([]);
+    });
+
+    it('GET /checkin/qr/{token}: the service a scan is for', () => {
+        expect(problemsWith(checkinService(), 'get', '/v1/checkin/qr/{token}', 200)).toEqual([]);
+    });
+
+    it('POST /checkin/qr: the check-in confirmation', () => {
+        expect(problemsWith(qrCheckedIn(), 'post', '/v1/checkin/qr', 200)).toEqual([]);
     });
 
     it('notices a field that is not what the spec says', () => {

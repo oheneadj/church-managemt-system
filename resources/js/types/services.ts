@@ -71,6 +71,30 @@ export interface VisitorInput {
     how_heard?: string;
 }
 
+/** The code to draw as a QR code at the venue. */
+export interface ServiceQrCode {
+    token: string;
+    url: string;
+    expires_at: string;
+    expires_in: number;
+    refresh_in: number;
+}
+
+/** What a member who scanned the QR code is told about the service. */
+export interface CheckinService {
+    name: string;
+    type_label: string;
+    service_date: string;
+    is_open: boolean;
+}
+
+export interface QrCheckedIn {
+    checked_in: boolean;
+    already_checked_in: boolean;
+    service_name: string;
+    first_name: string;
+}
+
 export interface Visitor {
     id: string;
     name: string;

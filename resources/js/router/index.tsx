@@ -20,12 +20,21 @@ export const router = createBrowserRouter([
                 lazy: async () => ({ Component: (await import('@/pages/LoginPage')).LoginPage }),
             },
             {
+                path: ROUTE_PATTERNS.CHECKIN,
+                lazy: async () => ({ Component: (await import('@/pages/QrCheckInPage')).QrCheckInPage }),
+            },
+            {
                 path: ROUTES.START,
                 lazy: async () => ({ Component: (await import('@/pages/StartChurchPage')).StartChurchPage }),
             },
             {
                 Component: AuthGuard,
                 children: [
+                    {
+                        // The screen at the venue: private, but with none of the menu around it.
+                        path: ROUTE_PATTERNS.SERVICE_QR,
+                        lazy: async () => ({ Component: (await import('@/pages/ServiceQrPage')).ServiceQrPage }),
+                    },
                     {
                         Component: AppLayout,
                         children: [
