@@ -23,12 +23,14 @@ use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
 use App\Repositories\EloquentMemberRepository;
 use App\Repositories\EloquentMessageLogRepository;
+use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Repositories\MessageLogRepositoryInterface;
+use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
@@ -52,5 +54,6 @@ class RepositoryServiceProvider extends ServiceProvider
         MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
         ConsentRepositoryInterface::class => EloquentConsentRepository::class,
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,
+        ServiceRepositoryInterface::class => EloquentServiceRepository::class,
     ];
 }

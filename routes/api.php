@@ -26,6 +26,11 @@ use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
 use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
+use App\Http\Controllers\Api\V1\Services\ListServicesController;
+use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
+use App\Http\Controllers\Api\V1\Services\ShowServiceController;
+use App\Http\Controllers\Api\V1\Services\StoreServiceController;
+use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API routes (prefix /api/v1, set in bootstrap/app.php).
@@ -61,6 +66,12 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('families', StoreFamilyController::class)->name('families.store');
         Route::get('families/{family}', ShowFamilyController::class)->name('families.show');
         Route::put('families/{family}', UpdateFamilyController::class)->name('families.update');
+
+        Route::get('services', ListServicesController::class)->name('services.index');
+        Route::post('services', StoreServiceController::class)->name('services.store');
+        Route::get('services/{service}', ShowServiceController::class)->name('services.show');
+        Route::put('services/{service}', UpdateServiceController::class)->name('services.update');
+        Route::patch('services/{service}/checkin', SetServiceCheckinController::class)->name('services.checkin');
 
         Route::get('departments', ListDepartmentsController::class)->name('departments.index');
         Route::post('departments', StoreDepartmentController::class)->name('departments.store');

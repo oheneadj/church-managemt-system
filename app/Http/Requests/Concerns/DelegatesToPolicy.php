@@ -7,6 +7,7 @@ namespace App\Http\Requests\Concerns;
 use App\Models\Department;
 use App\Models\Family;
 use App\Models\Member;
+use App\Models\Service;
 use LogicException;
 
 /**
@@ -33,6 +34,16 @@ trait DelegatesToPolicy
         $member = $this->route('member');
 
         return $member instanceof Member ? $member : throw new LogicException('This route has no member.');
+    }
+
+    /**
+     * The service that route binding found for this request.
+     */
+    public function service(): Service
+    {
+        $service = $this->route('service');
+
+        return $service instanceof Service ? $service : throw new LogicException('This route has no service.');
     }
 
     /**

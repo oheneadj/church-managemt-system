@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\PersonalAccessToken;
+use App\Models\Service;
 use App\Models\User;
 use App\Services\HealthCheck;
 use App\Support\EnvironmentCheck;
@@ -60,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('member', Member::class);
         Route::model('family', Family::class);
         Route::model('department', Department::class);
+        Route::model('service', Service::class);
 
         // The interactive API docs are open locally and, everywhere else, only for staff who may change church settings.
         Gate::define('viewApiDocs', fn (?User $user = null): bool => $user?->can(StaffPermission::ChurchSettings->value) === true);

@@ -676,6 +676,131 @@
                 }
             }
         },
+        "/v1/services": {
+            "get": {
+                "operationId": "services.index",
+                "summary": "Runs ListServicesAction for this request and returns the ServiceCollection",
+                "tags": [
+                    "ListServices"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ServiceType"
+                        }
+                    },
+                    {
+                        "name": "is_open",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ServiceCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "services.store",
+                "summary": "Runs CreateServiceAction for this request and returns the ServiceResource",
+                "tags": [
+                    "StoreService"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreServiceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ServiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/auth/logout": {
             "post": {
                 "operationId": "auth.logout",
@@ -880,6 +1005,68 @@
                 "security": []
             }
         },
+        "/v1/services/{service}/checkin": {
+            "patch": {
+                "operationId": "services.checkin",
+                "summary": "Runs SetServiceCheckinAction for this request and returns the ServiceResource",
+                "tags": [
+                    "SetServiceCheckin"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetServiceCheckinRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ServiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/families/{family}": {
             "get": {
                 "operationId": "families.show",
@@ -1069,6 +1256,117 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/services/{service}": {
+            "get": {
+                "operationId": "services.show",
+                "summary": "Runs ShowServiceAction for this request and returns the ServiceResource",
+                "tags": [
+                    "ShowService"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ServiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "services.update",
+                "summary": "Runs UpdateServiceAction for this request and returns the ServiceResource",
+                "tags": [
+                    "UpdateService"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateServiceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ServiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceResource"
                                         }
                                     },
                                     "required": [
@@ -3013,6 +3311,129 @@
                 ],
                 "title": "RequestOtpRequest"
             },
+            "ServiceCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/ServiceResource"
+                },
+                "title": "ServiceCollection"
+            },
+            "ServiceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "sunday",
+                            "midweek",
+                            "special",
+                            "youth",
+                            "children"
+                        ]
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "enum": [
+                            "Sunday",
+                            "Midweek",
+                            "Special",
+                            "Youth",
+                            "Children"
+                        ]
+                    },
+                    "checkin_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "service_date": {
+                        "type": "string"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_open": {
+                        "type": "boolean"
+                    },
+                    "headcount_override": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "attendance_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "type_label",
+                    "checkin_code",
+                    "service_date",
+                    "starts_at",
+                    "ends_at",
+                    "is_open",
+                    "headcount_override",
+                    "notes",
+                    "created_at"
+                ],
+                "title": "ServiceResource"
+            },
+            "ServiceType": {
+                "type": "string",
+                "description": "The allowed service type values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "sunday",
+                    "midweek",
+                    "special",
+                    "youth",
+                    "children"
+                ],
+                "title": "ServiceType"
+            },
+            "SetServiceCheckinRequest": {
+                "type": "object",
+                "description": "Validates opening or closing a service for check-in.",
+                "properties": {
+                    "is_open": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_open"
+                ],
+                "title": "SetServiceCheckinRequest"
+            },
             "SignInResource": {
                 "type": "object",
                 "properties": {
@@ -3298,6 +3719,48 @@
                 ],
                 "title": "StoreMilestoneRequest"
             },
+            "StoreServiceRequest": {
+                "type": "object",
+                "description": "Validates a new service. The check-in code is never accepted here: the system makes it.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ServiceType"
+                    },
+                    "service_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "service_date"
+                ],
+                "title": "StoreServiceRequest"
+            },
             "UpdateFamilyRequest": {
                 "type": "object",
                 "description": "Validates a family update. The head is changed through the members' roles, not here, so two people\ncan never both hold the head role.",
@@ -3335,6 +3798,51 @@
                     "status"
                 ],
                 "title": "UpdateMemberStatusRequest"
+            },
+            "UpdateServiceRequest": {
+                "type": "object",
+                "description": "Validates changes to a service. Any subset of the fields may be sent. A manual headcount stands in for the\ndigital count when a church counts heads on paper.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ServiceType"
+                    },
+                    "service_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "headcount_override": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100000
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "title": "UpdateServiceRequest"
             },
             "UploadMemberPhotoRequest": {
                 "type": "object",

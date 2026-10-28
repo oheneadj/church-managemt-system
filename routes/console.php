@@ -18,3 +18,6 @@ Schedule::command('churches:purge-cancelled')->dailyAt('03:30')->timezone('UTC')
 
 // The daily database backup (docs/16). 02:00 UTC, before the nightly clean-ups, and never two at once.
 Schedule::command('db:backup')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping();
+
+// Closes services left open after their day ended. Every hour, on the hour, UTC (it only compares dates).
+Schedule::command('services:close-stale')->hourly()->timezone('UTC')->onOneServer();

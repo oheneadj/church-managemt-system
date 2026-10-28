@@ -567,7 +567,22 @@ GET /api/v1/services
 Authorization: Bearer {token}
 ```
 
-**Query params:** `?from=2026-10-01&to=2026-10-31&type=sunday`
+**Query params:** `from` and `to` (dates, `Y-m-d`), `type` (`sunday`, `midweek`, `special`, `youth`, `children`), `is_open` (true or false), `per_page`. Newest first, paginated. Every signed-in role may read services (QA-10). Another church's services never appear.
+
+**Each service:** `id`, `name`, `type` and `type_label`, `checkin_code`, `service_date`, `starts_at`, `ends_at` (`H:i` or null), `is_open`, `headcount_override`, `notes`, `attendance_count`, `created_at`.
+
+### Get Service
+```
+GET /api/v1/services/{id}
+```
+`404` for a service of another church.
+
+### Update Service
+```
+PUT /api/v1/services/{id}
+Permission: members.edit
+```
+Any subset of `name`, `type`, `service_date`, `starts_at`, `ends_at`, `headcount_override` (a paper count that stands in for the digital count), `notes`. The check-in code cannot be changed.
 
 ### Create Service
 ```
@@ -587,7 +602,7 @@ Permission: members.edit
 }
 ```
 
-**Response `201`:** Service resource including auto-generated `checkin_code`.
+**Response `201`:** Service resource including the auto-generated `checkin_code`. A code sent in the body is ignored. The service starts closed. Two services on the same day are allowed.
 
 ---
 
@@ -595,7 +610,9 @@ Permission: members.edit
 ```
 PATCH /api/v1/services/{id}/checkin
 Authorization: Bearer {token}
+Permission: members.edit
 ```
+Asking for the state the service is already in changes nothing. A service left open is closed by the hourly `services:close-stale` command once its day has ended (24 hours, `config/attendance.php`).
 
 **Body:**
 ```json

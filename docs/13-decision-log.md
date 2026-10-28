@@ -786,6 +786,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-044 — How attendance is built (Sprint 3)
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/02 Module 3, docs/08, docs/14 section 3, QA-05 and QA-10
+**Status:** Active
+
+**Decision:**
+1. **Permissions follow docs/08 and QA-10:** every signed-in role may read services and attendance; creating and changing a service, opening and closing check-in and recording attendance need `members.edit` (church admin and pastor). No new permission is added. Where QA-05 names `/open` and `/close`, docs/08's single `PATCH /services/{id}/checkin` is used.
+2. **The check-in code is made by the system and is unique across all churches** (6 characters without look-alike letters), so one shared WhatsApp number and a QR code can tell which church and service is meant from the code alone. A clash is caught by the database's unique index and a new code is tried.
+3. **A forgotten open service is closed by an hourly command** after its day ends (24 hours), in every church.
+4. **Check-in is idempotent at the database:** one attendance row per member per service (the unique index), written with insert-or-ignore, so two check-ins at once leave one row.
+5. **Services have their date and times as the church's own calendar values** (a service is "Sunday 09:00" wherever it is), and `checked_in_at` is a UTC timestamp. Display conversion to the church's timezone happens only in the screens.
+6. **The live dashboard polls every 10 seconds** (TanStack Query `refetchInterval`) instead of using server push; it is simpler and enough for one screen, and the real-time pattern allows it.
+7. **Left for later slices, decided here so they follow one design:** manual and visitor attendance; the QR code (a signed token that expires in 2 minutes, then phone and a texted code); the WhatsApp CHECKIN (a gateway interface, a signed webhook, de-duplication by Meta message id, a circuit breaker and a pause switch); and the absent-members list (computed on request from the last services of the configured types, instead of a stored alert).
+
+**Rationale:** The agreement requires a database guarantee for anything that must not be double-recorded, provider integrations behind interfaces with circuit breakers and a way to switch them off, and the simplest design that meets the docs.
+
+**Revisit when:** Meta approves the WhatsApp account (replace the mock with real calls), or a church needs live updates faster than 10 seconds.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

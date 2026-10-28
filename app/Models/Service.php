@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\ServiceType;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A church service or event that attendance is recorded against.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $name
+ * @property ServiceType $type
+ * @property string|null $checkin_code
+ * @property CarbonImmutable $service_date
+ * @property string|null $starts_at
+ * @property string|null $ends_at
+ * @property bool $is_open
+ * @property int|null $headcount_override
+ * @property string|null $notes
+ * @property CarbonImmutable|null $created_at
  */
 class Service extends Model
 {

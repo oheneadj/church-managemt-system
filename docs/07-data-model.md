@@ -251,7 +251,7 @@ Every church service or event that attendance can be recorded for.
 | `church_id` | CHAR(26) | No | FK → churches |
 | `name` | VARCHAR(255) | No | e.g. "Sunday Morning Service", "Midweek Prayer" |
 | `type` | VARCHAR(30) | No | `ServiceType`: sunday, midweek, special, youth, children. |
-| `checkin_code` | VARCHAR(10) | Yes | Short code for WhatsApp CHECKIN. Unique per church. |
+| `checkin_code` | VARCHAR(10) | Yes | Short code for WhatsApp CHECKIN, made by the system (6 letters and numbers without look-alikes, `config/attendance.php`). Unique across ALL churches while the service is not deleted, because a member texts it to one shared WhatsApp number and the code alone identifies the service (D-044). |
 | `service_date` | DATE | No | |
 | `starts_at` | TIME | Yes | |
 | `ends_at` | TIME | Yes | |
@@ -262,7 +262,7 @@ Every church service or event that attendance can be recorded for.
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, service_date)`, `(church_id, checkin_code)` — unique
+**Index:** `(church_id, service_date)`; `checkin_code` — unique where `deleted_at` is null
 
 ---
 
