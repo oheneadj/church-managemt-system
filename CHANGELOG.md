@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Added the `SecurityHeaders` middleware, registered globally, which sets `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection` and `Referrer-Policy` on every response and `Strict-Transport-Security` on HTTPS requests. The header list lives in `config/security.php`. Updated `docs/15-security.md` to point at the real code.
 - **Why:** `docs/15` specified these headers and the Laravel addendum checklist asks "Security headers set in middleware?", but the middleware had never been written.
 - **Files:** `app/Http/Middleware/SecurityHeaders.php`, `config/security.php`, `bootstrap/app.php`, `docs/15-security.md`, `tests/Feature/Operations/SecurityHeadersTest.php`
-- **Commit:** `PENDING`
+- **Commit:** `fca3595` (2026-10-28)
 
 #### refactor(code): move fixed values into config and simplify tangled logic
 - **What:** Moved the rate limits, page sizes (default 25, maximum 100), photo size, quality, limits and link time, and the member number width into `config/limits.php` and `config/members.php`. The phone-number pattern is written once (`PhoneNumber::E164_PATTERN`). Raw HTTP status numbers became the framework's `Response::HTTP_*` constants. The "default directory" and "leaves active life" status lists became methods on `MemberStatus`. The member visibility scope now starts from "nobody" and opens up per role, and the audit listener has one short method per event instead of a `match(true)`.
