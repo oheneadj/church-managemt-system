@@ -12,6 +12,7 @@ use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
 use App\Enums\StaffRole;
 use App\Traits\BelongsToChurch;
+use App\ValueObjects\PhoneNumber;
 use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,6 +54,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Member extends Model
 {
+    /** The columns the directory search looks in. */
+    private const SEARCHABLE_COLUMNS = ['first_name', 'middle_name', 'last_name', 'preferred_name', 'phone', 'member_number'];
+
     /** The roles that see every member of the church. */
     private const SEE_EVERYONE = [StaffRole::ChurchAdmin, StaffRole::Pastor, StaffRole::FinanceSecretary];
 
@@ -232,6 +236,8 @@ class Member extends Model
     /**
      * Matches every word of the search against name, phone or member number, ignoring case.
      * Each word may match a different column, so "Emmanuel Mensah" finds Emmanuel Mensah-Boateng.
+     * A word that is a whole phone number in any common form (0201234567, 233201234567) also finds
+     * the number stored in international form (docs/qa QA-04, TC-04-08).
      *
      * @param  Builder<Member>  $query
      */
@@ -240,9 +246,15 @@ class Member extends Model
         foreach (preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
             $like = '%'.addcslashes($word, '%_\\').'%';
 
-            $query->where(function (Builder $any) use ($like): void {
-                foreach (['first_name', 'middle_name', 'last_name', 'preferred_name', 'phone', 'member_number'] as $column) {
+            $phone = PhoneNumber::tryFrom($word);
+
+            $query->where(function (Builder $any) use ($like, $phone): void {
+                foreach (self::SEARCHABLE_COLUMNS as $column) {
                     $any->orWhereLike($column, $like);
+                }
+
+                if ($phone !== null) {
+                    $any->orWhere('phone', $phone->e164);
                 }
             });
         }

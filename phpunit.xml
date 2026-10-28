@@ -36,6 +36,7 @@
         <env name="HEALTH_MIN_FREE_DISK_PERCENT" value="0"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="TENANT_BASE_DOMAIN" value="localhost"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
 </phpunit>

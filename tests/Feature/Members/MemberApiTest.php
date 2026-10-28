@@ -114,6 +114,15 @@ describe('listing', function (): void {
         }
     });
 
+    it('finds a member by their phone number written in the local form', function (): void {
+        $member = newMember($this->church, ['phone' => '+233201234567']);
+        newMember($this->church, ['phone' => '+233209999999']);
+
+        foreach (['0201234567', '233201234567', '+233201234567'] as $typed) {
+            as_($this->admin)->getJson(MEMBERS.'?search='.urlencode($typed))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $member->id);
+        }
+    });
+
     it('treats percent and underscore in a search as plain characters', function (): void {
         newMember($this->church, ['first_name' => 'Alpha']);
 
@@ -427,6 +436,12 @@ describe('creating', function (): void {
         newMember($this->church, ['phone' => '+233200987654']);
 
         as_($this->admin)->postJson(MEMBERS, payload())->assertUnprocessable()->assertJsonValidationErrors('phone');
+    });
+
+    it('says in plain words that the phone number is already used', function () {
+        newMember($this->church, ['phone' => '+233200987654']);
+
+        as_($this->admin)->postJson(MEMBERS, payload())->assertJsonPath('errors.phone.0', 'A member with this phone number already exists.');
     });
 
     it('accepts a phone used only in another church', function (): void {

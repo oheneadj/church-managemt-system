@@ -40,6 +40,16 @@ abstract class MemberInputRequest extends FormRequest
     }
 
     /**
+     * The sentence shown when a phone number is already used by another member of this church (QA-04, TC-04-02).
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return ['phone.unique' => 'A member with this phone number already exists.'];
+    }
+
+    /**
      * The member field rules shared by create and update. Create requires the basics; update accepts any subset.
      *
      * @return array<string, list<mixed>>
