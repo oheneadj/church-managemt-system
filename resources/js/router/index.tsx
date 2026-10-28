@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { HomeRedirect } from '@/components/layout/HomeRedirect';
+import { RouteErrorPage } from '@/components/layout/RouteErrorPage';
 import { PageSpinner } from '@/components/layout/PageSpinner';
 import { ROUTE_PATTERNS, ROUTES } from '@/constants/routes';
 
@@ -12,6 +13,7 @@ import { ROUTE_PATTERNS, ROUTES } from '@/constants/routes';
 export const router = createBrowserRouter([
     {
         hydrateFallbackElement: <PageSpinner />,
+        errorElement: <RouteErrorPage />,
         children: [
             {
                 path: ROUTES.LOGIN,

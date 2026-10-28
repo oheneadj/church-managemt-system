@@ -741,7 +741,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 **Decision:**
 1. A `consents` table keeps one row for every time a member agreed to receive texts or WhatsApp messages: purpose, time, privacy policy version and who recorded it. Withdrawing sets `withdrawn_at`; agreeing again adds a new row. The database allows only one open row per member and purpose.
 2. The rows are written by a listener on the member events, in the same transaction as the change, from the member's own `sms_opted_in` and `whatsapp_opted_in` choices. Erasing a member withdraws everything. The member's data export lists the history.
-3. **Open point for the Product Owner:** `sms_opted_in` is on by default for a new member, which the agreement does not accept as consent (pre-ticked boxes are not valid). Transactional messages such as receipts and sign-in codes do not need it, but broadcasts do. Before the Sprint 5 broadcasts, decide whether the default becomes off, or whether the church confirms consent when adding a member. The history is already right either way.
+3. **Decided by the Product Owner (28 Oct 2026): text messages stay on by default for a new member, WhatsApp stays off.** A church texting its own members is the normal relationship, and WhatsApp needs the member's explicit opt-in anyway (docs/05). Every default agreement is still recorded in the history with its time, policy version and the staff member who added the member, and the member can take it back at any time. The add-member screen should say plainly that the member will receive texts; that line is part of the Sprint 5 broadcast work. The agreement says a pre-ticked box is not valid consent, so this is a recorded, owner-accepted exception, to be revisited with the privacy policy text.
 4. Members who exist before this table have no rows until their choices next change; a backfill is not needed because nothing is in production.
 
 **Rationale:** The agreement requires consent to be recorded with a timestamp, purpose and policy version, and to be withdrawable with immediate effect.
@@ -762,3 +762,6 @@ Decisions that were intentionally not made yet, and when they need to be made.
 | DD-004 | Exact SMS credits per plan tier | Sprint 3 | Product Owner |
 | DD-005 | Exact GHS subscription prices | Sprint 4 | Product Owner |
 | DD-006 | Custom sender IDs for churches (v2 feature or not?) | Sprint 2 | Product Owner |
+| DD-007 | Sign the new admin in straight after sign-up (needs a one-time link between the platform host and the church host; today they sign in again) | When sign-up friction is measured | Product Owner |
+| DD-008 | Delivery status of text messages (PayPerlez documents no delivery webhooks; polling `GET /sms/messages/{reference}` is the option) | Sprint 4, story 4.8 | Lead Engineer |
+| DD-009 | Translating the screens (which languages: Twi, Ga, Ewe?) | Before the first non-English church signs up | Product Owner |

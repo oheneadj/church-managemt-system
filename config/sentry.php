@@ -13,7 +13,12 @@ return [
     'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
 
     // @see https://spotlightjs.com/
-    // 'spotlight' => env('SENTRY_SPOTLIGHT', false),
+    // Spotlight is a local screen for errors that needs no account and no internet (docs/17, Working offline).
+    'spotlight' => env('SENTRY_SPOTLIGHT', false),
+
+    // If the monitor cannot be reached, give up quickly so a slow monitor never slows a page or a queue job.
+    'http_timeout' => 2.0,
+    'http_connect_timeout' => 1.0,
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#logger
     // 'logger' => Sentry\Logger\DebugFileLogger::class, // By default this will log to `storage_path('logs/sentry.log')`

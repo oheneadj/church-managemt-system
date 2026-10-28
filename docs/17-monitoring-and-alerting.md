@@ -295,7 +295,16 @@ JSON log file (storage/logs/laravel-YYYY-MM-DD.log)
 [built] Sentry — auto-grouped, with stack trace + context (D-040)
 ```
 
-**Sentry is built in and switched on by setting `SENTRY_LARAVEL_DSN`** (`env:check` refuses to start outside development without it). With the DSN empty, as in development, nothing is sent. Every unhandled exception goes to Sentry from `bootstrap/app.php`. Each signed-in request adds the staff id, church id and role to the error (`AddErrorMonitoringContext`), and never a name, phone or email. Request bodies are not sent (`max_request_body_size: none`), `send_default_pii` is off, and SQL values are not recorded. Set `SENTRY_RELEASE` to the commit in the deploy so a new error shows which release brought it. The React app does not report to Sentry yet; that needs a decision on the bundle budget.
+**Sentry is built in and switched on by setting `SENTRY_LARAVEL_DSN`** (`env:check` refuses to start outside development without it). With the DSN empty, as in development, nothing is sent. Every unhandled exception goes to Sentry from `bootstrap/app.php`. Each signed-in request adds the staff id, church id and role to the error (`AddErrorMonitoringContext`), and never a name, phone or email. Request bodies are not sent (`max_request_body_size: none`), `send_default_pii` is off, and SQL values are not recorded. Set `SENTRY_RELEASE` to the commit in the deploy so a new error shows which release brought it. The React app reports too, but only when `VITE_SENTRY_DSN` is set, and the Sentry code is loaded on demand so it adds nothing to the main bundle (see below).
+
+### Working offline and self-hosting
+
+Sentry is not a cloud-only product, and the app never depends on it being reachable:
+
+- **In development, with no internet or account:** leave the DSN empty and set `SENTRY_SPOTLIGHT=true`, then run `npx @spotlightjs/spotlight`. Errors from the app show in a local screen on this machine. Nothing leaves it.
+- **In production, on your own server:** the SDK only needs a DSN, so it works with a self-hosted server that speaks Sentry's protocol. **GlitchTip** is the light choice and runs as a Coolify one-click service on the same Oracle machine; self-hosted Sentry itself needs far more memory. Point `SENTRY_LARAVEL_DSN` (and `VITE_SENTRY_DSN`) at it. The 90-day log rule in docs/05 applies to what it stores.
+- **When the monitor is down or unreachable:** the SDK gives up after 1 second to connect and 2 seconds in total (`config/sentry.php`), so pages and queue jobs are not held up. The error is then lost to the monitor but is still in the application log, which is why the log line is kept.
+- There is no offline buffer: the SDK does not store errors and send them later.
 
 ### Configuring Log Alerts (MVP — Slack via Webhook)
 
