@@ -1431,16 +1431,14 @@
                         "type": "string",
                         "enum": [
                             "male",
-                            "female",
-                            "other"
+                            "female"
                         ]
                     },
                     "gender_label": {
                         "type": "string",
                         "enum": [
                             "Male",
-                            "Female",
-                            "Other"
+                            "Female"
                         ]
                     },
                     "status": {
@@ -1560,8 +1558,7 @@
                 "description": "The allowed gender values, stored as a plain string column (D-017).\n",
                 "enum": [
                     "male",
-                    "female",
-                    "other"
+                    "female"
                 ],
                 "title": "Gender"
             },
@@ -1819,16 +1816,14 @@
                         "type": "string",
                         "enum": [
                             "male",
-                            "female",
-                            "other"
+                            "female"
                         ]
                     },
                     "gender_label": {
                         "type": "string",
                         "enum": [
                             "Male",
-                            "Female",
-                            "Other"
+                            "Female"
                         ]
                     },
                     "date_of_birth": {
@@ -2166,16 +2161,14 @@
                         "type": "string",
                         "enum": [
                             "male",
-                            "female",
-                            "other"
+                            "female"
                         ]
                     },
                     "gender_label": {
                         "type": "string",
                         "enum": [
                             "Male",
-                            "Female",
-                            "Other"
+                            "Female"
                         ]
                     },
                     "phone": {

@@ -126,7 +126,7 @@ The core entity. Represents every person the church knows about who has reached 
 | `middle_name` | VARCHAR(100) | Yes | |
 | `last_name` | VARCHAR(100) | No | |
 | `preferred_name` | VARCHAR(100) | Yes | "Known as" |
-| `gender` | VARCHAR(30) | No | `Gender`: male, female, other. |
+| `gender` | VARCHAR(30) | No | `Gender`: male, female. |
 | `date_of_birth` | DATE | Yes | |
 | `phone` | VARCHAR(20) | No | Primary — used for OTP |
 | `phone_secondary` | VARCHAR(20) | Yes | |

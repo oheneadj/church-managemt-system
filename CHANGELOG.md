@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### refactor(members): offer male and female only for gender
+- **What:** Removed "Other" from the gender list on both sides: the PHP `Gender` enum, the frontend `GENDERS` list, the data model doc and the committed OpenAPI spec. Added a test that the API rejects `gender: other`. The drift test that compares the two lists needed no change; it passes with both lists reduced. The unfinished edits that added a Visitor membership type and webp/avif photo types were reverted, because the server does not support them (a visitor is a separate record, docs/03; photos are jpg or png, D-032).
+- **Why:** Product decision from the project owner: gender is male or female. No stored member had "other", and the column is a plain string, so no migration is needed.
+- **Files:** `app/Enums/Gender.php`, `resources/js/constants/enums.ts`, `resources/js/constants/photo.ts` (reverted), `docs/07-data-model.md`, `docs/openapi.json`, `tests/Feature/Members/MemberApiTest.php`
+- **Commit:** pending
+
 #### fix(members-ui): move the select caret off the border and add placeholders
 - **What:** Drop-downs now hide the browser's own arrow and draw a chevron 12px in from the right edge, with room reserved so long labels do not run under it. Added example placeholders to the member form's text boxes that had none (names, second phone, email, home address, occupation, tribe, ID number) and to the milestone and family notes boxes. Labels stay visible above every box. Added tests for the select field.
 - **Why:** The default arrow sat against the border and looked cramped. Placeholders show the expected format. The React addendum requires a test for every reusable component, and the agreement requires a visible label, not only a placeholder.

@@ -423,6 +423,7 @@ describe('creating', function (): void {
         as_($this->admin)->postJson(MEMBERS, payload($bad))->assertUnprocessable()->assertJsonValidationErrors($field);
     })->with([
         'gender' => [['gender' => 'robot'], 'gender'],
+        'gender other (male and female only)' => [['gender' => 'other'], 'gender'],
         'phone' => [['phone' => 'abc'], 'phone'],
         'future birth date' => [['date_of_birth' => '2999-01-01'], 'date_of_birth'],
         'birth date format' => [['date_of_birth' => '12/07/1985'], 'date_of_birth'],

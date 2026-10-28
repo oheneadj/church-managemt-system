@@ -12,7 +12,6 @@ export interface Option<V extends string> {
 export const GENDERS = [
     { value: 'male', label: 'Male' },
     { value: 'female', label: 'Female' },
-    { value: 'other', label: 'Other' },
 ] as const satisfies readonly Option<string>[];
 
 export const MARITAL_STATUSES = [
