@@ -136,6 +136,8 @@ export interface MemberInput {
     address?: string | null;
     nearest_landmark?: string | null;
     digital_address?: string | null;
+    national_id_type?: string | null;
+    national_id_number?: string | null;
     marital_status?: MaritalStatus | null;
     occupation?: string | null;
     tribe?: string | null;

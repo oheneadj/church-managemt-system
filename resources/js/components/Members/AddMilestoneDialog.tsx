@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { MILESTONE_TYPES, type MilestoneType } from '@/constants/enums';
 import { useMemberMutations } from '@/hooks/useMemberMutations';
 import { showFieldErrors } from '@/lib/showFieldErrors';
+import { today } from '@/utils/today';
 
 const schema = z.object({
     type: z.string().min(1, 'Choose a milestone'),
@@ -25,13 +26,6 @@ interface AddMilestoneDialogProps {
     memberId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-}
-
-/** Today as YYYY-MM-DD in the viewer's own calendar, the latest date a milestone may have. */
-function today(): string {
-    const now = new Date();
-
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 /** An empty optional box becomes null so the server stores nothing instead of an empty text. */

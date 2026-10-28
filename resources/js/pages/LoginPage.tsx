@@ -8,16 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/constants/routes';
+import { PHONE_INPUT_PATTERN } from '@/constants/validation';
 import { useSignIn } from '@/hooks/useSignIn';
 import { showFieldErrors } from '@/lib/showFieldErrors';
 import type { ApiError } from '@/services/ApiError';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const phoneSchema = z.object({
-    phone: z
-        .string()
-        .trim()
-        .regex(/^\+?[\d\s-]{9,16}$/, 'Enter a valid phone number'),
+    phone: z.string().trim().regex(PHONE_INPUT_PATTERN, 'Enter a valid phone number'),
 });
 
 const codeSchema = z.object({

@@ -15,10 +15,11 @@ export function useMembers(filters: MemberFilters) {
     });
 }
 
-/** One member's full record. */
+/** One member's full record. An empty id (the add screen) makes no request. */
 export function useMember(id: string) {
     return useQuery({
         queryKey: QUERY_KEYS.members.detail(id),
         queryFn: () => membersApi.get(id),
+        enabled: id !== '',
     });
 }

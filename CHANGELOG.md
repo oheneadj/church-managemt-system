@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(members-ui): add the add and edit member form
+- **What:** Built story 2.12. One screen at `/members/new` and `/members/:id/edit` adds or edits a member in three short steps (who they are, how to reach them, church life). Each step is checked before moving on, Enter moves to the next step and only the last step saves, the step is kept in the URL, and a message from the server appears beside its box and takes the user back to the step that holds it. The save button is disabled while saving. Departments and messaging choices are native tick boxes, the family picker asks for a role once a family is chosen, and the national ID is only sent when typed. A new member chooses a starting status (prospect or active); editing leaves status to the profile. Staff without the edit permission and records of deceased members get a plain message. The phone rule is now shared with the login page, and the date helper with the milestone dialog.
+- **Why:** Sprint 2 story 2.12 and QA-04 TC-04-01 to TC-04-03. The React addendum requires React Hook Form with Zod, a label on every input, server errors mapped back to fields, and `isSubmitting`-style double-submit protection; the agreement requires a mobile-friendly form.
+- **Files:** `resources/js/pages/MemberFormPage.tsx`, `resources/js/components/Members/` (MemberForm, memberFormSchema, IdentityFields, ContactFields, ChurchFields), `resources/js/components/form/CheckboxField.tsx`, `resources/js/components/ui/StepIndicator.tsx`, `resources/js/hooks/useUrlStep.ts`, `resources/js/hooks/useMembers.ts`, `resources/js/constants/validation.ts`, `resources/js/utils/today.ts`, `resources/js/types/members.ts`, `resources/js/pages/LoginPage.tsx`, `resources/js/components/Members/AddMilestoneDialog.tsx`, `resources/js/router/index.tsx`, and 3 new Vitest test files
+- **Commit:** `PENDING`
+
 #### test(members-ui): fix the leaving-status drift test
 - **What:** The test that compares the frontend `LEAVING_STATUSES` list with `MemberStatus::leavesActiveLife()` compared array keys as well as values; it now compares values only.
 - **Why:** It was committed in the profile page commit while failing, because the check result was not looked at before committing. The suite is green again.
@@ -238,6 +244,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `269d265` (2026-10-28)
 
 ### Added
+- Add and edit member form (story 2.12): three steps, checked one at a time, with the step in the URL and server messages beside their boxes
 - Member profile page (story 2.11): Profile, Giving and Attendance tabs, photo upload, status change with confirmation, and milestones
 - Member directory page (story 2.10): search and filter members by status, gender and department, one tap to a profile, with filters in the URL (D-036)
 - Frontend bundle budget: the production build fails if any script passes 180 kB gzipped
