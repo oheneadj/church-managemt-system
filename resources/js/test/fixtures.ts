@@ -1,4 +1,5 @@
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
+import type { AttendanceRecord, AttendanceRecorded, Service, ServiceAttendance, Visitor } from '@/types/services';
 
 /** A directory row, with sensible defaults a test can override. */
 export function memberSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
@@ -70,4 +71,75 @@ export function family(overrides: Partial<Family> = {}): Family {
 /** Wraps rows in the paginated envelope the API returns. */
 export function pageOf<T>(rows: T[], meta: Partial<Page<T>['meta']> = {}): Page<T> {
     return { data: rows, meta: { current_page: 1, last_page: 1, per_page: 25, total: rows.length, ...meta } };
+}
+
+/** A service, closed, with sensible defaults a test can override. */
+export function service(overrides: Partial<Service> = {}): Service {
+    return {
+        id: 'service-1',
+        name: 'Sunday Morning Service',
+        type: 'sunday',
+        type_label: 'Sunday',
+        checkin_code: 'GRA7F2',
+        service_date: '2026-10-25',
+        starts_at: '09:00',
+        ends_at: '11:30',
+        is_open: false,
+        headcount_override: null,
+        notes: null,
+        attendance_count: 0,
+        created_at: '2026-10-20T08:00:00+00:00',
+        ...overrides,
+    };
+}
+
+export function attendanceRecord(overrides: Partial<AttendanceRecord> = {}): AttendanceRecord {
+    return {
+        id: 'record-1',
+        method: 'manual',
+        method_label: 'Manual',
+        checked_in_at: '2026-10-25T09:12:00+00:00',
+        member: { id: 'member-1', member_number: 'GRC-0001', full_name: 'Emmanuel Mensah-Boateng' },
+        visitor_name: null,
+        ...overrides,
+    };
+}
+
+/** The attendance of a service: one page of records with the service and its headcount. */
+export function serviceAttendance(
+    records: AttendanceRecord[] = [attendanceRecord()],
+    overrides: Partial<ServiceAttendance> = {},
+): ServiceAttendance {
+    return {
+        ...pageOf(records),
+        service: service({ is_open: true, attendance_count: records.length }),
+        summary: {
+            total: records.length,
+            members: records.length,
+            visitors: 0,
+            by_method: { manual: records.length, whatsapp: 0, qr: 0, biometric: 0 },
+            active_members: 10,
+            attendance_rate: records.length * 10,
+        },
+        ...overrides,
+    };
+}
+
+export function recorded(overrides: Partial<AttendanceRecorded> = {}): AttendanceRecorded {
+    return { recorded: 1, already_checked_in: 0, errors: [], ...overrides };
+}
+
+export function visitor(overrides: Partial<Visitor> = {}): Visitor {
+    return {
+        id: 'visitor-1',
+        name: 'Yaw Boateng',
+        phone: '+233244999000',
+        how_heard: 'A friend',
+        first_visit_date: '2026-10-25',
+        last_visit_date: '2026-10-25',
+        visit_count: 1,
+        follow_up_status: 'pending',
+        follow_up_status_label: 'Pending',
+        ...overrides,
+    };
 }

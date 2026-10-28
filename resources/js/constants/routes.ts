@@ -10,6 +10,8 @@ export const ROUTES = {
     MEMBER_NEW: '/members/new',
     MEMBER: (id: string) => `/members/${id}`,
     MEMBER_EDIT: (id: string) => `/members/${id}/edit`,
+    SERVICES: '/services',
+    SERVICE: (id: string) => `/services/${id}`,
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;
@@ -19,4 +21,5 @@ export const ROUTE_PATTERNS = {
     MEMBER: '/members/:id',
     MEMBER_EDIT: '/members/:id/edit',
     FAMILY: '/families/:id',
+    SERVICE: '/services/:id',
 } as const;

@@ -16,6 +16,12 @@ export const QUERY_KEYS = {
         picker: ['families', 'picker'] as const,
         detail: (id: string) => ['families', 'detail', id] as const,
     },
+    services: {
+        all: ['services'] as const,
+        list: (filters: { type: string; page: number }) => ['services', 'list', filters] as const,
+        detail: (id: string) => ['services', 'detail', id] as const,
+        attendance: (id: string, page: number) => ['services', 'attendance', id, page] as const,
+    },
     departments: {
         all: ['departments'] as const,
     },

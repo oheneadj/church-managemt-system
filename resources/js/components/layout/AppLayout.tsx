@@ -9,6 +9,7 @@ const NAV_ITEMS = [
     { label: 'Dashboard', to: ROUTES.DASHBOARD },
     { label: 'Members', to: ROUTES.MEMBERS },
     { label: 'Families', to: ROUTES.FAMILIES },
+    { label: 'Services', to: ROUTES.SERVICES },
 ] as const;
 
 /**

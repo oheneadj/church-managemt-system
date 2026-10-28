@@ -25,4 +25,9 @@ export default defineConfig({
         channel: 'chrome',
         trace: 'retain-on-failure',
     },
+    projects: [
+        // Signs in once and saves the browser state; the specs that need an admin start from it.
+        { name: 'setup', testMatch: /auth\.setup\.ts/ },
+        { name: 'chrome', testIgnore: /auth\.setup\.ts/, dependencies: ['setup'], use: { storageState: 'e2e/.auth/admin.json' } },
+    ],
 });

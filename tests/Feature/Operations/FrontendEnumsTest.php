@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CheckInMethod;
 use App\Enums\EducationalLevel;
 use App\Enums\FamilyRole;
 use App\Enums\Gender;
@@ -9,6 +10,7 @@ use App\Enums\MaritalStatus;
 use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
 use App\Enums\MilestoneType;
+use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
 
 // The React app mirrors some enums in resources/js/constants/enums.ts and permissions.ts (agreement section 13:
@@ -39,6 +41,8 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['FAMILY_ROLES', FamilyRole::class],
     ['MILESTONE_TYPES', MilestoneType::class],
     ['EDUCATIONAL_LEVELS', EducationalLevel::class],
+    ['SERVICE_TYPES', ServiceType::class],
+    ['CHECKIN_METHODS', CheckInMethod::class],
 ]);
 
 it('only names permissions that exist', function (): void {

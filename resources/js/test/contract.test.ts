@@ -3,7 +3,7 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { family, member, memberSummary, pageOf } from '@/test/fixtures';
+import { attendanceRecord, family, member, memberSummary, pageOf, recorded, service, serviceAttendance, visitor } from '@/test/fixtures';
 
 /**
  * Contract test (agreement section 35): the sample data this app's tests are built on must match what the API
@@ -50,6 +50,55 @@ describe('the sample data the app is tested with matches the API spec', () => {
 
     it('GET /families/{family}: a family', () => {
         expect(problemsWith({ data: family() }, 'get', '/v1/families/{family}', 200)).toEqual([]);
+    });
+
+    it('GET /services: a page of services', () => {
+        expect(
+            problemsWith(
+                pageOf([
+                    service(),
+                    service({
+                        id: 'service-2',
+                        is_open: true,
+                        starts_at: null,
+                        ends_at: null,
+                        checkin_code: null,
+                        headcount_override: 140,
+                    }),
+                ]),
+                'get',
+                '/v1/services',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('GET /services/{service}: one service', () => {
+        expect(problemsWith({ data: service() }, 'get', '/v1/services/{service}', 200)).toEqual([]);
+    });
+
+    it('GET /services/{service}/attendance: the headcount and a page of people', () => {
+        const withVisitor = serviceAttendance([
+            attendanceRecord(),
+            attendanceRecord({ id: 'record-2', member: null, visitor_name: 'Yaw Boateng' }),
+        ]);
+
+        expect(problemsWith(withVisitor, 'get', '/v1/services/{service}/attendance', 200)).toEqual([]);
+    });
+
+    it('POST /services/{service}/attendance: what a bulk check-in did', () => {
+        expect(
+            problemsWith(
+                recorded({ errors: [{ member_id: 'x', message: 'Member not found.' }] }),
+                'post',
+                '/v1/services/{service}/attendance',
+                201,
+            ),
+        ).toEqual([]);
+    });
+
+    it('POST /services/{service}/visitors: a visitor', () => {
+        expect(problemsWith({ data: visitor() }, 'post', '/v1/services/{service}/visitors', 201)).toEqual([]);
     });
 
     it('notices a field that is not what the spec says', () => {

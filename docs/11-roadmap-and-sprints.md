@@ -239,15 +239,14 @@ Blocked: [anything blocking me / none]
 
 ## Current Sprint
 
-> **Sprint 2** — Member Directory
-> Started: 2026-10-26 · Updated: 2026-10-28
-> Sprint 1 (Foundation) is done apart from the ops stories that need accounts and servers: 1.3 and 1.4 (Oracle and wildcard SSL), 1.6 (auto-deploy) and 1.10 (queue workers under Coolify). Docker files for them are written (D-029) but have not been built or deployed.
+> **Sprint 3** — Attendance
+> Started: 2026-10-28 · Updated: 2026-10-28
+> Sprint 2 (Member Directory) is complete. The design for Sprint 3 is in D-044.
 
 | Done | Stories |
 |---|---|
-| Backend | 2.2 to 2.9 (members, policy, photo upload, resources, requests, families, departments, milestones) |
-| Frontend | 2.10 directory, 2.11 profile, 2.12 add/edit form, 2.13 family pages |
-| Also done | 2.1 church onboarding (sign-up page and API, D-037) |
-| Still open | Nothing in the sprint; the exit criteria still need a run in a browser |
+| Backend | 3.1 services, 3.2 manual bulk check-in, 3.5 idempotent check-in, 3.6 visitor capture, 3.7 attendance reports (per service and per member), 3.13 absent members (computed on request) |
+| Frontend | 3.8 services list and create, 3.9 live check-in (polls every 10 seconds), 3.10 manual check-in with member search, 3.12 attendance report (the Attendance tab) |
+| Still open | 3.3 WhatsApp CHECKIN (needs the Meta account, built against a mock first), 3.4 QR check-in and 3.11 QR display page |
 
 Update this section at the start of each sprint.

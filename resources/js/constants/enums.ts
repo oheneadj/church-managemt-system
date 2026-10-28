@@ -83,3 +83,21 @@ export type MemberStatus = (typeof MEMBER_STATUSES)[number]['value'];
 export type FamilyRole = (typeof FAMILY_ROLES)[number]['value'];
 export type MilestoneType = (typeof MILESTONE_TYPES)[number]['value'];
 export type EducationalLevel = (typeof EDUCATIONAL_LEVELS)[number]['value'];
+
+export const SERVICE_TYPES = [
+    { value: 'sunday', label: 'Sunday' },
+    { value: 'midweek', label: 'Midweek' },
+    { value: 'special', label: 'Special' },
+    { value: 'youth', label: 'Youth' },
+    { value: 'children', label: 'Children' },
+] as const satisfies readonly Option<string>[];
+
+export const CHECKIN_METHODS = [
+    { value: 'manual', label: 'Manual' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'qr', label: 'QR code' },
+    { value: 'biometric', label: 'Biometric' },
+] as const satisfies readonly Option<string>[];
+
+export type ServiceType = (typeof SERVICE_TYPES)[number]['value'];
+export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];
