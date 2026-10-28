@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Drop-downs now hide the browser's own arrow and draw a chevron 12px in from the right edge, with room reserved so long labels do not run under it. Added example placeholders to the member form's text boxes that had none (names, second phone, email, home address, occupation, tribe, ID number) and to the milestone and family notes boxes. Labels stay visible above every box. Added tests for the select field.
 - **Why:** The default arrow sat against the border and looked cramped. Placeholders show the expected format. The React addendum requires a test for every reusable component, and the agreement requires a visible label, not only a placeholder.
 - **Files:** `resources/js/components/form/SelectField.tsx`, `resources/js/components/form/SelectField.test.tsx`, `resources/js/components/Members/` (IdentityFields, ContactFields, ChurchFields, AddMilestoneDialog), `resources/js/components/Families/FamilyFormDialog.tsx`
-- **Commit:** pending
+- **Commit:** `75cd59f` (2026-10-28)
 
 #### fix(spa): serve stored files instead of the React shell
 - **What:** The React catch-all route answered `/storage/...`, so a member photo's signed link returned the app's HTML page instead of the image. `storage` is now one of the paths the catch-all leaves alone. Added a test that a stored-file path reaches the file route (it is refused without a signature) rather than the shell.
