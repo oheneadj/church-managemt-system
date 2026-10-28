@@ -24,9 +24,10 @@ export interface OtpRequested {
     expires_in: number;
 }
 
-export interface AuthSession {
-    token: string;
-    token_type: 'Bearer';
+/**
+ * What sign-in and "who am I" return. The browser app is signed in by a cookie, so there is no token here.
+ */
+export interface Session {
     user: User;
     church: Church;
 }

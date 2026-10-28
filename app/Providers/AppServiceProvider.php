@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\ResolveTenant;
 use App\Models\PersonalAccessToken;
 use App\ValueObjects\PhoneNumber;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -36,7 +38,19 @@ class AppServiceProvider extends ServiceProvider
         // I fail loudly in dev and tests so an N+1 query is caught before it reaches production.
         Model::preventLazyLoading(! $this->app->isProduction());
 
+        $this->resolveTenantFirst();
         $this->configureRateLimiting();
+    }
+
+    /**
+     * Makes the tenant middleware run before everything else, including Sanctum's session handling.
+     * I do it here, not in bootstrap/app.php, because Sanctum puts its own middleware at the front of
+     * the priority list while it boots; this provider boots after it, so ours ends up in front.
+     * Without this, a user could be loaded before the church is known and leak across churches.
+     */
+    private function resolveTenantFirst(): void
+    {
+        $this->app->make(Kernel::class)->prependToMiddlewarePriority(ResolveTenant::class);
     }
 
     private function configureRateLimiting(): void

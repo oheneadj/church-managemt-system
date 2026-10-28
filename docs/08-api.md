@@ -92,11 +92,11 @@ GET /api/v1/contributions?from=2026-01-01&to=2026-03-31&fund_type_id=ulid
 GET /api/v1/members?sort=last_name&direction=asc
 ```
 
-### Authentication Header
-All authenticated endpoints require:
-```
-Authorization: Bearer {token}
-```
+### Authentication
+All authenticated endpoints accept **either**:
+
+- **A session cookie** (the church's web app). Sign-in sets an httpOnly cookie; send `Accept: application/json`, the cookie, and the `X-XSRF-TOKEN` header on writes (call `GET /sanctum/csrf-cookie` first). Requests must come from the church's own host (D-027).
+- **A bearer token** (any other client): `Authorization: Bearer {token}`.
 
 ---
 
@@ -139,10 +139,10 @@ POST /api/v1/auth/otp/verify
 }
 ```
 
-**Response `200`:**
+**Response `200`:** A browser request from the church's own page is signed in by cookie and the response has **no `token` or `token_type`**. Any other client gets:
 ```json
 {
-  "token": "1|abc123...",
+  "token": "01j...|abc123...",
   "token_type": "Bearer",
   "user": {
     "id": "ulid",
@@ -170,18 +170,18 @@ POST /api/v1/auth/otp/verify
 ### Logout
 ```
 POST /api/v1/auth/logout
-Authorization: Bearer {token}
 ```
 
-**Response `204`** — Token revoked.
+**Response `204`** — the cookie session is ended, or the bearer token is revoked.
 
 ---
 
 ### Get Authenticated User
 ```
 GET /api/v1/auth/me
-Authorization: Bearer {token}
 ```
+
+The web app calls this on load to restore its session after a refresh.
 
 **Response `200`:**
 ```json
@@ -193,9 +193,12 @@ Authorization: Bearer {token}
     "email": "akosua@example.com",
     "roles": ["finance-secretary"],
     "permissions": ["giving.record", "giving.summary", "members.view"]
-  }
+  },
+  "church": { "id": "ulid", "name": "Grace Assembly International", "slug": "grace-assembly", "plan": "growth", "sms_credits": 420 }
 }
 ```
+
+`401` when there is no valid session or token, or when the staff member was deactivated or changed phone number.
 
 ---
 

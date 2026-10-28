@@ -31,7 +31,8 @@
 ### TC-01-02 — Successful OTP verification
 **Action:** `POST /api/auth/otp/verify` with `{ "phone": "+233244000001", "otp": "<received_code>" }`
 **Expected:**
-- Response: `200 { "token": "...", "token_type": "Bearer", "user": { ... }, "church": { ... } }`
+- From the web app (browser request on the church's host): `200 { "user": {...}, "church": {...} }` with **no token**, and an httpOnly `laravel-session` cookie with no `Domain` attribute
+- From any other client: `200 { "token": "...", "token_type": "Bearer", "user": {...}, "church": {...} }`
 - The Redis code key and attempts key are deleted after successful verify
 - `personal_access_tokens` table has a new row for this user
 
@@ -92,6 +93,22 @@
 - Both requests return `200`
 - Only the most recent OTP is valid (earlier one is overwritten in Redis)
 - The second request within a minute returns `429`: the limit is 1 per minute and 5 per hour per phone (D-025), so "both return 200" only applies to requests more than a minute apart
+
+### TC-01-14 — Session survives a page refresh
+**Action:** Sign in through the web app, then reload the page (any private URL).
+**Expected:** The user is still signed in and sees the same church; no login screen appears. `GET /api/v1/auth/me` returns the user and church.
+
+### TC-01-15 — Session cannot cross to another church
+**Action:** Copy the `laravel-session` cookie value from church A and send it to church B's host.
+**Expected:** `401`. (This was once a real leak; a test fails if it returns).
+
+### TC-01-16 — Access changes end the session
+**Action:** While signed in, deactivate the user (or change their phone number) from another session.
+**Expected:** The next request returns `401`.
+
+### TC-01-17 — Logout ends the cookie session
+**Action:** Sign out, then reload a private URL or replay the old cookie.
+**Expected:** Login screen / `401`.
 
 ### TC-01-13 — Member portal authentication
 **Action:** A member (not staff) logs in via the member portal OTP flow

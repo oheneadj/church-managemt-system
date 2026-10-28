@@ -2,16 +2,14 @@ import { create } from 'zustand';
 import type { User } from '@/types/api';
 
 interface AuthState {
-    /** Kept in memory only: bearer tokens must never reach localStorage (addendum React §11). */
-    token: string | null;
+    /** The signed-in user. The session itself is an httpOnly cookie the browser holds; JavaScript never sees it. */
     user: User | null;
-    signIn: (token: string, user: User) => void;
+    signIn: (user: User) => void;
     signOut: () => void;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
-    token: null,
     user: null,
-    signIn: (token, user) => set({ token, user }),
-    signOut: () => set({ token: null, user: null }),
+    signIn: (user) => set({ user }),
+    signOut: () => set({ user: null }),
 }));

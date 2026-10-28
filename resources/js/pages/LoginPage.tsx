@@ -34,7 +34,7 @@ type CodeValues = z.infer<typeof codeSchema>;
  * The phone number stays in component state only; it is never put in the URL.
  */
 export function LoginPage() {
-    const token = useAuthStore((state) => state.token);
+    const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
     const { requestCode, verifyCode } = useSignIn();
     const [phone, setPhone] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function LoginPage() {
     const phoneForm = useForm<PhoneValues>({ resolver: zodResolver(phoneSchema), defaultValues: { phone: '' } });
     const codeForm = useForm<CodeValues>({ resolver: zodResolver(codeSchema), defaultValues: { otp: '' } });
 
-    if (token) {
+    if (user) {
         return <Navigate to={ROUTES.DASHBOARD} replace />;
     }
 

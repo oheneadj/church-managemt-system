@@ -5,24 +5,24 @@ import type { User } from '@/types/api';
 const user: User = { id: '01', name: 'Akosua', phone: '+233244123456', email: null, roles: [], permissions: [] };
 
 describe('useAuthStore', () => {
-    beforeEach(() => useAuthStore.setState({ token: null, user: null }));
+    beforeEach(() => useAuthStore.setState({ user: null }));
 
     it('starts signed out', () => {
-        expect(useAuthStore.getState().token).toBeNull();
+        expect(useAuthStore.getState().user).toBeNull();
     });
 
-    it('keeps the token in memory after sign in and clears it on sign out', () => {
-        useAuthStore.getState().signIn('1|abc', user);
-        expect(useAuthStore.getState()).toMatchObject({ token: '1|abc', user });
+    it('holds the user after sign in and clears it on sign out', () => {
+        useAuthStore.getState().signIn(user);
+        expect(useAuthStore.getState().user).toEqual(user);
 
         useAuthStore.getState().signOut();
-        expect(useAuthStore.getState()).toMatchObject({ token: null, user: null });
+        expect(useAuthStore.getState().user).toBeNull();
     });
 
-    it('never writes the token to browser storage', () => {
-        useAuthStore.getState().signIn('1|secret', user);
+    it('never writes anything to browser storage', () => {
+        useAuthStore.getState().signIn(user);
 
-        expect(JSON.stringify({ ...localStorage })).not.toContain('secret');
-        expect(JSON.stringify({ ...sessionStorage })).not.toContain('secret');
+        expect(localStorage.length).toBe(0);
+        expect(sessionStorage.length).toBe(0);
     });
 });

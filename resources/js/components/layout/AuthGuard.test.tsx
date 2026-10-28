@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { ROUTES } from '@/constants/routes';
 import { useAuthStore } from '@/stores/useAuthStore';
+import type { User } from '@/types/api';
+
+const user: User = { id: '01', name: 'Akosua', phone: '+233244123456', email: null, roles: [], permissions: [] };
 
 function renderGuarded() {
     const router = createMemoryRouter(
@@ -18,7 +21,7 @@ function renderGuarded() {
 }
 
 describe('AuthGuard', () => {
-    beforeEach(() => useAuthStore.setState({ token: null, user: null }));
+    beforeEach(() => useAuthStore.setState({ user: null }));
 
     it('sends a signed-out visitor to the login screen', () => {
         renderGuarded();
@@ -28,7 +31,7 @@ describe('AuthGuard', () => {
     });
 
     it('lets a signed-in user through', () => {
-        useAuthStore.setState({ token: '1|abc' });
+        useAuthStore.setState({ user });
 
         renderGuarded();
 

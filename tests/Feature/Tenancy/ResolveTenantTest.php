@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\ResolveTenant;
 use App\Models\Church;
 use App\Models\User;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 beforeEach(function (): void {
@@ -60,4 +62,10 @@ it('does not accept a church B token on church A', function (): void {
 
     // The token is valid, but its owner is invisible to church A's scoped user lookup.
     $this->withToken($token)->getJson('http://church-a.localhost/api/v1/_probe')->assertUnauthorized();
+});
+
+it('runs the tenant middleware before Sanctum and every other middleware', function (): void {
+    $priority = app(Kernel::class)->getMiddlewarePriority();
+
+    expect($priority[0])->toBe(ResolveTenant::class);
 });

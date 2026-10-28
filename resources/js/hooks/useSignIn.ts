@@ -5,7 +5,7 @@ import { useChurchStore } from '@/stores/useChurchStore';
 
 /**
  * The two-step sign-in: ask for a code, then exchange it for a session.
- * A successful verify stores the token and the church context.
+ * A successful verify stores the user and the church context; the session cookie is set by the server.
  */
 export function useSignIn() {
     const signIn = useAuthStore((state) => state.signIn);
@@ -16,7 +16,7 @@ export function useSignIn() {
     const verifyCode = useMutation({
         mutationFn: ({ phone, otp }: { phone: string; otp: string }) => authApi.verifyOtp(phone, otp),
         onSuccess: (session) => {
-            signIn(session.token, session.user);
+            signIn(session.user);
             setChurch(session.church);
         },
     });

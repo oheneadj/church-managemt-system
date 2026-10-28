@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnsureStaffIsCurrent;
 use App\Http\Middleware\ResolveTenant;
-use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,10 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Browser requests from a church's own host get session cookies; everything else keeps bearer tokens.
+        $middleware->statefulApi();
         $middleware->throttleApi('api');
-        $middleware->alias(['tenant' => ResolveTenant::class]);
+        $middleware->alias(['tenant' => ResolveTenant::class, 'staff.current' => EnsureStaffIsCurrent::class]);
         // The church must be known before auth runs, so Sanctum can only find users of this church.
-        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: ResolveTenant::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

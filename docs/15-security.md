@@ -80,9 +80,19 @@ Redis::del($attemptsKey);
 - Return different error messages for "OTP wrong" vs "OTP expired" (timing attack prevention)
 - Log the OTP value, even in debug mode
 
-### Session Tokens
+### Browser Sessions (the web app, D-027)
 
-Sanctum personal access tokens:
+The church's web app is signed in with a Laravel session, not a token:
+
+- The session id is in an httpOnly, host-only cookie (`SESSION_DOMAIN=null`), so it is never readable by JavaScript and never sent to another church's subdomain.
+- 8 hours of inactivity (`SESSION_LIFETIME=480`), stored in Redis; a fresh session id is issued on sign-in.
+- Writes need a CSRF token (`/sanctum/csrf-cookie` then `X-XSRF-TOKEN`).
+- `EnsureStaffIsCurrent` signs a session out on the next request if the user was deactivated or their phone number changed.
+- The tenant middleware runs before Sanctum so a user is never loaded without the church scope (tested).
+
+### API Tokens (other clients)
+
+Sanctum personal access tokens, for clients that are not the web app:
 
 - Generated with 64 bytes of random data (Laravel default: `Str::random(40)`)
 - Stored as SHA-256 hash in `personal_access_tokens` table (never plaintext)

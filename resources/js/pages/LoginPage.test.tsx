@@ -9,13 +9,11 @@ import { authApi } from '@/services/api/auth';
 import { ApiError } from '@/services/ApiError';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useChurchStore } from '@/stores/useChurchStore';
-import type { AuthSession } from '@/types/api';
+import type { Session } from '@/types/api';
 
 vi.mock('@/services/api/auth');
 
-const session: AuthSession = {
-    token: '1|abc',
-    token_type: 'Bearer',
+const session: Session = {
     user: { id: '01', name: 'Akosua', phone: '+233244123456', email: null, roles: ['church-admin'], permissions: [] },
     church: { id: '02', name: 'Grace Assembly', slug: 'grace', plan: 'starter', sms_credits: 0 },
 };
@@ -38,7 +36,7 @@ function renderLogin() {
 
 describe('LoginPage', () => {
     beforeEach(() => {
-        useAuthStore.setState({ token: null, user: null });
+        useAuthStore.setState({ user: null });
         useChurchStore.setState({ church: null });
     });
 
@@ -56,7 +54,7 @@ describe('LoginPage', () => {
 
         expect(await screen.findByText('Dashboard reached')).toBeInTheDocument();
         expect(authApi.verifyOtp).toHaveBeenCalledWith('0244123456', '123456');
-        expect(useAuthStore.getState().token).toBe('1|abc');
+        expect(useAuthStore.getState().user?.name).toBe('Akosua');
         expect(useChurchStore.getState().church?.name).toBe('Grace Assembly');
     });
 
@@ -97,7 +95,7 @@ describe('LoginPage', () => {
         await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
         expect(await screen.findByText('Invalid code')).toBeInTheDocument();
-        expect(useAuthStore.getState().token).toBeNull();
+        expect(useAuthStore.getState().user).toBeNull();
     });
 
     it('shows the rate-limit message when too many codes are requested', async () => {
@@ -124,7 +122,7 @@ describe('LoginPage', () => {
     });
 
     it('skips the form when already signed in', () => {
-        useAuthStore.setState({ token: '1|abc' });
+        useAuthStore.setState({ user: session.user });
         renderLogin();
 
         expect(screen.getByText('Dashboard reached')).toBeInTheDocument();

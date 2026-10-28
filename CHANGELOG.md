@@ -23,10 +23,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `SmsProvider` contract with a development-only log driver; the PayPerlez and Africa's Talking adapters come next
 - Roles and permissions seeder, ULID-keyed `Role` and `Permission` models, `PhoneNumber` value object
 - Tenancy and database-constraint tests (cross-tenant, partial unique indexes, double check-in)
-- React 19 SPA in `resources/js` served through one Blade shell (`/{any?}` catch-all, 404 for unknown churches): passwordless OTP sign-in (React Hook Form + Zod), auth guard, sidebar app layout, church context and a dashboard placeholder. The token is held in memory only (D-026)
+- React 19 SPA in `resources/js` served through one Blade shell (`/{any?}` catch-all, 404 for unknown churches): passwordless OTP sign-in (React Hook Form + Zod), auth guard, sidebar app layout, church context and a dashboard placeholder. Sessions are httpOnly Sanctum cookies, so a refresh keeps the user signed in; bearer tokens remain for non-browser clients (D-027)
 - Vitest + Testing Library suite (16 tests), ESLint 9 with jsx-a11y and react-hooks, Prettier, strict TypeScript
 - shadcn/ui primitives (button, input, label, card) and the Tailwind v4 theme
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
+
+### Fixed
+- A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
 
 ### Changed
 - OTP errors and lockout now follow QA-01 ("Invalid code"; the 5th wrong code returns 429); the ops runbook and queue lists include the `critical` queue

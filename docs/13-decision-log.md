@@ -490,15 +490,34 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 **Decision:**
 - **Versions actually installed:** React 19.3, React Router **7.18** (not 8), TypeScript **5.9**, Vite **8.3**, Tailwind 4.3, TanStack Query 5, Zustand 5, Vitest 5, ESLint **9**. Vite 8 is required, not chosen: `laravel-vite-plugin` 3 and `@vitejs/plugin-react` 6 both peer-depend on `vite ^8`. ESLint stays on 9 because `eslint-plugin-jsx-a11y` does not support 10 yet. Router and TypeScript are held on the majors the docs name; both have newer majors available.
-- **The bearer token is kept in memory (a Zustand store) and never written to `localStorage` or `sessionStorage`.** A page refresh therefore signs the user out and they request a new code. This is the trade-off the addendum prescribes for bearer tokens.
+- ~~The bearer token is kept in memory only.~~ **Superseded by D-027:** the browser app now uses Sanctum cookie sessions, so a refresh no longer signs the user out.
 - The phone number typed on the login screen is held in component state, not the URL.
 - UI primitives are shadcn/ui (`radix-nova` style, Radix base) generated with the official CLI; its `cn` helper comes from the first-party `cn` package (maintainer shadcn, repo `shadcn-ui/cn`).
 
 **Rationale:** The Universal agreement and the React addendum forbid tokens in browser storage. Cookie-based Sanctum SPA authentication would keep users signed in across refreshes and is possible now that the SPA shares an origin with the API, but it changes the documented auth contract, so it is left as an open option rather than done silently.
 
-**Open:** if staff find re-signing-in after a refresh too painful on slow connections, switch to Sanctum cookie authentication (httpOnly) and record it as a new decision.
-
 **Known audit note:** `npm audit` reports 3 low-severity findings, all in the `shadcn` CLI's own dependencies (a dev tool). CI fails only at `--audit-level=high`.
+
+---
+
+### D-027 — The browser app uses Sanctum cookie sessions; bearer tokens remain for other clients
+**Date:** October 2026
+**Decided by:** Product Owner (asked that sessions survive a page refresh)
+**Status:** Active — supersedes the token-in-memory choice in D-026 and amends `08-api.md` and `15-security.md`
+
+**Decision:**
+- A request from the church's own page (its `Origin`/`Referer` host equals the request host) is a **stateful** Sanctum request. Verifying a code signs the user in with a Laravel session and returns **no token**. The session id travels in an httpOnly cookie, so JavaScript never holds a credential and a page refresh keeps the user signed in.
+- Any other client (no matching `Origin`/`Referer`) still receives an 8-hour bearer token from the same endpoint, exactly as before.
+- `SANCTUM_STATEFUL_DOMAINS` defaults to `Sanctum::currentRequestHost()`, so every church subdomain is stateful without a list. `SESSION_DOMAIN` stays `null`: cookies are **host-only**, so a session never reaches another church's subdomain.
+- Sessions last 8 hours of inactivity (`SESSION_LIFETIME=480`, sliding), stored in Redis.
+- State-changing requests need CSRF: the SPA calls `GET /sanctum/csrf-cookie` once per page load and axios sends `X-XSRF-TOKEN`.
+- `GET /api/v1/auth/me` also returns the church, so the app can restore its state after a refresh.
+- `EnsureStaffIsCurrent` runs on every authenticated request: a deactivated user, or a session opened under a different phone number, is signed out immediately (the cookie-session equivalent of deleting tokens).
+- `ResolveTenant` is first in the middleware priority list, ahead of Sanctum, and Sanctum's `AuthenticateSession` step is disabled.
+
+**Why the last two matter:** the first build loaded the session user *before* the church was known, so a session cookie from church A replayed on church B's host was accepted. Found by a cross-church test and confirmed against the live server, then fixed and pinned with a test that fails if the fix is removed.
+
+**Consequences:** the web app must run on the same origin as the API (it does, D-022). CORS is not needed for it. A mobile app or third-party client uses the token path.
 
 ---
 
