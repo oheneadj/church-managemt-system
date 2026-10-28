@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Added `dedoc/scramble`, generated and committed the OpenAPI 3.1 spec at `docs/openapi.json`, served interactive docs at `/docs/api`, and added a test and a CI step that fail when the spec is out of date, has an untyped field, or misses an endpoint. Typed the fields Scramble could not work out. Added the rule "keep code simple, framework first, no hard-coding, clear comments" to the project and Universal `CLAUDE.md`. Gave the test run 512 MB of memory. Documented the changelog format below.
 - **Why:** Section 35 of the agreement requires a committed spec that CI checks and docs that are not public in production. The docs path also had to be kept out of the React catch-all route. The rule and the changelog format were requested by the Product Owner. The full test run had reached PHP's 128 MB limit.
 - **Files:** `composer.json`, `composer.lock`, `config/scramble.php`, `docs/openapi.json`, `docs/08-api.md`, `docs/10-definition-of-done.md`, `docs/13-decision-log.md` (D-035), `.github/workflows/ci.yml`, `routes/web.php`, `phpunit.xml`, `CLAUDE.md`, `Universal CLAUDE.md`, `app/Providers/AppServiceProvider.php`, `app/DTOs/Auth/OtpChallenge.php`, `app/DTOs/Members/GivingSummary.php`, `app/Services/MemberSummaries.php`, the Resources, Requests and Controllers that needed a type or response annotation (`app/Http/Resources/` ×5, `app/Http/Requests/` ×4, `app/Http/Controllers/` ×3), `tests/Feature/Operations/ApiDocsTest.php`, `tests/Unit/Services/MemberSummariesTest.php`
-- **Commit:** `PENDING`
+- **Commit:** `8dc0dbd` (2026-10-28)
 
 #### refactor(auth): replace role and permission strings with enums
 - **What:** Replace role and permission strings with enums.
