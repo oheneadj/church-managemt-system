@@ -483,6 +483,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-026 — Frontend toolchain versions, and the session token lives in memory only
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the React addendum, section 11)
+**Status:** Active — amends the version numbers in D-015 and `06-architecture.md`
+
+**Decision:**
+- **Versions actually installed:** React 19.3, React Router **7.18** (not 8), TypeScript **5.9**, Vite **8.3**, Tailwind 4.3, TanStack Query 5, Zustand 5, Vitest 5, ESLint **9**. Vite 8 is required, not chosen: `laravel-vite-plugin` 3 and `@vitejs/plugin-react` 6 both peer-depend on `vite ^8`. ESLint stays on 9 because `eslint-plugin-jsx-a11y` does not support 10 yet. Router and TypeScript are held on the majors the docs name; both have newer majors available.
+- **The bearer token is kept in memory (a Zustand store) and never written to `localStorage` or `sessionStorage`.** A page refresh therefore signs the user out and they request a new code. This is the trade-off the addendum prescribes for bearer tokens.
+- The phone number typed on the login screen is held in component state, not the URL.
+- UI primitives are shadcn/ui (`radix-nova` style, Radix base) generated with the official CLI; its `cn` helper comes from the first-party `cn` package (maintainer shadcn, repo `shadcn-ui/cn`).
+
+**Rationale:** The Universal agreement and the React addendum forbid tokens in browser storage. Cookie-based Sanctum SPA authentication would keep users signed in across refreshes and is possible now that the SPA shares an origin with the API, but it changes the documented auth contract, so it is left as an open option rather than done silently.
+
+**Open:** if staff find re-signing-in after a refresh too painful on slow connections, switch to Sanctum cookie authentication (httpOnly) and record it as a new decision.
+
+**Known audit note:** `npm audit` reports 3 low-severity findings, all in the `shadcn` CLI's own dependencies (a dev tool). CI fails only at `--audit-level=high`.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
