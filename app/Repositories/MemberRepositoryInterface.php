@@ -61,6 +61,11 @@ interface MemberRepositoryInterface
     public function countActive(): int;
 
     /**
+     * The member of the current church with this phone number, if there is one.
+     */
+    public function findByPhone(string $e164): ?Member;
+
+    /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.
      */
     public function delete(Member $member): void;

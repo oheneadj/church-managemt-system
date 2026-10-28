@@ -63,6 +63,14 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     }
 
     /**
+     * The service of the current church with this id, if there is one.
+     */
+    public function find(string $id): ?Service
+    {
+        return Service::query()->whereKey($id)->first();
+    }
+
+    /**
      * Whether any church, including a deleted service, already uses this check-in code. A deleted service's code is
      * counted too, so a code is never handed out twice in the same table while old rows may still point at it.
      */

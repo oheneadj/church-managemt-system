@@ -120,6 +120,14 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     }
 
     /**
+     * The member of the current church with this phone number, if there is one.
+     */
+    public function findByPhone(string $e164): ?Member
+    {
+        return Member::query()->where('phone', $e164)->first();
+    }
+
+    /**
      * How many members are active in the current church.
      */
     public function countActive(): int

@@ -39,6 +39,11 @@ interface ServiceRepositoryInterface
     public function withAttendanceCount(Service $service): Service;
 
     /**
+     * The service of the current church with this id, if there is one.
+     */
+    public function find(string $id): ?Service;
+
+    /**
      * Whether any church, including a deleted service, already uses this check-in code. The code is unique across
      * all churches, so this deliberately looks past the church scope.
      */

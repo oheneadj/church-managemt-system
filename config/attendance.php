@@ -27,6 +27,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | QR code check-in (docs/02 Module 3, QA-05 TC-05-09)
+    |--------------------------------------------------------------------------
+    | The code on the screen at the venue changes before it expires, so a photo of it stops working. A code is
+    | good for `qr_ttl_seconds`, and the display asks for a new one every `qr_refresh_seconds`, which is shorter, so
+    | the one a member scans is always still valid for a while.
+    */
+    'qr_ttl_seconds' => 120,
+    'qr_refresh_seconds' => 60,
+    'qr_token_length' => 32,
+
+    // The page a member lands on after scanning. It is a page of the React app and is mirrored in resources/js/constants/routes.ts.
+    'qr_page_path' => '/checkin',
+
+    /*
+    |--------------------------------------------------------------------------
     | Reports
     |--------------------------------------------------------------------------
     | How far back a member's attendance report looks when no number of weeks is asked for, and the longest it may look.

@@ -662,6 +662,27 @@ A phone number that matches an earlier visitor of the church makes this a return
 
 ---
 
+### QR Code Check-in
+
+The church shows a QR code on a screen at the venue. A member scans it with the phone camera, enters their phone number, is texted a code and confirms. The QR code proves they are at the venue; the texted code proves the phone is theirs. Neither needs an app or a sign-in.
+
+```
+GET /api/v1/services/{id}/qr                 (staff, members.edit)
+```
+**Response `200`:** `token`, `url` (the address to put in the QR code: `https://{church}.yourapp.com/checkin/{token}`), `expires_at`, `expires_in` (120 seconds) and `refresh_in` (60). Ask again every `refresh_in` seconds; older codes keep working until they expire, so a member who is about to scan is not turned away. `409` when the service is not open for check-in.
+
+```
+GET  /api/v1/checkin/qr/{token}             (public) which service the code is for: name, type_label, service_date, is_open
+POST /api/v1/checkin/qr/otp                 (public) { "token": "...", "phone": "0244123456" }
+POST /api/v1/checkin/qr                     (public) { "token": "...", "phone": "0244123456", "otp": "123456" }
+```
+- An unknown or expired code is `404` ("This code has expired. Please scan the screen again."). A closed service is `409`.
+- The request for a code answers `200` the same for any phone number and sends the text only to a member of this church who is not deceased, so nobody can find out who attends. The text goes on the `critical` queue and the code is kept as a hash, valid 10 minutes, five tries, then a 15-minute lockout (the same rules as sign-in). A code belongs to one phone and one service.
+- **Rate limits (cost control):** one text per phone and code per minute, five per hour, 20 per IP address per hour; ten verifications a minute per IP address.
+- The check-in answers `200`: `{ "checked_in": true, "already_checked_in": false, "service_name": "...", "first_name": "Emmanuel" }`. Scanning twice is harmless (`already_checked_in: true`, one record). Nothing else about the member or the congregation is returned.
+
+---
+
 ### WhatsApp Check-in (Internal — called by webhook handler)
 ```
 POST /api/v1/checkin/whatsapp

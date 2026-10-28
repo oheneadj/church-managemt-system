@@ -382,6 +382,50 @@
                 "security": []
             }
         },
+        "/v1/services/{service}/qr": {
+            "get": {
+                "operationId": "services.qr",
+                "summary": "Runs IssueQrCodeAction for this request and returns the QrCodeResource",
+                "tags": [
+                    "IssueQrCode"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`QrCodeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QrCodeResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/attendance/absent": {
             "get": {
                 "operationId": "attendance.absent",
@@ -1126,6 +1170,41 @@
                 }
             }
         },
+        "/v1/checkin/qr": {
+            "post": {
+                "operationId": "checkin.qr.store",
+                "summary": "Runs QrCheckInAction for this request and returns the QrCheckedInResource",
+                "tags": [
+                    "QrCheckIn"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QrCheckInRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`QrCheckedInResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QrCheckedInResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/onboarding/churches": {
             "post": {
                 "operationId": "onboarding.churches.store",
@@ -1255,6 +1334,41 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/RequestOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OtpRequestedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpRequestedResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/checkin/qr/otp": {
+            "post": {
+                "operationId": "checkin.qr.otp",
+                "summary": "Runs RequestQrCheckinOtpAction for this request and returns the OtpRequestedResource",
+                "tags": [
+                    "RequestQrCheckinOtp"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestQrCheckinOtpRequest"
                             }
                         }
                     }
@@ -1603,6 +1717,41 @@
                         "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
+            }
+        },
+        "/v1/checkin/qr/{token}": {
+            "get": {
+                "operationId": "checkin.qr.show",
+                "summary": "Runs ShowQrServiceAction for this request and returns the QrServiceResource",
+                "tags": [
+                    "ShowQrService"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`QrServiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QrServiceResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
             }
         },
         "/v1/services/{service}": {
@@ -3797,6 +3946,113 @@
                 ],
                 "title": "OtpRequestedResource"
             },
+            "QrCheckInRequest": {
+                "type": "object",
+                "description": "Validates confirming a QR check-in: the scanned code, the phone number and the texted code.",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 32,
+                        "maxLength": 32
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "otp": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "token",
+                    "phone",
+                    "otp"
+                ],
+                "title": "QrCheckInRequest"
+            },
+            "QrCheckedInResource": {
+                "type": "object",
+                "properties": {
+                    "checked_in": {
+                        "type": "boolean"
+                    },
+                    "already_checked_in": {
+                        "type": "boolean"
+                    },
+                    "service_name": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "checked_in",
+                    "already_checked_in",
+                    "service_name",
+                    "first_name"
+                ],
+                "title": "QrCheckedInResource"
+            },
+            "QrCodeResource": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "expires_at": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    },
+                    "refresh_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "token",
+                    "url",
+                    "expires_at",
+                    "expires_in",
+                    "refresh_in"
+                ],
+                "title": "QrCodeResource"
+            },
+            "QrServiceResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "enum": [
+                            "Sunday",
+                            "Midweek",
+                            "Special",
+                            "Youth",
+                            "Children"
+                        ]
+                    },
+                    "service_date": {
+                        "type": "string"
+                    },
+                    "is_open": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "type_label",
+                    "service_date",
+                    "is_open"
+                ],
+                "title": "QrServiceResource"
+            },
             "RecordAttendanceRequest": {
                 "type": "object",
                 "description": "Validates marking a list of members present at a service. The list is capped so one request stays small.",
@@ -3905,6 +4161,26 @@
                     "phone"
                 ],
                 "title": "RequestOtpRequest"
+            },
+            "RequestQrCheckinOtpRequest": {
+                "type": "object",
+                "description": "Validates asking for a check-in code: the scanned code and the member's phone number.",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 32,
+                        "maxLength": 32
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    }
+                },
+                "required": [
+                    "token",
+                    "phone"
+                ],
+                "title": "RequestQrCheckinOtpRequest"
             },
             "ServiceCollection": {
                 "type": "array",

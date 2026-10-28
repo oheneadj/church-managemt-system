@@ -3,10 +3,14 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Attendance\CaptureVisitorController;
+use App\Http\Controllers\Api\V1\Attendance\IssueQrCodeController;
 use App\Http\Controllers\Api\V1\Attendance\ListAbsentMembersController;
 use App\Http\Controllers\Api\V1\Attendance\ListServiceAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\QrCheckInController;
 use App\Http\Controllers\Api\V1\Attendance\RecordAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\RequestQrCheckinOtpController;
 use App\Http\Controllers\Api\V1\Attendance\ShowMemberAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\ShowQrServiceController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
@@ -53,6 +57,11 @@ Route::middleware('tenant')->group(function (): void {
     Route::post('auth/otp/request', RequestOtpController::class)->middleware('throttle:otp-request')->name('auth.otp.request');
     Route::post('auth/otp/verify', VerifyOtpController::class)->middleware('throttle:otp-verify')->name('auth.otp.verify');
 
+    // Public: a member who scanned the QR code at the venue. The code is the proof of presence; a texted code proves the phone.
+    Route::get('checkin/qr/{token}', ShowQrServiceController::class)->middleware('throttle:checkin-verify')->name('checkin.qr.show');
+    Route::post('checkin/qr/otp', RequestQrCheckinOtpController::class)->middleware('throttle:checkin-otp')->name('checkin.qr.otp');
+    Route::post('checkin/qr', QrCheckInController::class)->middleware('throttle:checkin-verify')->name('checkin.qr.store');
+
     Route::middleware(['auth:sanctum', 'staff.current', 'monitor.context'])->group(function (): void {
         Route::post('auth/logout', LogoutController::class)->name('auth.logout');
         Route::get('auth/me', MeController::class)->name('auth.me');
@@ -81,6 +90,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('services/{service}/attendance', ListServiceAttendanceController::class)->name('attendance.index');
         Route::post('services/{service}/attendance', RecordAttendanceController::class)->name('attendance.record');
         Route::post('services/{service}/visitors', CaptureVisitorController::class)->name('visitors.store');
+        Route::get('services/{service}/qr', IssueQrCodeController::class)->name('services.qr');
         Route::get('attendance/absent', ListAbsentMembersController::class)->name('attendance.absent');
         Route::get('members/{member}/attendance', ShowMemberAttendanceController::class)->name('members.attendance');
 

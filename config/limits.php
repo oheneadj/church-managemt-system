@@ -18,6 +18,12 @@ return [
     'otp_request_per_hour_per_ip' => 20,
     'otp_verify_per_minute_per_ip' => 10,
 
+    // A member checking in by QR code is texted a code, which costs money, so it is limited per phone and service, and per IP address.
+    'checkin_otp_per_minute' => 1,
+    'checkin_otp_per_hour' => 5,
+    'checkin_otp_per_hour_per_ip' => 20,
+    'checkin_verify_per_minute_per_ip' => 10,
+
     // Starting a church sends a code to a stranger's phone, so it is limited like sign-in: tightly per number and per IP address.
     'onboarding_otp_per_minute' => 1,
     'onboarding_otp_per_hour' => 3,

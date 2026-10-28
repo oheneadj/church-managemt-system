@@ -143,6 +143,20 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('onboarding-register', fn (Request $request) => Limit::perHour(config('limits.onboarding_register_per_hour_per_ip'))->by($request->ip()));
 
+        // A member checking in by QR code is texted a code, so it is limited per phone and service, and per IP address.
+        RateLimiter::for('checkin-otp', function (Request $request): array {
+            $phone = PhoneNumber::tryFrom((string) $request->input('phone'))->e164 ?? 'invalid';
+            $key = $this->tenantKey($request).':'.hash('sha256', $phone.'|'.$request->input('token'));
+
+            return [
+                Limit::perMinute(config('limits.checkin_otp_per_minute'))->by($key),
+                Limit::perHour(config('limits.checkin_otp_per_hour'))->by($key),
+                Limit::perHour(config('limits.checkin_otp_per_hour_per_ip'))->by($this->tenantKey($request).':'.$request->ip()),
+            ];
+        });
+
+        RateLimiter::for('checkin-verify', fn (Request $request) => Limit::perMinute(config('limits.checkin_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
+
         // Uploads are CPU heavy (every photo is re-encoded), so they get a tighter limit than other calls.
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(config('limits.uploads_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 

@@ -161,6 +161,30 @@ describe('services and attendance', function (): void {
     });
 });
 
+describe('QR check-in', function (): void {
+    it('code, scan, text and check-in', function (): void {
+        Queue::fake();
+        $service = Service::factory()->open()->create(['church_id' => $this->church->id]);
+        $this->member->update(['phone' => '+233244123456']);
+
+        $issued = $this->getJson(CHURCH_HOST.'/services/'.$service->id.'/qr');
+        assertMatchesSpec($issued, 'GET', '/v1/services/{service}/qr', 200);
+        $token = $issued->json('token');
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/checkin/qr/'.$token), 'GET', '/v1/checkin/qr/{token}', 200);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/checkin/qr/otp', ['token' => $token, 'phone' => '0244123456']), 'POST', '/v1/checkin/qr/otp', 200);
+
+        $code = '';
+        Queue::assertPushed(SendSmsJob::class, function ($job) use (&$code): bool {
+            preg_match('/\b(\d{6})\b/', $job->sms->message, $m);
+            $code = $m[1];
+
+            return true;
+        });
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/checkin/qr', ['token' => $token, 'phone' => '0244123456', 'otp' => $code]), 'POST', '/v1/checkin/qr', 200);
+    });
+});
+
 describe('sign-in and who am I', function (): void {
     it('me', fn () => assertMatchesSpec($this->getJson(CHURCH_HOST.'/auth/me'), 'GET', '/v1/auth/me', 200));
 
