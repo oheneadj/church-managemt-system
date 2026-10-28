@@ -1,8 +1,10 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
+import { HomeRedirect } from '@/components/layout/HomeRedirect';
+import { RouteErrorPage } from '@/components/layout/RouteErrorPage';
 import { PageSpinner } from '@/components/layout/PageSpinner';
-import { ROUTES } from '@/constants/routes';
+import { ROUTE_PATTERNS, ROUTES } from '@/constants/routes';
 
 /**
  * All routes live here. Pages load on demand so the first screen stays small on a slow connection.
@@ -11,10 +13,15 @@ import { ROUTES } from '@/constants/routes';
 export const router = createBrowserRouter([
     {
         hydrateFallbackElement: <PageSpinner />,
+        errorElement: <RouteErrorPage />,
         children: [
             {
                 path: ROUTES.LOGIN,
                 lazy: async () => ({ Component: (await import('@/pages/LoginPage')).LoginPage }),
+            },
+            {
+                path: ROUTES.START,
+                lazy: async () => ({ Component: (await import('@/pages/StartChurchPage')).StartChurchPage }),
             },
             {
                 Component: AuthGuard,
@@ -26,11 +33,35 @@ export const router = createBrowserRouter([
                                 path: ROUTES.DASHBOARD,
                                 lazy: async () => ({ Component: (await import('@/pages/DashboardPage')).DashboardPage }),
                             },
+                            {
+                                path: ROUTES.MEMBERS,
+                                lazy: async () => ({ Component: (await import('@/pages/MembersPage')).MembersPage }),
+                            },
+                            {
+                                path: ROUTES.FAMILIES,
+                                lazy: async () => ({ Component: (await import('@/pages/FamiliesPage')).FamiliesPage }),
+                            },
+                            {
+                                path: ROUTE_PATTERNS.FAMILY,
+                                lazy: async () => ({ Component: (await import('@/pages/FamilyDetailPage')).FamilyDetailPage }),
+                            },
+                            {
+                                path: ROUTES.MEMBER_NEW,
+                                lazy: async () => ({ Component: (await import('@/pages/MemberFormPage')).MemberFormPage }),
+                            },
+                            {
+                                path: ROUTE_PATTERNS.MEMBER_EDIT,
+                                lazy: async () => ({ Component: (await import('@/pages/MemberFormPage')).MemberFormPage }),
+                            },
+                            {
+                                path: ROUTE_PATTERNS.MEMBER,
+                                lazy: async () => ({ Component: (await import('@/pages/MemberDetailPage')).MemberDetailPage }),
+                            },
                         ],
                     },
                 ],
             },
-            { path: ROUTES.HOME, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
+            { path: ROUTES.HOME, element: <HomeRedirect /> },
             {
                 path: '*',
                 lazy: async () => ({ Component: (await import('@/pages/NotFoundPage')).NotFoundPage }),

@@ -10,6 +10,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -37,6 +38,8 @@ class User extends Authenticatable
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -45,5 +48,25 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * The departments this staff member heads.
+     *
+     * @return HasMany<Department, $this>
+     */
+    public function headedDepartments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'head_user_id');
+    }
+
+    /**
+     * The members this staff member is the assigned pastor of.
+     *
+     * @return HasMany<Member, $this>
+     */
+    public function assignedMembers(): HasMany
+    {
+        return $this->hasMany(Member::class, 'assigned_pastor_id');
     }
 }

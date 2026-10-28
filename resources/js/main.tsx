@@ -4,9 +4,13 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router/dom';
 import '../css/app.css';
 import { PageSpinner } from '@/components/layout/PageSpinner';
+import { Toaster } from '@/components/ui/sonner';
+import { startErrorMonitoring } from '@/lib/errorMonitoring';
 import { queryClient } from '@/lib/queryClient';
 import { restoreSession } from '@/lib/restoreSession';
 import { router } from '@/router';
+
+startErrorMonitoring();
 
 const container = document.getElementById('root');
 
@@ -24,6 +28,7 @@ void restoreSession().then(() => {
         <StrictMode>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
+                <Toaster />
             </QueryClientProvider>
         </StrictMode>,
     );

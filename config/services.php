@@ -42,4 +42,12 @@ return [
         'primary' => env('SMS_PRIMARY_PROVIDER', 'log'),
     ],
 
+    // PayPerlez SMS (docs/14, section 7). The key and the approved sender id come from the PayPerlez workspace.
+    'payperlez' => [
+        'api_key' => env('PAYPERLEZ_API_KEY'),
+        'sender_id' => env('PAYPERLEZ_SMS_SENDER_ID'),
+        'base_url' => env('PAYPERLEZ_BASE_URL', 'https://api.payperlez.org/api/v1'),
+        'timeout_seconds' => 10,
+    ],
+
 ];

@@ -524,13 +524,265 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-028 — Controller → Form Request → Service; no Action or Repository layers yet
 **Date:** October 2026
 **Decided by:** Lead Engineer (reconciling the Universal agreement §6 with `docs/09-engineering-principles.md`)
-**Status:** Active
+**Status:** Superseded by D-033
 
 **Decision:** Backend code is layered Controller → Form Request → Service → Model, as `docs/09-engineering-principles.md` specifies. Services own `DB::transaction()` boundaries and dispatch jobs and events. We do not add Action classes (one per operation) or Repository classes (all queries for a model) until a real need appears: an Action when one operation is triggered from several entry points, a Repository when a second data source exists. The layers, their duties and their prohibitions are written down in `ARCHITECTURE.md`.
 
 **Rationale:** The project documents name Services explicitly, `09` says interfaces are added only once there are two implementations, and the codebase is small. Extra layers now would be speculative (YAGNI). Eloquent scopes already cover repeated filters.
 
 **Revisit when:** a second client of the same operation appears (for example a CLI command and an endpoint doing the same thing) or a second storage backend is introduced.
+
+---
+
+### D-029 — One image with runtime roles, deployed as three Coolify Applications
+**Date:** October 2026
+**Decided by:** Lead Engineer (from Coolify and serversideup/php documentation)
+**Status:** Active
+
+**Decision:** `deploy/Dockerfile` builds one image on `serversideup/php` (pinned tag). `CONTAINER_ROLE` (`web`, `worker`, `scheduler`) selects the process at start-up. It is deployed as three Coolify Applications, not Docker Compose. Only `web` runs migrations and seeding, from the start script, which always runs `env:check` first. Telescope is registered only in the `local` environment so a `--no-dev` image boots. Logs go to stderr as JSON. Queue workers run under Supervisor inside the `worker` container.
+
+**Rationale:** Coolify does not support rolling updates for Compose applications, and the Dockerfile build pack has no start-command override, so roles must be chosen by environment variable. One image keeps web, worker and scheduler on identical code.
+
+**Revisit when:** Coolify documents rolling updates for Compose, or worker load needs more than one container.
+
+---
+
+### D-030 — Member numbers, change log and pastor edit rights
+**Date:** October 2026
+**Decided by:** Product Owner (answers given at Sprint 2 planning)
+**Status:** Active
+
+**Decision:**
+1. **Member number.** The church admin types a short prefix at onboarding, stored as `churches.member_number_prefix`. The number is `{prefix}-{sequence, at least 4 digits}`, for example `GRC-0042`. The sequence is `churches.member_number_seq`, incremented under a row lock inside the create transaction, so numbers are unique, gapless on success and never reused after a delete. Until a prefix is set, adding a member returns `422`.
+2. **Change log.** A new append-only `audit_logs` table records creates, updates and status changes on members, with the acting user (name snapshotted), old and new values, the request id and an optional reason. Encrypted fields (address, national id) are recorded by name only, never by value. Written by `AuditLogger` from the service layer, not from model observers, so the actor is always explicit.
+3. **Pastor.** The `pastor` role gets `members.edit` (add and edit members), as `docs/02` and `docs/03` specify. Only `church-admin` can deactivate members or export.
+
+**Rationale:** `docs/03` requires an audit trail on phone and status changes and `docs/02` requires a change log, but `docs/07` had no table for it. The seeder and `docs/06` disagreed with `docs/02` and `docs/03` about the pastor.
+
+**Revisit when:** a church needs a different number format, or audit rows need to be shown in the app (Sprint 5).
+
+---
+
+### D-031 — Who can see which members, and who can deactivate
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/03`; the youth rule was set by the Product Owner
+**Status:** Active
+
+**Decision:**
+1. **Directory visibility.** `church-admin`, `pastor` and `finance-secretary` see all members. `department-head` sees members of departments where they are `head_user_id`. `youth-pastor` sees youth members. Youth is defined by age (Product Owner, Sprint 2): younger than the church's `settings.youth_age_limit`, default 25 (`config/members.php`). A member with no date of birth falls back to the educational level: anything except `graduate`. The docs said "youth only" without defining it. A user with several of these roles sees the union. Enforced by `Member::scopeVisibleTo` and `MemberPolicy::view`.
+2. **Deactivation.** A new permission `members.deactivate`, held only by `church-admin`, is required to move a member to inactive, transferred, deceased or archived. `members.edit` is enough to move to prospect or active. This matches the `docs/03` table (pastors add and edit, only the admin deactivates).
+3. **Default directory.** With no status filter and no search, only prospects and active members are listed. Everything else is reachable by search or an explicit status.
+4. **Milestones.** A new permission `milestones.view`, held by `church-admin`, `pastor` and `youth-pastor`, controls whether Get Member includes milestones (docs/03: finance secretaries and department heads may not see them). Adding a milestone needs `members.edit`.
+5. **Deceased is read-only.** `MemberPolicy::update` refuses a deceased member (docs/03, Stage 4). A status change is still allowed so a mistake can be corrected.
+
+**Rationale:** `docs/03` states these rules in prose and a table, but `docs/08` only mentions `members.view` and `members.edit`.
+
+**Revisit when:** a church needs per-department editing rights.
+
+---
+
+### D-032 — Member photos: processed in the request, stored in the default disk
+**Date:** October 2026
+**Decided by:** Lead Engineer (reconciling `docs/08` with the "queue every outbound call" rule)
+**Status:** Active
+
+**Decision:** A member photo is validated, re-encoded to a 512 pixel JPEG and written to object storage during the upload request, using Laravel's image API (`intervention/image` ^4, GD). Writing to our own private R2 bucket is treated like a database write, not as a third-party API call, so it is not queued. The limits that make this safe are a 5 MB and 4096 pixel cap, a 20 per minute rate limit, and a fixed storage key per member so replacements leave nothing behind.
+
+**Rationale:** `docs/08` returns the new signed link in the upload response, which a queued job cannot do, and the rule against inline outbound calls exists for slow third-party services (SMS, payments), not our own storage. The file-upload pattern prefers a queue; if photo volume or size grows (for example batch imports), move processing to a job and return `202`.
+
+**Revisit when:** uploads are slow on the 3G target, or a bulk import of photos is built.
+
+---
+
+### D-033 — Follow the Universal layer stack in full: Actions, DTOs and Repositories
+**Date:** October 2026
+**Decided by:** Product Owner (instructed that the code must match the Universal agreement and the Laravel addendum exactly)
+**Status:** Active. Supersedes D-028.
+
+**Decision:** Backend code is layered Controller → Form Request → DTO → Action → Service → Repository → Model, as Universal section 6 and the Laravel addendum (sections 3, 5, 6, 7, 11 and 12) describe.
+- One `final` Action per user intent in `app/Actions`, with a single `execute(DTO)` method. It owns `DB::transaction()` and fires domain events. An Action never calls another Action.
+- Services in `app/Services` hold rules shared by several Actions and never own a transaction.
+- Every Eloquent model that Actions touch has a Repository interface and an Eloquent implementation in `app/Repositories`, bound in `RepositoryServiceProvider`. Controllers, Actions and Services do not query models directly.
+- Controllers are single-action (`__invoke`) and only build a DTO, call one Action and return a Resource. Form Requests authorise through a Policy.
+- Events are fired by Actions (`MemberCreated`, `MemberUpdated`, `MemberStatusChanged`); the audit line is written by a synchronous listener inside the transaction, so a rolled-back change leaves no history.
+- Unit tests for Actions and Services use mocked repositories and no database; Feature tests remain for every endpoint.
+
+**Rationale:** D-028 skipped these layers on YAGNI grounds, but the Universal agreement sits at the top of the precedence order and the project documents never explicitly removed them. The addendum's checklist requires Actions to own transactions and fire events, which the earlier Service-only code could not satisfy.
+
+**Revisit when:** a rule in the agreement is changed by the Product Owner.
+
+---
+
+### D-034 — Response labels, formatted money and a log of who views personal data
+**Date:** October 2026
+**Decided by:** Product Owner (instructed to match the Universal agreement and Laravel addendum exactly)
+**Status:** Active
+
+**Decision:**
+1. Every enum field in an API response is sent as its value plus a `{field}_label` sibling (addendum section 6).
+2. Money is shaped by the `Money` value object, the only place an amount becomes display text. Storage stays `DECIMAL(12,2)` and the raw API value stays a decimal string (D-017), which is the project's explicit override of the agreement's integer minor units; a `_formatted` sibling such as `"GHS 2,400.00"` is added beside it.
+3. Opening a member's full record fires `MemberViewed`, and a listener writes a `viewed` line to `audit_logs` naming the viewer and that the encrypted address was shown (agreement section 36: access to PII fields must be logged). The value is never copied into the log. List views do not return the address, so they are not logged.
+4. Resources nest other Resources for related records, and every list uses a `ResourceCollection` class (`MemberCollection`, `FamilyCollection`, `DepartmentCollection`).
+
+**Rationale:** The agreement and addendum require each of these. The view log costs one insert per profile open, which is small next to the compliance value.
+
+**Revisit when:** the member profile returns more personal fields, or view volume makes the log too large (then add a retention job, per the agreement's retention table).
+
+---
+
+### D-035 — The OpenAPI spec is generated by Scramble, committed, and checked in CI
+**Date:** October 2026
+**Decided by:** Product Owner (instructed to match the Universal agreement, section 35)
+**Status:** Active
+
+**Decision:** `dedoc/scramble` generates an OpenAPI 3.1 document from the routes, Form Requests, Resources and DTO-typed Actions. It is committed at `docs/openapi.json`. A Pest test and a CI step re-generate it and fail on any difference or on any type Scramble cannot work out (`--fail-on-unknown`), and a test checks that every `/api` route is in it. Routes behind `auth:sanctum` are documented as needing a bearer token and the rest as public. The interactive docs live at `/docs/api` behind the `tenant` middleware and the `viewApiDocs` gate: open in local development, otherwise only for staff with `church.settings`. The spec version is `1.0.0`, matching `/api/v1`, and a breaking change means a new version.
+
+**Rationale:** The agreement requires a committed spec, a CI check, interactive docs behind authentication in production, and says hand-written docs go stale. Generating it from code removes that risk. `docs/08-api.md` stays as the plain-language guide to the conventions.
+
+**Revisit when:** a second API version appears (add a second Scramble API), or contract tests with the React app are added.
+
+---
+
+### D-036 — How the member screens are built
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the React addendum and `docs/patterns/Pattern — State Management.md`
+**Status:** Active
+
+**Decision:**
+1. **Filters and the page number live in the URL** (`useMemberFilters`), so a refresh, the back button and a shared link show the same view. Unknown values in the URL are ignored.
+2. **Search runs when the user presses Search or Enter**, not on every key press, which is gentler on a slow connection and needs no timer.
+3. **Drop-downs are the browser's own `<select>`**, which is the easiest control on a cheap phone and fully accessible. The generated shadcn Select is not used.
+4. **Buttons are hidden by permission** (`useCan`) for a cleaner screen; the API still answers 403, which is what actually protects the data.
+5. **Money is never calculated in the browser.** `MoneyDisplay` shows the `_formatted` text the API sends.
+6. **Backend enums and permissions are mirrored** in `constants/enums.ts` and `constants/permissions.ts`, guarded by a backend test so they cannot drift.
+7. **UI parts come from the official shadcn registry** (`npx shadcn add`) and are formatted to the project style. `next-themes`, which the toast wrapper wanted, was dropped because the app has no theme switch.
+
+**Rationale:** Each point follows the React addendum (state in the right place, no business logic in components, no magic strings) and the agreement's accessibility and mobile-first rules.
+
+**Revisit when:** a theme switch is added, or a list gets long enough to need virtualisation.
+
+---
+
+### D-037 — How a church is started
+**Date:** October 2026
+**Decided by:** Product Owner (phone check and reserved names), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **The phone is proven before anything is created.** The person asks for a code on the platform host, then sends the church details with the code; the church and its first admin are created in one transaction only if the code is right. Nothing half-made is ever stored, and no one can hold a web address without owning a phone. (QA-03 TC-03-01 describes creating a "pending" church first; this order replaces it, so there is no pending state to clean up.)
+2. **Sign-up codes use the same rules as sign-in codes** (hashed, 10 minutes, 5 tries, 15-minute lockout) under their own scope. They are limited more tightly because they text a stranger: 1 a minute and 3 an hour per phone, 10 an hour per IP.
+3. **The web address** is typed or built from the church name. It is lowercase letters, numbers and single hyphens, 3 to 40 characters. Names kept for the platform (`www`, `api`, `admin`, `docs` and others in `config/onboarding.php`) are refused. A taken typed address returns free alternatives and does not use up the code. A deleted church's address stays taken.
+4. **The member number prefix** (2 to 6 letters) is asked at sign-up, as D-030 decided.
+5. **After creating the church the admin signs in on the new address with a new code**, because a session cookie belongs to one host (D-027). Handing a session from the platform host to the church host would need a one-time link; it is left out until it is wanted. (QA-03 TC-03-01 expects the admin to be signed in straight away.)
+6. **The sign-up code's text message is logged with no church**, so `message_logs.church_id` is now nullable. Rolling that migration back deletes those rows.
+7. **Left for later stories:** the bank or MoMo payout details and Paystack subaccount (story 4.1, QA-03 TC-03-05), inviting a second admin (story 5.15; the sign-up page only recommends it, as TC-03-06 allows), and a welcome email (the platform has no email sender yet).
+
+**Rationale:** The agreement requires provisioning to be atomic (section 34) and every cost-triggering endpoint to be separately rate limited (section 16). Proving the phone first keeps abusive sign-ups cheap to refuse.
+
+**Revisit when:** a one-time sign-in link is wanted, or churches can be started by the platform's own staff.
+
+---
+
+### D-038 — PayPerlez sends our SMS; we keep making our own codes
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the PayPerlez SMS documentation
+**Status:** Active
+
+**Decision:**
+1. **`SMS_PRIMARY_PROVIDER=payperlez` sends every text through `POST /sms/messages`** (docs/14, section 7). The provider interface now takes the whole message and returns a receipt, so the message log keeps PayPerlez's reference and the safe parts of its reply.
+2. **Every message has one retry key**, made when the job is created and kept across retries, so a retry after a timeout can never send a second text.
+3. **Temporary failures retry; refusals do not.** A rate limit, a server error or a lost connection retries with backoff. Any other refusal (unapproved sender, no credit, bad request) fails the job at once and is logged with PayPerlez's error code and request id only.
+4. **Sign-in and sign-up codes stay ours.** PayPerlez's own OTP product is not used, so sign-in is not tied to one provider and the code rules (10 minutes, 5 tries, lockout) stay the same whichever provider sends the text.
+5. **The app refuses to start** with this provider unless the API key and an approved sender id are set (`env:check` and the provider binding both say so).
+
+**Rationale:** The agreement requires every provider to sit behind an interface, retries to be safe, and failures to be normalised at the driver boundary.
+
+**Revisit when:** PayPerlez publishes SMS delivery webhooks (replace polling), or a second SMS provider is added (Africa's Talking is the planned fallback).
+
+---
+
+### D-039 — Subject access, erasure and retention
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36, `docs/05-data-safety.md` and the audit-trail pattern
+**Status:** Active
+
+**Decision:**
+1. **Export:** `GET /members/{id}/data-export` returns everything held about one member as JSON. It needs `members.export` and is itself recorded in the change log.
+2. **Erasure anonymises, it does not delete.** `POST /members/{id}/erasure` (new permission `members.erase`, church admin only) replaces the name with `[deleted]`, removes every other identifying detail, deletes the photo file, strips the phone and text from messages sent to the person, clears milestone notes, releases a family they head, archives the member and soft-deletes the row. The member number stays as the record's identifier. Records that point to the member (giving, attendance) keep working.
+3. **The change history is masked, never removed.** This is the one allowed change to the append-only audit log: every value in the member's history becomes `[deleted]` while the lines and field names stay, then an `erased` line is added. This follows the audit-trail pattern.
+4. **Giving records need the same treatment when they are built.** Any snapshot of a member's name inside a contribution must be masked by the erasure service (Sprint 4); financial records themselves are kept for 7 years.
+5. **Retention is automatic:** message logs are deleted after 12 months and webhook payloads after 90 days by a daily `model:prune` job at 03:00 UTC (`config/retention.php`). Audit logs and money records are not pruned.
+6. **Not built yet:** consent records with history (`consents` table), church-wide CSV exports (stories 5.8 and 5.9), the 90-day purge after a church cancels, and anonymising visitor records (Sprint 3).
+
+**Rationale:** The agreement requires erasure to anonymise rather than hard-delete (section 36), history to stay append-only, and retention to be enforced by a job.
+
+**Revisit when:** giving or visitor records are built, or consent history is needed for WhatsApp broadcasts.
+
+---
+
+### D-040 — Sentry for error monitoring
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 27 (supersedes the "Sentry is v2" note in docs/17)
+**Status:** Active
+
+**Decision:** The Sentry Laravel SDK is installed and every unhandled exception is reported to it once `SENTRY_LARAVEL_DSN` is set. Outside development the app refuses to start without the DSN. Errors carry the staff id, church id and role only. Request bodies, cookies and SQL values are never sent. The React app is not instrumented yet.
+
+**Rationale:** The agreement requires a dedicated error monitor in production, not only log files. Doing it now costs a few lines and keeps the free tier enough for the first churches.
+
+**Revisit when:** the React app needs browser error reporting, or the free tier is outgrown.
+
+---
+
+### D-041 — Consent history for messages
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36
+**Status:** Active
+
+**Decision:**
+1. A `consents` table keeps one row for every time a member agreed to receive texts or WhatsApp messages: purpose, time, privacy policy version and who recorded it. Withdrawing sets `withdrawn_at`; agreeing again adds a new row. The database allows only one open row per member and purpose.
+2. The rows are written by a listener on the member events, in the same transaction as the change, from the member's own `sms_opted_in` and `whatsapp_opted_in` choices. Erasing a member withdraws everything. The member's data export lists the history.
+3. **Decided by the Product Owner (28 Oct 2026): text messages stay on by default for a new member, WhatsApp stays off.** A church texting its own members is the normal relationship, and WhatsApp needs the member's explicit opt-in anyway (docs/05). Every default agreement is still recorded in the history with its time, policy version and the staff member who added the member, and the member can take it back at any time. The add-member screen should say plainly that the member will receive texts; that line is part of the Sprint 5 broadcast work. The agreement says a pre-ticked box is not valid consent, so this is a recorded, owner-accepted exception, to be revisited with the privacy policy text.
+4. Members who exist before this table have no rows until their choices next change; a backfill is not needed because nothing is in production.
+
+**Rationale:** The agreement requires consent to be recorded with a timestamp, purpose and policy version, and to be withdrawable with immediate effect.
+
+**Revisit when:** broadcasts are built (story 5.1, 5.2), or members can change their own choices (story 5.16).
+
+---
+
+### D-042 — Cancelling a church and purging its data
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/05-data-safety.md` and agreement section 34
+**Status:** Active
+
+**Decision:**
+1. Cancelling sets `churches.cancelled_at`. The church stays active for 90 days so its admin can export their data; `purged_at` records the purge. There is no settings page yet, so cancelling is the support command `church:cancel {slug}`; the self-service button comes with story 5.14.
+2. A daily command queues one `PurgeChurchJob` per church whose grace period is over. The job is unique per church, retries three times, and logs a critical line if it still fails, because personal data staying past its date needs a person.
+3. The purge reuses the single-member erasure for every member, then cleans staff, families, visitors, attendance visitor names and contribution notes, deletes messages and files, masks the whole change history, removes the church's own contact and payout details, soft-deletes the church and changes its slug to `{slug}-deleted-{id}` so the address can be used again.
+4. Money records stay for the 7-year rule. When Sprint 4 adds anything that holds a name or phone (receipt text, donor details), the purge repository must clear it too.
+5. The database part is one transaction; deleting files comes after and is safe to repeat, so a half-finished run is fixed by running it again.
+6. A church is not locked during the grace period. Making it read-only, and the 'your data will be deleted on…' notice, belong with billing (Sprint 5).
+
+**Rationale:** docs/05 promises exports for 90 days and a purge after that; the agreement requires atomic offboarding with a grace period, an export before deletion, and retention enforced by a job.
+
+**Revisit when:** billing exists (read-only grace period and reminders), or the church's export is built (stories 5.8, 5.9).
+
+---
+
+### D-043 — Incident response, circuit breaker and backups
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 37
+**Status:** Active
+
+**Decision:**
+1. Severity is P1 to P4 (`docs/18-incident-response.md`); the older P0 to P3 table in docs/17 points there. Nine runbooks live in `docs/runbooks/`, each with symptom, contain, diagnose, resolve and verify, and the alert table links to them.
+2. **The SMS provider has a circuit breaker.** After 5 failures in 2 minutes it opens for a minute, then lets one test message through. Held messages wait on the queue for up to 30 minutes; only real failures count against a message (three). `sms:pause` and `sms:resume` are the manual switch. A message the provider refuses for good does not count as the provider being down.
+3. **The daily database backup is built** (`db:backup`): encrypted for a public key so the server cannot read its own backups, sent to the separate bucket, 30 days kept, and the plain dump never kept. A missed backup is reported to Sentry.
+4. **Open items:** there is no general feature-flag system; each risky feature (broadcasts, payments) must ship with its own off switch like `sms:pause`. The runbooks and the full restore are written but not rehearsed, because there is no staging. Neither Coolify rollback nor the Docker commands have been tried.
+
+**Rationale:** The agreement requires severity levels, runbooks in the repository, circuit breakers on external providers, a tested backup and a post-mortem process before launch.
+
+**Revisit when:** staging exists (rehearse every runbook and the restore), or the second SMS provider is added (the circuit is per provider name).
 
 ---
 
@@ -546,3 +798,6 @@ Decisions that were intentionally not made yet, and when they need to be made.
 | DD-004 | Exact SMS credits per plan tier | Sprint 3 | Product Owner |
 | DD-005 | Exact GHS subscription prices | Sprint 4 | Product Owner |
 | DD-006 | Custom sender IDs for churches (v2 feature or not?) | Sprint 2 | Product Owner |
+| DD-007 | Sign the new admin in straight after sign-up (needs a one-time link between the platform host and the church host; today they sign in again) | When sign-up friction is measured | Product Owner |
+| DD-008 | Delivery status of text messages (PayPerlez documents no delivery webhooks; polling `GET /sms/messages/{reference}` is the option) | Sprint 4, story 4.8 | Lead Engineer |
+| DD-009 | Translating the screens (which languages: Twi, Ga, Ewe?) | Before the first non-English church signs up | Product Owner |

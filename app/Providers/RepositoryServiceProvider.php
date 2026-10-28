@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\AuditLogRepositoryInterface;
+use App\Repositories\ChurchPurgeRepositoryInterface;
+use App\Repositories\ChurchRepositoryInterface;
+use App\Repositories\ConsentRepositoryInterface;
+use App\Repositories\ContributionRepositoryInterface;
+use App\Repositories\DepartmentRepositoryInterface;
+use App\Repositories\EloquentAttendanceRecordRepository;
+use App\Repositories\EloquentAuditLogRepository;
+use App\Repositories\EloquentChurchPurgeRepository;
+use App\Repositories\EloquentChurchRepository;
+use App\Repositories\EloquentConsentRepository;
+use App\Repositories\EloquentContributionRepository;
+use App\Repositories\EloquentDepartmentRepository;
+use App\Repositories\EloquentFamilyRepository;
+use App\Repositories\EloquentMemberDepartmentRepository;
+use App\Repositories\EloquentMemberMilestoneRepository;
+use App\Repositories\EloquentMemberRepository;
+use App\Repositories\EloquentMessageLogRepository;
+use App\Repositories\EloquentUserRepository;
+use App\Repositories\FamilyRepositoryInterface;
+use App\Repositories\MemberDepartmentRepositoryInterface;
+use App\Repositories\MemberMilestoneRepositoryInterface;
+use App\Repositories\MemberRepositoryInterface;
+use App\Repositories\MessageLogRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * Binds each repository contract to its Eloquent implementation. A test swaps a contract for a mock here.
+ */
+class RepositoryServiceProvider extends ServiceProvider
+{
+    /** @var array<class-string, class-string> */
+    public array $bindings = [
+        MemberRepositoryInterface::class => EloquentMemberRepository::class,
+        FamilyRepositoryInterface::class => EloquentFamilyRepository::class,
+        DepartmentRepositoryInterface::class => EloquentDepartmentRepository::class,
+        MemberDepartmentRepositoryInterface::class => EloquentMemberDepartmentRepository::class,
+        MemberMilestoneRepositoryInterface::class => EloquentMemberMilestoneRepository::class,
+        AuditLogRepositoryInterface::class => EloquentAuditLogRepository::class,
+        ChurchRepositoryInterface::class => EloquentChurchRepository::class,
+        ContributionRepositoryInterface::class => EloquentContributionRepository::class,
+        AttendanceRecordRepositoryInterface::class => EloquentAttendanceRecordRepository::class,
+        UserRepositoryInterface::class => EloquentUserRepository::class,
+        MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
+        ConsentRepositoryInterface::class => EloquentConsentRepository::class,
+        ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,
+    ];
+}

@@ -18,6 +18,9 @@ class AuthSessionService
     /** Session key holding a fingerprint of the phone number the session was opened with. */
     public const PHONE_FINGERPRINT_KEY = 'auth.phone_fingerprint';
 
+    /**
+     * Opens an expiring bearer-token session for a non-browser client.
+     */
     public function startTokenSession(User $user): NewAccessToken
     {
         $this->recordLogin($user);
@@ -25,6 +28,9 @@ class AuthSessionService
         return $user->createToken('staff', ['*'], now()->addHours((int) config('otp.staff_token_hours')));
     }
 
+    /**
+     * Signs the browser app in with a session cookie and a fresh session id.
+     */
     public function startBrowserSession(User $user, Session $session): void
     {
         $this->recordLogin($user);
@@ -35,6 +41,9 @@ class AuthSessionService
         $session->put(self::PHONE_FINGERPRINT_KEY, self::fingerprint($user));
     }
 
+    /**
+     * Signs the browser app out and discards its session.
+     */
     public function endBrowserSession(Session $session): void
     {
         Auth::guard('web')->logout();
@@ -51,11 +60,17 @@ class AuthSessionService
         return is_string($opened) && ! hash_equals($opened, self::fingerprint($user));
     }
 
+    /**
+     * Stamps the time of the staff member's last sign-in.
+     */
     private function recordLogin(User $user): void
     {
         $user->forceFill(['last_login_at' => now()])->save();
     }
 
+    /**
+     * A hash of the phone number, used to notice when it changes under an open session.
+     */
     private static function fingerprint(User $user): string
     {
         return hash('sha256', $user->phone);

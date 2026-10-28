@@ -195,7 +195,7 @@ Members authenticate via OTP — no password required.
 
 | Field / Action | Church Admin | Pastor | Finance Secretary | Dept Head | Youth Pastor | Member |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| View directory | ✓ | ✓ | ✓ | Own dept | Youth only | Own record |
+| View directory | ✓ | ✓ | ✓ | Own dept | Youth only (under the church's youth age limit, default 25) | Own record |
 | Add / edit member | ✓ | ✓ | ✗ | ✗ | ✗ | Own only |
 | View giving history | ✓ | Summary only | ✓ Full | ✗ | ✗ | Own only |
 | View pastoral notes | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |

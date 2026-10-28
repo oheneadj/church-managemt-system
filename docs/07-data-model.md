@@ -44,6 +44,7 @@ churches
   └── webhook_logs
   └── sms_credit_ledger
   └── visitor_records
+  └── audit_logs
 ```
 
 ---
@@ -79,6 +80,8 @@ The root tenant record. Every other table references this.
 | `whatsapp_opted_in` | BOOLEAN | No | Default: false. Set when Meta account connected. |
 | `ussd_code` | VARCHAR(10) | Yes | Unique 4-digit church code for USSD giving (e.g. `1042` → dial `*713*1042#`). Auto-generated on onboarding. |
 | `timezone` | VARCHAR(50) | No | Default: `Africa/Accra` |
+| `member_number_prefix` | VARCHAR(10) | Yes | Letters in front of every member number (the `GRC` in `GRC-0042`). Typed by the admin at onboarding. Null until set; adding a member fails until it is (D-030). |
+| `member_number_seq` | INT | No | Last member number handed out. Default: 0. Only incremented under a row lock, never reset, so a number is never reused (D-030). |
 | `settings` | JSON | Yes | Configurable per-church settings (absence threshold, receipt preferences, etc.) |
 | `is_active` | BOOLEAN | No | Default: true. False = suspended. |
 | `created_at` | TIMESTAMP | No | |
@@ -123,7 +126,7 @@ The core entity. Represents every person the church knows about who has reached 
 | `middle_name` | VARCHAR(100) | Yes | |
 | `last_name` | VARCHAR(100) | No | |
 | `preferred_name` | VARCHAR(100) | Yes | "Known as" |
-| `gender` | VARCHAR(30) | No | `Gender`: male, female, other. |
+| `gender` | VARCHAR(30) | No | `Gender`: male, female. |
 | `date_of_birth` | DATE | Yes | |
 | `phone` | VARCHAR(20) | No | Primary — used for OTP |
 | `phone_secondary` | VARCHAR(20) | Yes | |
@@ -418,6 +421,26 @@ First-time visitors who haven't yet become members.
 
 ---
 
+### `consents`
+
+Every time a member agreed to receive a kind of message (agreement section 36). Written by the application whenever a member's `sms_opted_in` or `whatsapp_opted_in` choice changes (D-041).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `member_id` | CHAR(26) | No | FK → members |
+| `purpose` | VARCHAR(30) | No | `ConsentPurpose`: sms, whatsapp. |
+| `consented_at` | TIMESTAMP | No | When the agreement was recorded. |
+| `withdrawn_at` | TIMESTAMP | Yes | Set when the member takes it back. A later agreement is a new row. |
+| `policy_version` | VARCHAR(20) | No | The privacy policy version in force (`config/privacy.php`). |
+| `recorded_by` | CHAR(26) | Yes | FK → users: the staff member who recorded it. |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+**Indexes:** `(church_id, member_id, purpose)`; unique `(member_id, purpose)` where `withdrawn_at` is null, so a member has at most one open agreement per purpose.
+
+---
+
 ### `message_logs`
 
 Every outbound SMS, WhatsApp, or email sent by the system.
@@ -425,9 +448,9 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
-| `church_id` | CHAR(26) | No | FK → churches |
+| `church_id` | CHAR(26) | Yes | FK → churches. Null only for a platform message sent before a church exists (the sign-up code); church screens never see those rows (D-037). |
 | `channel` | VARCHAR(30) | No | `MessageChannel`: sms, whatsapp, email. |
-| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor. |
+| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church). |
 | `recipient_id` | CHAR(26) | Yes | FK to the relevant table |
 | `recipient_phone` | VARCHAR(20) | Yes | |
 | `recipient_email` | VARCHAR(255) | Yes | |
@@ -485,6 +508,30 @@ Raw incoming webhook payloads. Never lose a webhook event.
 
 ---
 
+### `audit_logs`
+
+Append-only change history (`patterns/Pattern — Audit Trails.md`, D-030). Written once, never updated or deleted, so it has no `updated_at` and no `deleted_at`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `auditable_type` | VARCHAR | No | Model class, for example `App\Models\Member` |
+| `auditable_id` | CHAR(26) | No | ULID of the changed record |
+| `event` | VARCHAR(30) | No | `AuditEvent`: created, updated, status_changed, viewed. |
+| `old_values` | JSONB | Yes | Previous values of the changed fields. Null for a create. Encrypted fields are never copied here. |
+| `new_values` | JSONB | Yes | New values of the changed fields |
+| `changed_fields` | JSONB | Yes | Names of the fields that changed |
+| `actor_id` | CHAR(26) | Yes | FK → users. Null for a system change. |
+| `actor_name` | VARCHAR(255) | Yes | Snapshot of the name at the time, not a join |
+| `request_id` | VARCHAR(64) | Yes | Same id as `X-Request-ID` and the application log |
+| `reason` | TEXT | Yes | For example the note on a status change |
+| `created_at` | TIMESTAMP | No | |
+
+**Indexes:** `(auditable_type, auditable_id)`, `(church_id, created_at)`, `(actor_id, created_at)`
+
+---
+
 ## Key Relationships Summary
 
 ```
@@ -531,7 +578,8 @@ Migrations must be run in this order to satisfy foreign key constraints:
 15. `message_logs`
 16. `sms_credit_ledger`
 17. `webhook_logs`
-18. Spatie permission tables (via `php artisan vendor:publish`)
+18. `audit_logs` (after `users`; added in Sprint 2)
+19. Spatie permission tables (via `php artisan vendor:publish`)
 
 ---
 

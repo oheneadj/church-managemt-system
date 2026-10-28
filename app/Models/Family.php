@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Groups members into a household.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $name
+ * @property string|null $notes
+ * @property string|null $head_member_id
  */
 class Family extends Model
 {
@@ -32,6 +38,8 @@ class Family extends Model
     ];
 
     /**
+     * The member this family belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function head(): BelongsTo
@@ -40,6 +48,8 @@ class Family extends Model
     }
 
     /**
+     * The member records of this family.
+     *
      * @return HasMany<Member, $this>
      */
     public function members(): HasMany

@@ -9,10 +9,13 @@
         "lint": "eslint resources/js --fix",
         "lint:check": "eslint resources/js && prettier --check resources/js",
         "format": "prettier --write resources/js",
-        "test": "vitest run"
+        "test": "vitest run",
+        "e2e": "playwright test",
+        "e2e:typecheck": "tsc --noEmit -p e2e/tsconfig.json"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.5",
+        "@playwright/test": "^1.64.1",
         "@tailwindcss/vite": "^4.0.0",
         "@testing-library/jest-dom": "^7.0.1",
         "@testing-library/react": "^16.3.3",
@@ -21,6 +24,8 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "@vitejs/plugin-react": "^6.1.2",
+        "ajv": "^8.20.0",
+        "ajv-formats": "^3.0.1",
         "concurrently": "^10.0.3",
         "eslint": "^9.39.5",
         "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -42,6 +47,7 @@
     "dependencies": {
         "@fontsource-variable/geist": "^5.3.0",
         "@hookform/resolvers": "^5.9.2",
+        "@sentry/react": "^11.10.0",
         "@tanstack/react-query": "^5.105.0",
         "axios": "^1.21.0",
         "class-variance-authority": "^0.7.1",
@@ -52,6 +58,7 @@
         "react-dom": "^19.3.1",
         "react-hook-form": "^7.91.0",
         "react-router": "^7.18.5",
+        "sonner": "^2.0.8",
         "tw-animate-css": "^1.4.0",
         "zod": "^4.6.7",
         "zustand": "^5.0.16"

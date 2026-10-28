@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Sms;
 
 use App\Contracts\SmsProvider;
+use App\DTOs\OutboundSms;
+use App\DTOs\SmsReceipt;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -14,14 +16,19 @@ use Illuminate\Support\Facades\Log;
  */
 final class LogSmsProvider implements SmsProvider
 {
-    public function send(string $phone, string $message): void
+    /**
+     * Writes the message to the log instead of sending it. For development only.
+     */
+    public function send(OutboundSms $sms, string $idempotencyKey): SmsReceipt
     {
         if (app()->environment('local')) {
-            Log::info('SMS (local log driver)', ['to' => $phone, 'message' => $message]);
+            Log::info('SMS (local log driver)', ['to' => $sms->phone, 'message' => $sms->message]);
 
-            return;
+            return new SmsReceipt;
         }
 
         Log::info('SMS accepted by the log driver; content is not recorded outside local.');
+
+        return new SmsReceipt;
     }
 }

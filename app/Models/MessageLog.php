@@ -9,8 +9,10 @@ use App\Enums\MessageStatus;
 use App\Enums\RecipientType;
 use App\Traits\BelongsToChurch;
 use Database\Factories\MessageLogFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MessageLog extends Model
 {
-    use BelongsToChurch, HasUlids;
+    use BelongsToChurch, HasUlids, MassPrunable;
 
     /** @use HasFactory<MessageLogFactory> */
     use HasFactory;
@@ -41,6 +43,19 @@ class MessageLog extends Model
     ];
 
     /**
+     * The logs old enough to delete (docs/05: 12 months rolling). This runs from the scheduler, not for one church,
+     * so it deliberately looks across all churches.
+     *
+     * @return Builder<MessageLog>
+     */
+    public function prunable(): Builder
+    {
+        return self::query()->withoutGlobalScopes()->where('created_at', '<', now()->subMonths(config('retention.message_logs_months')));
+    }
+
+    /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array

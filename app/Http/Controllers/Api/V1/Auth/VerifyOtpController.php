@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Auth\VerifyOtpAction;
+use App\DTOs\Auth\VerifyOtpDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\VerifyOtpRequest;
-use App\Http\Resources\ChurchResource;
-use App\Http\Resources\UserResource;
-use App\Services\AuthSessionService;
-use App\Services\OtpService;
-use Illuminate\Http\JsonResponse;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use App\Http\Resources\SignInResource;
 
 /**
  * Completes sign-in. The browser app is signed in with a session cookie and gets no token in the
@@ -19,31 +16,16 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
  */
 class VerifyOtpController extends Controller
 {
-    public function __construct(
-        private readonly OtpService $otp,
-        private readonly AuthSessionService $sessions,
-    ) {}
+    /**
+     * Takes the verify OTP action.
+     */
+    public function __construct(private readonly VerifyOtpAction $action) {}
 
-    public function __invoke(VerifyOtpRequest $request): JsonResponse
+    /**
+     * Runs VerifyOtpAction for this request and returns the SignInResource.
+     */
+    public function __invoke(VerifyOtpRequest $request): SignInResource
     {
-        $church = app('current.church');
-        $user = $this->otp->verify($church, $request->phone(), $request->code());
-
-        $body = [
-            'user' => new UserResource($user),
-            'church' => new ChurchResource($church),
-        ];
-
-        if (EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
-            $this->sessions->startBrowserSession($user, $request->session());
-
-            return response()->json($body);
-        }
-
-        return response()->json([
-            'token' => $this->sessions->startTokenSession($user)->plainTextToken,
-            'token_type' => 'Bearer',
-            ...$body,
-        ]);
+        return new SignInResource($this->action->execute(VerifyOtpDTO::fromRequest($request)));
     }
 }

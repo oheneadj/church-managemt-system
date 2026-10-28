@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\StaffRole;
 use App\Models\Church;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -23,13 +24,13 @@ class DatabaseSeeder extends Seeder
 
         $church = Church::query()->firstOrCreate(
             ['slug' => 'demo'],
-            ['name' => 'Demo Assembly', 'timezone' => 'Africa/Accra'],
+            ['name' => 'Demo Assembly', 'timezone' => 'Africa/Accra', 'member_number_prefix' => 'DEM'],
         );
 
         $admin = User::query()->withoutGlobalScopes()->firstOrCreate(
             ['church_id' => $church->id, 'phone' => '+233200000000'],
             ['name' => 'Demo Admin'],
         );
-        $admin->assignRole('church-admin');
+        $admin->assignRole(StaffRole::ChurchAdmin);
     }
 }

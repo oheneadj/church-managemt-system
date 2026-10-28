@@ -17,8 +17,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnsureStaffIsCurrent
 {
+    /**
+     * Takes the auth session service.
+     */
     public function __construct(private readonly AuthSessionService $sessions) {}
 
+    /**
+     * Ends the session with a 401 when the staff member was deactivated or changed phone number.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -33,7 +39,7 @@ class EnsureStaffIsCurrent
                 $this->sessions->endBrowserSession($session);
             }
 
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json(['message' => 'Unauthenticated.'], Response::HTTP_UNAUTHORIZED);
         }
 
         Context::add('user_id', $user->getKey());

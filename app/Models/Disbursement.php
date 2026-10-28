@@ -41,6 +41,8 @@ class Disbursement extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -59,6 +61,8 @@ class Disbursement extends Model
     }
 
     /**
+     * The contribution this disbursement belongs to.
+     *
      * @return BelongsTo<Contribution, $this>
      */
     public function contribution(): BelongsTo

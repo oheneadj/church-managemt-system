@@ -6,6 +6,12 @@
 
 ---
 
+## Machine-readable spec
+
+The OpenAPI 3.1 spec of this API is committed at `docs/openapi.json` and generated from the code by Scramble, so it cannot drift: `php artisan test` and a CI step fail when it is out of date. After changing an endpoint, run `php artisan scramble:export` and commit the result. The interactive docs are at `/docs/api` (and the JSON at `/docs/api.json`) on every church host; they are open in local development and, everywhere else, only for staff who may change church settings (D-035). This hand-written page explains the conventions; the spec is the contract.
+
+---
+
 ## Base URL
 
 Every request targets the church's subdomain:
@@ -97,6 +103,58 @@ All authenticated endpoints accept **either**:
 
 - **A session cookie** (the church's web app). Sign-in sets an httpOnly cookie; send `Accept: application/json`, the cookie, and the `X-XSRF-TOKEN` header on writes (call `GET /sanctum/csrf-cookie` first). Requests must come from the church's own host (D-027).
 - **A bearer token** (any other client): `Authorization: Bearer {token}`.
+
+---
+
+## Onboarding Endpoints (start a church)
+
+These two calls go to the **platform's own host** (`https://yourapp.com/api/v1/...`, no church subdomain), because no church exists yet. On a church subdomain they answer `404`. They need no sign-in.
+
+### Request a sign-up code
+```
+POST /api/v1/onboarding/otp
+```
+
+**Body:** `{ "admin_phone": "+233244300001" }` (a local number such as `0244300001` is accepted).
+
+**Response `200`:** `{ "message": "OTP sent", "expires_in": 600 }`
+
+**Rate limit:** 1 per phone per minute, 3 per phone per hour, 10 per IP per hour. The code is texted on the `critical` queue; it proves the person owns the phone (D-037).
+
+### Start a church
+```
+POST /api/v1/onboarding/churches
+```
+
+**Body:**
+```json
+{
+  "church_name": "Victory Chapel International",
+  "slug": "victory-chapel",
+  "denomination": "Pentecostal",
+  "city": "Kumasi",
+  "member_number_prefix": "VCI",
+  "admin_name": "Kofi Mensah",
+  "admin_phone": "+233244300001",
+  "otp": "123456"
+}
+```
+`slug`, `denomination` and `city` are optional. Without a `slug` the address is built from the church name (`grace-assembly`, then `grace-assembly-2` if taken). A typed `slug` is lowercase letters, numbers and single hyphens, 3 to 40 characters, and not one of the names kept for the platform (`config/onboarding.php`). `member_number_prefix` is 2 to 6 letters and is stored in capitals.
+
+**Response `201`:**
+```json
+{
+  "church": { "id": "ulid", "name": "Victory Chapel International", "slug": "victory-chapel", "member_number_prefix": "VCI", "url": "https://victory-chapel.yourapp.com" },
+  "admin": { "id": "ulid", "name": "Kofi Mensah" },
+  "login_url": "https://victory-chapel.yourapp.com/login"
+}
+```
+
+The church (plan `starter`, no payment) and its first admin (role `church-admin`) are created together, or not at all. The admin then signs in on `login_url` with a new code.
+
+**Errors:** `422` with `{"message": "Invalid code"}` for a wrong, used or expired code; `429` after five wrong codes for a phone (15-minute lockout); `422` on `slug` when the address is taken, with free alternatives in the message (the code is not used up); `422` per field for the rest.
+
+**Rate limit:** 10 per IP per hour.
 
 ---
 
@@ -219,9 +277,14 @@ Permission: members.view
 | `department_id` | ulid | |
 | `family_id` | ulid | |
 | `educational_level` | string | `jhs_1`, `shs_3` |
-| `search` | string | Name or phone search |
-| `sort` | string | `last_name`, `created_at`, `membership_date` |
-| `direction` | string | `asc`, `desc` |
+| `search` | string | Every word must match the first, middle, last or preferred name, the phone or the member number, ignoring case. `%` and `_` are plain characters. |
+| `sort` | string | `last_name` (default), `first_name`, `created_at`, `membership_date` |
+| `direction` | string | `asc` (default), `desc` |
+| `per_page` | integer | 1 to 100, default 25 |
+
+**Default view:** with no `status` and no `search`, only `prospect` and `active` members are listed. Inactive, transferred, deceased and archived members stay out of the default view but are found by `search` or an explicit `status` (docs/03).
+
+**Who sees whom (D-031):** the church admin, pastor and finance secretary see every member. A department head sees members of the departments they head. A youth pastor sees youth members: younger than the church's youth age limit (default 25), or, with no date of birth, any educational level except `graduate`. Asking for a member outside that view returns `403`. Invalid filters return `422`.
 
 **Response `200`:** Paginated collection of member summaries.
 
@@ -312,7 +375,9 @@ Permission: members.view
 }
 ```
 
-**Note:** `giving_summary` is omitted for roles without `giving.summary` permission. `address` is decrypted server-side before returning (never the encrypted blob).
+**Note:** every enum field is sent as its value plus a `_label` sibling for display, for example `"status": "active"`, `"status_label": "Active"`. `giving_summary` is omitted (the key is absent) for roles without `giving.summary` permission. Its amounts are decimal strings in GHS, for example `"2400.00"`, each with a `_formatted` sibling, for example `"this_year_formatted": "GHS 2,400.00"`, and voided contributions never count. Opening a member's full record writes a `viewed` line to the change log, because it returns the encrypted address (D-034). `address` is decrypted server-side before returning (never the encrypted blob). `national_id_number` is never returned. `photo_url` arrives with the photo endpoint. The record also carries `status_changed_at` and `status_note`.
+
+**Errors:** `403` for a member outside the caller's view; `404` for a member that does not exist, is deleted, or belongs to another church.
 
 ---
 
@@ -340,7 +405,11 @@ Permission: members.edit
 }
 ```
 
+`member_number` is assigned by the server (`GRC-0042`, see D-030) and is ignored if sent. `status` may be `prospect` or `active` (default `active`). `department_ids` and `family_id` must belong to this church. A phone number may be sent as `0244123456` or `+233244123456`; it is stored in international form.
+
 **Response `201`:** Full member resource.
+
+**Errors:** `403` without `members.edit`. `422` for validation failures, including: a `phone` already used by a non-deleted member of this church; a `family_role` without a `family_id`; a second `head` in one family; or a church that has not yet set its member number prefix. Each create is written to the change log.
 
 ---
 
@@ -351,9 +420,11 @@ Authorization: Bearer {token}
 Permission: members.edit
 ```
 
-**Body:** Any subset of member fields. Only provided fields are updated.
+**Body:** Any subset of member fields. Only provided fields are updated. `member_number` and `status` are ignored (status has its own endpoint). Sending `department_ids` makes the member's departments exactly that list. Sending `family_id: null` also clears `family_role`.
 
 **Response `200`:** Updated member resource.
+
+**Errors:** `403` without `members.edit`, or when the member is deceased (the record is read-only). Every change is written to the change log with the old and new values and the acting user; encrypted fields (`address`, `national_id_number`) are logged as `[changed]`, never by value.
 
 ---
 
@@ -374,6 +445,8 @@ Permission: members.edit
 
 **Response `200`:** Updated member resource.
 
+**Permissions:** `members.edit` to move a member to `prospect` or `active`. Moving to `inactive`, `transferred`, `deceased` or `archived` also needs `members.deactivate` (church admin only), otherwise `403`. The note is kept in the change log as the reason.
+
 ---
 
 ### Upload Member Photo
@@ -384,12 +457,38 @@ Permission: members.edit
 Content-Type: multipart/form-data
 ```
 
-**Body:** `photo` field — JPG or PNG, max 5MB.
+**Body:** `photo` field: JPG or PNG, up to 5 MB and 4096 pixels on a side. The type is read from the file's contents, so a renamed script or SVG is rejected.
+
+The photo is rotated to match the camera, cropped to a 512 pixel square and re-encoded as JPEG, which removes EXIF data such as GPS positions. It is stored in the private bucket at `churches/{church_id}/members/{member_id}/photo.jpg`; a new upload replaces the old one. The client's file name is never used.
 
 **Response `200`:**
 ```json
-{ "photo_url": "https://r2.yourapp.com/..." }
+{ "photo_url": "https://<signed link, valid for 1 hour>" }
 ```
+
+`photo_url` on Get Member and List Members is a fresh signed link on every response, or `null` when the member has none. **Errors:** `403` without `members.edit` or for a deceased member; `404` for another church's member; `422` for an invalid file; `429` after 20 uploads a minute.
+
+---
+
+### Export Member Data (subject access)
+```
+GET /api/v1/members/{id}/data-export
+```
+**Permission:** `members.export`, and the member must be visible to the caller. `403` otherwise; `404` for another church's member.
+
+**Response `200`:** `exported_at`, `member` (every personal field, with the encrypted address and ID number readable), `family` (name and role), `departments`, `milestones`, `consents` (each agreement to receive texts or WhatsApp messages: purpose, when, withdrawn when, policy version) and `history` (each change: event, field names, who, reason, when). The photo file is not part of the JSON. Each export is recorded in the member's change log (`exported`), without the data.
+
+---
+
+### Erase Member (right to erasure)
+```
+POST /api/v1/members/{id}/erasure
+```
+**Body:** `{ "reason": "Member asked in writing on 2026-10-20" }` (3 to 1000 characters; the reason is kept in the change log, so it must not contain personal details).
+
+**Permission:** `members.erase` (church admin only). **Response `204`.** It cannot be undone.
+
+The member's name becomes `[deleted]`, and their phone, birth date, email, address, landmark, GPS code, ID details, occupation, tribe, language, education, marital status, membership date and notes are removed. The photo file is deleted, the phone and text are removed from the messages sent to them, milestone notes are cleared and a family they head loses its head. The record stays: it is archived and soft-deleted, its member number is kept, and giving and attendance records that point to it keep working. In the member's history every line and field name stays, but the values become `[deleted]`, and an `erased` line is added. The phone number can be used by a new member straight away. A repeat call is `404`.
 
 ---
 
@@ -410,7 +509,13 @@ Permission: members.edit
 }
 ```
 
-**Response `201`:** Milestone resource.
+`type` is one of `dedication`, `baptism`, `confirmation`, `first_communion`, `membership_class`. `occurred_at` cannot be in the future. `cohort` is optional (for example "Confirmation Class 2026"). The acting user is recorded as `created_by`.
+
+**Response `201`:** `{ "data": { "id", "type", "occurred_at", "officiant", "cohort", "notes" } }`
+
+**Errors:** `403` without `members.edit`, or when the member is deceased. `404` for another church's member.
+
+Milestones appear on Get Member only for roles with `milestones.view` (church admin, pastor, youth pastor); for other roles the key is absent (docs/03).
 
 ---
 
@@ -423,17 +528,34 @@ Authorization: Bearer {token}
 Permission: members.view
 ```
 
+**Query params:** `search` (name, ignoring case), `per_page` (1 to 100, default 25). Paginated, ordered by name. Each family has `id`, `name`, `notes`, `head_member_id` and `members_count`; the count only includes members the caller may see (D-031).
+
 ### Get Family
 ```
 GET /api/v1/families/{id}
+Permission: members.view
 ```
-Returns family record + all linked members with their status and basic profile.
+Returns the family and the members the caller may see, each with `id`, `member_number`, `full_name`, `gender`, `status` and `family_role`. `404` for another church's family.
 
-### Create / Update Family
+### Create Family
 ```
 POST /api/v1/families
-PUT /api/v1/families/{id}
+Permission: members.edit
 ```
+
+**Body:** `{ "name": "Mensah-Boateng Family", "notes": "optional", "head_member_id": "ulid (optional)" }`
+
+`head_member_id` must be a member of this church who is not already in a family (`422` otherwise). The member becomes the head: their `family_id` and `family_role` are set and the change is written to their change log. **Response `201`:** the family.
+
+### Update Family
+```
+PUT /api/v1/families/{id}
+Permission: members.edit
+```
+
+**Body:** `name` and/or `notes`. The head is not changed here: change each member's `family_role` with Update Member, which enforces one head per family. **Response `200`:** the family.
+
+Members are linked to a family through `family_id` and `family_role` on Create Member and Update Member. A member belongs to one family at a time.
 
 ---
 
@@ -850,18 +972,27 @@ Permission: `church-admin` only.
 
 ## Departments
 
-### List / Create / Update
+Permissions: `members.view` to list, `members.edit` for everything else. A department of another church returns `404`.
+
+### List Departments
 ```
-GET    /api/v1/departments
-POST   /api/v1/departments
-PUT    /api/v1/departments/{id}
+GET /api/v1/departments
 ```
+**Query params:** `is_active` (`0` or `1`), `per_page` (1 to 100, default 25). Paginated, ordered by name. Each department has `id`, `name`, `description`, `head_user_id`, `is_active` and `members_count`; the count only includes members the caller may see (D-031).
+
+### Create / Update
+```
+POST /api/v1/departments
+PUT  /api/v1/departments/{id}
+```
+**Body:** `name` (required on create, unique among this church's departments), `description`, `head_user_id` (an active staff member of this church), `is_active`. Update accepts any subset; `is_active: false` retires a department. **Response:** `201` on create, `200` on update, with the department.
 
 ### Add / Remove Member from Department
 ```
 POST   /api/v1/departments/{id}/members   { "member_id": "ulid", "role": "Member" }
 DELETE /api/v1/departments/{id}/members/{member_id}
 ```
+Adding returns `201` with `{ "data": { "department_id", "member_id", "role", "joined_at" } }`. If the member already serves in the department their role is changed and the reply is `200`, so a retried request is harmless. `member_id` must belong to this church (`422` otherwise). Removing returns `204` and soft deletes the link so the history is kept; `404` if the member is not in the department. A member can also be placed in departments with `department_ids` on Create Member and Update Member.
 
 ---
 
@@ -888,7 +1019,8 @@ Permission: church-admin
     "receipt_on_cash": true,
     "checkin_method": ["whatsapp", "manual"],
     "weekly_report_day": "monday",
-    "birthday_alert_days_before": 7
+    "birthday_alert_days_before": 7,
+    "youth_age_limit": 25
   }
 }
 ```
@@ -931,6 +1063,8 @@ Handled message types: `text` (for CHECKIN command parsing), `status` (delivery 
 |---|---|
 | `POST /api/v1/auth/otp/request` | 1 per phone per minute, 5 per phone per hour, 20 per IP per hour |
 | `POST /api/v1/auth/otp/verify` | 5 wrong codes per phone, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |
+| `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | All other authenticated endpoints | 300 per minute per token |
 

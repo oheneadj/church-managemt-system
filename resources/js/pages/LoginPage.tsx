@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm, type FieldValues, type Path, type UseFormSetError } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -8,15 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/constants/routes';
+import { PHONE_INPUT_PATTERN } from '@/constants/validation';
 import { useSignIn } from '@/hooks/useSignIn';
-import { ApiError } from '@/services/ApiError';
+import { showFieldErrors } from '@/lib/showFieldErrors';
+import type { ApiError } from '@/services/ApiError';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const phoneSchema = z.object({
-    phone: z
-        .string()
-        .trim()
-        .regex(/^\+?[\d\s-]{9,16}$/, 'Enter a valid phone number'),
+    phone: z.string().trim().regex(PHONE_INPUT_PATTERN, 'Enter a valid phone number'),
 });
 
 const codeSchema = z.object({
@@ -73,7 +72,9 @@ export function LoginPage() {
         <main className="flex min-h-svh items-center justify-center p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle>Sign in</CardTitle>
+                    <CardTitle>
+                        <h1>Sign in</h1>
+                    </CardTitle>
                     <CardDescription>
                         {phone === null ? 'Enter your phone number and we will text you a code.' : 'Enter the 6-digit code we sent you.'}
                     </CardDescription>
@@ -151,21 +152,4 @@ function ServerError({ error }: { error: ApiError | null }) {
             {error.message}
         </p>
     );
-}
-
-/**
- * Puts the server's validation messages next to the form fields they belong to.
- */
-function showFieldErrors<T extends FieldValues>(error: Error, setError: UseFormSetError<T>, fields: readonly Path<T>[]): void {
-    if (!(error instanceof ApiError)) {
-        return;
-    }
-
-    for (const field of fields) {
-        const message = error.fieldErrors[field]?.[0];
-
-        if (message !== undefined) {
-            setError(field, { message });
-        }
-    }
 }

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\SmsProvider;
+use App\Exceptions\SmsProviderUnavailableException;
 use App\Services\Sms\LogSmsProvider;
+use App\Services\Sms\PayperlezSmsProvider;
 use Illuminate\Support\ServiceProvider;
-use RuntimeException;
 
 /**
  * Binds third-party provider interfaces to the implementation chosen in config.
@@ -15,19 +16,35 @@ use RuntimeException;
  */
 class ProviderServiceProvider extends ServiceProvider
 {
+    /**
+     * Binds each third-party contract to the driver chosen in config.
+     */
     public function register(): void
     {
         $this->app->bind(SmsProvider::class, function (): SmsProvider {
             $driver = (string) config('services.sms.primary');
 
             if ($driver === 'log' && $this->app->isProduction()) {
-                throw new RuntimeException('The log SMS driver cannot be used in production.');
+                throw new SmsProviderUnavailableException('The log SMS driver cannot be used in production.');
             }
 
             return match ($driver) {
                 'log' => new LogSmsProvider,
-                default => throw new RuntimeException("SMS provider [{$driver}] is not implemented yet."),
+                'payperlez' => $this->payperlez(),
+                default => throw new SmsProviderUnavailableException("SMS provider [{$driver}] is not implemented yet."),
             };
         });
+    }
+
+    /**
+     * The PayPerlez SMS provider, once its key and sender id are set. Without them every send would fail, so I stop early.
+     */
+    private function payperlez(): PayperlezSmsProvider
+    {
+        if (blank(config('services.payperlez.api_key')) || blank(config('services.payperlez.sender_id'))) {
+            throw new SmsProviderUnavailableException('PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set to use PayPerlez.');
+        }
+
+        return new PayperlezSmsProvider;
     }
 }

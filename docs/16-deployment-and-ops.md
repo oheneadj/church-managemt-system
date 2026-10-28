@@ -15,11 +15,12 @@ Cloudflare (DNS + DDoS + proxy)
    ▼
 Oracle ARM Instance (4 OCPUs, 24GB RAM)
    │
-   ├── Coolify (PaaS layer — Docker, Nginx, SSL, process supervisor)
-   │     ├── Laravel API (Docker container, port 8000)
-   │     ├── PostgreSQL (Docker container, internal only)
-   │     ├── Redis (Docker container, internal only)
-   │     └── Queue Workers (Supervisor — 6 named queues)
+   ├── Coolify (PaaS layer — Docker, Traefik proxy, SSL)
+   │     ├── web        (one image, CONTAINER_ROLE=web, nginx + php-fpm on 8080)
+   │     ├── worker     (same image, CONTAINER_ROLE=worker, Supervisor runs the 6 named queues)
+   │     ├── scheduler  (same image, CONTAINER_ROLE=scheduler, php artisan schedule:work)
+   │     ├── PostgreSQL (Coolify database, private)
+   │     └── Redis      (Coolify database, private)
    │
    └── Cloudflare R2 (object storage — external, CDN-backed)
 ```
@@ -78,155 +79,128 @@ sudo timedatectl set-timezone UTC
 
 ## Coolify Configuration
 
-### Services to Create in Coolify
+### One image, three applications
 
-| Service | Type | Port | Notes |
-|---|---|---|---|
-| PostgreSQL | Database | 5432 (internal) | Production DB |
-| Redis | Database | 6379 (internal) | Cache + queues |
-| Laravel API | Application | 8000 | Main app container |
-| Queue Worker | Worker | — | Supervisor process, no HTTP |
+`deploy/Dockerfile` builds one image. The `CONTAINER_ROLE` environment variable picks what a container does (`deploy/bin/start`). Create **three Coolify Applications** from the same repository, all with the **Dockerfile** build pack, Base Directory `/` and Dockerfile Location `/deploy/Dockerfile`:
+
+| Application | `CONTAINER_ROLE` | Domain | Ports Exposes | What runs |
+|---|---|---|---|---|
+| `chms-web` | `web` | yes (see Wildcard routing) | `8080` | `env:check`, `migrate --force`, `db:seed --force`, `optimize`, then nginx + php-fpm |
+| `chms-worker` | `worker` | none | none | `env:check`, then Supervisor running the six queue workers |
+| `chms-scheduler` | `scheduler` | none | none | `env:check`, then `php artisan schedule:work` |
+
+Why three Applications and not Docker Compose: Coolify does not support rolling updates for Compose applications, and rolling updates need a health check, default container naming and no host port mapping. The `web` app meets all three.
+
+Only `web` migrates and seeds. Both are idempotent, and the migrate step retries for about 30 seconds so a database that is still starting does not fail the deploy.
+
+The image's own `HEALTHCHECK` (`deploy/bin/healthcheck`) is what Coolify uses (it ignores the dashboard check when the image defines one): `web` calls `/api/health`, `worker` requires every Supervisor program to be RUNNING, `scheduler` requires the `schedule:work` process.
+
+Databases are Coolify resources, private to the server:
+
+- **PostgreSQL**: Coolify defaults to 18, which matches local development and CI.
+- **Redis**: Coolify defaults to `redis:7.2`. Change the image to a Redis 8 tag so production matches development and CI. Coolify does not back Redis up; only cache, queues and OTP codes live there, all rebuildable.
+- Use the internal URL's host, which is the database container name shown in Coolify, for `DB_HOST` and `REDIS_HOST`.
 
 ### Environment Variables
 
-Set in Coolify's environment manager for the Laravel API service. All secrets live here — never in the repo.
+Set in each Application's environment manager. All secrets live here, never in the repo. `.env.example` lists every key; `php artisan env:check` (run on every container start) refuses to boot when a required one is missing or unsafe.
+
+Shared by all three applications:
 
 ```env
-APP_NAME=YourAppName
+CONTAINER_ROLE=web                 # web | worker | scheduler (different per application)
 APP_ENV=production
-APP_KEY=base64:...           # Generate: php artisan key:generate --show
+APP_KEY=base64:...                 # Generate: php artisan key:generate --show (same value in all three)
 APP_DEBUG=false
-APP_URL=https://api.yourapp.com
+APP_URL=https://yourapp.com        # must be https
 
 DB_CONNECTION=pgsql
-DB_HOST=postgres             # Coolify service name = internal hostname
+DB_HOST=<postgres container name>
 DB_PORT=5432
 DB_DATABASE=chms_production
 DB_USERNAME=chms_user
 DB_PASSWORD=...
 
-REDIS_HOST=redis             # Coolify service name
+REDIS_HOST=<redis container name>
 REDIS_PORT=6379
-
 QUEUE_CONNECTION=redis
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
+CACHE_STORE=redis
 
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.resend.com
-MAIL_PORT=465
-MAIL_USERNAME=resend
-MAIL_PASSWORD=re_...
-MAIL_FROM_ADDRESS=noreply@yourapp.com
-MAIL_FROM_NAME="YourAppName"
+# Logs go to stderr as JSON so Coolify's log viewer shows them
+LOG_CHANNEL=stderr
+LOG_FORMAT=json
+LOG_LEVEL=warning
 
-PAYSTACK_SECRET_KEY=sk_live_...
-PAYSTACK_PUBLIC_KEY=pk_live_...
-PAYSTACK_WEBHOOK_SECRET=...
-
-AT_API_KEY=...
-AT_USERNAME=...
-AT_SENDER_ID=YourApp
-
-META_VERIFY_TOKEN=...
-META_ACCESS_TOKEN=...
-META_PHONE_NUMBER_ID=...
+# Providers: a real SMS provider is required in production (env:check rejects `log`)
+SMS_PRIMARY_PROVIDER=...
 
 FILESYSTEM_DISK=r2
 CLOUDFLARE_R2_ACCESS_KEY_ID=...
 CLOUDFLARE_R2_SECRET_ACCESS_KEY=...
 CLOUDFLARE_R2_BUCKET=chms-production
 CLOUDFLARE_R2_URL=https://<account id>.r2.cloudflarestorage.com
-# Backups: a separate bucket and a separate key pair
-CLOUDFLARE_R2_BACKUP_ACCESS_KEY_ID=...
+CLOUDFLARE_R2_BACKUP_ACCESS_KEY_ID=...        # separate bucket and key pair
 CLOUDFLARE_R2_BACKUP_SECRET_ACCESS_KEY=...
 CLOUDFLARE_R2_BACKUP_BUCKET=chms-backups
-
-FRONTEND_URL=https://yourapp.com
 ```
 
-### Wildcard SSL
+Only on `web` (it serves browsers and receives webhooks):
 
-Coolify handles Let's Encrypt automatically. Configure:
-
-1. In Coolify → SSL/TLS → Add domain: `*.yourapp.com` and `yourapp.com`
-2. Use DNS challenge (required for wildcard) — add the DNS TXT record Coolify shows you in Cloudflare
-3. Auto-renewal is handled by Coolify; cert renews 30 days before expiry
-
-### Process Supervisor (Queue Workers)
-
-Add a Supervisor config in Coolify's process manager for queue workers:
-
-```ini
-[program:queue-critical]
-command=php /var/www/html/artisan queue:work redis --queue=critical --sleep=1 --tries=3 --backoff=5
-numprocs=1
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-critical.log
-
-[program:queue-notifications]
-command=php /var/www/html/artisan queue:work redis --queue=notifications --sleep=3 --tries=3 --backoff=60
-numprocs=2
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-notifications.log
-
-[program:queue-payments]
-command=php /var/www/html/artisan queue:work redis --queue=payments --sleep=1 --tries=3 --backoff=30
-numprocs=2
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-payments.log
-
-[program:queue-reports]
-command=php /var/www/html/artisan queue:work redis --queue=reports --sleep=5 --tries=2 --backoff=120
-numprocs=1
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-reports.log
-
-[program:queue-exports]
-command=php /var/www/html/artisan queue:work redis --queue=exports --sleep=5 --tries=2 --backoff=120
-numprocs=1
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-exports.log
-
-[program:queue-scheduled]
-command=php /var/www/html/artisan queue:work redis --queue=scheduled --sleep=10 --tries=1
-numprocs=1
-autostart=true
-autorestart=true
-redirect_stderr=true
-stdout_logfile=/var/www/html/storage/logs/worker-scheduled.log
+```env
+TENANCY_BASE_DOMAIN=yourapp.com
+SESSION_DRIVER=redis
+SESSION_DOMAIN=                    # leave empty: cookies stay host-only per church (D-027)
+SESSION_SECURE_COOKIE=true
+TRUSTED_PROXIES=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16   # the Docker network Traefik sits on; never *
+PAYSTACK_SECRET_KEY=sk_live_...
+PAYSTACK_PUBLIC_KEY=pk_live_...
+PAYSTACK_WEBHOOK_SECRET=...
+META_VERIFY_TOKEN=...
+META_ACCESS_TOKEN=...
+META_PHONE_NUMBER_ID=...
 ```
 
-### Scheduled Tasks (Laravel Scheduler)
+The worker also needs the provider keys it calls (SMS, WhatsApp, Paystack, mail), because the jobs run there. `worker` and `scheduler` have no domain and need no `TRUSTED_PROXIES`.
 
-A single cron entry runs the Laravel scheduler every minute:
+### Wildcard routing and SSL
 
-```bash
-# Add via Coolify's cron manager, or directly in the container's crontab:
-* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
-```
+Churches live on `<slug>.yourapp.com`, so the `web` app must answer every subdomain, with a wildcard certificate.
 
-The scheduler then dispatches individual tasks on their own cadence (see `09-engineering-principles.md` for the scheduled tasks table).
+1. In Cloudflare, add `A` records for `yourapp.com` and `*.yourapp.com` pointing at the server.
+2. A wildcard certificate needs the Let's Encrypt **DNS challenge**. Configure Traefik (Coolify's proxy) with the Cloudflare DNS provider and a scoped API token, following Coolify's wildcard certificate documentation.
+3. Coolify documents editing container labels with a `HostRegexp` rule. Use that for the `web` app so one router matches `yourapp.com` and every subdomain. A wildcard in the Domains field is **not documented**; verify it on staging before relying on it.
+4. Unknown subdomains are answered by the app with a 404 (`ResolveTenant`).
+
+### Scheduled tasks
+
+There is no cron entry. The `scheduler` application runs `php artisan schedule:work`, which triggers the scheduler every minute. The tasks themselves are listed in `09-engineering-principles.md`.
+
+### Queue workers
+
+`deploy/supervisor/supervisord.conf` runs the six queues in the `worker` app:
+
+| Queue | Processes | `--sleep` | `--tries` | `--backoff` |
+|---|---|---|---|---|
+| `critical` | 1 | 1 | 3 | 5 |
+| `payments` | 2 | 1 | 3 | 30 |
+| `notifications` | 2 | 3 | 3 | 60 |
+| `reports` | 1 | 5 | 2 | 120 |
+| `exports` | 1 | 5 | 2 | 120 |
+| `scheduled` | 1 | 10 | 1 | none |
+
+Every worker uses `--max-time=3600` so it recycles hourly, and `stopwaitsecs=120` so a stop signal lets a running job finish. Worker output goes to stdout, which Coolify shows as the container log. The file is the source of truth; change the table when you change the file.
+
+### Verify on the first staging deploy
+
+These were read from documentation but not yet proven, because no Docker build has run yet:
+
+- The image builds on the ARM server (CI builds amd64 only).
+- `*.yourapp.com` routes to `chms-web` using the label approach above.
+- Coolify accepts `chms-worker` and `chms-scheduler` with no domain and no port.
+- Coolify's stop timeout is at least the Supervisor `stopwaitsecs` (120s), so a stopping worker is not killed mid-job.
+- The base image's entrypoint runs cleanly with our `CMD`.
+- The 120s health `start-period` covers the first migration.
+- Staging sign-in needs a real SMS adapter, which is not written yet.
 
 ---
 
@@ -238,7 +212,7 @@ The scheduler then dispatches individual tasks on their own cadence (see `09-eng
 github.com/yourorg/chms   (Laravel API + React 19 SPA in resources/js — one repo, D-022)
 ```
 
-Local development is native (no Docker, D-023). Staging and production build the Docker image from `deploy/Dockerfile`; that file is the source of truth for the PHP version and extensions (`pdo_pgsql`, `redis`, `bcmath`).
+Local development is native (no Docker, D-023). Staging and production build the Docker image from `deploy/Dockerfile`; that file is the source of truth for the PHP version and extensions (`pdo_pgsql`, `redis`, `bcmath`, `intl`, `gd`, `exif`).
 
 ### GitHub Actions Workflow
 
@@ -248,53 +222,27 @@ The pipeline is `.github/workflows/ci.yml` (the file is the source of truth; thi
 |---|---|---|
 | `backend` | every push and PR to `main` / `staging` | PHP 8.4, PostgreSQL 18 and Redis 8 services (same majors as local, D-023). Migrations go up, down and up again; Pint; PHPStan level 8; `composer audit`; Pest. |
 | `frontend` | same | Node 24: `npm ci`, TypeScript, ESLint + Prettier, Vitest, production build, `npm audit --audit-level=high`. |
-| `deploy-staging` | push to `staging`, after both jobs pass | `POST` to the Coolify webhook, then a smoke test of `/api/health` (retries for about 5 minutes). |
-| `deploy-production` | push to `main`, after both jobs pass | Same, behind the `production` environment, whose **required reviewers** are the manual approval step. |
+| `image` | same | hadolint on `deploy/Dockerfile`, builds the image (amd64), then checks it has `pdo_pgsql`, `redis`, `bcmath`, `intl`, `gd`, `exif`, Supervisor and the built assets, and no Telescope. |
+| `deploy-staging` | push to `staging`, after all three jobs pass | `POST` to the Coolify webhook, then a smoke test of `/api/health` (retries for about 5 minutes). |
+| `deploy-production` | push to `main`, after all three jobs pass | Same, behind the `production` environment, whose **required reviewers** are the manual approval step. |
 
 One-time GitHub setup:
 
 - Secrets: `COOLIFY_TOKEN`, `COOLIFY_STAGING_WEBHOOK`, `COOLIFY_PRODUCTION_WEBHOOK`. Each webhook secret is the full deploy URL copied from the application's Webhooks page in Coolify; the call is `POST` with `Authorization: Bearer <token>` (Coolify API, `POST /deploy?uuid=...`).
 - Variables: `STAGING_URL`, `PRODUCTION_URL` (for example `https://staging.yourapp.com`).
 - Environments: create `staging` and `production`; add yourself as a required reviewer on `production`.
-- Branch protection on `main` and `staging`: require the `backend` and `frontend` checks.
-- `.github/dependabot.yml` opens weekly update PRs for Composer, npm and the actions themselves.
+- Branch protection on `main` and `staging`: require the `backend`, `frontend` and `image` checks.
+- `.github/dependabot.yml` opens weekly update PRs for Composer, npm, the actions and the Docker base images.
 
 Differences from the first draft of this document: PHP 8.4 (the draft said 8.3), PHPStan level 8 (the draft said 6), Redis 8, current action versions, a migration round-trip step, `composer audit` and `npm audit`, and no `.env.testing` (the workflow copies `.env.example`; `phpunit.xml` sets the test database).
 
-### Deploy Script (run by Coolify on each deploy)
+### What a deploy does
 
-Coolify runs the app's deploy script after pulling the new image:
-
-```bash
-#!/bin/bash
-set -e
-
-echo "=== Checking the environment ==="
-php artisan env:check
-
-echo "=== Running migrations ==="
-php artisan migrate --force
-
-echo "=== Clearing caches ==="
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
-
-echo "=== Restarting queue workers ==="
-php artisan queue:restart
-
-echo "=== Deploy complete ==="
-```
+CI triggers the Coolify webhook for the `chms-web` application; trigger the other two the same way (or enable auto-deploy on them). Each new container runs `deploy/bin/start`, which is the whole deploy script: `env:check`, then (web only) migrate, seed and `optimize`, then the role's process. Caches are built at start-up, so there is no separate cache step and no `queue:restart`: replacing the worker container replaces its workers.
 
 ### Zero-Downtime Deploys
 
-Coolify uses a rolling restart strategy with Docker:
-1. Pulls new image
-2. Starts new container
-3. Runs health check (`GET /api/health` must return 200)
-4. Switches Nginx upstream to new container
-5. Stops old container
+With rolling updates enabled on `chms-web` (needs the health check, default container naming and no host port mapping), Coolify starts the new container, waits until its health check passes (`/api/health` returns 200), switches Traefik to it, then stops the old one. Migrations run before the new container goes healthy, so they must stay backward-compatible with the previous release (already a project rule).
 
 **The `/api/health` endpoint** (`HealthController`, `HealthCheck` service): public, unversioned, no tenant. It runs `database`, `cache`, `queue`, `storage` and `disk` checks and returns `200 {status:"ok", checks:{...}}` or `503 {status:"degraded", ...}`. Each check reports only `ok` or `error`; the reason goes to the log. Laravel's built-in `GET /up` is the liveness probe (is the process running?), `/api/health` is readiness (can it serve?). The `disk` check fails when less than `HEALTH_MIN_FREE_DISK_PERCENT` (default 10) of the disk holding `storage/` is free.
 
@@ -311,63 +259,17 @@ Coolify uses a rolling restart strategy with Docker:
 | `.env` file | Manual — in 1Password | On change | Indefinite | 1Password |
 | Coolify config | Coolify export | Weekly | 4 copies | R2 backup bucket |
 
-### Database Backup Script
+### Database Backup (built)
 
-Runs as a scheduled Laravel command at 02:00 UTC:
+`php artisan db:backup` (`app/Console/Commands/BackupDatabase.php`) runs every day at 02:00 UTC from the scheduler and never twice at once:
 
-```php
-// app/Console/Commands/BackupDatabase.php
-class BackupDatabase extends Command
-{
-    protected $signature = 'db:backup';
+1. `pg_dump -Fc` writes a compressed dump to a private work folder. The database password goes in `PGPASSWORD` in the process environment, never on the command line.
+2. `gpg --encrypt` encrypts it for `BACKUP_GPG_RECIPIENT`, the **public** key. The server can write backups but cannot read them; the private key stays offline (1Password).
+3. The encrypted file is streamed to the `r2-backup` disk (the separate bucket with its own credentials) under `backups/database/backup-YYYY-MM-DD-HH-MM-SS.dump.gpg`.
+4. Backups older than 30 days (`config/backup.php`) are removed.
+5. The plain dump and the encrypted copy are deleted from the server afterwards, even when a step fails. A failure is reported to Sentry and the command exits with an error. With no `BACKUP_GPG_RECIPIENT` it refuses to make an unencrypted backup, and `env:check` fails outside development.
 
-    public function handle(): void
-    {
-        $filename  = 'backup-' . now()->format('Y-m-d-H-i-s') . '.dump.gpg';
-        $tmpPath   = '/tmp/' . $filename;
-        $s3Path    = 'backups/database/' . $filename;
-
-        // Dump (custom format is already compressed). Password via PGPASSWORD, never on the command line.
-        $dumpCmd = sprintf(
-            'PGPASSWORD=%s pg_dump -Fc -h %s -U %s %s',
-            escapeshellarg(config('database.connections.pgsql.password')),
-            escapeshellarg(config('database.connections.pgsql.host')),
-            escapeshellarg(config('database.connections.pgsql.username')),
-            escapeshellarg(config('database.connections.pgsql.database')),
-        );
-
-        // Encrypt with GPG
-        $gpgCmd = sprintf(
-            '%s | gpg --batch --yes --recipient %s --output %s --encrypt',
-            $dumpCmd,
-            config('backup.gpg_recipient'),
-            $tmpPath,
-        );
-
-        exec($gpgCmd, $output, $exitCode);
-
-        if ($exitCode !== 0) {
-            Log::error('Database backup failed', ['exit_code' => $exitCode]);
-            return;
-        }
-
-        // Upload to R2
-        Storage::disk('r2-backup')->put($s3Path, file_get_contents($tmpPath));
-        unlink($tmpPath);
-
-        Log::info('Database backup complete', ['path' => $s3Path]);
-
-        // Prune backups older than 30 days
-        $this->pruneOldBackups();
-    }
-}
-```
-
-**Add to schedule:**
-```php
-// app/Console/Kernel.php
-$schedule->command('db:backup')->dailyAt('02:00');
-```
+Tested with faked `pg_dump`, `gpg` and bucket, and once for real against the development database (encrypted, unreadable with another key, same row counts after decrypting). The full restore into a new database still has to be rehearsed on staging: [restore runbook](runbooks/restore-from-backup.md).
 
 ### Restore Procedure
 
@@ -445,15 +347,7 @@ Confirm the phone number with the church admin before doing this.
 
 ### Runbook: Restart Queue Workers
 
-Queue workers must be restarted after every deploy to load new code. This is handled automatically by the deploy script (`php artisan queue:restart`). To do it manually:
-
-```bash
-# Via Coolify process manager UI: find "queue-*" processes, click Restart
-# Or via SSH:
-php artisan queue:restart
-```
-
-Workers finish their current job before restarting — no jobs are dropped.
+Every deploy replaces the `chms-worker` container, so workers always run the new code. To restart them without a deploy, restart the `chms-worker` application in Coolify. Supervisor sends a stop signal and waits up to 120 seconds for running jobs to finish, so no jobs are dropped. Queued jobs stay in Redis and are picked up by the new container.
 
 ### Runbook: Emergency Maintenance Mode
 

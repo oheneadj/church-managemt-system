@@ -38,6 +38,8 @@ class Pledge extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -51,6 +53,8 @@ class Pledge extends Model
     }
 
     /**
+     * The member this pledge belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function member(): BelongsTo
@@ -59,6 +63,8 @@ class Pledge extends Model
     }
 
     /**
+     * The fund type this pledge belongs to.
+     *
      * @return BelongsTo<FundType, $this>
      */
     public function fundType(): BelongsTo
@@ -67,6 +73,8 @@ class Pledge extends Model
     }
 
     /**
+     * The contribution records of this pledge.
+     *
      * @return HasMany<Contribution, $this>
      */
     public function contributions(): HasMany

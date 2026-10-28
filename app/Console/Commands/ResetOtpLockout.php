@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\Church;
-use App\Services\OtpService;
+use App\Actions\Auth\ResetOtpLockoutAction;
+use App\DTOs\Auth\ResetOtpLockoutDTO;
+use App\Repositories\ChurchRepositoryInterface;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Console\Command;
 
@@ -19,9 +20,12 @@ class ResetOtpLockout extends Command
 
     protected $description = 'Clear the OTP lockout and any pending code for a staff phone number';
 
-    public function handle(OtpService $otp): int
+    /**
+     * Clears the lockout for one phone number of one church, for the support runbook.
+     */
+    public function handle(ChurchRepositoryInterface $churches, ResetOtpLockoutAction $action): int
     {
-        $church = Church::query()->where('slug', $this->argument('church'))->first();
+        $church = $churches->findBySlug((string) $this->argument('church'));
         $phone = PhoneNumber::tryFrom((string) $this->argument('phone'));
 
         if ($church === null || $phone === null) {
@@ -30,7 +34,7 @@ class ResetOtpLockout extends Command
             return self::FAILURE;
         }
 
-        $otp->resetLockout($church, $phone);
+        $action->execute(new ResetOtpLockoutDTO($church, $phone));
         $this->info('Lockout cleared.');
 
         return self::SUCCESS;

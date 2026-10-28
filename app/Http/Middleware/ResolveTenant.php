@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Church;
+use App\Repositories\ChurchRepositoryInterface;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
@@ -16,12 +17,20 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ResolveTenant
 {
+    /**
+     * Takes the church repository.
+     */
+    public function __construct(private readonly ChurchRepositoryInterface $churches) {}
+
+    /**
+     * Finds the church for the request host and binds it, or answers 404.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $church = $this->findChurch($request->getHost());
 
         if ($church === null || ! $church->is_active) {
-            abort(404);
+            abort(Response::HTTP_NOT_FOUND);
         }
 
         app()->instance('current.church', $church);
@@ -31,6 +40,9 @@ class ResolveTenant
         return $next($request);
     }
 
+    /**
+     * Looks the church up by subdomain slug, or by custom domain when the host is not on the base domain.
+     */
     private function findChurch(string $host): ?Church
     {
         $suffix = '.'.config('tenancy.base_domain');
@@ -38,9 +50,9 @@ class ResolveTenant
         if (str_ends_with($host, $suffix)) {
             $slug = substr($host, 0, -strlen($suffix));
 
-            return Church::query()->where('slug', $slug)->first();
+            return $this->churches->findBySlug($slug);
         }
 
-        return Church::query()->where('custom_domain', $host)->first();
+        return $this->churches->findByCustomDomain($host);
     }
 }

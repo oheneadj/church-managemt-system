@@ -47,7 +47,7 @@ SendSmsJob::dispatch($phone, $message)->onQueue('notifications');
 HTTP calls in a request lifecycle cause timeouts and slow responses.
 
 ### 4. No business logic in controllers
-Controllers are thin. They: validate (via Form Request), authorise (via Policy), call a Service, return a Resource. That's it.
+Controllers are thin and single-action. They: build a DTO from the validated Form Request, call one Action, return a Resource. Authorisation happens in the Form Request's `authorize()`, which asks a Policy. The layers are Controller → Form Request → DTO → Action → Service → Repository → Model (Universal §6, Laravel addendum §5, D-033).
 
 ### 5. No hard deletes. Ever.
 All models use `SoftDeletes`. Contributions use `is_voided` flag, not deletion. Void requires a reason.
@@ -56,6 +56,16 @@ All models use `SoftDeletes`. Contributions use `is_voided` flag, not deletion. 
 No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithmetic with PHP floats — use `bcmath` or `brick/math` (see D-017). Paystack requires pesewas in its API (`amount * 100`), but we store and display GHS.
 
 ### 7. `APP_DEBUG=false` in production. Always.
+
+### 8. Simple, Framework-First, No Hard-Coding
+Write simple code that anyone can read at a glance. This applies to every project and sits beside the other principles; it never replaces them.
+
+- **No hard-coding.** Do not scatter fixed values (limits, sizes, durations, names, URLs, rates, status text) through the code. Put them in config, an enum, a constant or a named value, and read them from there.
+- **Keep it simple and straightforward.** Prefer short, plain, obvious logic. Do not write complex logic; if a piece of code is hard to follow, break it into small named steps or find the simpler way.
+- **Framework first, then the language.** Use the framework's own tools before reaching for raw language features, and use the language's standard features before writing anything custom.
+- **Comments that help.** Write comments and docblocks that are well structured and clearly written, so a developer who has never seen the code understands what it does and why. Explain intent, not the obvious.
+- **Apply all of this together with the other principles** (layers, tests, types, security). Simplicity is never a reason to skip a rule, and a rule is never a reason to write something harder to understand than it needs to be.
+
 
 ---
 
@@ -66,8 +76,11 @@ app/
 ├── Console/Commands/       — Artisan commands (backup, prune, monitor)
 ├── Events/                 — Domain events (ContributionReceived, etc.)
 ├── Exceptions/             — Custom exception classes
+├── Actions/                — One class per user intent. execute(DTO). Owns the transaction.
+├── DTOs/                   — Typed input for one operation
+├── Repositories/           — Interface + Eloquent implementation per model
 ├── Http/
-│   ├── Controllers/        — Thin. One public method per action.
+│   ├── Controllers/        — Thin, single-action (__invoke).
 │   ├── Middleware/         — ResolveTenant, SecurityHeaders
 │   ├── Requests/           — Form Request validation classes
 │   └── Resources/          — API Resource serialisation classes
@@ -86,26 +99,33 @@ app/
 
 ## Key Patterns
 
-### Controller → Form Request → Service → Resource
+### Controller → Form Request → DTO → Action → Resource
 ```php
-public function store(StoreMemberRequest $request): JsonResponse
+// app/Http/Controllers/Api/V1/Members/StoreMemberController.php
+public function __invoke(StoreMemberRequest $request): JsonResponse
 {
-    $this->authorize('create', Member::class);
-    $member = $this->memberService->create($request->validated());
-    return new MemberResource($member);
+    $member = $this->action->execute(CreateMemberDTO::fromRequest($request));
+
+    return (new MemberResource($member))->response()->setStatusCode(201);
 }
 ```
 
-### Service Class
+### Action (one user intent, owns the transaction, fires events)
 ```php
-class MemberService
+final class CreateMemberAction
 {
-    public function create(array $data): Member
+    public function execute(CreateMemberDTO $dto): Member
     {
-        return Member::create($data); // church_id auto-set by BelongsToChurch
+        return DB::transaction(function () use ($dto): Member {
+            $member = $this->members->save(new Member($dto->attributes())); // church_id set by BelongsToChurch
+            MemberCreated::dispatch($member, $dto->actor);
+
+            return $member;
+        });
     }
 }
 ```
+Services hold rules shared by several Actions and never open a transaction. Queries live in a Repository (`MemberRepositoryInterface`), never in an Action, Service or Controller.
 
 ### Policy (always check church_id)
 ```php
@@ -177,6 +197,12 @@ Full integration details: `docs/14-integrations.md`
 
 ---
 
+## Changelog
+
+Before every commit, add an entry to `CHANGELOG.md` under `Change record`. Each entry states **what** was done, **why** it was done, **which files** were affected, and **the commit** (add the hash right after committing). The short Added / Changed bullets stay as a summary.
+
+---
+
 ## Testing
 
 ```bash
@@ -211,10 +237,13 @@ php artisan migrate                 # Run pending migrations
 php artisan migrate:fresh --seed    # Reset + seed (dev/staging only)
 php artisan db:backup               # Manual backup
 
+# End-to-end tests (real Chrome against the running local sites; needs a `critical` queue worker, see playwright.config.ts)
+npm run e2e
+
 # Code quality
 ./vendor/bin/pint                   # Fix code style
 ./vendor/bin/pint --test            # Check without fixing
-./vendor/bin/phpstan analyse        # Static analysis
+./vendor/bin/phpstan analyse --memory-limit=1G   # Static analysis (the default 128M limit crashes the parallel workers; CI and `composer analyse` already pass the flag)
 
 # Queues
 php artisan queue:work redis --queue=payments,notifications

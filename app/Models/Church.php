@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\ChurchPlan;
 use App\Enums\MomoNetwork;
 use App\Enums\PayoutMethod;
+use Carbon\CarbonImmutable;
 use Database\Factories\ChurchFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The tenant root: one row per church. Every other tenant-owned table points back here.
  *
+ * @property string $id
+ * @property string $slug
  * @property ChurchPlan $plan
+ * @property CarbonImmutable|null $cancelled_at
+ * @property CarbonImmutable|null $purged_at
  */
 class Church extends Model
 {
@@ -50,11 +55,17 @@ class Church extends Model
         'whatsapp_opted_in',
         'ussd_code',
         'timezone',
+        'member_number_prefix',
+        'member_number_seq',
         'settings',
         'is_active',
+        'cancelled_at',
+        'purged_at',
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -67,13 +78,26 @@ class Church extends Model
             'payout_account_number' => 'encrypted',
             'payout_verified_at' => 'immutable_datetime',
             'sms_credits' => 'integer',
+            'member_number_seq' => 'integer',
             'whatsapp_opted_in' => 'boolean',
             'settings' => 'array',
             'is_active' => 'boolean',
+            'cancelled_at' => 'immutable_datetime',
+            'purged_at' => 'immutable_datetime',
         ];
     }
 
     /**
+     * The age below which a member counts as youth. The church's own setting wins over the default (D-031).
+     */
+    public function youthAgeLimit(): int
+    {
+        return max(1, (int) data_get($this->settings, 'youth_age_limit', config('members.youth_age_limit')));
+    }
+
+    /**
+     * The user records of this church.
+     *
      * @return HasMany<User, $this>
      */
     public function users(): HasMany
@@ -82,6 +106,8 @@ class Church extends Model
     }
 
     /**
+     * The member records of this church.
+     *
      * @return HasMany<Member, $this>
      */
     public function members(): HasMany

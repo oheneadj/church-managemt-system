@@ -9,7 +9,7 @@
 | Layer | Tool | What It Watches |
 |---|---|---|
 | Application logs | Laravel Log (JSON → file) | Exceptions, errors, warnings, slow queries |
-| Application performance | Laravel Telescope (dev/staging only) | Queries, jobs, HTTP requests, exceptions |
+| Application performance | Laravel Telescope (local development only, installed with `--dev`; not in staging or production images) | Queries, jobs, HTTP requests, exceptions |
 | Uptime | Coolify built-in + UptimeRobot (free tier) | HTTP health check every 60 seconds |
 | Infrastructure | Oracle Cloud metrics | CPU, RAM, disk, network egress |
 | Queue health | Custom `queue:monitor` command | Queue depth, failed jobs |
@@ -264,8 +264,11 @@ foreach ($lowBalanceChurches as $church) {
 | 4xx error rate (non-auth) | > 10% of requests in 5 min | Check for attack or broken frontend |
 | API response time p99 | > 2 seconds | Check slow query log; check queue saturation |
 | Failed job count | > 5 accumulated | Review with `php artisan queue:failed` |
-| Payments queue depth | > 10 | Workers may be stuck; check worker logs |
-| Health check failure | Any check != ok | See on-call runbook |
+| Payments queue depth | > 10 | Workers may be stuck; see [queue worker stopped](runbooks/queue-worker-stopped.md) and [payment provider errors](runbooks/payment-provider-errors.md) |
+| Health check failure | Any check != ok | [Database](runbooks/database-connections-exhausted.md), [disk](runbooks/disk-space-critical.md) or [queue](runbooks/queue-worker-stopped.md) runbook, by the failing check |
+| SMS circuit opened | `Circuit opened` in the log | [SMS provider down](runbooks/sms-provider-down.md) |
+| Church purge failed | `Church purge failed` (critical) | [Church purge failed](runbooks/church-purge-failed.md) |
+| Backup failed | `db:backup` fails (reported to Sentry) | [Restore from backup](runbooks/restore-from-backup.md), after fixing the backup |
 
 ### Business Alerts
 
@@ -292,8 +295,19 @@ Log::error() with context
 JSON log file (storage/logs/laravel-YYYY-MM-DD.log)
    ↓
 [MVP] Manual log review
-[v2] Sentry — auto-grouped, with stack trace + context
+[built] Sentry — auto-grouped, with stack trace + context (D-040)
 ```
+
+**Sentry is built in and switched on by setting `SENTRY_LARAVEL_DSN`** (`env:check` refuses to start outside development without it). With the DSN empty, as in development, nothing is sent. Every unhandled exception goes to Sentry from `bootstrap/app.php`. Each signed-in request adds the staff id, church id and role to the error (`AddErrorMonitoringContext`), and never a name, phone or email. Request bodies are not sent (`max_request_body_size: none`), `send_default_pii` is off, and SQL values are not recorded. Set `SENTRY_RELEASE` to the commit in the deploy so a new error shows which release brought it. The React app reports too, but only when `VITE_SENTRY_DSN` is set, and the Sentry code is loaded on demand so it adds nothing to the main bundle (see below).
+
+### Working offline and self-hosting
+
+Sentry is not a cloud-only product, and the app never depends on it being reachable:
+
+- **In development, with no internet or account:** leave the DSN empty and set `SENTRY_SPOTLIGHT=true`, then run `npx @spotlightjs/spotlight`. Errors from the app show in a local screen on this machine. Nothing leaves it.
+- **In production, on your own server:** the SDK only needs a DSN, so it works with a self-hosted server that speaks Sentry's protocol. **GlitchTip** is the light choice and runs as a Coolify one-click service on the same Oracle machine; self-hosted Sentry itself needs far more memory. Point `SENTRY_LARAVEL_DSN` (and `VITE_SENTRY_DSN`) at it. The 90-day log rule in docs/05 applies to what it stores.
+- **When the monitor is down or unreachable:** the SDK gives up after 1 second to connect and 2 seconds in total (`config/sentry.php`), so pages and queue jobs are not held up. The error is then lost to the monitor but is still in the application log, which is why the log line is kept.
+- There is no offline buffer: the SDK does not store errors and send them later.
 
 ### Configuring Log Alerts (MVP — Slack via Webhook)
 
@@ -391,7 +405,7 @@ This means digital giving is silently failing. **High priority.**
 ### Alert: API response time p99 > 2 seconds
 
 1. Check for a recent deploy that may have introduced a slow query
-2. Check Laravel Telescope on staging for query analysis
+2. Reproduce locally with Laravel Telescope (it is not installed in staging or production), and check the JSON logs for the slow request's `request_id`
 3. On production, enable the query log temporarily:
    ```php
    DB::enableQueryLog();
@@ -437,22 +451,16 @@ OTP failures mean members can't log in.
 |---|---|---|---|
 | Application logs | `storage/logs/` | 14 days | Laravel `daily` driver rotation |
 | Failed jobs | `failed_jobs` table | Manual review | Pruned after retry/resolution |
-| Webhook logs | `webhook_logs` table | 90 days | `php artisan webhook-logs:prune` (weekly cron) |
-| Message logs | `message_logs` table | 12 months | `php artisan message-logs:prune` (monthly cron) |
+| Webhook logs | `webhook_logs` table | 90 days | `model:prune`, daily 03:00 UTC (`config/retention.php`) |
+| Message logs | `message_logs` table | 12 months | `model:prune`, daily 03:00 UTC (`config/retention.php`) |
+| Cancelled church's personal data | all tenant tables | 90 days after cancelling | `churches:purge-cancelled`, daily 03:30 UTC (D-042) |
 | Auth logs | `personal_access_tokens` | Until revoked | `php artisan sanctum:prune-expired --hours=8` (daily cron) |
 
 ---
 
 ## Incident Severity Levels
 
-| Severity | Definition | Response time | Who |
-|---|---|---|---|
-| P0 — Critical | Platform down for all churches; payments failing; data breach | Immediate | Lead Engineer |
-| P1 — High | One or more churches can't use core feature (giving, attendance); data loss risk | < 1 hour | Lead Engineer |
-| P2 — Medium | Degraded performance; non-critical feature broken; alerts firing but workaround exists | < 4 hours | Lead Engineer |
-| P3 — Low | Minor bug; cosmetic issue; non-urgent alert | Next business day | Lead Engineer |
-
-All incidents → post-mortem. Template in `docs/reference/post-mortems/`.
+See [`docs/18-incident-response.md`](./18-incident-response.md): P1 Critical, P2 High, P3 Medium and P4 Low, with who responds and when. (This section used P0 to P3; P0 is now P1, P1 is P2, and so on.) The step-by-step guides are in [`docs/runbooks/`](./runbooks/README.md); the short runbook above is kept for the alerts it covers.
 
 ---
 

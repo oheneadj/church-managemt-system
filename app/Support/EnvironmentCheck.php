@@ -24,6 +24,8 @@ final class EnvironmentCheck
     ];
 
     /**
+     * Lists what is wrong with the environment, or nothing when it is safe to run.
+     *
      * @return list<string>
      */
     public static function problems(Repository $config): array
@@ -44,12 +46,38 @@ final class EnvironmentCheck
             $problems[] = 'TENANT_BASE_DOMAIN must be set to the real platform domain.';
         }
 
+        if (! str_starts_with((string) $config->get('app.url'), 'https://')) {
+            $problems[] = 'APP_URL must start with https://.';
+        }
+
+        if ($config->get('session.secure') !== true) {
+            $problems[] = 'SESSION_SECURE_COOKIE must be true, so session cookies are only sent over HTTPS.';
+        }
+
+        $proxies = $config->get('trustedproxy.proxies');
+
+        if ($proxies === '*' || $proxies === '**' || (is_array($proxies) && in_array('*', $proxies, true))) {
+            $problems[] = 'TRUSTED_PROXIES must list the proxy address ranges, not "*".';
+        }
+
         if ($config->get('session.domain') !== null) {
             $problems[] = 'SESSION_DOMAIN must be empty, so session cookies stay on one church subdomain.';
         }
 
         if ($config->get('services.sms.primary') === 'log') {
             $problems[] = 'SMS_PRIMARY_PROVIDER must not be "log" outside development.';
+        }
+
+        if ($config->get('services.sms.primary') === 'payperlez' && (blank($config->get('services.payperlez.api_key')) || blank($config->get('services.payperlez.sender_id')))) {
+            $problems[] = 'PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".';
+        }
+
+        if (blank($config->get('backup.gpg_recipient'))) {
+            $problems[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
+        }
+
+        if (blank($config->get('sentry.dsn'))) {
+            $problems[] = 'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.';
         }
 
         if ($config->get('filesystems.default') === 'local') {

@@ -13,6 +13,9 @@ use App\Models\User;
  */
 class UserObserver
 {
+    /**
+     * Ends the staff member's tokens when they are deactivated or change phone number.
+     */
     public function updated(User $user): void
     {
         $lostAccess = $user->wasChanged('is_active') && ! $user->is_active;
@@ -22,6 +25,9 @@ class UserObserver
         }
     }
 
+    /**
+     * Ends all of a deleted staff member's tokens.
+     */
     public function deleted(User $user): void
     {
         $user->tokens()->delete();

@@ -329,18 +329,7 @@ Collect only what the church needs. Fields that are optional in the data model m
 - **Wildcard SSL via Let's Encrypt.** Auto-renewed by Coolify.
 - **API responses include `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`.**
 
-```php
-// app/Http/Middleware/SecurityHeaders.php
-public function handle(Request $request, Closure $next): Response
-{
-    $response = $next($request);
-    $response->headers->set('X-Content-Type-Options', 'nosniff');
-    $response->headers->set('X-Frame-Options', 'DENY');
-    $response->headers->set('X-XSS-Protection', '0'); // Let browser defaults handle it
-    $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    return $response;
-}
-```
+The `SecurityHeaders` middleware (`app/Http/Middleware/SecurityHeaders.php`) sets these headers on every response, including errors and the React page. The header list and the HSTS value live in `config/security.php`; HSTS is sent only over HTTPS, because browsers ignore it over plain HTTP.
 
 ---
 

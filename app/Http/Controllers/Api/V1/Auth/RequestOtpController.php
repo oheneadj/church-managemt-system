@@ -4,25 +4,30 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Auth\RequestOtpAction;
+use App\DTOs\Auth\OtpChallenge;
+use App\DTOs\Auth\RequestOtpDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RequestOtpRequest;
-use App\Services\OtpService;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\OtpRequestedResource;
 
 /**
  * Starts sign-in by texting a code to a staff phone number.
  */
 class RequestOtpController extends Controller
 {
-    public function __construct(private readonly OtpService $otp) {}
+    /**
+     * Takes the request OTP action.
+     */
+    public function __construct(private readonly RequestOtpAction $action) {}
 
-    public function __invoke(RequestOtpRequest $request): JsonResponse
+    /**
+     * Runs RequestOtpAction for this request and returns the OtpRequestedResource.
+     */
+    public function __invoke(RequestOtpRequest $request): OtpRequestedResource
     {
-        $this->otp->request(app('current.church'), $request->phone());
+        $this->action->execute(RequestOtpDTO::fromRequest($request));
 
-        return response()->json([
-            'message' => 'OTP sent',
-            'expires_in' => config('otp.ttl_seconds'),
-        ]);
+        return new OtpRequestedResource(new OtpChallenge((int) config('otp.ttl_seconds')));
     }
 }

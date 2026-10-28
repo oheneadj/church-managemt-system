@@ -12,9 +12,12 @@ function goodConfig(array $overrides = []): Repository
         'app' => ['key' => 'base64:abc', 'url' => 'https://app.example.com', 'debug' => false],
         'database' => ['connections' => ['pgsql' => ['host' => 'postgres', 'database' => 'chms', 'username' => 'chms', 'password' => 'x']], 'redis' => ['default' => ['host' => 'redis']]],
         'tenancy' => ['base_domain' => 'example.com'],
-        'session' => ['domain' => null],
-        'services' => ['sms' => ['primary' => 'payperlez']],
+        'session' => ['domain' => null, 'secure' => true],
+        'trustedproxy' => ['proxies' => ['10.0.0.0/8']],
+        'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender']],
         'filesystems' => ['default' => 'r2'],
+        'sentry' => ['dsn' => 'https://key@o0.ingest.sentry.io/1'],
+        'backup' => ['gpg_recipient' => 'backups@example.com'],
     ];
 
     return new Repository(array_replace_recursive($base, $overrides));
@@ -42,9 +45,17 @@ it('rejects unsafe values', function (): void {
         'session' => ['domain' => '.example.com'],
         'services' => ['sms' => ['primary' => 'log']],
         'filesystems' => ['default' => 'local'],
+        'trustedproxy' => ['proxies' => ['*']],
     ]));
 
-    expect($problems)->toHaveCount(5);
+    expect($problems)->toHaveCount(6); // the bad config sets six wrong values; the Sentry DSN is still set
+});
+
+it('requires HTTPS and secure cookies, because TLS ends at the proxy', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['app' => ['url' => 'http://app.example.com'], 'session' => ['secure' => false]]));
+
+    expect($problems)->toContain('APP_URL must start with https://.')
+        ->and($problems)->toContain('SESSION_SECURE_COOKIE must be true, so session cookies are only sent over HTTPS.');
 });
 
 it('never prints a secret value in a message', function (): void {
@@ -58,4 +69,22 @@ it('fails the env:check command on a bad configuration', function (): void {
     config(['app.debug' => true]);
 
     $this->artisan('env:check')->assertFailed();
+});
+
+it('requires the PayPerlez key and sender id when PayPerlez sends the SMS', function (string $missing): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['services' => ['payperlez' => [$missing => '']]]));
+
+    expect($problems)->toBe(['PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".']);
+})->with(['api_key', 'sender_id']);
+
+it('requires the error monitor DSN outside development', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['sentry' => ['dsn' => '']]));
+
+    expect($problems)->toBe(['SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.']);
+});
+
+it('requires the backup key recipient outside development', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['backup' => ['gpg_recipient' => '']]));
+
+    expect($problems)->toBe(['BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.']);
 });

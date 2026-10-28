@@ -19,7 +19,17 @@ use Throwable;
  */
 class HealthCheck
 {
+    /** The cache key and lifetime (seconds) of the value the cache check writes and reads back. */
+    private const CACHE_PROBE_KEY = 'health-check';
+
+    private const CACHE_PROBE_SECONDS = 10;
+
+    /** The queue that is checked: the one OTP texts use, which must never be stuck. */
+    private const QUEUE_PROBE = 'critical';
+
     /**
+     * Takes the named checks to run.
+     *
      * @param  array<string, Closure(): mixed>  $checks  Each check throws when its dependency is unhealthy.
      */
     public function __construct(private readonly array $checks) {}
@@ -32,13 +42,13 @@ class HealthCheck
         return new self([
             'database' => fn () => DB::connection()->getPdo(),
             'cache' => function (): void {
-                Cache::put('health-check', 'ok', 10);
+                Cache::put(self::CACHE_PROBE_KEY, 'ok', self::CACHE_PROBE_SECONDS);
 
-                if (Cache::get('health-check') !== 'ok') {
+                if (Cache::get(self::CACHE_PROBE_KEY) !== 'ok') {
                     throw new RuntimeException('Cache did not return the value just written.');
                 }
             },
-            'queue' => fn () => Queue::size('critical'),
+            'queue' => fn () => Queue::size(self::QUEUE_PROBE),
             'storage' => fn () => Storage::put('health-check.txt', 'ok'),
             'disk' => function (): void {
                 $free = disk_free_space(storage_path());
@@ -52,6 +62,8 @@ class HealthCheck
     }
 
     /**
+     * Runs every check and reports ok or error for each, logging the reason for any failure.
+     *
      * @return array<string, 'ok'|'error'>
      */
     public function run(): array
