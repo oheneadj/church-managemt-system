@@ -17,6 +17,7 @@ function goodConfig(array $overrides = []): Repository
         'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender']],
         'filesystems' => ['default' => 'r2'],
         'sentry' => ['dsn' => 'https://key@o0.ingest.sentry.io/1'],
+        'backup' => ['gpg_recipient' => 'backups@example.com'],
     ];
 
     return new Repository(array_replace_recursive($base, $overrides));
@@ -80,4 +81,10 @@ it('requires the error monitor DSN outside development', function (): void {
     $problems = EnvironmentCheck::problems(goodConfig(['sentry' => ['dsn' => '']]));
 
     expect($problems)->toBe(['SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.']);
+});
+
+it('requires the backup key recipient outside development', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['backup' => ['gpg_recipient' => '']]));
+
+    expect($problems)->toBe(['BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.']);
 });

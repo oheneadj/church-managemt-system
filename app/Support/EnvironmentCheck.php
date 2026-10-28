@@ -72,6 +72,10 @@ final class EnvironmentCheck
             $problems[] = 'PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".';
         }
 
+        if (blank($config->get('backup.gpg_recipient'))) {
+            $problems[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
+        }
+
         if (blank($config->get('sentry.dsn'))) {
             $problems[] = 'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.';
         }

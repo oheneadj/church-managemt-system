@@ -15,3 +15,6 @@ Schedule::command('model:prune')->dailyAt('03:00')->timezone('UTC')->onOneServer
 
 // Queues the purge of churches whose 90-day grace period after cancelling is over (docs/05). 03:30 UTC, after the prune above.
 Schedule::command('churches:purge-cancelled')->dailyAt('03:30')->timezone('UTC')->onOneServer();
+
+// The daily database backup (docs/16). 02:00 UTC, before the nightly clean-ups, and never two at once.
+Schedule::command('db:backup')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping();
