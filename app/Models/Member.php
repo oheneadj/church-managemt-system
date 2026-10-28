@@ -93,6 +93,8 @@ class Member extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -115,6 +117,8 @@ class Member extends Model
     }
 
     /**
+     * The family this member belongs to.
+     *
      * @return BelongsTo<Family, $this>
      */
     public function family(): BelongsTo
@@ -123,6 +127,8 @@ class Member extends Model
     }
 
     /**
+     * The user this member belongs to.
+     *
      * @return BelongsTo<User, $this>
      */
     public function assignedPastor(): BelongsTo
@@ -131,6 +137,8 @@ class Member extends Model
     }
 
     /**
+     * The department records this member is linked to.
+     *
      * @return BelongsToMany<Department, $this>
      */
     public function departments(): BelongsToMany
@@ -139,6 +147,8 @@ class Member extends Model
     }
 
     /**
+     * The member milestone records of this member.
+     *
      * @return HasMany<MemberMilestone, $this>
      */
     public function milestones(): HasMany
@@ -147,6 +157,8 @@ class Member extends Model
     }
 
     /**
+     * The attendance record records of this member.
+     *
      * @return HasMany<AttendanceRecord, $this>
      */
     public function attendanceRecords(): HasMany
@@ -155,6 +167,8 @@ class Member extends Model
     }
 
     /**
+     * The contribution records of this member.
+     *
      * @return HasMany<Contribution, $this>
      */
     public function contributions(): HasMany

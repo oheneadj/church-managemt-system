@@ -16,8 +16,14 @@ use Illuminate\Http\JsonResponse;
  */
 class StoreMemberMilestoneController extends Controller
 {
+    /**
+     * Takes the add member milestone action.
+     */
     public function __construct(private readonly AddMemberMilestoneAction $action) {}
 
+    /**
+     * Runs AddMemberMilestoneAction for this request and returns the JsonResponse.
+     */
     public function __invoke(StoreMilestoneRequest $request): JsonResponse
     {
         $milestone = $this->action->execute(AddMemberMilestoneDTO::fromRequest($request));

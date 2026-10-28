@@ -9,12 +9,17 @@ namespace App\Http\Requests\Departments;
  */
 class UpdateDepartmentRequest extends DepartmentInputRequest
 {
+    /**
+     * Asks the policy whether the caller may change this department.
+     */
     public function authorize(): bool
     {
         return $this->allowed('update', $this->department());
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

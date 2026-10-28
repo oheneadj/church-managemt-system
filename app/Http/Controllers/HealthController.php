@@ -14,8 +14,14 @@ use Illuminate\Http\JsonResponse;
  */
 class HealthController extends Controller
 {
+    /**
+     * Takes the check health action.
+     */
     public function __construct(private readonly CheckHealthAction $action) {}
 
+    /**
+     * Runs the readiness checks and answers 200 when healthy, 503 when degraded.
+     */
     public function __invoke(): JsonResponse
     {
         $report = $this->action->execute();

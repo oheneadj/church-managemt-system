@@ -15,6 +15,9 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
  */
 final readonly class VerifyOtpDTO
 {
+    /**
+     * Holds the church, phone, code and browser session.
+     */
     public function __construct(
         public Church $church,
         public PhoneNumber $phone,
@@ -22,6 +25,9 @@ final readonly class VerifyOtpDTO
         public ?Session $browserSession = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(VerifyOtpRequest $request): self
     {
         $browserSession = EnsureFrontendRequestsAreStateful::fromFrontend($request) ? $request->session() : null;

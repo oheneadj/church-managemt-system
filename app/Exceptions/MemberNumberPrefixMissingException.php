@@ -12,6 +12,9 @@ use Illuminate\Http\JsonResponse;
  */
 class MemberNumberPrefixMissingException extends Exception
 {
+    /**
+     * Answers 422 asking the admin to set the prefix first.
+     */
     public function render(): JsonResponse
     {
         return response()->json(['message' => 'Set the church member number prefix before adding members.'], 422);

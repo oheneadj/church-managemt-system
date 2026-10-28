@@ -16,8 +16,14 @@ use LogicException;
  */
 final class AddDepartmentMemberAction
 {
+    /**
+     * Takes the member department repository.
+     */
     public function __construct(private readonly MemberDepartmentRepositoryInterface $links) {}
 
+    /**
+     * Puts a member in a department, or changes their role if they already serve there, so a retried request is harmless.
+     */
     public function execute(AddDepartmentMemberDTO $dto): DepartmentMembership
     {
         $departmentId = $dto->department->getKey();

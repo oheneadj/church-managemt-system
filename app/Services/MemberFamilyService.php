@@ -18,6 +18,9 @@ use Illuminate\Validation\ValidationException;
  */
 class MemberFamilyService
 {
+    /**
+     * Takes the family repository and the member repository.
+     */
     public function __construct(
         private readonly FamilyRepositoryInterface $families,
         private readonly MemberRepositoryInterface $members,

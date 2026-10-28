@@ -13,8 +13,14 @@ use App\Repositories\FamilyRepositoryInterface;
  */
 final class UpdateFamilyAction
 {
+    /**
+     * Takes the family repository.
+     */
     public function __construct(private readonly FamilyRepositoryInterface $families) {}
 
+    /**
+     * Renames a family or edits its notes.
+     */
     public function execute(UpdateFamilyDTO $dto): Family
     {
         $family = $this->families->update($dto->family, $dto->attributes);

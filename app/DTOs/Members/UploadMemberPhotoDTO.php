@@ -17,8 +17,14 @@ final readonly class UploadMemberPhotoDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, member and photo.
+     */
     public function __construct(public User $actor, public Member $member, public UploadedFile $photo) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(UploadMemberPhotoRequest $request): self
     {
         $photo = $request->file('photo');

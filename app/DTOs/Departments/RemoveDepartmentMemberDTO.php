@@ -17,8 +17,14 @@ final readonly class RemoveDepartmentMemberDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, department and member.
+     */
     public function __construct(public User $actor, public Department $department, public Member $member) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(RemoveDepartmentMemberRequest $request): self
     {
         return new self(self::actorFrom($request), $request->department(), $request->member());

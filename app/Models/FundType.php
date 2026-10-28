@@ -31,6 +31,8 @@ class FundType extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array

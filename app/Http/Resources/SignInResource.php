@@ -18,6 +18,8 @@ class SignInResource extends JsonResource
     public static $wrap = null;
 
     /**
+     * Shapes the sign in for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

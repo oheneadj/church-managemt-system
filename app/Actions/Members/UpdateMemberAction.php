@@ -19,12 +19,18 @@ use Illuminate\Support\Facades\DB;
  */
 final class UpdateMemberAction
 {
+    /**
+     * Takes the member repository, the member family service and the member department service.
+     */
     public function __construct(
         private readonly MemberRepositoryInterface $members,
         private readonly MemberFamilyService $families,
         private readonly MemberDepartmentService $departments,
     ) {}
 
+    /**
+     * Applies only the fields that were sent.
+     */
     public function execute(UpdateMemberDTO $dto): Member
     {
         return DB::transaction(function () use ($dto): Member {

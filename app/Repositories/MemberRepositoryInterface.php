@@ -21,6 +21,9 @@ interface MemberRepositoryInterface
      */
     public function paginate(ListMembersDTO $filters): LengthAwarePaginator;
 
+    /**
+     * Saves the member, new or changed.
+     */
     public function save(Member $member): Member;
 
     /**
@@ -38,5 +41,8 @@ interface MemberRepositoryInterface
      */
     public function loadDetail(Member $member, bool $withMilestones): Member;
 
+    /**
+     * Finds a member of the current church, or fails with a not-found error.
+     */
     public function findOrFail(string $id): Member;
 }

@@ -15,6 +15,9 @@ final readonly class CreateDepartmentDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, name, description, head user id and is active.
+     */
     public function __construct(
         public User $actor,
         public string $name,
@@ -23,6 +26,9 @@ final readonly class CreateDepartmentDTO
         public bool $isActive = true,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(StoreDepartmentRequest $request): self
     {
         $v = $request->validated();

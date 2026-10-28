@@ -13,8 +13,14 @@ use App\ValueObjects\PhoneNumber;
  */
 final readonly class RequestOtpDTO
 {
+    /**
+     * Holds the church and phone.
+     */
     public function __construct(public Church $church, public PhoneNumber $phone) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(RequestOtpRequest $request): self
     {
         return new self(app('current.church'), $request->phone());

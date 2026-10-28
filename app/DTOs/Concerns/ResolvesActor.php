@@ -14,6 +14,9 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 trait ResolvesActor
 {
+    /**
+     * Reads the signed-in staff member from the request.
+     */
     private static function actorFrom(FormRequest $request): User
     {
         $user = $request->user();

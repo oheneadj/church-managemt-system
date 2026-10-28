@@ -15,5 +15,8 @@ class MemberCreated
 {
     use Dispatchable;
 
+    /**
+     * Holds the member and actor.
+     */
     public function __construct(public readonly Member $member, public readonly User $actor) {}
 }

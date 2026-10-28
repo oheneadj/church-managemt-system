@@ -17,6 +17,8 @@ abstract class DepartmentInputRequest extends FormRequest
     use DelegatesToPolicy;
 
     /**
+     * The department field rules shared by create and update.
+     *
      * @return array<string, list<mixed>>
      */
     protected function departmentRules(bool $partial): array

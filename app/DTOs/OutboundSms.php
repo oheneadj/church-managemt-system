@@ -12,6 +12,9 @@ use App\Enums\RecipientType;
  */
 final readonly class OutboundSms
 {
+    /**
+     * Holds everything the SMS job needs, including the church id because a queued job has no request.
+     */
     public function __construct(
         public string $churchId,
         public string $phone,

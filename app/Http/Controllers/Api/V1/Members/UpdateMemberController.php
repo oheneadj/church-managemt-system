@@ -15,8 +15,14 @@ use App\Http\Resources\MemberResource;
  */
 class UpdateMemberController extends Controller
 {
+    /**
+     * Takes the update member action.
+     */
     public function __construct(private readonly UpdateMemberAction $action) {}
 
+    /**
+     * Runs UpdateMemberAction for this request and returns the MemberResource.
+     */
     public function __invoke(UpdateMemberRequest $request): MemberResource
     {
         return new MemberResource($this->action->execute(UpdateMemberDTO::fromRequest($request)));

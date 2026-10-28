@@ -11,6 +11,9 @@ use App\Models\AuditLog;
  */
 class EloquentAuditLogRepository implements AuditLogRepositoryInterface
 {
+    /**
+     * Adds one line to the history. Lines are never changed or removed.
+     */
     public function append(array $attributes): AuditLog
     {
         return AuditLog::query()->create($attributes);

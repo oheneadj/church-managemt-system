@@ -20,6 +20,9 @@ class ResetOtpLockout extends Command
 
     protected $description = 'Clear the OTP lockout and any pending code for a staff phone number';
 
+    /**
+     * Clears the lockout for one phone number of one church, for the support runbook.
+     */
     public function handle(ChurchRepositoryInterface $churches, ResetOtpLockoutAction $action): int
     {
         $church = $churches->findBySlug((string) $this->argument('church'));

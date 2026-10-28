@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 
+/**
+ * The base class every controller extends. It only holds the helper that reads the signed-in staff member;
+ * controllers do nothing else (build a DTO, call one Action, return a Resource).
+ */
 abstract class Controller
 {
     /**

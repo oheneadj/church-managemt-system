@@ -18,6 +18,9 @@ class AssignRequestId
 {
     public const HEADER = 'X-Request-ID';
 
+    /**
+     * Gives the request an id, adds it to the log context and returns it in the response header.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $sent = (string) $request->header(self::HEADER);

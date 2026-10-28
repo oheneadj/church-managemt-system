@@ -15,8 +15,14 @@ use App\Http\Resources\FamilyResource;
  */
 class ShowFamilyController extends Controller
 {
+    /**
+     * Takes the show family action.
+     */
     public function __construct(private readonly ShowFamilyAction $action) {}
 
+    /**
+     * Runs ShowFamilyAction for this request and returns the FamilyResource.
+     */
     public function __invoke(ShowFamilyRequest $request): FamilyResource
     {
         return new FamilyResource($this->action->execute(ShowFamilyDTO::fromRequest($request)));

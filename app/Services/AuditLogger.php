@@ -17,9 +17,14 @@ use Illuminate\Support\Facades\Context;
  */
 class AuditLogger
 {
+    /**
+     * Takes the audit log repository.
+     */
     public function __construct(private readonly AuditLogRepositoryInterface $logs) {}
 
     /**
+     * Appends one change-history line describing what happened, who did it and why.
+     *
      * @param  array<string, mixed>  $old  previous values of the changed fields (empty for a create)
      * @param  array<string, mixed>  $new  new values of the changed fields
      */

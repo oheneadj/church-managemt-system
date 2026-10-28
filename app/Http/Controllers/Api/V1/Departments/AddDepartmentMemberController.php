@@ -16,8 +16,14 @@ use Illuminate\Http\JsonResponse;
  */
 class AddDepartmentMemberController extends Controller
 {
+    /**
+     * Takes the add department member action.
+     */
     public function __construct(private readonly AddDepartmentMemberAction $action) {}
 
+    /**
+     * Runs AddDepartmentMemberAction for this request and returns the JsonResponse.
+     */
     public function __invoke(AddDepartmentMemberRequest $request): JsonResponse
     {
         $membership = $this->action->execute(AddDepartmentMemberDTO::fromRequest($request));

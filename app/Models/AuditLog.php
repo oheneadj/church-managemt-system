@@ -41,6 +41,8 @@ class AuditLog extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -54,6 +56,8 @@ class AuditLog extends Model
     }
 
     /**
+     * The record this entry is about.
+     *
      * @return MorphTo<Model, $this>
      */
     public function auditable(): MorphTo

@@ -20,6 +20,8 @@ use Throwable;
 class HealthCheck
 {
     /**
+     * Takes the named checks to run.
+     *
      * @param  array<string, Closure(): mixed>  $checks  Each check throws when its dependency is unhealthy.
      */
     public function __construct(private readonly array $checks) {}
@@ -52,6 +54,8 @@ class HealthCheck
     }
 
     /**
+     * Runs every check and reports ok or error for each, logging the reason for any failure.
+     *
      * @return array<string, 'ok'|'error'>
      */
     public function run(): array

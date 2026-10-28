@@ -21,11 +21,15 @@ interface DepartmentRepositoryInterface
     public function paginate(ListDepartmentsDTO $filters): LengthAwarePaginator;
 
     /**
+     * Creates a department.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): Department;
 
     /**
+     * Changes a department.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function update(Department $department, array $attributes): Department;

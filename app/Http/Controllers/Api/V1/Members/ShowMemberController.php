@@ -15,8 +15,14 @@ use App\Http\Resources\MemberResource;
  */
 class ShowMemberController extends Controller
 {
+    /**
+     * Takes the show member action.
+     */
     public function __construct(private readonly ShowMemberAction $action) {}
 
+    /**
+     * Runs ShowMemberAction for this request and returns the MemberResource.
+     */
     public function __invoke(ShowMemberRequest $request): MemberResource
     {
         return new MemberResource($this->action->execute(ShowMemberDTO::fromRequest($request)));

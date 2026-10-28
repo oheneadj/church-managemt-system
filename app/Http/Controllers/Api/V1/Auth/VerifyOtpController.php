@@ -16,8 +16,14 @@ use App\Http\Resources\SignInResource;
  */
 class VerifyOtpController extends Controller
 {
+    /**
+     * Takes the verify OTP action.
+     */
     public function __construct(private readonly VerifyOtpAction $action) {}
 
+    /**
+     * Runs VerifyOtpAction for this request and returns the SignInResource.
+     */
     public function __invoke(VerifyOtpRequest $request): SignInResource
     {
         return new SignInResource($this->action->execute(VerifyOtpDTO::fromRequest($request)));

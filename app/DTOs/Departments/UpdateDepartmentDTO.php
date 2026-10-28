@@ -17,10 +17,15 @@ final readonly class UpdateDepartmentDTO
     use ResolvesActor;
 
     /**
+     * Holds the actor, department and attributes.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function __construct(public User $actor, public Department $department, public array $attributes) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(UpdateDepartmentRequest $request): self
     {
         return new self(self::actorFrom($request), $request->department(), $request->validated());

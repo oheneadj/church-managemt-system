@@ -15,8 +15,14 @@ use App\Http\Resources\FamilyCollection;
  */
 class ListFamiliesController extends Controller
 {
+    /**
+     * Takes the list families action.
+     */
     public function __construct(private readonly ListFamiliesAction $action) {}
 
+    /**
+     * Runs ListFamiliesAction for this request and returns the FamilyCollection.
+     */
     public function __invoke(ListFamiliesRequest $request): FamilyCollection
     {
         return new FamilyCollection($this->action->execute(ListFamiliesDTO::fromRequest($request)));

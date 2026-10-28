@@ -11,6 +11,9 @@ use App\Models\MemberMilestone;
  */
 class EloquentMemberMilestoneRepository implements MemberMilestoneRepositoryInterface
 {
+    /**
+     * Records a milestone.
+     */
     public function create(array $attributes): MemberMilestone
     {
         return MemberMilestone::query()->create($attributes);

@@ -16,12 +16,17 @@ class UpdateMemberStatusRequest extends FormRequest
 {
     use DelegatesToPolicy;
 
+    /**
+     * Asks the policy whether the caller may move this member to the requested status.
+     */
     public function authorize(): bool
     {
         return $this->allowed('changeStatus', [$this->member(), $this->status()]);
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

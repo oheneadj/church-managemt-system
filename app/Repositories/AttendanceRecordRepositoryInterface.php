@@ -11,5 +11,8 @@ use DateTimeInterface;
  */
 interface AttendanceRecordRepositoryInterface
 {
+    /**
+     * How many services the member was recorded at since the given moment.
+     */
     public function countForMemberSince(string $memberId, DateTimeInterface $since): int;
 }

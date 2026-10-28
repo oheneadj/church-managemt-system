@@ -16,6 +16,9 @@ final readonly class AddDepartmentMemberDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, department, member id and role.
+     */
     public function __construct(
         public User $actor,
         public Department $department,
@@ -23,6 +26,9 @@ final readonly class AddDepartmentMemberDTO
         public ?string $role = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(AddDepartmentMemberRequest $request): self
     {
         $v = $request->validated();

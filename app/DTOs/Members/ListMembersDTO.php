@@ -18,6 +18,9 @@ final readonly class ListMembersDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the values this operation needs.
+     */
     public function __construct(
         public User $viewer,
         public ?MemberStatus $status = null,
@@ -31,6 +34,9 @@ final readonly class ListMembersDTO
         public int $perPage = 25,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(ListMembersRequest $request): self
     {
         $data = $request->validated();

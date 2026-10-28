@@ -38,6 +38,8 @@ class MemberDepartment extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -48,6 +50,8 @@ class MemberDepartment extends Model
     }
 
     /**
+     * The member this member department belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function member(): BelongsTo
@@ -56,6 +60,8 @@ class MemberDepartment extends Model
     }
 
     /**
+     * The department this member department belongs to.
+     *
      * @return BelongsTo<Department, $this>
      */
     public function department(): BelongsTo

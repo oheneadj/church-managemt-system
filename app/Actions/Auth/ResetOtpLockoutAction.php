@@ -12,8 +12,14 @@ use App\Services\OtpService;
  */
 final class ResetOtpLockoutAction
 {
+    /**
+     * Takes the OTP service.
+     */
     public function __construct(private readonly OtpService $otp) {}
 
+    /**
+     * Clears a phone number's sign-in lockout and any pending code.
+     */
     public function execute(ResetOtpLockoutDTO $dto): void
     {
         $this->otp->resetLockout($dto->church, $dto->phone);

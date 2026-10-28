@@ -17,6 +17,9 @@ final readonly class AddMemberMilestoneDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the values this operation needs.
+     */
     public function __construct(
         public User $actor,
         public Member $member,
@@ -27,6 +30,9 @@ final readonly class AddMemberMilestoneDTO
         public ?string $notes = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(StoreMilestoneRequest $request): self
     {
         $v = $request->validated();

@@ -13,8 +13,14 @@ use App\Repositories\FamilyRepositoryInterface;
  */
 final class ShowFamilyAction
 {
+    /**
+     * Takes the family repository.
+     */
     public function __construct(private readonly FamilyRepositoryInterface $families) {}
 
+    /**
+     * Loads one family with its head and the members the viewer may see.
+     */
     public function execute(ShowFamilyDTO $dto): Family
     {
         return $this->families->loadWithVisibleMembers($dto->family, $dto->viewer);

@@ -13,8 +13,14 @@ use App\Repositories\MemberMilestoneRepositoryInterface;
  */
 final class AddMemberMilestoneAction
 {
+    /**
+     * Takes the member milestone repository.
+     */
     public function __construct(private readonly MemberMilestoneRepositoryInterface $milestones) {}
 
+    /**
+     * Records a milestone such as a baptism on a member, with the staff member who entered it.
+     */
     public function execute(AddMemberMilestoneDTO $dto): MemberMilestone
     {
         return $this->milestones->create([

@@ -22,6 +22,8 @@ final readonly class CreateMemberDTO
     use ResolvesActor;
 
     /**
+     * Holds the values this operation needs.
+     *
      * @param  list<string>  $departmentIds
      */
     public function __construct(
@@ -56,6 +58,9 @@ final readonly class CreateMemberDTO
         public array $departmentIds = [],
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(StoreMemberRequest $request): self
     {
         $v = $request->validated();

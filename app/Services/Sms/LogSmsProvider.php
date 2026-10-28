@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Log;
  */
 final class LogSmsProvider implements SmsProvider
 {
+    /**
+     * Writes the message to the log instead of sending it. For development only.
+     */
     public function send(string $phone, string $message): void
     {
         if (app()->environment('local')) {

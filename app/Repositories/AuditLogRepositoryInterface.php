@@ -12,6 +12,8 @@ use App\Models\AuditLog;
 interface AuditLogRepositoryInterface
 {
     /**
+     * Adds one line to the history. Lines are never changed or removed.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function append(array $attributes): AuditLog;

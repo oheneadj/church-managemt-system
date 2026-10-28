@@ -19,6 +19,8 @@ final readonly class Money implements Stringable
     public string $amount;
 
     /**
+     * Takes the amount.
+     *
      * @param  numeric-string|string  $amount  a decimal such as "2400.5" or "2400.50"; negative values are allowed for refunds
      */
     private function __construct(string $amount)
@@ -50,6 +52,9 @@ final readonly class Money implements Stringable
         return self::CURRENCY.' '.($negative ? '-' : '').preg_replace('/\B(?=(\d{3})+(?!\d))/', ',', $digits).'.'.$pesewas;
     }
 
+    /**
+     * The amount as a two-place decimal string.
+     */
     public function __toString(): string
     {
         return $this->amount;

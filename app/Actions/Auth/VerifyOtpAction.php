@@ -20,11 +20,17 @@ use App\Services\OtpService;
  */
 final class VerifyOtpAction
 {
+    /**
+     * Takes the OTP service and the auth session service.
+     */
     public function __construct(
         private readonly OtpService $otp,
         private readonly AuthSessionService $sessions,
     ) {}
 
+    /**
+     * Completes sign-in.
+     */
     public function execute(VerifyOtpDTO $dto): SignedInStaff
     {
         $user = $this->otp->verify($dto->church, $dto->phone, $dto->code);

@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class FamilyResource extends JsonResource
 {
     /**
+     * Shapes the family for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

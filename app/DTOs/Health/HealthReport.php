@@ -12,6 +12,8 @@ use DateTimeInterface;
 final readonly class HealthReport
 {
     /**
+     * Holds the checks, healthy and checked at.
+     *
      * @param  array<string, 'ok'|'error'>  $checks
      */
     public function __construct(public array $checks, public bool $healthy, public DateTimeInterface $checkedAt) {}

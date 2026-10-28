@@ -15,6 +15,9 @@ final readonly class CreateFamilyDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, name, notes and head member id.
+     */
     public function __construct(
         public User $actor,
         public string $name,
@@ -22,6 +25,9 @@ final readonly class CreateFamilyDTO
         public ?string $headMemberId = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(StoreFamilyRequest $request): self
     {
         $v = $request->validated();

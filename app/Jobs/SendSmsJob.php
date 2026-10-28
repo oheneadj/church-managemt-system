@@ -28,8 +28,14 @@ class SendSmsJob implements ShouldQueue
     /** @var list<int> */
     public array $backoff = [5, 20, 60];
 
+    /**
+     * Takes the SMS.
+     */
     public function __construct(public readonly OutboundSms $sms) {}
 
+    /**
+     * Sends the text through the active provider and records it as sent.
+     */
     public function handle(SmsProvider $provider, MessageLogRepositoryInterface $logs): void
     {
         $provider->send($this->sms->phone, $this->sms->message);
@@ -37,11 +43,17 @@ class SendSmsJob implements ShouldQueue
         $this->record($logs, MessageStatus::Sent);
     }
 
+    /**
+     * Records the text as failed once every retry is used up.
+     */
     public function failed(Throwable $exception): void
     {
         $this->record(app(MessageLogRepositoryInterface::class), MessageStatus::Failed);
     }
 
+    /**
+     * Writes one line to the message log with the given outcome.
+     */
     private function record(MessageLogRepositoryInterface $logs, MessageStatus $status): void
     {
         $logs->create([

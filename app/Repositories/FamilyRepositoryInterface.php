@@ -22,11 +22,15 @@ interface FamilyRepositoryInterface
     public function paginate(ListFamiliesDTO $filters): LengthAwarePaginator;
 
     /**
+     * Creates a family.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): Family;
 
     /**
+     * Changes a family.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function update(Family $family, array $attributes): Family;
@@ -41,6 +45,9 @@ interface FamilyRepositoryInterface
      */
     public function lock(string $familyId): Family;
 
+    /**
+     * Records the member as the family's head.
+     */
     public function setHead(string $familyId, string $memberId): void;
 
     /**

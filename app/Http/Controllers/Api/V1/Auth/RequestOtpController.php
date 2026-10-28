@@ -15,8 +15,14 @@ use App\Http\Resources\OtpRequestedResource;
  */
 class RequestOtpController extends Controller
 {
+    /**
+     * Takes the request OTP action.
+     */
     public function __construct(private readonly RequestOtpAction $action) {}
 
+    /**
+     * Runs RequestOtpAction for this request and returns the OtpRequestedResource.
+     */
     public function __invoke(RequestOtpRequest $request): OtpRequestedResource
     {
         $this->action->execute(RequestOtpDTO::fromRequest($request));

@@ -12,6 +12,8 @@ use App\Models\MessageLog;
 interface MessageLogRepositoryInterface
 {
     /**
+     * Writes one line to the message log.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): MessageLog;

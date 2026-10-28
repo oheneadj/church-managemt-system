@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Hash;
  */
 class OtpService
 {
+    /**
+     * Takes the user repository.
+     */
     public function __construct(private readonly UserRepositoryInterface $users) {}
 
     /**
@@ -103,6 +106,9 @@ class OtpService
         Cache::forget($this->codeKey($church, $phone));
     }
 
+    /**
+     * A random numeric code of the configured length.
+     */
     private function generateCode(): string
     {
         $length = (int) config('otp.length');
@@ -111,11 +117,17 @@ class OtpService
     }
 
     // Keys carry the church id and a hash of the phone, so churches never share state and raw numbers stay out of Redis.
+    /**
+     * The cache key of a phone number's pending code.
+     */
     private function codeKey(Church $church, PhoneNumber $phone): string
     {
         return "church:{$church->id}:otp:".hash('sha256', $phone->e164);
     }
 
+    /**
+     * The cache key of a phone number's count of wrong codes.
+     */
     private function attemptsKey(Church $church, PhoneNumber $phone): string
     {
         return "church:{$church->id}:otp-attempts:".hash('sha256', $phone->e164);

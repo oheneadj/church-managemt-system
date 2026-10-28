@@ -24,6 +24,8 @@ final class EnvironmentCheck
     ];
 
     /**
+     * Lists what is wrong with the environment, or nothing when it is safe to run.
+     *
      * @return list<string>
      */
     public static function problems(Repository $config): array

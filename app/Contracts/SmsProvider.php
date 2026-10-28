@@ -10,5 +10,8 @@ namespace App\Contracts;
  */
 interface SmsProvider
 {
+    /**
+     * Sends one text message. Implementations translate failures into exceptions.
+     */
     public function send(string $phone, string $message): void;
 }

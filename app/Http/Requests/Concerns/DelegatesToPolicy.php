@@ -16,6 +16,8 @@ use LogicException;
 trait DelegatesToPolicy
 {
     /**
+     * Whether the signed-in user passes the policy check for this ability.
+     *
      * @param  array<int, mixed>|mixed  $arguments
      */
     protected function allowed(string $ability, mixed $arguments): bool
@@ -23,6 +25,9 @@ trait DelegatesToPolicy
         return $this->user()?->can($ability, $arguments) === true;
     }
 
+    /**
+     * The member that route binding found for this request.
+     */
     public function member(): Member
     {
         $member = $this->route('member');
@@ -30,6 +35,9 @@ trait DelegatesToPolicy
         return $member instanceof Member ? $member : throw new LogicException('This route has no member.');
     }
 
+    /**
+     * The family that route binding found for this request.
+     */
     public function family(): Family
     {
         $family = $this->route('family');
@@ -37,6 +45,9 @@ trait DelegatesToPolicy
         return $family instanceof Family ? $family : throw new LogicException('This route has no family.');
     }
 
+    /**
+     * The department that route binding found for this request.
+     */
     public function department(): Department
     {
         $department = $this->route('department');

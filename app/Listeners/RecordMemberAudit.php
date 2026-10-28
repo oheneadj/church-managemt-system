@@ -20,8 +20,14 @@ class RecordMemberAudit
     /** Fields whose values are encrypted at rest; the change log records that they changed, never what to. */
     private const SENSITIVE = ['address', 'national_id_number'];
 
+    /**
+     * Takes the audit logger.
+     */
     public function __construct(private readonly AuditLogger $audit) {}
 
+    /**
+     * Writes the audit line that matches the member event.
+     */
     public function handle(MemberCreated|MemberUpdated|MemberStatusChanged|MemberViewed $event): void
     {
         match (true) {
@@ -56,6 +62,8 @@ class RecordMemberAudit
     }
 
     /**
+     * Replaces the values of encrypted fields with a marker before they are logged.
+     *
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */

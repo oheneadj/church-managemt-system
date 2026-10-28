@@ -16,6 +16,8 @@ class OtpRequestedResource extends JsonResource
     public static $wrap = null;
 
     /**
+     * Shapes the OTP requested for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

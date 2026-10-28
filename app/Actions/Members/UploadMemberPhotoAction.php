@@ -14,11 +14,17 @@ use App\Services\MemberPhotoService;
  */
 final class UploadMemberPhotoAction
 {
+    /**
+     * Takes the member photo service and the member repository.
+     */
     public function __construct(
         private readonly MemberPhotoService $photos,
         private readonly MemberRepositoryInterface $members,
     ) {}
 
+    /**
+     * Replaces a member's profile photo: the service processes and stores the file, then the path is saved.
+     */
     public function execute(UploadMemberPhotoDTO $dto): Member
     {
         $member = $dto->member;

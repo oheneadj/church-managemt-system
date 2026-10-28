@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class EloquentContributionRepository implements ContributionRepositoryInterface
 {
+    /**
+     * Adds up a member's unvoided gifts since the given moment, or all of them.
+     */
     public function totalForMember(string $memberId, ?DateTimeInterface $since): string
     {
         $sum = Contribution::query()

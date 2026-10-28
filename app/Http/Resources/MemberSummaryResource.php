@@ -17,6 +17,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class MemberSummaryResource extends JsonResource
 {
     /**
+     * Shapes the member summary for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

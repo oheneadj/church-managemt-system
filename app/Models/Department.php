@@ -42,6 +42,8 @@ class Department extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -52,6 +54,8 @@ class Department extends Model
     }
 
     /**
+     * The user this department belongs to.
+     *
      * @return BelongsTo<User, $this>
      */
     public function head(): BelongsTo
@@ -60,6 +64,8 @@ class Department extends Model
     }
 
     /**
+     * The member records this department is linked to.
+     *
      * @return BelongsToMany<Member, $this>
      */
     public function members(): BelongsToMany

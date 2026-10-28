@@ -15,8 +15,14 @@ use Illuminate\Support\Facades\DB;
  */
 final class ChangeMemberStatusAction
 {
+    /**
+     * Takes the member repository.
+     */
     public function __construct(private readonly MemberRepositoryInterface $members) {}
 
+    /**
+     * Moves a member to another status, keeping the note as the reason in the change log.
+     */
     public function execute(ChangeMemberStatusDTO $dto): Member
     {
         return DB::transaction(function () use ($dto): Member {

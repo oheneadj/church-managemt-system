@@ -14,8 +14,14 @@ use Illuminate\Http\Request;
  */
 final readonly class LogoutDTO
 {
+    /**
+     * Holds the user and session.
+     */
     public function __construct(public User $user, public ?Session $session = null) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(Request $request): self
     {
         $user = $request->user();

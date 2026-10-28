@@ -15,8 +15,14 @@ use App\Http\Resources\MemberCollection;
  */
 class ListMembersController extends Controller
 {
+    /**
+     * Takes the list members action.
+     */
     public function __construct(private readonly ListMembersAction $action) {}
 
+    /**
+     * Runs ListMembersAction for this request and returns the MemberCollection.
+     */
     public function __invoke(ListMembersRequest $request): MemberCollection
     {
         return new MemberCollection($this->action->execute(ListMembersDTO::fromRequest($request)));

@@ -12,16 +12,25 @@ use App\Models\User;
  */
 class DepartmentPolicy
 {
+    /**
+     * Whether the user may list departments.
+     */
     public function viewAny(User $user): bool
     {
         return $user->hasPermissionTo('members.view');
     }
 
+    /**
+     * Whether the user may add a department.
+     */
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('members.edit');
     }
 
+    /**
+     * Whether the user may change this department.
+     */
     public function update(User $user, Department $department): bool
     {
         return $user->church_id === $department->church_id && $user->hasPermissionTo('members.edit');

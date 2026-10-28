@@ -15,8 +15,14 @@ use App\Http\Resources\FamilyResource;
  */
 class UpdateFamilyController extends Controller
 {
+    /**
+     * Takes the update family action.
+     */
     public function __construct(private readonly UpdateFamilyAction $action) {}
 
+    /**
+     * Runs UpdateFamilyAction for this request and returns the FamilyResource.
+     */
     public function __invoke(UpdateFamilyRequest $request): FamilyResource
     {
         return new FamilyResource($this->action->execute(UpdateFamilyDTO::fromRequest($request)));

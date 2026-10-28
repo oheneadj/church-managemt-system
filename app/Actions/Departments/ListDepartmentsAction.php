@@ -14,9 +14,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  */
 final class ListDepartmentsAction
 {
+    /**
+     * Takes the department repository.
+     */
     public function __construct(private readonly DepartmentRepositoryInterface $departments) {}
 
     /**
+     * Lists one page of departments.
+     *
      * @return LengthAwarePaginator<int, Department>
      */
     public function execute(ListDepartmentsDTO $dto): LengthAwarePaginator

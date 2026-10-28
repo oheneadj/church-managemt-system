@@ -11,5 +11,8 @@ use App\Models\MemberDepartment;
  */
 final readonly class DepartmentMembership
 {
+    /**
+     * Holds the link and whether it is new.
+     */
     public function __construct(public MemberDepartment $link, public bool $created) {}
 }

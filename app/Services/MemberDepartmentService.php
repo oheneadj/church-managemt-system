@@ -13,9 +13,14 @@ use App\Repositories\MemberDepartmentRepositoryInterface;
  */
 class MemberDepartmentService
 {
+    /**
+     * Takes the member department repository.
+     */
     public function __construct(private readonly MemberDepartmentRepositoryInterface $links) {}
 
     /**
+     * Makes the member's departments match the list, soft deleting links that are no longer wanted.
+     *
      * @param  list<string>  $departmentIds
      */
     public function sync(Member $member, array $departmentIds): void

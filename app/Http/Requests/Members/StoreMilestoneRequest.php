@@ -16,12 +16,17 @@ class StoreMilestoneRequest extends FormRequest
 {
     use DelegatesToPolicy;
 
+    /**
+     * Asks the policy whether the caller may change this member.
+     */
     public function authorize(): bool
     {
         return $this->allowed('update', $this->member());
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

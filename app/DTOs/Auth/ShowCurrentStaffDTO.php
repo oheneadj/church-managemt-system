@@ -14,8 +14,14 @@ use Illuminate\Http\Request;
  */
 final readonly class ShowCurrentStaffDTO
 {
+    /**
+     * Holds the user and church.
+     */
     public function __construct(public User $user, public Church $church) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(Request $request): self
     {
         $user = $request->user();

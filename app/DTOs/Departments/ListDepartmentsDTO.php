@@ -15,8 +15,14 @@ final readonly class ListDepartmentsDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the viewer, is active and per page.
+     */
     public function __construct(public User $viewer, public ?bool $isActive = null, public int $perPage = 25) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(ListDepartmentsRequest $request): self
     {
         $v = $request->validated();

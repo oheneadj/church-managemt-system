@@ -17,6 +17,9 @@ final readonly class ChangeMemberStatusDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the actor, member, status and note.
+     */
     public function __construct(
         public User $actor,
         public Member $member,
@@ -24,6 +27,9 @@ final readonly class ChangeMemberStatusDTO
         public ?string $note = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(UpdateMemberStatusRequest $request): self
     {
         return new self(self::actorFrom($request), $request->member(), $request->status(), $request->validated('note'));

@@ -15,8 +15,14 @@ use App\Http\Resources\DepartmentResource;
  */
 class UpdateDepartmentController extends Controller
 {
+    /**
+     * Takes the update department action.
+     */
     public function __construct(private readonly UpdateDepartmentAction $action) {}
 
+    /**
+     * Runs UpdateDepartmentAction for this request and returns the DepartmentResource.
+     */
     public function __invoke(UpdateDepartmentRequest $request): DepartmentResource
     {
         return new DepartmentResource($this->action->execute(UpdateDepartmentDTO::fromRequest($request)));

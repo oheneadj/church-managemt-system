@@ -17,8 +17,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ResolveTenant
 {
+    /**
+     * Takes the church repository.
+     */
     public function __construct(private readonly ChurchRepositoryInterface $churches) {}
 
+    /**
+     * Finds the church for the request host and binds it, or answers 404.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $church = $this->findChurch($request->getHost());
@@ -34,6 +40,9 @@ class ResolveTenant
         return $next($request);
     }
 
+    /**
+     * Looks the church up by subdomain slug, or by custom domain when the host is not on the base domain.
+     */
     private function findChurch(string $host): ?Church
     {
         $suffix = '.'.config('tenancy.base_domain');

@@ -12,6 +12,8 @@ use App\Models\MemberMilestone;
 interface MemberMilestoneRepositoryInterface
 {
     /**
+     * Records a milestone.
+     *
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): MemberMilestone;

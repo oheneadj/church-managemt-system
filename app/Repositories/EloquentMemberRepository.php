@@ -39,6 +39,9 @@ class EloquentMemberRepository implements MemberRepositoryInterface
             ->paginate($filters->perPage);
     }
 
+    /**
+     * Saves the member, new or changed.
+     */
     public function save(Member $member): Member
     {
         $member->save();
@@ -46,11 +49,17 @@ class EloquentMemberRepository implements MemberRepositoryInterface
         return $member;
     }
 
+    /**
+     * Whether the member is inside the viewer's part of the directory.
+     */
     public function isVisibleTo(User $viewer, Member $member): bool
     {
         return Member::query()->visibleTo($viewer)->whereKey($member->getKey())->exists();
     }
 
+    /**
+     * Whether a different member already holds the head role in the family.
+     */
     public function familyHasOtherHead(string $familyId, ?string $exceptMemberId): bool
     {
         return Member::query()
@@ -60,6 +69,9 @@ class EloquentMemberRepository implements MemberRepositoryInterface
             ->exists();
     }
 
+    /**
+     * Loads the family, departments and pastor, and the milestones when asked.
+     */
     public function loadDetail(Member $member, bool $withMilestones): Member
     {
         $member->load(['family', 'departments', 'assignedPastor']);
@@ -71,6 +83,9 @@ class EloquentMemberRepository implements MemberRepositoryInterface
         return $member;
     }
 
+    /**
+     * Finds a member of the current church, or fails with a not-found error.
+     */
     public function findOrFail(string $id): Member
     {
         return Member::query()->whereKey($id)->firstOrFail();

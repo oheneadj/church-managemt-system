@@ -12,5 +12,8 @@ use App\ValueObjects\PhoneNumber;
  */
 final readonly class ResetOtpLockoutDTO
 {
+    /**
+     * Holds the church and phone.
+     */
     public function __construct(public Church $church, public PhoneNumber $phone) {}
 }

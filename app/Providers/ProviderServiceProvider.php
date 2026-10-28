@@ -15,6 +15,9 @@ use RuntimeException;
  */
 class ProviderServiceProvider extends ServiceProvider
 {
+    /**
+     * Binds each third-party contract to the driver chosen in config.
+     */
     public function register(): void
     {
         $this->app->bind(SmsProvider::class, function (): SmsProvider {

@@ -16,8 +16,14 @@ final readonly class ShowMemberDTO
 {
     use ResolvesActor;
 
+    /**
+     * Holds the viewer and member.
+     */
     public function __construct(public User $viewer, public Member $member) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(ShowMemberRequest $request): self
     {
         return new self(self::actorFrom($request), $request->member());

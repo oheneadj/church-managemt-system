@@ -15,8 +15,14 @@ use App\Repositories\ChurchRepositoryInterface;
  */
 class MemberNumberGenerator
 {
+    /**
+     * Takes the church repository.
+     */
     public function __construct(private readonly ChurchRepositoryInterface $churches) {}
 
+    /**
+     * Reserves and returns the church's next member number.
+     */
     public function next(string $churchId): string
     {
         $church = $this->churches->lock($churchId);

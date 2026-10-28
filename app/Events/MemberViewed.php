@@ -15,5 +15,8 @@ class MemberViewed
 {
     use Dispatchable;
 
+    /**
+     * Holds the member and viewer.
+     */
     public function __construct(public readonly Member $member, public readonly User $viewer) {}
 }

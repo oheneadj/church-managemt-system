@@ -16,6 +16,9 @@ class MemberStatusChanged
 {
     use Dispatchable;
 
+    /**
+     * Holds the member, actor, previous and note.
+     */
     public function __construct(
         public readonly Member $member,
         public readonly User $actor,

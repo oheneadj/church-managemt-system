@@ -39,6 +39,8 @@ class Service extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -52,6 +54,8 @@ class Service extends Model
     }
 
     /**
+     * The attendance record records of this service.
+     *
      * @return HasMany<AttendanceRecord, $this>
      */
     public function attendanceRecords(): HasMany

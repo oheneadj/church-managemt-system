@@ -12,5 +12,8 @@ use App\Models\User;
  */
 final readonly class SignedInStaff
 {
+    /**
+     * Holds the user, church and token.
+     */
     public function __construct(public User $user, public Church $church, public ?string $token = null) {}
 }

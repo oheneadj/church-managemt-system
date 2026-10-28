@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class EloquentDepartmentRepository implements DepartmentRepositoryInterface
 {
+    /**
+     * One page of departments, counting only the members the viewer may see.
+     */
     public function paginate(ListDepartmentsDTO $filters): LengthAwarePaginator
     {
         return Department::query()
@@ -28,11 +31,17 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
             ->paginate($filters->perPage);
     }
 
+    /**
+     * Creates a department and reloads its database defaults.
+     */
     public function create(array $attributes): Department
     {
         return Department::query()->create($attributes)->refresh();
     }
 
+    /**
+     * Changes a department.
+     */
     public function update(Department $department, array $attributes): Department
     {
         $department->update($attributes);

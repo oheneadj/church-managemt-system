@@ -38,6 +38,8 @@ class Family extends Model
     ];
 
     /**
+     * The member this family belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function head(): BelongsTo
@@ -46,6 +48,8 @@ class Family extends Model
     }
 
     /**
+     * The member records of this family.
+     *
      * @return HasMany<Member, $this>
      */
     public function members(): HasMany

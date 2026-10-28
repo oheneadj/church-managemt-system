@@ -14,9 +14,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  */
 final class ListFamiliesAction
 {
+    /**
+     * Takes the family repository.
+     */
     public function __construct(private readonly FamilyRepositoryInterface $families) {}
 
     /**
+     * Lists one page of families.
+     *
      * @return LengthAwarePaginator<int, Family>
      */
     public function execute(ListFamiliesDTO $dto): LengthAwarePaginator

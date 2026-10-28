@@ -15,12 +15,17 @@ class UpdateFamilyRequest extends FormRequest
 {
     use DelegatesToPolicy;
 
+    /**
+     * Asks the policy whether the caller may change this family.
+     */
     public function authorize(): bool
     {
         return $this->allowed('update', $this->family());
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

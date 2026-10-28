@@ -16,8 +16,14 @@ use Illuminate\Http\Request;
  */
 class MeController extends Controller
 {
+    /**
+     * Takes the show current staff action.
+     */
     public function __construct(private readonly ShowCurrentStaffAction $action) {}
 
+    /**
+     * Runs ShowCurrentStaffAction for this request and returns the CurrentStaffResource.
+     */
     public function __invoke(Request $request): CurrentStaffResource
     {
         return new CurrentStaffResource($this->action->execute(ShowCurrentStaffDTO::fromRequest($request)));

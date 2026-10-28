@@ -49,6 +49,8 @@ class Contribution extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -65,6 +67,8 @@ class Contribution extends Model
     }
 
     /**
+     * The member this contribution belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function member(): BelongsTo
@@ -73,6 +77,8 @@ class Contribution extends Model
     }
 
     /**
+     * The service this contribution belongs to.
+     *
      * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
@@ -81,6 +87,8 @@ class Contribution extends Model
     }
 
     /**
+     * The fund type this contribution belongs to.
+     *
      * @return BelongsTo<FundType, $this>
      */
     public function fundType(): BelongsTo
@@ -89,6 +97,8 @@ class Contribution extends Model
     }
 
     /**
+     * The pledge this contribution belongs to.
+     *
      * @return BelongsTo<Pledge, $this>
      */
     public function pledge(): BelongsTo
@@ -97,6 +107,8 @@ class Contribution extends Model
     }
 
     /**
+     * The one disbursement of this contribution.
+     *
      * @return HasOne<Disbursement, $this>
      */
     public function disbursement(): HasOne

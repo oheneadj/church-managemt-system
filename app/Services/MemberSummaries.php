@@ -14,12 +14,17 @@ use App\Repositories\ContributionRepositoryInterface;
  */
 class MemberSummaries
 {
+    /**
+     * Takes the contribution repository and the attendance record repository.
+     */
     public function __construct(
         private readonly ContributionRepositoryInterface $contributions,
         private readonly AttendanceRecordRepositoryInterface $attendance,
     ) {}
 
     /**
+     * The member's giving this year, this month and all time, as exact decimal strings.
+     *
      * @return array{this_year: string, this_month: string, all_time: string}
      */
     public function giving(Member $member): array
@@ -32,6 +37,8 @@ class MemberSummaries
     }
 
     /**
+     * How many services the member attended in the last 4, 8 and 12 weeks.
+     *
      * @return array{last_4_weeks: int, last_8_weeks: int, last_12_weeks: int}
      */
     public function attendance(Member $member): array

@@ -11,6 +11,9 @@ use App\Models\MessageLog;
  */
 class EloquentMessageLogRepository implements MessageLogRepositoryInterface
 {
+    /**
+     * Writes one line to the message log.
+     */
     public function create(array $attributes): MessageLog
     {
         return MessageLog::query()->create($attributes);

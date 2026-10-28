@@ -13,6 +13,9 @@ use Illuminate\Http\JsonResponse;
  */
 class InvalidOtpException extends Exception
 {
+    /**
+     * Answers 422 with one message for every kind of wrong code.
+     */
     public function render(): JsonResponse
     {
         return response()->json(['message' => 'Invalid code'], 422);

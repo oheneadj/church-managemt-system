@@ -12,5 +12,8 @@ use App\Models\User;
  */
 final readonly class CurrentStaff
 {
+    /**
+     * Holds the user and church.
+     */
     public function __construct(public User $user, public Church $church) {}
 }

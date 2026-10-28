@@ -16,8 +16,14 @@ use Illuminate\Http\JsonResponse;
  */
 class StoreFamilyController extends Controller
 {
+    /**
+     * Takes the create family action.
+     */
     public function __construct(private readonly CreateFamilyAction $action) {}
 
+    /**
+     * Runs CreateFamilyAction for this request and returns the JsonResponse.
+     */
     public function __invoke(StoreFamilyRequest $request): JsonResponse
     {
         $family = $this->action->execute(CreateFamilyDTO::fromRequest($request));

@@ -14,12 +14,17 @@ class ShowFamilyRequest extends FormRequest
 {
     use DelegatesToPolicy;
 
+    /**
+     * Asks the policy whether the caller may open this family.
+     */
     public function authorize(): bool
     {
         return $this->allowed('view', $this->family());
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

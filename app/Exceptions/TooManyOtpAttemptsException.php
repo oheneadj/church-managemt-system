@@ -12,6 +12,9 @@ use Illuminate\Http\JsonResponse;
  */
 class TooManyOtpAttemptsException extends Exception
 {
+    /**
+     * Answers 429 once a phone number is locked out.
+     */
     public function render(): JsonResponse
     {
         return response()->json(

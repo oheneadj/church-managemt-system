@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class MemberMilestoneResource extends JsonResource
 {
     /**
+     * Shapes the member milestone for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

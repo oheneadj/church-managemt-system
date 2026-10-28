@@ -15,6 +15,9 @@ use App\Repositories\MemberRepositoryInterface;
  */
 class MemberPolicy
 {
+    /**
+     * Takes the member repository.
+     */
     public function __construct(private readonly MemberRepositoryInterface $members) {}
 
     /** Statuses that take a member out of active life; moving to one needs members.deactivate (docs/03). */
@@ -25,11 +28,17 @@ class MemberPolicy
         MemberStatus::Archived,
     ];
 
+    /**
+     * Whether the user may list members.
+     */
     public function viewAny(User $user): bool
     {
         return $user->hasPermissionTo('members.view');
     }
 
+    /**
+     * Whether the user may open this member.
+     */
     public function view(User $user, Member $member): bool
     {
         return $user->church_id === $member->church_id
@@ -37,6 +46,9 @@ class MemberPolicy
             && $this->members->isVisibleTo($user, $member);
     }
 
+    /**
+     * Whether the user may add a member.
+     */
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('members.edit');
@@ -51,6 +63,9 @@ class MemberPolicy
             && $this->view($user, $member);
     }
 
+    /**
+     * Whether the user may move this member to the given status.
+     */
     public function changeStatus(User $user, Member $member, MemberStatus $target): bool
     {
         if ($user->church_id !== $member->church_id || ! $user->hasPermissionTo('members.edit') || ! $this->view($user, $member)) {

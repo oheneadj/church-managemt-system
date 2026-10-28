@@ -18,6 +18,8 @@ final readonly class UpdateMemberDTO
     use ResolvesActor;
 
     /**
+     * Holds the actor, member, attributes and department ids.
+     *
      * @param  array<string, mixed>  $attributes  validated member columns that were sent
      * @param  list<string>|null  $departmentIds  null when the client did not send departments
      */
@@ -28,6 +30,9 @@ final readonly class UpdateMemberDTO
         public ?array $departmentIds = null,
     ) {}
 
+    /**
+     * Builds the DTO from the validated request.
+     */
     public static function fromRequest(UpdateMemberRequest $request): self
     {
         $data = $request->validated();

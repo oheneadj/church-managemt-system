@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class DepartmentMemberResource extends JsonResource
 {
     /**
+     * Shapes the department member for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

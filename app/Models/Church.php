@@ -57,6 +57,8 @@ class Church extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -85,6 +87,8 @@ class Church extends Model
     }
 
     /**
+     * The user records of this church.
+     *
      * @return HasMany<User, $this>
      */
     public function users(): HasMany
@@ -93,6 +97,8 @@ class Church extends Model
     }
 
     /**
+     * The member records of this church.
+     *
      * @return HasMany<Member, $this>
      */
     public function members(): HasMany

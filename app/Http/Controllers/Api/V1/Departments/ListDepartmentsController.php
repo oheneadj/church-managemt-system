@@ -15,8 +15,14 @@ use App\Http\Resources\DepartmentCollection;
  */
 class ListDepartmentsController extends Controller
 {
+    /**
+     * Takes the list departments action.
+     */
     public function __construct(private readonly ListDepartmentsAction $action) {}
 
+    /**
+     * Runs ListDepartmentsAction for this request and returns the DepartmentCollection.
+     */
     public function __invoke(ListDepartmentsRequest $request): DepartmentCollection
     {
         return new DepartmentCollection($this->action->execute(ListDepartmentsDTO::fromRequest($request)));

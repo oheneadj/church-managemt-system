@@ -13,8 +13,14 @@ use App\Services\OtpService;
  */
 final class RequestOtpAction
 {
+    /**
+     * Takes the OTP service.
+     */
     public function __construct(private readonly OtpService $otp) {}
 
+    /**
+     * Starts sign-in by texting a code to a staff phone number.
+     */
     public function execute(RequestOtpDTO $dto): void
     {
         $this->otp->request($dto->church, $dto->phone);

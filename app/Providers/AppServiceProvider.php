@@ -25,6 +25,10 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 use RuntimeException;
 
+/**
+ * Application-wide setup: the tenant middleware order, route model bindings, date and lazy-loading rules,
+ * rate limiters, the environment guard and the local-only Telescope.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -97,6 +101,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->make(Kernel::class)->prependToMiddlewarePriority(ResolveTenant::class);
     }
 
+    /**
+     * Defines the named rate limiters, including the tight limits on costly actions.
+     */
     private function configureRateLimiting(): void
     {
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
@@ -120,6 +127,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(10)->by($this->tenantKey($request).':'.$request->ip()));
     }
 
+    /**
+     * The church id (or the host) used to keep each church's rate limits separate.
+     */
     private function tenantKey(Request $request): string
     {
         return $this->app->bound('current.church') ? (string) app('current.church')->getKey() : $request->getHost();

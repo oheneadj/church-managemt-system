@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class UserResource extends JsonResource
 {
     /**
+     * Shapes the user for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

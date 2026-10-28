@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 trait BelongsToChurch
 {
+    /**
+     * Adds the church scope to the model and fills church_id on create.
+     */
     protected static function bootBelongsToChurch(): void
     {
         static::addGlobalScope(new ChurchScope);
@@ -26,6 +29,8 @@ trait BelongsToChurch
     }
 
     /**
+     * The church this record belongs to.
+     *
      * @return BelongsTo<Church, $this>
      */
     public function church(): BelongsTo

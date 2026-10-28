@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class CurrentStaffResource extends JsonResource
 {
     /**
+     * Shapes the current staff for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -24,6 +26,8 @@ class CurrentStaffResource extends JsonResource
     }
 
     /**
+     * Adds the data that sits beside the main resource in the reply.
+     *
      * @return array<string, mixed>
      */
     public function with(Request $request): array

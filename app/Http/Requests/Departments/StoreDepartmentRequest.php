@@ -11,12 +11,17 @@ use App\Models\Department;
  */
 class StoreDepartmentRequest extends DepartmentInputRequest
 {
+    /**
+     * Asks the policy whether the caller may create (department).
+     */
     public function authorize(): bool
     {
         return $this->allowed('create', Department::class);
     }
 
     /**
+     * The rules that check this request's input.
+     *
      * @return array<string, list<mixed>>
      */
     public function rules(): array

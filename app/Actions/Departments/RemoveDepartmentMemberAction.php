@@ -16,8 +16,14 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  */
 final class RemoveDepartmentMemberAction
 {
+    /**
+     * Takes the member department repository.
+     */
     public function __construct(private readonly MemberDepartmentRepositoryInterface $links) {}
 
+    /**
+     * Takes a member out of a department by soft deleting the link, so the history is kept.
+     */
     public function execute(RemoveDepartmentMemberDTO $dto): void
     {
         $link = $this->links->find($dto->department->getKey(), $dto->member->getKey())

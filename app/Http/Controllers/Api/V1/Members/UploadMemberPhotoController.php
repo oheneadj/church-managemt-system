@@ -15,8 +15,14 @@ use App\Http\Resources\MemberPhotoResource;
  */
 class UploadMemberPhotoController extends Controller
 {
+    /**
+     * Takes the upload member photo action.
+     */
     public function __construct(private readonly UploadMemberPhotoAction $action) {}
 
+    /**
+     * Runs UploadMemberPhotoAction for this request and returns the MemberPhotoResource.
+     */
     public function __invoke(UploadMemberPhotoRequest $request): MemberPhotoResource
     {
         return new MemberPhotoResource($this->action->execute(UploadMemberPhotoDTO::fromRequest($request)));

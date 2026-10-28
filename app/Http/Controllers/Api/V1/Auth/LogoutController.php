@@ -15,8 +15,14 @@ use Illuminate\Http\Response;
  */
 class LogoutController extends Controller
 {
+    /**
+     * Takes the logout action.
+     */
     public function __construct(private readonly LogoutAction $action) {}
 
+    /**
+     * Runs LogoutAction for this request and returns the Response.
+     */
     public function __invoke(Request $request): Response
     {
         $this->action->execute(LogoutDTO::fromRequest($request));

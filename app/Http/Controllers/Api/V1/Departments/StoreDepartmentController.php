@@ -16,8 +16,14 @@ use Illuminate\Http\JsonResponse;
  */
 class StoreDepartmentController extends Controller
 {
+    /**
+     * Takes the create department action.
+     */
     public function __construct(private readonly CreateDepartmentAction $action) {}
 
+    /**
+     * Runs CreateDepartmentAction for this request and returns the JsonResponse.
+     */
     public function __invoke(StoreDepartmentRequest $request): JsonResponse
     {
         $department = $this->action->execute(CreateDepartmentDTO::fromRequest($request));

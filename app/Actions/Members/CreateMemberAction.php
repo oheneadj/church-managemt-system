@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\DB;
  */
 final class CreateMemberAction
 {
+    /**
+     * Takes the member repository, the member number generator, the member family service and the member department service.
+     */
     public function __construct(
         private readonly MemberRepositoryInterface $members,
         private readonly MemberNumberGenerator $numbers,
@@ -26,6 +29,9 @@ final class CreateMemberAction
         private readonly MemberDepartmentService $departments,
     ) {}
 
+    /**
+     * Adds a member: numbers them, checks the family rules, sets their departments and fires MemberCreated, all in one transaction so a failure leaves nothing half-saved.
+     */
     public function execute(CreateMemberDTO $dto): Member
     {
         return DB::transaction(function () use ($dto): Member {

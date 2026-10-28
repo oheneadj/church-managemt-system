@@ -16,6 +16,8 @@ class MemberUpdated
     use Dispatchable;
 
     /**
+     * Holds the member, actor, old and new.
+     *
      * @param  array<string, mixed>  $old
      * @param  array<string, mixed>  $new
      */

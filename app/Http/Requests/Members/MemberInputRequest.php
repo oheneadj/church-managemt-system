@@ -27,6 +27,9 @@ abstract class MemberInputRequest extends FormRequest
     /** The member being updated, or null on create. */
     abstract protected function subject(): ?Member;
 
+    /**
+     * Normalises phone numbers to international form before they are validated.
+     */
     protected function prepareForValidation(): void
     {
         foreach (['phone', 'phone_secondary'] as $field) {
@@ -37,6 +40,8 @@ abstract class MemberInputRequest extends FormRequest
     }
 
     /**
+     * The member field rules shared by create and update. Create requires the basics; update accepts any subset.
+     *
      * @return array<string, list<mixed>>
      */
     protected function memberRules(): array

@@ -13,8 +13,14 @@ use App\Services\AuthSessionService;
  */
 final class LogoutAction
 {
+    /**
+     * Takes the auth session service.
+     */
     public function __construct(private readonly AuthSessionService $sessions) {}
 
+    /**
+     * Ends the current sign-in: deletes the token for API clients, or closes the cookie session for the browser app.
+     */
     public function execute(LogoutDTO $dto): void
     {
         $token = $dto->user->currentAccessToken();

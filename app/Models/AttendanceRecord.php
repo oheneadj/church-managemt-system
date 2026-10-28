@@ -34,6 +34,8 @@ class AttendanceRecord extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -45,6 +47,8 @@ class AttendanceRecord extends Model
     }
 
     /**
+     * The service this attendance record belongs to.
+     *
      * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
@@ -53,6 +57,8 @@ class AttendanceRecord extends Model
     }
 
     /**
+     * The member this attendance record belongs to.
+     *
      * @return BelongsTo<Member, $this>
      */
     public function member(): BelongsTo

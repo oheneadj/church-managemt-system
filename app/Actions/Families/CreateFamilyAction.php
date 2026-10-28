@@ -20,12 +20,18 @@ use Illuminate\Validation\ValidationException;
  */
 final class CreateFamilyAction
 {
+    /**
+     * Takes the family repository, the member repository and the member family service.
+     */
     public function __construct(
         private readonly FamilyRepositoryInterface $families,
         private readonly MemberRepositoryInterface $members,
         private readonly MemberFamilyService $memberFamilies,
     ) {}
 
+    /**
+     * Creates a family, and when a first head is given, makes that member the head and fires MemberUpdated for them.
+     */
     public function execute(CreateFamilyDTO $dto): Family
     {
         return DB::transaction(function () use ($dto): Family {

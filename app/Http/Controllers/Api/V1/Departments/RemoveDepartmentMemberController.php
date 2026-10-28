@@ -15,8 +15,14 @@ use Illuminate\Http\Response;
  */
 class RemoveDepartmentMemberController extends Controller
 {
+    /**
+     * Takes the remove department member action.
+     */
     public function __construct(private readonly RemoveDepartmentMemberAction $action) {}
 
+    /**
+     * Runs RemoveDepartmentMemberAction for this request and returns the Response.
+     */
     public function __invoke(RemoveDepartmentMemberRequest $request): Response
     {
         $this->action->execute(RemoveDepartmentMemberDTO::fromRequest($request));

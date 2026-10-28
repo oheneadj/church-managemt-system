@@ -13,8 +13,14 @@ use App\Repositories\DepartmentRepositoryInterface;
  */
 final class CreateDepartmentAction
 {
+    /**
+     * Takes the department repository.
+     */
     public function __construct(private readonly DepartmentRepositoryInterface $departments) {}
 
+    /**
+     * Creates a department in the staff member's church.
+     */
     public function execute(CreateDepartmentDTO $dto): Department
     {
         return $this->departments->create([
