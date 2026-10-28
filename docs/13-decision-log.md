@@ -521,6 +521,19 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-028 — Controller → Form Request → Service; no Action or Repository layers yet
+**Date:** October 2026
+**Decided by:** Lead Engineer (reconciling the Universal agreement §6 with `docs/09-engineering-principles.md`)
+**Status:** Active
+
+**Decision:** Backend code is layered Controller → Form Request → Service → Model, as `docs/09-engineering-principles.md` specifies. Services own `DB::transaction()` boundaries and dispatch jobs and events. We do not add Action classes (one per operation) or Repository classes (all queries for a model) until a real need appears: an Action when one operation is triggered from several entry points, a Repository when a second data source exists. The layers, their duties and their prohibitions are written down in `ARCHITECTURE.md`.
+
+**Rationale:** The project documents name Services explicitly, `09` says interfaces are added only once there are two implementations, and the codebase is small. Extra layers now would be speculative (YAGNI). Eloquent scopes already cover repeated filters.
+
+**Revisit when:** a second client of the same operation appears (for example a CLI command and an endpoint doing the same thing) or a second storage backend is introduced.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
