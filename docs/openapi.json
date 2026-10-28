@@ -2827,7 +2827,10 @@
                         "type": "string"
                     },
                     "photo_url": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "status": {
                         "type": "string",

@@ -100,6 +100,7 @@ export interface Member {
     membership_date: string | null;
     status: MemberStatus;
     status_label: string;
+    status_changed_at: string | null;
     status_note: string | null;
     family?: MemberFamilyRef | null;
     departments?: MemberDepartmentRef[];
@@ -111,6 +112,7 @@ export interface Member {
     attendance_summary: AttendanceSummary;
     whatsapp_opted_in: boolean;
     sms_opted_in: boolean;
+    created_at: string | null;
 }
 
 /** The directory filters. They live in the URL, so every value is optional text or a page number. */

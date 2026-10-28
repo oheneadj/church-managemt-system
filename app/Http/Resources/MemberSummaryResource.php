@@ -31,6 +31,7 @@ class MemberSummaryResource extends JsonResource
             'gender' => $this->gender->value,
             'gender_label' => $this->gender->label(),
             'phone' => $this->phone,
+            /** @var string|null */
             'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
