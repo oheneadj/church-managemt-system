@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** A wrong sign-in code, a locked-out phone, a taken web address, a broken family rule and a missing member number prefix still get their 4xx answer, but are no longer written to the log as errors or sent to Sentry. Real faults, such as the SMS provider refusing us, are still reported.
 - **Why:** A wrong code is the user's mistake, not ours. Logged as errors they would bury real faults and flood the error monitor, which was found while running the browser tests (each wrong code wrote an error to laravel.log).
 - **Files:** `bootstrap/app.php`, `tests/Feature/Operations/ExceptionReportingTest.php`
-- **Commit:** pending
+- **Commit:** `734bc16` (2026-10-28)
 
 #### feat(monitoring): report errors to Sentry without personal data
 - **What:** Installed the Sentry Laravel SDK. Every unhandled exception is reported once `SENTRY_LARAVEL_DSN` is set, and the app now refuses to start outside development without it (`env:check`). Each signed-in request adds the staff id, church id and role to the error, never a name, phone or email. Request bodies and cookies are not sent, personal data collection is off and SQL values are not recorded. `SENTRY_RELEASE` ties errors to a deploy. With the DSN empty (development) nothing is sent. Updated docs/17 and recorded D-040.
