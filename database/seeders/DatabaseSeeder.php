@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $church = Church::query()->firstOrCreate(
             ['slug' => 'demo'],
-            ['name' => 'Demo Assembly', 'timezone' => 'Africa/Accra'],
+            ['name' => 'Demo Assembly', 'timezone' => 'Africa/Accra', 'member_number_prefix' => 'DEM'],
         );
 
         $admin = User::query()->withoutGlobalScopes()->firstOrCreate(

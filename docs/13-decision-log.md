@@ -547,6 +547,22 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-030 — Member numbers, change log and pastor edit rights
+**Date:** October 2026
+**Decided by:** Product Owner (answers given at Sprint 2 planning)
+**Status:** Active
+
+**Decision:**
+1. **Member number.** The church admin types a short prefix at onboarding, stored as `churches.member_number_prefix`. The number is `{prefix}-{sequence, at least 4 digits}`, for example `GRC-0042`. The sequence is `churches.member_number_seq`, incremented under a row lock inside the create transaction, so numbers are unique, gapless on success and never reused after a delete. Until a prefix is set, adding a member returns `422`.
+2. **Change log.** A new append-only `audit_logs` table records creates, updates and status changes on members, with the acting user (name snapshotted), old and new values, the request id and an optional reason. Encrypted fields (address, national id) are recorded by name only, never by value. Written by `AuditLogger` from the service layer, not from model observers, so the actor is always explicit.
+3. **Pastor.** The `pastor` role gets `members.edit` (add and edit members), as `docs/02` and `docs/03` specify. Only `church-admin` can deactivate members or export.
+
+**Rationale:** `docs/03` requires an audit trail on phone and status changes and `docs/02` requires a change log, but `docs/07` had no table for it. The seeder and `docs/06` disagreed with `docs/02` and `docs/03` about the pastor.
+
+**Revisit when:** a church needs a different number format, or audit rows need to be shown in the app (Sprint 5).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

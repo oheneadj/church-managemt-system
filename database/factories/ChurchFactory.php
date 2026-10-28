@@ -23,6 +23,7 @@ class ChurchFactory extends Factory
             'slug' => fake()->unique()->slug(2),
             'plan' => ChurchPlan::Starter,
             'timezone' => 'Africa/Accra',
+            'member_number_prefix' => strtoupper(fake()->unique()->lexify('???')),
             'sms_credits' => 0,
             'is_active' => true,
         ];

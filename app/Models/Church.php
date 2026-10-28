@@ -50,6 +50,8 @@ class Church extends Model
         'whatsapp_opted_in',
         'ussd_code',
         'timezone',
+        'member_number_prefix',
+        'member_number_seq',
         'settings',
         'is_active',
     ];
@@ -67,6 +69,7 @@ class Church extends Model
             'payout_account_number' => 'encrypted',
             'payout_verified_at' => 'immutable_datetime',
             'sms_credits' => 'integer',
+            'member_number_seq' => 'integer',
             'whatsapp_opted_in' => 'boolean',
             'settings' => 'array',
             'is_active' => 'boolean',
