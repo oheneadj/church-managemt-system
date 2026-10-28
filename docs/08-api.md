@@ -438,17 +438,34 @@ Authorization: Bearer {token}
 Permission: members.view
 ```
 
+**Query params:** `search` (name, ignoring case), `per_page` (1 to 100, default 25). Paginated, ordered by name. Each family has `id`, `name`, `notes`, `head_member_id` and `members_count`; the count only includes members the caller may see (D-031).
+
 ### Get Family
 ```
 GET /api/v1/families/{id}
+Permission: members.view
 ```
-Returns family record + all linked members with their status and basic profile.
+Returns the family and the members the caller may see, each with `id`, `member_number`, `full_name`, `gender`, `status` and `family_role`. `404` for another church's family.
 
-### Create / Update Family
+### Create Family
 ```
 POST /api/v1/families
-PUT /api/v1/families/{id}
+Permission: members.edit
 ```
+
+**Body:** `{ "name": "Mensah-Boateng Family", "notes": "optional", "head_member_id": "ulid (optional)" }`
+
+`head_member_id` must be a member of this church who is not already in a family (`422` otherwise). The member becomes the head: their `family_id` and `family_role` are set and the change is written to their change log. **Response `201`:** the family.
+
+### Update Family
+```
+PUT /api/v1/families/{id}
+Permission: members.edit
+```
+
+**Body:** `name` and/or `notes`. The head is not changed here: change each member's `family_role` with Update Member, which enforces one head per family. **Response `200`:** the family.
+
+Members are linked to a family through `family_id` and `family_role` on Create Member and Update Member. A member belongs to one family at a time.
 
 ---
 

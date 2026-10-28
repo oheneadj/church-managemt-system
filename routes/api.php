@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
+use App\Http\Controllers\Api\V1\FamilyController;
 use App\Http\Controllers\Api\V1\MemberController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,5 +27,10 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');
         Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
         Route::patch('members/{member}/status', [MemberController::class, 'updateStatus'])->name('members.status');
+
+        Route::get('families', [FamilyController::class, 'index'])->name('families.index');
+        Route::post('families', [FamilyController::class, 'store'])->name('families.store');
+        Route::get('families/{family}', [FamilyController::class, 'show'])->name('families.show');
+        Route::put('families/{family}', [FamilyController::class, 'update'])->name('families.update');
     });
 });

@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Changes staged but not yet in a versioned release.
 
 ### Added
+- Family endpoints (story 2.7): list, show, create and rename families, with an optional first head; counts and member lists respect each role's directory view
 - Member directory API (stories 2.2, 2.3, 2.5, 2.6): `GET/POST /api/v1/members`, `GET/PUT /api/v1/members/{id}` and `PATCH /api/v1/members/{id}/status`, with `MemberPolicy`, form requests, `MemberService`, and list/full resources. Search, filters, sort and pagination; role-scoped visibility for department heads and youth pastors; one head per family; departments set with the member; every create, edit and status change in the change log with the reason (D-031)
 - `members.deactivate` permission, held by the church admin only
 - Sprint 2 groundwork (D-030): per-church member number prefix and a locked sequence so numbers like `GRC-0042` are unique and never reused, an append-only `audit_logs` table with an `AuditLogger` for member change history, and `members.edit` for the pastor role

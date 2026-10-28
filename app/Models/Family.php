@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Groups members into a household.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $name
+ * @property string|null $notes
+ * @property string|null $head_member_id
  */
 class Family extends Model
 {
