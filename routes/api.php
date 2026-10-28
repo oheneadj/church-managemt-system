@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Attendance\CaptureVisitorController;
+use App\Http\Controllers\Api\V1\Attendance\ListAbsentMembersController;
+use App\Http\Controllers\Api\V1\Attendance\ListServiceAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\RecordAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\ShowMemberAttendanceController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
@@ -72,6 +77,12 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('services/{service}', ShowServiceController::class)->name('services.show');
         Route::put('services/{service}', UpdateServiceController::class)->name('services.update');
         Route::patch('services/{service}/checkin', SetServiceCheckinController::class)->name('services.checkin');
+
+        Route::get('services/{service}/attendance', ListServiceAttendanceController::class)->name('attendance.index');
+        Route::post('services/{service}/attendance', RecordAttendanceController::class)->name('attendance.record');
+        Route::post('services/{service}/visitors', CaptureVisitorController::class)->name('visitors.store');
+        Route::get('attendance/absent', ListAbsentMembersController::class)->name('attendance.absent');
+        Route::get('members/{member}/attendance', ShowMemberAttendanceController::class)->name('members.attendance');
 
         Route::get('departments', ListDepartmentsController::class)->name('departments.index');
         Route::post('departments', StoreDepartmentController::class)->name('departments.store');

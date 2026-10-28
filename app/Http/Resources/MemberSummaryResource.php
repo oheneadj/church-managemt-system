@@ -26,7 +26,7 @@ class MemberSummaryResource extends JsonResource
         return [
             'id' => $this->id,
             'member_number' => $this->member_number,
-            'full_name' => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"),
+            'full_name' => $this->full_name,
             'preferred_name' => $this->preferred_name,
             'gender' => $this->gender->value,
             'gender_label' => $this->gender->label(),

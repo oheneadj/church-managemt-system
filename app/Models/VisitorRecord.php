@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\FollowUpStatus;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\VisitorRecordFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A first-time visitor who is not yet a member.
+ *
+ * @property string $id
+ * @property string $name
+ * @property string|null $phone
+ * @property string|null $how_heard
+ * @property CarbonImmutable $first_visit_date
+ * @property CarbonImmutable|null $last_visit_date
+ * @property int $visit_count
+ * @property FollowUpStatus $follow_up_status
  */
 class VisitorRecord extends Model
 {

@@ -8,6 +8,7 @@ use App\DTOs\Members\ListMembersDTO;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Every query on members lives behind this contract, so Actions and Services never touch Eloquent for them.
@@ -45,6 +46,19 @@ interface MemberRepositoryInterface
      * Finds a member of the current church, or fails with a not-found error.
      */
     public function findOrFail(string $id): Member;
+
+    /**
+     * The members of the current church with these ids. An id of another church, or one that does not exist, is not returned.
+     *
+     * @param  list<string>  $ids
+     * @return Collection<int, Member>
+     */
+    public function findMany(array $ids): Collection;
+
+    /**
+     * How many members are active in the current church.
+     */
+    public function countActive(): int;
 
     /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.

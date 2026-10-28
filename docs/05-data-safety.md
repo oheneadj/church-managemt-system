@@ -36,6 +36,12 @@ Data handling practices are disclosed in plain language in the Terms of Service 
 **Classification: Sensitive PII**
 **Retention: For the life of the church's subscription + 90-day grace period after cancellation**
 
+### Visitor Data (PII)
+- Name, optional phone number, how they heard of the church, and the services they came to
+- **Purpose:** so the church can welcome and follow up a first-time visitor (docs/02). Nothing else is collected.
+- **Classification:** Personal data. Shown only to staff who may edit members (church admin, pastor).
+- **Retention:** For the life of the church's subscription + the 90-day grace period; removed when a cancelled church is purged (D-042). A visitor who becomes a member is linked, not copied.
+
 ### Financial Data
 - Contribution amounts, dates, fund types, payment methods
 - Pledge records and status

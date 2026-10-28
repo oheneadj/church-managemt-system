@@ -25,4 +25,28 @@ return [
     */
     'stale_open_hours' => 24,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reports
+    |--------------------------------------------------------------------------
+    | How far back a member's attendance report looks when no number of weeks is asked for, and the longest it may look.
+    */
+    'member_report_weeks' => 12,
+    // The most members one bulk check-in request may name (a large church marks a whole row at a time).
+    'bulk_max' => 500,
+    'member_report_max_weeks' => 52,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Absent members (docs/02, QA-05 TC-05-12)
+    |--------------------------------------------------------------------------
+    | A member who missed this many services in a row is listed. A church can set its own number in its settings under
+    | "absence_threshold". Only these kinds of service count, because a midweek prayer meeting is always smaller and
+    | would list people who never miss a Sunday.
+    */
+    'absence_threshold' => 3,
+    'absence_threshold_min' => 2,
+    'absence_threshold_max' => 12,
+    'absence_service_types' => ['sunday'],
+
 ];

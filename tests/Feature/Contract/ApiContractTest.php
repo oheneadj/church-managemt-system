@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\MemberMilestone;
+use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Http\UploadedFile;
@@ -133,6 +134,30 @@ describe('families and departments', function (): void {
 
         assertMatchesSpec($this->putJson(CHURCH_HOST.'/departments/'.$id, ['name' => 'Main Choir']), 'PUT', '/v1/departments/{department}', 200);
         assertMatchesSpec($this->postJson(CHURCH_HOST.'/departments/'.$id.'/members', ['member_id' => $this->member->id]), 'POST', '/v1/departments/{department}/members', 201);
+    });
+});
+
+describe('services and attendance', function (): void {
+    it('services: list, create, show, update and check-in', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/services'), 'GET', '/v1/services', 200);
+        $created = $this->postJson(CHURCH_HOST.'/services', ['name' => 'Sunday Service', 'type' => 'sunday', 'service_date' => '2026-10-25', 'starts_at' => '09:00']);
+        assertMatchesSpec($created, 'POST', '/v1/services', 201);
+        $id = $created->json('data.id');
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/services/'.$id), 'GET', '/v1/services/{service}', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/services/'.$id, ['name' => 'Early Service']), 'PUT', '/v1/services/{service}', 200);
+        assertMatchesSpec($this->patchJson(CHURCH_HOST.'/services/'.$id.'/checkin', ['is_open' => true]), 'PATCH', '/v1/services/{service}/checkin', 200);
+    });
+
+    it('attendance: record, list, visitor, member report and absent members', function (): void {
+        $service = Service::factory()->open()->create(['church_id' => $this->church->id]);
+        $url = CHURCH_HOST.'/services/'.$service->id;
+
+        assertMatchesSpec($this->postJson($url.'/attendance', ['member_ids' => [$this->member->id]]), 'POST', '/v1/services/{service}/attendance', 201);
+        assertMatchesSpec($this->postJson($url.'/visitors', ['name' => 'Yaw Boateng', 'phone' => '0244999000']), 'POST', '/v1/services/{service}/visitors', 201);
+        assertMatchesSpec($this->getJson($url.'/attendance'), 'GET', '/v1/services/{service}/attendance', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/members/'.$this->member->id.'/attendance'), 'GET', '/v1/members/{member}/attendance', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/attendance/absent'), 'GET', '/v1/attendance/absent', 200);
     });
 });
 

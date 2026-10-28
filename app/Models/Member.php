@@ -16,6 +16,7 @@ use App\ValueObjects\PhoneNumber;
 use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $first_name
  * @property string|null $middle_name
  * @property string $last_name
+ * @property-read string $full_name
+ * @property-read string|null $last_attended_at the latest check-in time, present only on the absent-members query
  * @property string|null $preferred_name
  * @property Gender $gender
  * @property CarbonImmutable|null $date_of_birth
@@ -124,6 +127,16 @@ class Member extends Model
             'whatsapp_opted_in' => 'boolean',
             'sms_opted_in' => 'boolean',
         ];
+    }
+
+    /**
+     * The member's first, middle and last name in one string, as the screens show it.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::get(fn (): string => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"));
     }
 
     /**

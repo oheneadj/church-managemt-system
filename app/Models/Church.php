@@ -96,6 +96,14 @@ class Church extends Model
     }
 
     /**
+     * How many services in a row a member must miss before they are listed as absent. The church's own setting wins.
+     */
+    public function absenceThreshold(): int
+    {
+        return (int) data_get($this->settings, 'absence_threshold', config('attendance.absence_threshold'));
+    }
+
+    /**
      * The user records of this church.
      *
      * @return HasMany<User, $this>

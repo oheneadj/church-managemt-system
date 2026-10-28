@@ -149,6 +149,68 @@
                 }
             }
         },
+        "/v1/services/{service}/visitors": {
+            "post": {
+                "operationId": "visitors.store",
+                "summary": "Runs CaptureVisitorAction for this request and returns the VisitorResource",
+                "tags": [
+                    "CaptureVisitor"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CaptureVisitorRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`VisitorResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VisitorResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}/erasure": {
             "post": {
                 "operationId": "members.erase",
@@ -318,6 +380,64 @@
                     }
                 },
                 "security": []
+            }
+        },
+        "/v1/attendance/absent": {
+            "get": {
+                "operationId": "attendance.absent",
+                "summary": "Runs ListAbsentMembersAction for this request and returns the AbsentMemberCollection",
+                "tags": [
+                    "ListAbsentMembers"
+                ],
+                "parameters": [
+                    {
+                        "name": "consecutive",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 12
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AbsentMemberCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AbsentMemberCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
             }
         },
         "/v1/departments": {
@@ -663,6 +783,158 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/services/{service}/attendance": {
+            "get": {
+                "operationId": "attendance.index",
+                "summary": "Runs ListServiceAttendanceAction for this request and returns the AttendanceCollection",
+                "tags": [
+                    "ListServiceAttendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AttendanceCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AttendanceCollection"
+                                        },
+                                        "service": {
+                                            "$ref": "#/components/schemas/ServiceResource"
+                                        },
+                                        "summary": {
+                                            "type": "object",
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "members": {
+                                                    "type": "integer"
+                                                },
+                                                "visitors": {
+                                                    "type": "integer"
+                                                },
+                                                "by_method": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "active_members": {
+                                                    "type": "integer"
+                                                },
+                                                "attendance_rate": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "total",
+                                                "members",
+                                                "visitors",
+                                                "by_method",
+                                                "active_members",
+                                                "attendance_rate"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "service",
+                                        "summary"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "attendance.record",
+                "summary": "Runs RecordAttendanceAction for this request and returns the AttendanceRecordedResource",
+                "tags": [
+                    "RecordAttendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecordAttendanceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AttendanceRecordedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttendanceRecordedResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -1280,6 +1552,59 @@
                 }
             }
         },
+        "/v1/members/{member}/attendance": {
+            "get": {
+                "operationId": "members.attendance",
+                "summary": "Runs ShowMemberAttendanceAction for this request and returns the MemberAttendanceResource",
+                "tags": [
+                    "ShowMemberAttendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "weeks",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 52
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberAttendanceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MemberAttendanceResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}": {
             "get": {
                 "operationId": "services.show",
@@ -1665,6 +1990,44 @@
             }
         },
         "schemas": {
+            "AbsentMemberCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/AbsentMemberResource"
+                },
+                "title": "AbsentMemberCollection"
+            },
+            "AbsentMemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_number": {
+                        "type": "string"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "last_attended_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_number",
+                    "full_name",
+                    "phone",
+                    "last_attended_at"
+                ],
+                "title": "AbsentMemberResource"
+            },
             "AddDepartmentMemberRequest": {
                 "type": "object",
                 "description": "Validates adding a member to a department. The member must belong to this church.",
@@ -1684,6 +2047,142 @@
                     "member_id"
                 ],
                 "title": "AddDepartmentMemberRequest"
+            },
+            "AttendanceCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordResource"
+                },
+                "title": "AttendanceCollection"
+            },
+            "AttendanceRecordResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "manual",
+                            "whatsapp",
+                            "qr",
+                            "biometric"
+                        ]
+                    },
+                    "method_label": {
+                        "type": "string",
+                        "enum": [
+                            "Manual",
+                            "WhatsApp",
+                            "QR code",
+                            "Biometric"
+                        ]
+                    },
+                    "checked_in_at": {
+                        "type": "string"
+                    },
+                    "member": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "member_number": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "member_number",
+                            "full_name"
+                        ]
+                    },
+                    "visitor_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "method",
+                    "method_label",
+                    "checked_in_at",
+                    "member",
+                    "visitor_name"
+                ],
+                "title": "AttendanceRecordResource"
+            },
+            "AttendanceRecordedResource": {
+                "type": "object",
+                "properties": {
+                    "recorded": {
+                        "type": "integer"
+                    },
+                    "already_checked_in": {
+                        "type": "integer"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "member_id": {
+                                    "type": "string"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "member_id",
+                                "message"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "recorded",
+                    "already_checked_in",
+                    "errors"
+                ],
+                "title": "AttendanceRecordedResource"
+            },
+            "CaptureVisitorRequest": {
+                "type": "object",
+                "description": "Validates a visitor: a name, and optionally a phone number (normalised before it is checked) and how they heard of the church.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "how_heard": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "CaptureVisitorRequest"
             },
             "ChurchRegisteredResource": {
                 "type": "object",
@@ -2168,6 +2667,78 @@
                     "divorced"
                 ],
                 "title": "MaritalStatus"
+            },
+            "MemberAttendanceResource": {
+                "type": "object",
+                "properties": {
+                    "weeks": {
+                        "type": "integer"
+                    },
+                    "services_held": {
+                        "type": "integer"
+                    },
+                    "attended": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "attendance_rate": {
+                        "type": "integer"
+                    },
+                    "records": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "service_id": {
+                                    "type": "string"
+                                },
+                                "service_name": {
+                                    "type": "string"
+                                },
+                                "service_date": {
+                                    "type": "string"
+                                },
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "manual",
+                                        "whatsapp",
+                                        "qr",
+                                        "biometric"
+                                    ]
+                                },
+                                "method_label": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Manual",
+                                        "WhatsApp",
+                                        "QR code",
+                                        "Biometric"
+                                    ]
+                                },
+                                "checked_in_at": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "service_id",
+                                "service_name",
+                                "service_date",
+                                "method",
+                                "method_label",
+                                "checked_in_at"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "weeks",
+                    "services_held",
+                    "attended",
+                    "attendance_rate",
+                    "records"
+                ],
+                "title": "MemberAttendanceResource"
             },
             "MemberCollection": {
                 "type": "array",
@@ -3226,6 +3797,30 @@
                 ],
                 "title": "OtpRequestedResource"
             },
+            "RecordAttendanceRequest": {
+                "type": "object",
+                "description": "Validates marking a list of members present at a service. The list is capped so one request stays small.",
+                "properties": {
+                    "member_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "maxItems": 500,
+                        "uniqueItems": true
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Only a manual check-in comes through here; QR and WhatsApp have their own entrances.",
+                        "const": "manual"
+                    }
+                },
+                "required": [
+                    "member_ids"
+                ],
+                "title": "RecordAttendanceRequest"
+            },
             "RegisterChurchRequest": {
                 "type": "object",
                 "description": "Validates the sign-up of a new church: its name, web address, member number prefix, first admin and the\ncode texted to that admin's phone.",
@@ -3918,6 +4513,71 @@
                     "otp"
                 ],
                 "title": "VerifyOtpRequest"
+            },
+            "VisitorResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "how_heard": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "first_visit_date": {
+                        "type": "string"
+                    },
+                    "last_visit_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "visit_count": {
+                        "type": "integer"
+                    },
+                    "follow_up_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "contacted",
+                            "converted",
+                            "lost"
+                        ]
+                    },
+                    "follow_up_status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Pending",
+                            "Contacted",
+                            "Converted",
+                            "Lost"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "phone",
+                    "how_heard",
+                    "first_visit_date",
+                    "last_visit_date",
+                    "visit_count",
+                    "follow_up_status",
+                    "follow_up_status_label"
+                ],
+                "title": "VisitorResource"
             }
         },
         "responses": {

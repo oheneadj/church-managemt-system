@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\CheckInMethod;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\AttendanceRecordFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * One member (or walk-in visitor) checked in to one service.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $service_id
+ * @property string|null $member_id
+ * @property string|null $visitor_record_id
+ * @property string|null $visitor_name
+ * @property CheckInMethod $method
+ * @property CarbonImmutable $checked_in_at
+ * @property-read Service $service
  */
 class AttendanceRecord extends Model
 {
@@ -28,6 +39,7 @@ class AttendanceRecord extends Model
         'church_id',
         'service_id',
         'member_id',
+        'visitor_record_id',
         'visitor_name',
         'method',
         'checked_in_at',

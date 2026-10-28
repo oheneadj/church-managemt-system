@@ -275,13 +275,14 @@ One row per member per service.
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
 | `service_id` | CHAR(26) | No | FK → services |
-| `member_id` | CHAR(26) | Yes | Null = anonymous (visitor walk-in) |
+| `member_id` | CHAR(26) | Yes | Null = a visitor or anonymous walk-in |
+| `visitor_record_id` | CHAR(26) | Yes | FK → visitor_records. Set for a captured visitor, so a visitor is counted once per service. |
 | `visitor_name` | VARCHAR(255) | Yes | For non-member attendees |
 | `method` | VARCHAR(30) | No | `CheckInMethod`: manual, whatsapp, qr, biometric. How they checked in |
 | `checked_in_at` | TIMESTAMP | No | |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, service_id, member_id)` — unique (prevents double check-in)
+**Index:** `(church_id, service_id, member_id)` — unique (prevents double check-in); `(church_id, service_id, visitor_record_id)` — unique (a visitor is counted once per service). A null never collides in either.
 
 ---
 

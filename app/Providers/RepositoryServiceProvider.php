@@ -25,6 +25,7 @@ use App\Repositories\EloquentMemberRepository;
 use App\Repositories\EloquentMessageLogRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentUserRepository;
+use App\Repositories\EloquentVisitorRecordRepository;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
@@ -32,6 +33,7 @@ use App\Repositories\MemberRepositoryInterface;
 use App\Repositories\MessageLogRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
+use App\Repositories\VisitorRecordRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -55,5 +57,6 @@ class RepositoryServiceProvider extends ServiceProvider
         ConsentRepositoryInterface::class => EloquentConsentRepository::class,
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,
         ServiceRepositoryInterface::class => EloquentServiceRepository::class,
+        VisitorRecordRepositoryInterface::class => EloquentVisitorRecordRepository::class,
     ];
 }

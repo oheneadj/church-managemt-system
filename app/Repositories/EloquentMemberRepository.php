@@ -11,6 +11,7 @@ use App\Models\Member;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Eloquent implementation of the member queries.
@@ -105,5 +106,24 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     public function findOrFail(string $id): Member
     {
         return Member::query()->whereKey($id)->firstOrFail();
+    }
+
+    /**
+     * The members of the current church with these ids. An id of another church, or one that does not exist, is not returned.
+     *
+     * @param  list<string>  $ids
+     * @return Collection<int, Member>
+     */
+    public function findMany(array $ids): Collection
+    {
+        return Member::query()->whereKey($ids)->get(['id', 'status']);
+    }
+
+    /**
+     * How many members are active in the current church.
+     */
+    public function countActive(): int
+    {
+        return Member::query()->where('status', MemberStatus::Active)->count();
     }
 }

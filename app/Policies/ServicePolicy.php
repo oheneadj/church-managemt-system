@@ -39,10 +39,19 @@ class ServicePolicy
     }
 
     /**
-     * Whether the user may change this service, open or close it, or record attendance for it.
+     * Whether the user may change this service, or open or close it.
      */
     public function update(User $user, Service $service): bool
     {
         return $user->church_id === $service->church_id && $user->hasPermissionTo(StaffPermission::MembersEdit);
+    }
+
+    /**
+     * Whether the user may check people in to this service, or add a visitor to it. This is the same permission as
+     * changing the service, kept as its own ability so the two can be split later without touching the callers.
+     */
+    public function recordAttendance(User $user, Service $service): bool
+    {
+        return $this->update($user, $service);
     }
 }

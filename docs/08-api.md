@@ -625,7 +625,7 @@ Asking for the state the service is already in changes nothing. A service left o
 ```
 POST /api/v1/services/{id}/attendance
 Authorization: Bearer {token}
-Permission: members.view
+Permission: members.edit
 ```
 
 **Body:**
@@ -635,6 +635,7 @@ Permission: members.view
   "method": "manual"
 }
 ```
+`member_ids` has 1 to 500 different ids (`config/attendance.php`). `method`, when sent, can only be `manual`: the QR code and WhatsApp check-ins have their own entrances.
 
 **Response `201`:**
 ```json
@@ -644,6 +645,20 @@ Permission: members.view
   "errors": []
 }
 ```
+It answers `201` even when everyone was already checked in; the counts say what happened. Checking in twice is not an error: the second time is counted in `already_checked_in` and no row is added (a unique index in the database, so two requests at once also leave one row). An id that is not a member of this church, or belongs to a deceased member, is listed in `errors` as `{ "member_id", "message" }` and does not stop the others. Inactive members can be checked in, because they came. It works on a closed service, so a missed person can be added afterwards (QA-05 TC-05-14); there is no note field for that in v1. `404` for a service of another church.
+
+---
+
+### Capture Visitor
+```
+POST /api/v1/services/{id}/visitors
+Permission: members.edit
+```
+**Body:** `{ "name": "Yaw Boateng", "phone": "0244999000", "how_heard": "A friend" }`. Only `name` is required.
+
+**Response `201`:** the visitor: `id`, `name`, `phone`, `how_heard`, `first_visit_date`, `last_visit_date`, `visit_count`, `follow_up_status` (`pending`) and its label. The visitor is counted at the service (an attendance row with their name, apart from members).
+
+A phone number that matches an earlier visitor of the church makes this a return visit (`visit_count` goes up, `last_visit_date` moves) instead of a new record; sending the same form twice for one service counts it once. Without a phone number there is nothing to match, so each form is a new record. Visitor details are personal data kept for follow-up; they are removed when a cancelled church is purged (D-042).
 
 ---
 
@@ -657,23 +672,44 @@ Internal endpoint called by the WhatsApp webhook processor. Not called by the SP
 
 ### Get Attendance for a Service
 ```
-GET /api/v1/services/{id}/attendance
+GET /api/v1/services/{id}/attendance?per_page=25
 Authorization: Bearer {token}
 ```
+Every signed-in role may read it (QA-10), with two limits that protect people: visitors' names are shown only to staff who may edit members (church admin, pastor), and everyone else sees only the members they are allowed to see in the directory. The `summary` is a headcount, not a list of people, so it always counts everyone.
 
-**Response `200`:**
+**Response `200`** (paginated like every list):
 ```json
 {
-  "service": { "id": "ulid", "name": "Sunday Morning Service", "service_date": "2026-10-26" },
+  "service": { "id": "ulid", "name": "Sunday Morning Service", "service_date": "2026-10-26", "...": "..." },
   "summary": {
     "total": 124,
     "members": 118,
     "visitors": 6,
-    "by_method": { "manual": 80, "whatsapp": 30, "qr": 14 }
+    "by_method": { "manual": 80, "whatsapp": 30, "qr": 14, "biometric": 0 },
+    "active_members": 140,
+    "attendance_rate": 84
   },
-  "data": [ ... attendance records ... ]
+  "data": [
+    { "id": "ulid", "method": "whatsapp", "method_label": "WhatsApp", "checked_in_at": "2026-10-26T09:12:03+00:00",
+      "member": { "id": "ulid", "member_number": "GRC-0042", "full_name": "Abena Asante" }, "visitor_name": null }
+  ],
+  "meta": { "current_page": 1, "per_page": 25, "total": 124, "last_page": 5 }
 }
 ```
+Newest check-in first. `attendance_rate` is the whole percent of active members who were checked in (members only, visitors not counted), rounded to the nearest percent.
+
+### Get Member Attendance
+```
+GET /api/v1/members/{id}/attendance?weeks=12
+```
+`weeks` is 1 to 52 (default 12). **Response `200`:** `weeks`, `services_held` (services in the window that anyone was checked in to), `attended`, `attendance_rate` (whole percent, `0` when nothing was held) and `records` (each `service_id`, `service_name`, `service_date`, `method`, `checked_in_at`). `404` for another church's member; `403` if the viewer may not see the member.
+
+### List Absent Members
+```
+GET /api/v1/attendance/absent?consecutive=3&per_page=25
+Permission: reports.view
+```
+Active members who missed each of the last `consecutive` services (default: the church's own `absence_threshold` setting, else 3; allowed 2 to 12). Only Sunday services count, because a midweek meeting is always smaller (`config/attendance.php`), and a service nobody was checked in to is treated as not held. A member who joined after the oldest of those services is left out. Each member: `id`, `member_number`, `full_name`, `phone`, `last_attended_at` (null if never). It is worked out when asked, so it is always up to date; the automatic text to these members is part of Sprint 5.
 
 ---
 
