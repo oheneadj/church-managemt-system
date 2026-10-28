@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The two prune queries now start from the model's own class, which gives PHPStan the exact type it expects.
 - **Why:** The retention commit was made while PHPStan still reported 2 errors, because the check result was not looked at before committing. Every check now has to pass before a commit (the lesson from the earlier drift-test slip).
 - **Files:** `app/Models/MessageLog.php`, `app/Models/WebhookLog.php`
-- **Commit:** pending
+- **Commit:** `29799b1` (2026-10-28)
 
 #### feat(retention): delete old message logs and webhook payloads every day
 - **What:** Message logs older than 12 months and webhook payloads older than 90 days are now deleted by a daily job (Laravel's `model:prune`, scheduled at 03:00 UTC on one server). The periods live in `config/retention.php`. Money records and audit logs are not touched.
