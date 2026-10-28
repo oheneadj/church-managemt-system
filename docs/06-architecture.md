@@ -75,9 +75,9 @@ Lives in the same repository as the backend (`resources/js`, D-022) but is a pur
 | Tool | Version | Role |
 |---|---|---|
 | React | 19 (latest) | UI framework |
-| TypeScript | 5.x | Type safety across all components and API calls |
-| Vite | 6.x | Build tool + dev server |
-| React Router | v7 | Client-side routing |
+| TypeScript | 5.9 | Type safety across all components and API calls |
+| Vite | 8.x | Build tool + dev server (required by laravel-vite-plugin 3, D-026) |
+| React Router | v7 (7.18) | Client-side routing |
 | Zustand | v5 | Global state (auth user, current church, UI state) |
 | TanStack Query | v5 | Server state — fetching, caching, syncing API data |
 | Tailwind CSS | v4 | Utility-first styling |
@@ -236,7 +236,8 @@ All side effects that don't need to be synchronous are queued:
 
 | Job | Queue | Priority |
 |---|---|---|
-| `SendSmsJob` | `notifications` | Normal |
+| `SendSmsJob` (OTP) | `critical` | Highest (D-025) |
+| `SendSmsJob` (receipts, broadcasts) | `notifications` | Normal |
 | `SendWhatsAppJob` | `notifications` | Normal |
 | `SendEmailJob` | `notifications` | Low |
 | `ProcessPaystackWebhookJob` | `payments` | High |

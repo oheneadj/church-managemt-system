@@ -19,7 +19,7 @@ Oracle ARM Instance (4 OCPUs, 24GB RAM)
    │     ├── Laravel API (Docker container, port 8000)
    │     ├── PostgreSQL (Docker container, internal only)
    │     ├── Redis (Docker container, internal only)
-   │     └── Queue Workers (Supervisor — 5 named queues)
+   │     └── Queue Workers (Supervisor — 6 named queues)
    │
    └── Cloudflare R2 (object storage — external, CDN-backed)
 ```
@@ -132,10 +132,15 @@ META_VERIFY_TOKEN=...
 META_ACCESS_TOKEN=...
 META_PHONE_NUMBER_ID=...
 
+FILESYSTEM_DISK=r2
 CLOUDFLARE_R2_ACCESS_KEY_ID=...
 CLOUDFLARE_R2_SECRET_ACCESS_KEY=...
 CLOUDFLARE_R2_BUCKET=chms-production
-CLOUDFLARE_R2_URL=https://...r2.cloudflarestorage.com
+CLOUDFLARE_R2_URL=https://<account id>.r2.cloudflarestorage.com
+# Backups: a separate bucket and a separate key pair
+CLOUDFLARE_R2_BACKUP_ACCESS_KEY_ID=...
+CLOUDFLARE_R2_BACKUP_SECRET_ACCESS_KEY=...
+CLOUDFLARE_R2_BACKUP_BUCKET=chms-backups
 
 FRONTEND_URL=https://yourapp.com
 ```
@@ -153,6 +158,16 @@ Coolify handles Let's Encrypt automatically. Configure:
 Add a Supervisor config in Coolify's process manager for queue workers:
 
 ```ini
+[program:queue-critical]
+command=php /var/www/html/artisan queue:work redis --queue=critical --sleep=1 --tries=3 --backoff=5
+numprocs=1
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/www/html/storage/logs/worker-critical.log
+
 [program:queue-notifications]
 command=php /var/www/html/artisan queue:work redis --queue=notifications --sleep=3 --tries=3 --backoff=60
 numprocs=2
@@ -189,7 +204,7 @@ numprocs=1
 autostart=true
 autorestart=true
 stopasgroup=true
-killasfile=true
+killasgroup=true
 redirect_stderr=true
 stdout_logfile=/var/www/html/storage/logs/worker-exports.log
 
@@ -225,105 +240,26 @@ github.com/yourorg/chms   (Laravel API + React 19 SPA in resources/js — one re
 
 Local development is native (no Docker, D-023). Staging and production build the Docker image from `deploy/Dockerfile`; that file is the source of truth for the PHP version and extensions (`pdo_pgsql`, `redis`, `bcmath`).
 
-### GitHub Actions Workflow (API)
+### GitHub Actions Workflow
 
-```yaml
-# .github/workflows/ci.yml
-name: CI
+The pipeline is `.github/workflows/ci.yml` (the file is the source of truth; this section only explains it).
 
-on:
-  push:
-    branches: [main, staging]
-  pull_request:
-    branches: [main]
+| Job | Runs on | What it does |
+|---|---|---|
+| `backend` | every push and PR to `main` / `staging` | PHP 8.4, PostgreSQL 18 and Redis 8 services (same majors as local, D-023). Migrations go up, down and up again; Pint; PHPStan level 8; `composer audit`; Pest. |
+| `frontend` | same | Node 24: `npm ci`, TypeScript, ESLint + Prettier, Vitest, production build, `npm audit --audit-level=high`. |
+| `deploy-staging` | push to `staging`, after both jobs pass | `POST` to the Coolify webhook, then a smoke test of `/api/health` (retries for about 5 minutes). |
+| `deploy-production` | push to `main`, after both jobs pass | Same, behind the `production` environment, whose **required reviewers** are the manual approval step. |
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+One-time GitHub setup:
 
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: chms_test
-        ports: ['5432:5432']
-        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=5
-      redis:
-        image: redis:7
-        ports: ['6379:6379']
+- Secrets: `COOLIFY_TOKEN`, `COOLIFY_STAGING_WEBHOOK`, `COOLIFY_PRODUCTION_WEBHOOK`. Each webhook secret is the full deploy URL copied from the application's Webhooks page in Coolify; the call is `POST` with `Authorization: Bearer <token>` (Coolify API, `POST /deploy?uuid=...`).
+- Variables: `STAGING_URL`, `PRODUCTION_URL` (for example `https://staging.yourapp.com`).
+- Environments: create `staging` and `production`; add yourself as a required reviewer on `production`.
+- Branch protection on `main` and `staging`: require the `backend` and `frontend` checks.
+- `.github/dependabot.yml` opens weekly update PRs for Composer, npm and the actions themselves.
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, xml, ctype, fileinfo, pdo, pdo_pgsql, bcmath, redis
-          coverage: none
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Build and check the SPA
-        run: |
-          npm ci
-          npm run typecheck
-          npm run build
-
-      - name: Copy .env
-        run: cp .env.testing .env
-
-      - name: Generate key
-        run: php artisan key:generate
-
-      - name: Run migrations
-        run: php artisan migrate --force
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: chms_test
-          DB_USERNAME: postgres
-          DB_PASSWORD: password
-
-      - name: Check code style (Pint)
-        run: ./vendor/bin/pint --test
-
-      - name: Static analysis (PHPStan level 6)
-        run: ./vendor/bin/phpstan analyse
-
-      - name: Run tests
-        run: php artisan test --parallel
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: chms_test
-          DB_USERNAME: postgres
-          DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
-
-  deploy-staging:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/staging'
-    steps:
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X POST "${{ secrets.COOLIFY_STAGING_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
-
-  deploy-production:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X POST "${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
-```
+Differences from the first draft of this document: PHP 8.4 (the draft said 8.3), PHPStan level 8 (the draft said 6), Redis 8, current action versions, a migration round-trip step, `composer audit` and `npm audit`, and no `.env.testing` (the workflow copies `.env.example`; `phpunit.xml` sets the test database).
 
 ### Deploy Script (run by Coolify on each deploy)
 
@@ -332,6 +268,9 @@ Coolify runs the app's deploy script after pulling the new image:
 ```bash
 #!/bin/bash
 set -e
+
+echo "=== Checking the environment ==="
+php artisan env:check
 
 echo "=== Running migrations ==="
 php artisan migrate --force
@@ -357,17 +296,7 @@ Coolify uses a rolling restart strategy with Docker:
 4. Switches Nginx upstream to new container
 5. Stops old container
 
-**The `/api/health` endpoint:**
-```php
-Route::get('/health', function () {
-    return response()->json([
-        'status'    => 'ok',
-        'db'        => DB::connection()->getPdo() ? 'ok' : 'error',
-        'redis'     => Redis::ping() === 'PONG' ? 'ok' : 'error',
-        'timestamp' => now()->toIso8601String(),
-    ]);
-}); // No auth middleware — health check must be publicly reachable
-```
+**The `/api/health` endpoint** (`HealthController`, `HealthCheck` service): public, unversioned, no tenant. It runs `database`, `cache`, `queue`, `storage` and `disk` checks and returns `200 {status:"ok", checks:{...}}` or `503 {status:"degraded", ...}`. Each check reports only `ok` or `error`; the reason goes to the log. Laravel's built-in `GET /up` is the liveness probe (is the process running?), `/api/health` is readiness (can it serve?). The `disk` check fails when less than `HEALTH_MIN_FREE_DISK_PERCENT` (default 10) of the disk holding `storage/` is free.
 
 ---
 
@@ -507,9 +436,10 @@ Then create the admin user and invite them via email.
 If a staff member is locked out due to too many OTP attempts:
 
 ```bash
-php artisan tinker
->>> Redis::del('otp_attempts:+233244123456')
+php artisan otp:reset-lockout grace-assembly +233244123456
 ```
+
+The command clears the lockout counter and any pending code for that church and number (the Redis keys are namespaced per church and hashed, so deleting a raw key by hand no longer works).
 
 Confirm the phone number with the church admin before doing this.
 

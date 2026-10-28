@@ -457,6 +457,83 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-024 — API versioned under `/api/v1` from day one
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the Universal agreement, section 9)
+**Status:** Active — amends the unversioned paths in the first draft of `08-api.md`
+
+**Decision:** Every API route is prefixed `/api/v1` (set once via `apiPrefix` in `bootstrap/app.php`). Breaking changes get `/api/v2`; the old version gets `Deprecation` and `Sunset` headers and stays live for its support window.
+
+**Rationale:** Retrofitting a version later breaks every client, including the SPA, the WhatsApp/webhook configuration at providers, and any future mobile PWA. It costs nothing now.
+
+---
+
+### D-025 — OTP sends use a `critical` queue and cost-based rate limits
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the Universal agreement, sections 16 and 18)
+**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`
+
+**Decision:**
+- A sixth queue, `critical`, carries OTP SMS so a slow broadcast can never delay a sign-in. It is listed first in the worker command.
+- Code requests are limited to **1 per minute and 5 per hour per phone per church**, plus 20 per hour per IP. Sending a code costs money, so this is separate from the security limit on verification (5 wrong codes, then a 15-minute lockout; 10 verify calls per minute per IP).
+- OTP SMS is not charged to the church's SMS credit balance. The message is stored in `message_logs` with the code redacted.
+- Redis keys for codes and attempts are namespaced by church id and use a hash of the phone number.
+
+**Rationale:** The Universal agreement requires cost-triggering endpoints to have their own limit and OTPs to be isolated from slow external-API work. The previous limits (5 a minute, 3 a minute) allowed an attacker to burn SMS budget quickly.
+
+---
+
+### D-026 — Frontend toolchain versions, and the session token lives in memory only
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the React addendum, section 11)
+**Status:** Active — amends the version numbers in D-015 and `06-architecture.md`
+
+**Decision:**
+- **Versions actually installed:** React 19.3, React Router **7.18** (not 8), TypeScript **5.9**, Vite **8.3**, Tailwind 4.3, TanStack Query 5, Zustand 5, Vitest 5, ESLint **9**. Vite 8 is required, not chosen: `laravel-vite-plugin` 3 and `@vitejs/plugin-react` 6 both peer-depend on `vite ^8`. ESLint stays on 9 because `eslint-plugin-jsx-a11y` does not support 10 yet. Router and TypeScript are held on the majors the docs name; both have newer majors available.
+- ~~The bearer token is kept in memory only.~~ **Superseded by D-027:** the browser app now uses Sanctum cookie sessions, so a refresh no longer signs the user out.
+- The phone number typed on the login screen is held in component state, not the URL.
+- UI primitives are shadcn/ui (`radix-nova` style, Radix base) generated with the official CLI; its `cn` helper comes from the first-party `cn` package (maintainer shadcn, repo `shadcn-ui/cn`).
+
+**Rationale:** The Universal agreement and the React addendum forbid tokens in browser storage. Cookie-based Sanctum SPA authentication would keep users signed in across refreshes and is possible now that the SPA shares an origin with the API, but it changes the documented auth contract, so it is left as an open option rather than done silently.
+
+**Known audit note:** `npm audit` reports 3 low-severity findings, all in the `shadcn` CLI's own dependencies (a dev tool). CI fails only at `--audit-level=high`.
+
+---
+
+### D-027 — The browser app uses Sanctum cookie sessions; bearer tokens remain for other clients
+**Date:** October 2026
+**Decided by:** Product Owner (asked that sessions survive a page refresh)
+**Status:** Active — supersedes the token-in-memory choice in D-026 and amends `08-api.md` and `15-security.md`
+
+**Decision:**
+- A request from the church's own page (its `Origin`/`Referer` host equals the request host) is a **stateful** Sanctum request. Verifying a code signs the user in with a Laravel session and returns **no token**. The session id travels in an httpOnly cookie, so JavaScript never holds a credential and a page refresh keeps the user signed in.
+- Any other client (no matching `Origin`/`Referer`) still receives an 8-hour bearer token from the same endpoint, exactly as before.
+- `SANCTUM_STATEFUL_DOMAINS` defaults to `Sanctum::currentRequestHost()`, so every church subdomain is stateful without a list. `SESSION_DOMAIN` stays `null`: cookies are **host-only**, so a session never reaches another church's subdomain.
+- Sessions last 8 hours of inactivity (`SESSION_LIFETIME=480`, sliding), stored in Redis.
+- State-changing requests need CSRF: the SPA calls `GET /sanctum/csrf-cookie` once per page load and axios sends `X-XSRF-TOKEN`.
+- `GET /api/v1/auth/me` also returns the church, so the app can restore its state after a refresh.
+- `EnsureStaffIsCurrent` runs on every authenticated request: a deactivated user, or a session opened under a different phone number, is signed out immediately (the cookie-session equivalent of deleting tokens).
+- `ResolveTenant` is first in the middleware priority list, ahead of Sanctum, and Sanctum's `AuthenticateSession` step is disabled.
+
+**Why the last two matter:** the first build loaded the session user *before* the church was known, so a session cookie from church A replayed on church B's host was accepted. Found by a cross-church test and confirmed against the live server, then fixed and pinned with a test that fails if the fix is removed.
+
+**Consequences:** the web app must run on the same origin as the API (it does, D-022). CORS is not needed for it. A mobile app or third-party client uses the token path.
+
+---
+
+### D-028 — Controller → Form Request → Service; no Action or Repository layers yet
+**Date:** October 2026
+**Decided by:** Lead Engineer (reconciling the Universal agreement §6 with `docs/09-engineering-principles.md`)
+**Status:** Active
+
+**Decision:** Backend code is layered Controller → Form Request → Service → Model, as `docs/09-engineering-principles.md` specifies. Services own `DB::transaction()` boundaries and dispatch jobs and events. We do not add Action classes (one per operation) or Repository classes (all queries for a model) until a real need appears: an Action when one operation is triggered from several entry points, a Repository when a second data source exists. The layers, their duties and their prohibitions are written down in `ARCHITECTURE.md`.
+
+**Rationale:** The project documents name Services explicitly, `09` says interfaces are added only once there are two implementations, and the codebase is small. Extra layers now would be speculative (YAGNI). Eloquent scopes already cover repeated filters.
+
+**Revisit when:** a second client of the same operation appears (for example a CLI command and an endpoint doing the same thing) or a second storage backend is introduced.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
 use Laravel\Sanctum\Sanctum;
 
 return [
@@ -18,12 +19,10 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
-    ))),
+    // Every church lives on its own subdomain, so a request is "from the app" when its Origin or Referer
+    // is the same host it is addressed to. That keeps cookies host-only (SESSION_DOMAIN stays null), so a
+    // session never crosses from one church to another.
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', Sanctum::currentRequestHost())),
 
     /*
     |--------------------------------------------------------------------------
@@ -79,7 +78,9 @@ return [
     */
 
     'middleware' => [
-        'authenticate_session' => AuthenticateSession::class,
+        // Off on purpose: it loads the user before the church is known, and it only exists to end sessions
+        // on a password change. There are no passwords here; EnsureStaffIsCurrent ends sessions instead.
+        'authenticate_session' => null,
         'encrypt_cookies' => EncryptCookies::class,
         'validate_csrf_token' => ValidateCsrfToken::class,
     ],

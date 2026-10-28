@@ -23,15 +23,17 @@
 - Response: `200 { "message": "OTP sent" }`
 - SMS arrives on the phone within 30 seconds
 - OTP is 6 digits
-- Redis key `otp:+233244000001` exists with a hashed value
-- Redis key expires in ≤ 600 seconds
+- The job is queued on the `critical` queue and the SMS reads "Your <app name> code is: NNNNNN. Valid for 10 minutes. Do not share."
+- A Redis key `church:<church id>:otp:<sha256 of the phone>` exists holding a bcrypt hash (never the code)
+- The key expires in ≤ 600 seconds
+- `message_logs` records the send with the content `[otp redacted]`
 
 ### TC-01-02 — Successful OTP verification
 **Action:** `POST /api/auth/otp/verify` with `{ "phone": "+233244000001", "otp": "<received_code>" }`
 **Expected:**
-- Response: `200 { "token": "...", "user": { ... } }`
-- Token is a 40-character string
-- Redis key `otp:+233244000001` is deleted after successful verify
+- From the web app (browser request on the church's host): `200 { "user": {...}, "church": {...} }` with **no token**, and an httpOnly `laravel-session` cookie with no `Domain` attribute
+- From any other client: `200 { "token": "...", "token_type": "Bearer", "user": {...}, "church": {...} }`
+- The Redis code key and attempts key are deleted after successful verify
 - `personal_access_tokens` table has a new row for this user
 
 ### TC-01-03 — Wrong OTP
@@ -39,7 +41,7 @@
 **Expected:**
 - Response: `422 { "message": "Invalid code" }`
 - Error message is the SAME as for an expired code (no distinguishing)
-- Redis key `otp_attempts:+233244000001` is incremented
+- The attempts counter for that church and phone is incremented
 
 ### TC-01-04 — Expired OTP
 **Action:** Wait 11 minutes after requesting OTP, then verify with the correct code
@@ -50,9 +52,9 @@
 ### TC-01-05 — Lockout after 5 failed attempts
 **Action:** Submit 5 incorrect OTP verifications in a row
 **Expected:**
-- 5th attempt response: `429 { "message": "Too many attempts. Try again in 15 minutes." }`
-- A 6th request within 15 minutes also returns `429`
-- After 15 minutes, a new OTP can be requested and verified
+- 4th wrong attempt: `422`. 5th wrong attempt: `429 { "message": "Too many attempts. Try again in 15 minutes." }` with `Retry-After: 900`
+- A 6th request within 15 minutes also returns `429`, even with the correct code
+- After 15 minutes (or `php artisan otp:reset-lockout`), a new OTP can be requested and verified
 
 ### TC-01-06 — Phone number enumeration prevention
 **Action:** Request OTP for a phone that is NOT registered: `+233244999999`
@@ -71,13 +73,13 @@
 
 ### TC-01-09 — Token expiry
 **Action:** Use a token that was created more than 8 hours ago
-**Expected:** `401 { "message": "Token expired." }`
-**Setup:** Manually set `created_at` on the token record in DB to 9 hours ago
+**Expected:** `401 { "message": "Unauthenticated." }`
+**Setup:** Set `expires_at` on the token record in the DB to a past time (tokens are created with an 8-hour `expires_at`)
 
 ### TC-01-10 — Logout
 **Action:** `POST /api/auth/logout` with a valid token
 **Expected:**
-- Response: `200 { "message": "Logged out" }`
+- Response: `204` with an empty body (as documented in `08-api.md`)
 - Token is deleted from `personal_access_tokens`
 - A subsequent request with the same token returns `401`
 
@@ -90,7 +92,23 @@
 **Expected:**
 - Both requests return `200`
 - Only the most recent OTP is valid (earlier one is overwritten in Redis)
-- Rate limit on the OTP endpoint prevents abuse (3 requests per minute)
+- The second request within a minute returns `429`: the limit is 1 per minute and 5 per hour per phone (D-025), so "both return 200" only applies to requests more than a minute apart
+
+### TC-01-14 — Session survives a page refresh
+**Action:** Sign in through the web app, then reload the page (any private URL).
+**Expected:** The user is still signed in and sees the same church; no login screen appears. `GET /api/v1/auth/me` returns the user and church.
+
+### TC-01-15 — Session cannot cross to another church
+**Action:** Copy the `laravel-session` cookie value from church A and send it to church B's host.
+**Expected:** `401`. (This was once a real leak; a test fails if it returns).
+
+### TC-01-16 — Access changes end the session
+**Action:** While signed in, deactivate the user (or change their phone number) from another session.
+**Expected:** The next request returns `401`.
+
+### TC-01-17 — Logout ends the cookie session
+**Action:** Sign out, then reload a private URL or replay the old cookie.
+**Expected:** Login screen / `401`.
 
 ### TC-01-13 — Member portal authentication
 **Action:** A member (not staff) logs in via the member portal OTP flow

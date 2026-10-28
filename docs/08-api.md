@@ -1,5 +1,7 @@
 # API Reference
 
+> All routes are versioned under `/api/v1` (D-024). A breaking change gets `/api/v2`; the old version stays live until its announced sunset.
+
 > The Laravel API is a RESTful JSON API. This document defines conventions, authentication, and every endpoint. Keep this in sync with the code — if an endpoint changes, update this doc in the same PR.
 
 ---
@@ -9,10 +11,10 @@
 Every request targets the church's subdomain:
 
 ```
-https://{church-slug}.yourapp.com/api
+https://{church-slug}.yourapp.com/api/v1
 ```
 
-Example: `https://grace-assembly.yourapp.com/api/members`
+Example: `https://grace-assembly.yourapp.com/api/v1/members`
 
 ---
 
@@ -85,16 +87,16 @@ Query params: `?page=2&per_page=50`
 ### Filtering & Sorting
 Filters are query params. Example:
 ```
-GET /api/members?status=active&gender=female&department_id=ulid
-GET /api/contributions?from=2026-01-01&to=2026-03-31&fund_type_id=ulid
-GET /api/members?sort=last_name&direction=asc
+GET /api/v1/members?status=active&gender=female&department_id=ulid
+GET /api/v1/contributions?from=2026-01-01&to=2026-03-31&fund_type_id=ulid
+GET /api/v1/members?sort=last_name&direction=asc
 ```
 
-### Authentication Header
-All authenticated endpoints require:
-```
-Authorization: Bearer {token}
-```
+### Authentication
+All authenticated endpoints accept **either**:
+
+- **A session cookie** (the church's web app). Sign-in sets an httpOnly cookie; send `Accept: application/json`, the cookie, and the `X-XSRF-TOKEN` header on writes (call `GET /sanctum/csrf-cookie` first). Requests must come from the church's own host (D-027).
+- **A bearer token** (any other client): `Authorization: Bearer {token}`.
 
 ---
 
@@ -102,7 +104,7 @@ Authorization: Bearer {token}
 
 ### Request OTP
 ```
-POST /api/auth/otp/request
+POST /api/v1/auth/otp/request
 ```
 
 **Body:**
@@ -120,13 +122,13 @@ POST /api/auth/otp/request
 }
 ```
 
-**Rate limit:** 5 requests per phone per minute.
+**Rate limit:** 1 request per phone per minute and 5 per hour (D-025). Always returns `200`, whether or not the phone belongs to a staff member, so numbers cannot be enumerated.
 
 ---
 
 ### Verify OTP
 ```
-POST /api/auth/otp/verify
+POST /api/v1/auth/otp/verify
 ```
 
 **Body:**
@@ -137,10 +139,10 @@ POST /api/auth/otp/verify
 }
 ```
 
-**Response `200`:**
+**Response `200`:** A browser request from the church's own page is signed in by cookie and the response has **no `token` or `token_type`**. Any other client gets:
 ```json
 {
-  "token": "1|abc123...",
+  "token": "01j...|abc123...",
   "token_type": "Bearer",
   "user": {
     "id": "ulid",
@@ -167,19 +169,19 @@ POST /api/auth/otp/verify
 
 ### Logout
 ```
-POST /api/auth/logout
-Authorization: Bearer {token}
+POST /api/v1/auth/logout
 ```
 
-**Response `204`** — Token revoked.
+**Response `204`** — the cookie session is ended, or the bearer token is revoked.
 
 ---
 
 ### Get Authenticated User
 ```
-GET /api/auth/me
-Authorization: Bearer {token}
+GET /api/v1/auth/me
 ```
+
+The web app calls this on load to restore its session after a refresh.
 
 **Response `200`:**
 ```json
@@ -191,9 +193,12 @@ Authorization: Bearer {token}
     "email": "akosua@example.com",
     "roles": ["finance-secretary"],
     "permissions": ["giving.record", "giving.summary", "members.view"]
-  }
+  },
+  "church": { "id": "ulid", "name": "Grace Assembly International", "slug": "grace-assembly", "plan": "growth", "sms_credits": 420 }
 }
 ```
+
+`401` when there is no valid session or token, or when the staff member was deactivated or changed phone number.
 
 ---
 
@@ -201,7 +206,7 @@ Authorization: Bearer {token}
 
 ### List Members
 ```
-GET /api/members
+GET /api/v1/members
 Authorization: Bearer {token}
 Permission: members.view
 ```
@@ -245,7 +250,7 @@ Permission: members.view
 
 ### Get Member
 ```
-GET /api/members/{id}
+GET /api/v1/members/{id}
 Authorization: Bearer {token}
 Permission: members.view
 ```
@@ -313,7 +318,7 @@ Permission: members.view
 
 ### Create Member
 ```
-POST /api/members
+POST /api/v1/members
 Authorization: Bearer {token}
 Permission: members.edit
 ```
@@ -341,7 +346,7 @@ Permission: members.edit
 
 ### Update Member
 ```
-PUT /api/members/{id}
+PUT /api/v1/members/{id}
 Authorization: Bearer {token}
 Permission: members.edit
 ```
@@ -354,7 +359,7 @@ Permission: members.edit
 
 ### Update Member Status
 ```
-PATCH /api/members/{id}/status
+PATCH /api/v1/members/{id}/status
 Authorization: Bearer {token}
 Permission: members.edit
 ```
@@ -373,7 +378,7 @@ Permission: members.edit
 
 ### Upload Member Photo
 ```
-POST /api/members/{id}/photo
+POST /api/v1/members/{id}/photo
 Authorization: Bearer {token}
 Permission: members.edit
 Content-Type: multipart/form-data
@@ -390,7 +395,7 @@ Content-Type: multipart/form-data
 
 ### Add Member Milestone
 ```
-POST /api/members/{id}/milestones
+POST /api/v1/members/{id}/milestones
 Authorization: Bearer {token}
 Permission: members.edit
 ```
@@ -413,21 +418,21 @@ Permission: members.edit
 
 ### List Families
 ```
-GET /api/families
+GET /api/v1/families
 Authorization: Bearer {token}
 Permission: members.view
 ```
 
 ### Get Family
 ```
-GET /api/families/{id}
+GET /api/v1/families/{id}
 ```
 Returns family record + all linked members with their status and basic profile.
 
 ### Create / Update Family
 ```
-POST /api/families
-PUT /api/families/{id}
+POST /api/v1/families
+PUT /api/v1/families/{id}
 ```
 
 ---
@@ -436,7 +441,7 @@ PUT /api/families/{id}
 
 ### List Services
 ```
-GET /api/services
+GET /api/v1/services
 Authorization: Bearer {token}
 ```
 
@@ -444,7 +449,7 @@ Authorization: Bearer {token}
 
 ### Create Service
 ```
-POST /api/services
+POST /api/v1/services
 Authorization: Bearer {token}
 Permission: members.edit
 ```
@@ -466,7 +471,7 @@ Permission: members.edit
 
 ### Open / Close Service for Check-in
 ```
-PATCH /api/services/{id}/checkin
+PATCH /api/v1/services/{id}/checkin
 Authorization: Bearer {token}
 ```
 
@@ -479,7 +484,7 @@ Authorization: Bearer {token}
 
 ### Record Attendance (Manual)
 ```
-POST /api/services/{id}/attendance
+POST /api/v1/services/{id}/attendance
 Authorization: Bearer {token}
 Permission: members.view
 ```
@@ -505,7 +510,7 @@ Permission: members.view
 
 ### WhatsApp Check-in (Internal — called by webhook handler)
 ```
-POST /api/checkin/whatsapp
+POST /api/v1/checkin/whatsapp
 ```
 Internal endpoint called by the WhatsApp webhook processor. Not called by the SPA directly.
 
@@ -513,7 +518,7 @@ Internal endpoint called by the WhatsApp webhook processor. Not called by the SP
 
 ### Get Attendance for a Service
 ```
-GET /api/services/{id}/attendance
+GET /api/v1/services/{id}/attendance
 Authorization: Bearer {token}
 ```
 
@@ -537,7 +542,7 @@ Authorization: Bearer {token}
 
 ### List Contributions
 ```
-GET /api/contributions
+GET /api/v1/contributions
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
@@ -557,7 +562,7 @@ Permission: giving.summary
 
 ### Get Contribution
 ```
-GET /api/contributions/{id}
+GET /api/v1/contributions/{id}
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
@@ -566,7 +571,7 @@ Permission: giving.summary
 
 ### Record Cash Contribution
 ```
-POST /api/contributions
+POST /api/v1/contributions
 Authorization: Bearer {token}
 Permission: giving.record
 ```
@@ -593,7 +598,7 @@ Permission: giving.record
 
 ### Initiate MoMo / Card Payment
 ```
-POST /api/contributions/initiate
+POST /api/v1/contributions/initiate
 Authorization: Bearer {token}
 Permission: giving.record
 ```
@@ -624,7 +629,7 @@ The contribution record is created when the provider's callback (or our reconcil
 
 ### Void Contribution
 ```
-PATCH /api/contributions/{id}/void
+PATCH /api/v1/contributions/{id}/void
 Authorization: Bearer {token}
 Permission: giving.edit
 ```
@@ -642,7 +647,7 @@ Permission: giving.edit
 
 ### Sunday Offering Report
 ```
-GET /api/services/{id}/offering-report
+GET /api/v1/services/{id}/offering-report
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
@@ -670,7 +675,7 @@ Permission: giving.summary
 
 ### List Pledges
 ```
-GET /api/pledges
+GET /api/v1/pledges
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
@@ -679,13 +684,13 @@ Permission: giving.summary
 
 ### Get Pledge
 ```
-GET /api/pledges/{id}
+GET /api/v1/pledges/{id}
 ```
 Returns pledge + all linked contributions.
 
 ### Create Pledge
 ```
-POST /api/pledges
+POST /api/v1/pledges
 Authorization: Bearer {token}
 Permission: giving.record
 ```
@@ -707,7 +712,7 @@ Permission: giving.record
 
 ### Send Broadcast
 ```
-POST /api/messages/broadcast
+POST /api/v1/messages/broadcast
 Authorization: Bearer {token}
 Permission: sms.send
 ```
@@ -740,7 +745,7 @@ Recipients are confirmed and messages dispatched asynchronously. Credits are ded
 
 ### Get Message Log
 ```
-GET /api/messages
+GET /api/v1/messages
 Authorization: Bearer {token}
 Permission: members.view
 ```
@@ -753,7 +758,7 @@ Permission: members.view
 
 ### Attendance Trends
 ```
-GET /api/reports/attendance
+GET /api/v1/reports/attendance
 Authorization: Bearer {token}
 Permission: reports.view
 ```
@@ -779,7 +784,7 @@ Permission: reports.view
 
 ### Giving Trends
 ```
-GET /api/reports/giving
+GET /api/v1/reports/giving
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
@@ -790,7 +795,7 @@ Permission: giving.summary
 
 ### Member Growth
 ```
-GET /api/reports/members
+GET /api/v1/reports/members
 Authorization: Bearer {token}
 Permission: reports.view
 ```
@@ -799,7 +804,7 @@ Permission: reports.view
 
 ### Export Members (CSV)
 ```
-POST /api/exports/members
+POST /api/v1/exports/members
 Authorization: Bearer {token}
 Permission: members.view
 ```
@@ -818,7 +823,7 @@ Permission: members.view
 
 ### Export Contributions (CSV)
 ```
-POST /api/exports/contributions
+POST /api/v1/exports/contributions
 Authorization: Bearer {token}
 Permission: giving.export
 ```
@@ -829,15 +834,15 @@ Permission: giving.export
 
 ### List Fund Types
 ```
-GET /api/fund-types
+GET /api/v1/fund-types
 Authorization: Bearer {token}
 ```
 
 ### Create / Update / Deactivate Fund Type
 ```
-POST   /api/fund-types
-PUT    /api/fund-types/{id}
-PATCH  /api/fund-types/{id}   { "is_active": false }
+POST   /api/v1/fund-types
+PUT    /api/v1/fund-types/{id}
+PATCH  /api/v1/fund-types/{id}   { "is_active": false }
 ```
 Permission: `church-admin` only.
 
@@ -847,15 +852,15 @@ Permission: `church-admin` only.
 
 ### List / Create / Update
 ```
-GET    /api/departments
-POST   /api/departments
-PUT    /api/departments/{id}
+GET    /api/v1/departments
+POST   /api/v1/departments
+PUT    /api/v1/departments/{id}
 ```
 
 ### Add / Remove Member from Department
 ```
-POST   /api/departments/{id}/members   { "member_id": "ulid", "role": "Member" }
-DELETE /api/departments/{id}/members/{member_id}
+POST   /api/v1/departments/{id}/members   { "member_id": "ulid", "role": "Member" }
+DELETE /api/v1/departments/{id}/members/{member_id}
 ```
 
 ---
@@ -864,13 +869,13 @@ DELETE /api/departments/{id}/members/{member_id}
 
 ### Get Settings
 ```
-GET /api/church/settings
+GET /api/v1/church/settings
 Authorization: Bearer {token}
 ```
 
 ### Update Settings
 ```
-PUT /api/church/settings
+PUT /api/v1/church/settings
 Authorization: Bearer {token}
 Permission: church-admin
 ```
@@ -896,7 +901,7 @@ These endpoints receive payloads from external services. They do not require a B
 
 ### PayPerlez Webhook (MoMo collections and payouts)
 ```
-POST /api/webhooks/payperlez
+POST /api/v1/webhooks/payperlez
 Header: X-Payperlez-Signature: t=<unix-seconds>,v1=<hmac_sha256 of "t.body">
 ```
 
@@ -904,7 +909,7 @@ Rejected if the signature is invalid or the timestamp is more than 5 minutes old
 
 ### Paystack Webhook (cards)
 ```
-POST /api/webhooks/paystack
+POST /api/v1/webhooks/paystack
 Header: X-Paystack-Signature: {hmac_sha512}
 ```
 
@@ -912,8 +917,8 @@ Handled events: `charge.success`, `charge.failed`, `refund.processed`
 
 ### Meta / WhatsApp Webhook
 ```
-GET  /api/webhooks/whatsapp   (Meta verification challenge)
-POST /api/webhooks/whatsapp   (Incoming messages)
+GET  /api/v1/webhooks/whatsapp   (Meta verification challenge)
+POST /api/v1/webhooks/whatsapp   (Incoming messages)
 ```
 
 Handled message types: `text` (for CHECKIN command parsing), `status` (delivery receipts)
@@ -924,9 +929,9 @@ Handled message types: `text` (for CHECKIN command parsing), `status` (delivery 
 
 | Endpoint group | Limit |
 |---|---|
-| `POST /api/auth/otp/request` | 5 per phone per minute |
-| `POST /api/auth/otp/verify` | 5 attempts per phone per window |
-| `POST /api/messages/broadcast` | 10 per hour per church |
+| `POST /api/v1/auth/otp/request` | 1 per phone per minute, 5 per phone per hour, 20 per IP per hour |
+| `POST /api/v1/auth/otp/verify` | 5 wrong codes per phone, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

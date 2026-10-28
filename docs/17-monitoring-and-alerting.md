@@ -22,7 +22,7 @@
 
 ## Log Structure
 
-All logs are structured JSON for easy parsing:
+All logs are structured JSON for easy parsing. Set `LOG_STACK=daily`, `LOG_LEVEL=warning` and `LOG_FORMAT=json` in staging and production. Every record carries `message`, `level_name`, `datetime` (UTC) and, under `extra`, `service`, `environment`, `request_id`, `church_id` and `user_id`. The same `request_id` is returned to the client in the `X-Request-ID` response header and travels into queued jobs, so a support ticket quoting that header finds every related log line.
 
 ```php
 // config/logging.php
@@ -57,6 +57,8 @@ All logs are structured JSON for easy parsing:
 ## Health Checks
 
 ### `/api/health` — Application Health
+
+> **As built:** see `app/Services/HealthCheck.php`. Checks are `database`, `cache`, `queue`, `storage` (default disk, `r2` in staging/production) and `disk`. The sketch below is the original design; the response never contains error text.
 
 ```php
 Route::get('/health', function () {
@@ -99,7 +101,7 @@ Route::get('/health', function () {
 
 ```php
 Route::get('/health/queues', function () {
-    $queues = ['notifications', 'payments', 'reports', 'exports', 'scheduled'];
+    $queues = ['critical', 'notifications', 'payments', 'reports', 'exports', 'scheduled'];
     $sizes  = [];
 
     foreach ($queues as $queue) {
@@ -148,6 +150,7 @@ class MonitorQueueDepth extends Command
 
     // Thresholds: alert if any queue exceeds this depth
     private array $thresholds = [
+        'critical'      => 3,    // OTPs: a backlog here means people cannot sign in
         'payments'      => 10,   // Payments queue should clear fast
         'notifications' => 50,
         'reports'       => 20,

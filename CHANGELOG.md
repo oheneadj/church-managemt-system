@@ -11,7 +11,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > Changes staged but not yet in a versioned release.
 
+### Added
+- Laravel 13 application scaffold in the repo root, alongside `docs/` (D-022)
+- PostgreSQL migrations for all 16 v1 tables plus Sanctum, Spatie Permission and Telescope, all with ULID keys and working `down()` methods
+- Pest, Pint (strict types enforced) and Larastan level 8; tests run against PostgreSQL (`chms_test`)
+- 22 backed enums for every fixed-value column, Eloquent models (ULID keys, soft deletes, encrypted casts, `BelongsToChurch` tenancy trait) and factories
+- `ResolveTenant` middleware (subdomain or custom domain, 404 when unknown or suspended), run before auth so tokens only resolve within their own church
+- API is versioned from day one under `/api/v1` (D-024)
+- OTP sign-in: `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`. Codes are bcrypt-hashed in Redis per church, locked out after 5 misses, and sent by a queued `SendSmsJob` on the new `critical` queue (D-025)
+- Tokens are revoked immediately when a staff member is deactivated or changes phone number; `php artisan otp:reset-lockout {church} {phone}` for support
+- `SmsProvider` contract with a development-only log driver; the PayPerlez and Africa's Talking adapters come next
+- Roles and permissions seeder, ULID-keyed `Role` and `Permission` models, `PhoneNumber` value object
+- Tenancy and database-constraint tests (cross-tenant, partial unique indexes, double check-in)
+- React 19 SPA in `resources/js` served through one Blade shell (`/{any?}` catch-all, 404 for unknown churches): passwordless OTP sign-in (React Hook Form + Zod), auth guard, sidebar app layout, church context and a dashboard placeholder. Sessions are httpOnly Sanctum cookies, so a refresh keeps the user signed in; bearer tokens remain for non-browser clients (D-027)
+- Vitest + Testing Library suite (16 tests), ESLint 9 with jsx-a11y and react-hooks, Prettier, strict TypeScript
+- shadcn/ui primitives (button, input, label, card) and the Tailwind v4 theme
+- `GET /api/health` readiness probe (database, cache, queue, storage, disk) and Laravel's `/up` liveness probe; `X-Request-ID` on every response with the id, church and user added to log context and queued jobs; JSON log format for production; `php artisan env:check` and a fail-fast guard so a misconfigured deploy stops at start-up
+- `ARCHITECTURE.md`: the backend and frontend layers, tenancy rules, auth, queues, providers and observability as built, with a checklist of where new code goes (D-028)
+- GitHub Actions CI/deploy workflow (`.github/workflows/ci.yml`): backend and frontend checks on every PR, migration round-trip, dependency audits, Coolify deploys with a health smoke test, manual approval for production; weekly Dependabot PRs
+- Cloudflare R2 disks (`r2`, `r2-backup`): private, throw on failure, no public URL, tested offline with locally signed URLs. The AWS SDK is pruned to S3 only (1 GB to 37 MB). `docs/14-integrations.md` corrected: R2 does not implement ACLs, and a real upload, read-back, signed link, tamper and expiry test against a dev bucket confirmed R2 ignores the ACL header and keeps files private
+- Laravel Boost MCP server (`.mcp.json`, `boost.json`) with Laravel, testing, Telescope, Tailwind and convention-inference skills for Claude Code; the project's MCP usage is documented in `CLAUDE.md`
+- `.env.example` rewritten for this stack (PostgreSQL, Redis, tenancy, SMS, health)
+- `scripts/setup-dev-db.sh` for local Postgres role and databases
+
+### Fixed
+- A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
+
 ### Changed
+- OTP errors and lockout now follow QA-01 ("Invalid code"; the 5th wrong code returns 429); the ops runbook and queue lists include the `critical` queue
 - Database is now PostgreSQL instead of MySQL; data model, CI, backup and restore docs updated (D-021)
 - React SPA now lives in the Laravel repo (`resources/js`) behind one Blade shell view, no Inertia; replaces the separate `chms-frontend` repo (D-022, amends D-008)
 - Local development is native (PostgreSQL 18, Redis 8, no Docker); staging and production stay on Docker via Coolify (D-023)

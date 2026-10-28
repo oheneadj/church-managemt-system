@@ -144,10 +144,11 @@ public function update(User $user, Member $member): bool
 
 ## Queues
 
-Five named queues, in priority order:
+Six named queues, in priority order:
 
 | Queue | Used for | Workers |
 |---|---|---|
+| `critical` | OTP SMS, nothing else (D-025) | 1 |
 | `payments` | Paystack webhook processing | 2 (high priority) |
 | `notifications` | SMS, WhatsApp, email sends | 2 |
 | `reports` | Report generation | 1 |
@@ -227,6 +228,14 @@ php artisan monitor:integrations    # Check third-party health
 ```
 
 ---
+
+## MCP Servers and Skills
+
+Use these instead of recalling framework APIs from memory (Universal agreement §1, §3a):
+
+- **Laravel Boost** (`laravel-boost`, in `.mcp.json`; run `php artisan boost:mcp`). Call `search-docs` before using any Laravel, Pest, Livewire or Tailwind API you are not certain about for the installed version. Call `database-schema` before writing a migration and `database-query` to inspect data. Use `last-error` and `read-log-entries` when debugging, and `record-rule` to save a project rule that every future session should follow. Claude Code asks you to approve this server the first time (`/mcp`).
+- **Context7** (`context7`, hosted at `https://mcp.context7.com/mcp`, added per developer with `claude mcp add --transport http --scope local context7 https://mcp.context7.com/mcp`). Use it for the React side that Boost does not cover: React Router 7, TanStack Query 5, Zod, React Hook Form, Vitest, shadcn/ui. State the version in the question. Send only generic library questions, never secrets or member data.
+- **Boost skills** live in `.claude/skills` (configured in `boost.json`, Claude Code only). Refresh them with `php artisan boost:update --no-discover` after upgrading Laravel packages.
 
 ## What Not to Do
 

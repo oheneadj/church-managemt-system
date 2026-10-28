@@ -1,0 +1,173 @@
+# Continuous integration and deploy (docs/16-deployment-and-ops.md, Universal agreement section 28).
+# Every PR runs the full backend and frontend checks. Pushes to `staging` and `main` then deploy through
+# Coolify and are smoke tested against /api/health. Production waits for a manual approval, set as a
+# required reviewer on the `production` environment in the repository settings.
+name: CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+# Cancel a superseded PR run, but never cancel a run on main or staging: that could stop a deploy halfway.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: Backend (Pint, PHPStan, Pest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Same engines and majors as local development and production (decision D-023).
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: chms_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:8
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: chms_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      REDIS_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_pgsql, redis, bcmath, xml, ctype, fileinfo
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare the environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # Proves every migration can go up, come down and go up again (Universal agreement section 8).
+      - name: Migrations run and roll back
+        run: |
+          php artisan migrate --force
+          php artisan migrate:rollback --force
+          php artisan migrate --force
+
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Static analysis (PHPStan level 8)
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      - name: Dependency audit
+        run: composer audit
+
+      - name: Tests (Pest)
+        run: php artisan test
+
+  frontend:
+    name: Frontend (types, lint, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint and formatting
+        run: npm run lint:check
+
+      - name: Tests (Vitest)
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Dependency audit (fails on high severity)
+        run: npm audit --audit-level=high
+
+  deploy-staging:
+    name: Deploy to staging
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    steps:
+      - name: Trigger the Coolify deploy
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          curl --fail --silent --show-error -X POST "$COOLIFY_WEBHOOK" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"
+
+      # Coolify only switches traffic once the new container is healthy, so a passing probe means the release is live.
+      - name: Smoke test the health endpoint
+        env:
+          BASE_URL: ${{ vars.STAGING_URL }}
+        run: |
+          curl --fail --silent --show-error --retry 20 --retry-delay 15 --retry-all-errors \
+            "$BASE_URL/api/health"
+
+  deploy-production:
+    name: Deploy to production
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Required reviewers on this environment provide the manual approval step.
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: Trigger the Coolify deploy
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          curl --fail --silent --show-error -X POST "$COOLIFY_WEBHOOK" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"
+
+      - name: Smoke test the health endpoint
+        env:
+          BASE_URL: ${{ vars.PRODUCTION_URL }}
+        run: |
+          curl --fail --silent --show-error --retry 20 --retry-delay 15 --retry-all-errors \
+            "$BASE_URL/api/health"

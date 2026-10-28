@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -33,6 +35,11 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    // Which SmsProvider implementation sends text messages (docs/09-engineering-principles.md).
+    'sms' => [
+        'primary' => env('SMS_PRIMARY_PROVIDER', 'log'),
     ],
 
 ];

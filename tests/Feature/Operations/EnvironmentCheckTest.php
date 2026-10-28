@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Support\EnvironmentCheck;
+use Illuminate\Config\Repository;
+
+/** A configuration that passes every check, so each test breaks exactly one thing. */
+function goodConfig(array $overrides = []): Repository
+{
+    $base = [
+        'app' => ['key' => 'base64:abc', 'url' => 'https://app.example.com', 'debug' => false],
+        'database' => ['connections' => ['pgsql' => ['host' => 'postgres', 'database' => 'chms', 'username' => 'chms', 'password' => 'x']], 'redis' => ['default' => ['host' => 'redis']]],
+        'tenancy' => ['base_domain' => 'example.com'],
+        'session' => ['domain' => null],
+        'services' => ['sms' => ['primary' => 'payperlez']],
+        'filesystems' => ['default' => 'r2'],
+    ];
+
+    return new Repository(array_replace_recursive($base, $overrides));
+}
+
+it('accepts a complete production configuration', function (): void {
+    expect(EnvironmentCheck::problems(goodConfig()))->toBe([]);
+});
+
+it('names each missing variable', function (string $key, string $value, string $expected): void {
+    $config = goodConfig();
+    $config->set($key, $value);
+
+    expect(EnvironmentCheck::problems($config))->toContain($expected);
+})->with([
+    'no app key' => ['app.key', '', 'APP_KEY is not set.'],
+    'no database password' => ['database.connections.pgsql.password', '', 'DB_PASSWORD is not set.'],
+    'no redis host' => ['database.redis.default.host', '', 'REDIS_HOST is not set.'],
+]);
+
+it('rejects unsafe values', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig([
+        'app' => ['debug' => true],
+        'tenancy' => ['base_domain' => 'localhost'],
+        'session' => ['domain' => '.example.com'],
+        'services' => ['sms' => ['primary' => 'log']],
+        'filesystems' => ['default' => 'local'],
+    ]));
+
+    expect($problems)->toHaveCount(5);
+});
+
+it('never prints a secret value in a message', function (): void {
+    $config = goodConfig();
+    $config->set('database.connections.pgsql.host', '');
+
+    expect(implode(' ', EnvironmentCheck::problems($config)))->not->toContain('x');
+});
+
+it('fails the env:check command on a bad configuration', function (): void {
+    config(['app.debug' => true]);
+
+    $this->artisan('env:check')->assertFailed();
+});
