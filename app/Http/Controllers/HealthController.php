@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Health\CheckHealthAction;
 use App\Http\Resources\HealthReportResource;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -22,6 +23,8 @@ class HealthController extends Controller
     /**
      * Runs the readiness checks and answers 200 when healthy, 503 when degraded.
      */
+    #[Response(status: 200, description: 'Every check passed.', type: 'array{status: "ok", checks: array<string, "ok"|"error">, timestamp: string}')]
+    #[Response(status: 503, description: 'At least one check failed.', type: 'array{status: "degraded", checks: array<string, "ok"|"error">, timestamp: string}')]
     public function __invoke(): JsonResponse
     {
         $report = $this->action->execute();

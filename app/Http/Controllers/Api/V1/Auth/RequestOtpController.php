@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Actions\Auth\RequestOtpAction;
+use App\DTOs\Auth\OtpChallenge;
 use App\DTOs\Auth\RequestOtpDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RequestOtpRequest;
@@ -27,6 +28,6 @@ class RequestOtpController extends Controller
     {
         $this->action->execute(RequestOtpDTO::fromRequest($request));
 
-        return new OtpRequestedResource(config('otp.ttl_seconds'));
+        return new OtpRequestedResource(new OtpChallenge((int) config('otp.ttl_seconds')));
     }
 }

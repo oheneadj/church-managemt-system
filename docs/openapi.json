@@ -1,0 +1,2786 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "Church Management API",
+        "version": "1.0.0",
+        "description": "The church management API. Every request goes to a church's own host, for example https://grace-assembly.yourapp.com/api/v1. Amounts are GHS decimal strings with a _formatted sibling. Enum fields come with a _label sibling."
+    },
+    "servers": [
+        {
+            "url": "https://your-church.yourapp.com/api",
+            "description": "Your church"
+        }
+    ],
+    "security": [
+        {
+            "http": []
+        }
+    ],
+    "paths": {
+        "/v1/departments/{department}/members": {
+            "post": {
+                "operationId": "departments.members.add",
+                "summary": "Runs AddDepartmentMemberAction for this request and returns the JsonResponse",
+                "tags": [
+                    "AddDepartmentMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "description": "The department ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddDepartmentMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The member already served there, so only their role changed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "department_id": {
+                                                    "type": "string"
+                                                },
+                                                "member_id": {
+                                                    "type": "string"
+                                                },
+                                                "role": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "joined_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "department_id",
+                                                "member_id",
+                                                "role",
+                                                "joined_at"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "201": {
+                        "description": "The member was added to the department.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "department_id": {
+                                                    "type": "string"
+                                                },
+                                                "member_id": {
+                                                    "type": "string"
+                                                },
+                                                "role": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "joined_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "department_id",
+                                                "member_id",
+                                                "role",
+                                                "joined_at"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "operationId": "health",
+                "summary": "Runs the readiness checks and answers 200 when healthy, 503 when degraded",
+                "tags": [
+                    "Health"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Every check passed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "ok"
+                                        },
+                                        "checks": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "ok",
+                                                    "error"
+                                                ]
+                                            }
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "checks",
+                                        "timestamp"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "At least one check failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "degraded"
+                                        },
+                                        "checks": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "ok",
+                                                    "error"
+                                                ]
+                                            }
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "checks",
+                                        "timestamp"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/departments": {
+            "get": {
+                "operationId": "departments.index",
+                "summary": "Runs ListDepartmentsAction for this request and returns the DepartmentCollection",
+                "tags": [
+                    "ListDepartments"
+                ],
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DepartmentCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DepartmentCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "departments.store",
+                "summary": "Runs CreateDepartmentAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreDepartment"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "`DepartmentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DepartmentResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/families": {
+            "get": {
+                "operationId": "families.index",
+                "summary": "Runs ListFamiliesAction for this request and returns the FamilyCollection",
+                "tags": [
+                    "ListFamilies"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FamilyCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FamilyCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "families.store",
+                "summary": "Runs CreateFamilyAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreFamily"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreFamilyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`FamilyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FamilyResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members": {
+            "get": {
+                "operationId": "members.index",
+                "summary": "Runs ListMembersAction for this request and returns the MemberCollection",
+                "tags": [
+                    "ListMembers"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/MemberStatus"
+                        }
+                    },
+                    {
+                        "name": "gender",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Gender"
+                        }
+                    },
+                    {
+                        "name": "educational_level",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/EducationalLevel"
+                        }
+                    },
+                    {
+                        "name": "department_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "family_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "last_name",
+                                "first_name",
+                                "created_at",
+                                "membership_date"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "members.store",
+                "summary": "Runs CreateMemberAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreMember"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`MemberResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "operationId": "auth.logout",
+                "summary": "Runs LogoutAction for this request and returns the Response",
+                "tags": [
+                    "Logout"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/me": {
+            "get": {
+                "operationId": "auth.me",
+                "summary": "Runs ShowCurrentStaffAction for this request and returns the CurrentStaffResource",
+                "tags": [
+                    "Me"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CurrentStaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CurrentStaffResource"
+                                        },
+                                        "church": {
+                                            "$ref": "#/components/schemas/ChurchResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "church"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/departments/{department}/members/{member}": {
+            "delete": {
+                "operationId": "departments.members.remove",
+                "summary": "Runs RemoveDepartmentMemberAction for this request and returns the Response",
+                "tags": [
+                    "RemoveDepartmentMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "description": "The department ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/request": {
+            "post": {
+                "operationId": "auth.otp.request",
+                "summary": "Runs RequestOtpAction for this request and returns the OtpRequestedResource",
+                "tags": [
+                    "RequestOtp"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OtpRequestedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpRequestedResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/families/{family}": {
+            "get": {
+                "operationId": "families.show",
+                "summary": "Runs ShowFamilyAction for this request and returns the FamilyResource",
+                "tags": [
+                    "ShowFamily"
+                ],
+                "parameters": [
+                    {
+                        "name": "family",
+                        "in": "path",
+                        "required": true,
+                        "description": "The family ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FamilyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FamilyResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "families.update",
+                "summary": "Runs UpdateFamilyAction for this request and returns the FamilyResource",
+                "tags": [
+                    "UpdateFamily"
+                ],
+                "parameters": [
+                    {
+                        "name": "family",
+                        "in": "path",
+                        "required": true,
+                        "description": "The family ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFamilyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`FamilyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FamilyResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members/{member}": {
+            "get": {
+                "operationId": "members.show",
+                "summary": "Runs ShowMemberAction for this request and returns the MemberResource",
+                "tags": [
+                    "ShowMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "members.update",
+                "summary": "Runs UpdateMemberAction for this request and returns the MemberResource",
+                "tags": [
+                    "UpdateMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members/{member}/milestones": {
+            "post": {
+                "operationId": "members.milestones.store",
+                "summary": "Runs AddMemberMilestoneAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreMemberMilestone"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreMilestoneRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`MemberMilestoneResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberMilestoneResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/departments/{department}": {
+            "put": {
+                "operationId": "departments.update",
+                "summary": "Runs UpdateDepartmentAction for this request and returns the DepartmentResource",
+                "tags": [
+                    "UpdateDepartment"
+                ],
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "description": "The department ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DepartmentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DepartmentResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members/{member}/status": {
+            "patch": {
+                "operationId": "members.status",
+                "summary": "Runs ChangeMemberStatusAction for this request and returns the MemberResource",
+                "tags": [
+                    "UpdateMemberStatus"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateMemberStatusRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`MemberResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/members/{member}/photo": {
+            "post": {
+                "operationId": "members.photo",
+                "summary": "Runs UploadMemberPhotoAction for this request and returns the MemberPhotoResource",
+                "tags": [
+                    "UploadMemberPhoto"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UploadMemberPhotoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`MemberPhotoResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MemberPhotoResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/verify": {
+            "post": {
+                "operationId": "auth.otp.verify",
+                "summary": "Runs VerifyOtpAction for this request and returns the SignInResource",
+                "tags": [
+                    "VerifyOtp"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SignInResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignInResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "http": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "AddDepartmentMemberRequest": {
+                "type": "object",
+                "description": "Validates adding a member to a department. The member must belong to this church.",
+                "properties": {
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "member_id"
+                ],
+                "title": "AddDepartmentMemberRequest"
+            },
+            "ChurchResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "plan": {
+                        "type": "string",
+                        "enum": [
+                            "starter",
+                            "growth",
+                            "pro",
+                            "enterprise"
+                        ]
+                    },
+                    "plan_label": {
+                        "type": "string",
+                        "enum": [
+                            "Starter",
+                            "Growth",
+                            "Pro",
+                            "Enterprise"
+                        ]
+                    },
+                    "sms_credits": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "plan",
+                    "plan_label",
+                    "sms_credits"
+                ],
+                "title": "ChurchResource"
+            },
+            "CurrentStaffResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "phone",
+                    "email",
+                    "roles",
+                    "permissions"
+                ],
+                "title": "CurrentStaffResource"
+            },
+            "DepartmentCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DepartmentResource"
+                },
+                "title": "DepartmentCollection"
+            },
+            "DepartmentMemberResource": {
+                "type": "object",
+                "properties": {
+                    "department_id": {
+                        "type": "string"
+                    },
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "joined_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "department_id",
+                    "member_id",
+                    "role",
+                    "joined_at"
+                ],
+                "title": "DepartmentMemberResource"
+            },
+            "DepartmentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "head_user_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "members_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "head_user_id",
+                    "is_active"
+                ],
+                "title": "DepartmentResource"
+            },
+            "EducationalLevel": {
+                "type": "string",
+                "description": "The allowed educational level values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "creche",
+                    "kg",
+                    "primary_1",
+                    "primary_2",
+                    "primary_3",
+                    "primary_4",
+                    "primary_5",
+                    "primary_6",
+                    "jhs_1",
+                    "jhs_2",
+                    "jhs_3",
+                    "shs_1",
+                    "shs_2",
+                    "shs_3",
+                    "tertiary",
+                    "graduate"
+                ],
+                "title": "EducationalLevel"
+            },
+            "FamilyCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/FamilyResource"
+                },
+                "title": "FamilyCollection"
+            },
+            "FamilyMemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_number": {
+                        "type": "string"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ]
+                    },
+                    "gender_label": {
+                        "type": "string",
+                        "enum": [
+                            "Male",
+                            "Female",
+                            "Other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "prospect",
+                            "active",
+                            "inactive",
+                            "transferred",
+                            "deceased",
+                            "archived"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Prospect",
+                            "Active",
+                            "Inactive",
+                            "Transferred",
+                            "Deceased",
+                            "Archived"
+                        ]
+                    },
+                    "family_role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "head",
+                            "spouse",
+                            "child",
+                            "dependent",
+                            null
+                        ]
+                    },
+                    "family_role_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Head",
+                            "Spouse",
+                            "Child",
+                            "Dependent",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_number",
+                    "full_name",
+                    "gender",
+                    "gender_label",
+                    "status",
+                    "status_label",
+                    "family_role",
+                    "family_role_label"
+                ],
+                "title": "FamilyMemberResource"
+            },
+            "FamilyResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "head_member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "members_count": {
+                        "type": "integer"
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FamilyMemberResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "notes",
+                    "head_member_id"
+                ],
+                "title": "FamilyResource"
+            },
+            "FamilyRole": {
+                "type": "string",
+                "description": "The allowed family role values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "head",
+                    "spouse",
+                    "child",
+                    "dependent"
+                ],
+                "title": "FamilyRole"
+            },
+            "Gender": {
+                "type": "string",
+                "description": "The allowed gender values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "male",
+                    "female",
+                    "other"
+                ],
+                "title": "Gender"
+            },
+            "GivingSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "this_year": {
+                        "type": "string"
+                    },
+                    "this_year_formatted": {
+                        "type": "string"
+                    },
+                    "this_month": {
+                        "type": "string"
+                    },
+                    "this_month_formatted": {
+                        "type": "string"
+                    },
+                    "all_time": {
+                        "type": "string"
+                    },
+                    "all_time_formatted": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "this_year",
+                    "this_year_formatted",
+                    "this_month",
+                    "this_month_formatted",
+                    "all_time",
+                    "all_time_formatted"
+                ],
+                "title": "GivingSummaryResource"
+            },
+            "HealthReportResource": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "degraded"
+                        ]
+                    },
+                    "checks": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string",
+                            "enum": [
+                                "ok",
+                                "error"
+                            ]
+                        }
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status",
+                    "checks",
+                    "timestamp"
+                ],
+                "title": "HealthReportResource"
+            },
+            "MaritalStatus": {
+                "type": "string",
+                "description": "The allowed marital status values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "single",
+                    "married",
+                    "widowed",
+                    "divorced"
+                ],
+                "title": "MaritalStatus"
+            },
+            "MemberCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MemberSummaryResource"
+                },
+                "title": "MemberCollection"
+            },
+            "MemberDepartmentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {}
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "role"
+                ],
+                "title": "MemberDepartmentResource"
+            },
+            "MemberFamilyResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "head",
+                            "spouse",
+                            "child",
+                            "dependent",
+                            null
+                        ]
+                    },
+                    "role_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Head",
+                            "Spouse",
+                            "Child",
+                            "Dependent",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "role",
+                    "role_label"
+                ],
+                "title": "MemberFamilyResource"
+            },
+            "MemberMilestoneResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "dedication",
+                            "baptism",
+                            "confirmation",
+                            "first_communion",
+                            "membership_class"
+                        ]
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "enum": [
+                            "Dedication",
+                            "Baptism",
+                            "Confirmation",
+                            "First communion",
+                            "Membership class"
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": "string"
+                    },
+                    "officiant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cohort": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "type_label",
+                    "occurred_at",
+                    "officiant",
+                    "cohort",
+                    "notes"
+                ],
+                "title": "MemberMilestoneResource"
+            },
+            "MemberPhotoResource": {
+                "type": "object",
+                "properties": {
+                    "photo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "photo_url"
+                ],
+                "title": "MemberPhotoResource"
+            },
+            "MemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_number": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string"
+                    },
+                    "middle_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
+                    "preferred_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ]
+                    },
+                    "gender_label": {
+                        "type": "string",
+                        "enum": [
+                            "Male",
+                            "Female",
+                            "Other"
+                        ]
+                    },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "phone_secondary": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "photo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "nearest_landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "digital_address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "marital_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "single",
+                            "married",
+                            "widowed",
+                            "divorced",
+                            null
+                        ]
+                    },
+                    "marital_status_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Single",
+                            "Married",
+                            "Widowed",
+                            "Divorced",
+                            null
+                        ]
+                    },
+                    "occupation": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tribe": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "language_preference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "educational_level": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "creche",
+                            "kg",
+                            "primary_1",
+                            "primary_2",
+                            "primary_3",
+                            "primary_4",
+                            "primary_5",
+                            "primary_6",
+                            "jhs_1",
+                            "jhs_2",
+                            "jhs_3",
+                            "shs_1",
+                            "shs_2",
+                            "shs_3",
+                            "tertiary",
+                            "graduate",
+                            null
+                        ]
+                    },
+                    "educational_level_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Creche",
+                            "KG",
+                            "Primary 1",
+                            "Primary 2",
+                            "Primary 3",
+                            "Primary 4",
+                            "Primary 5",
+                            "Primary 6",
+                            "JHS 1",
+                            "JHS 2",
+                            "JHS 3",
+                            "SHS 1",
+                            "SHS 2",
+                            "SHS 3",
+                            "Tertiary",
+                            "Graduate",
+                            null
+                        ]
+                    },
+                    "membership_type": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "associate",
+                            "affiliate"
+                        ]
+                    },
+                    "membership_type_label": {
+                        "type": "string",
+                        "enum": [
+                            "Full",
+                            "Associate",
+                            "Affiliate"
+                        ]
+                    },
+                    "membership_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "prospect",
+                            "active",
+                            "inactive",
+                            "transferred",
+                            "deceased",
+                            "archived"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Prospect",
+                            "Active",
+                            "Inactive",
+                            "Transferred",
+                            "Deceased",
+                            "Archived"
+                        ]
+                    },
+                    "status_changed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "family": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/MemberFamilyResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "departments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MemberDepartmentResource"
+                        }
+                    },
+                    "milestones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MemberMilestoneResource"
+                        }
+                    },
+                    "assigned_pastor": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/StaffSummaryResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "giving_summary": {
+                        "$ref": "#/components/schemas/GivingSummaryResource"
+                    },
+                    "attendance_summary": {
+                        "type": "object",
+                        "properties": {
+                            "last_4_weeks": {
+                                "type": "integer"
+                            },
+                            "last_8_weeks": {
+                                "type": "integer"
+                            },
+                            "last_12_weeks": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "last_4_weeks",
+                            "last_8_weeks",
+                            "last_12_weeks"
+                        ]
+                    },
+                    "whatsapp_opted_in": {
+                        "type": "boolean"
+                    },
+                    "sms_opted_in": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_number",
+                    "first_name",
+                    "middle_name",
+                    "last_name",
+                    "preferred_name",
+                    "gender",
+                    "gender_label",
+                    "date_of_birth",
+                    "phone",
+                    "phone_secondary",
+                    "email",
+                    "photo_url",
+                    "address",
+                    "nearest_landmark",
+                    "digital_address",
+                    "marital_status",
+                    "marital_status_label",
+                    "occupation",
+                    "tribe",
+                    "language_preference",
+                    "educational_level",
+                    "educational_level_label",
+                    "membership_type",
+                    "membership_type_label",
+                    "membership_date",
+                    "status",
+                    "status_label",
+                    "status_changed_at",
+                    "status_note",
+                    "attendance_summary",
+                    "whatsapp_opted_in",
+                    "sms_opted_in",
+                    "created_at"
+                ],
+                "title": "MemberResource"
+            },
+            "MemberStatus": {
+                "type": "string",
+                "description": "The allowed member status values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "prospect",
+                    "active",
+                    "inactive",
+                    "transferred",
+                    "deceased",
+                    "archived"
+                ],
+                "title": "MemberStatus"
+            },
+            "MemberSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_number": {
+                        "type": "string"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "preferred_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ]
+                    },
+                    "gender_label": {
+                        "type": "string",
+                        "enum": [
+                            "Male",
+                            "Female",
+                            "Other"
+                        ]
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "photo_url": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "prospect",
+                            "active",
+                            "inactive",
+                            "transferred",
+                            "deceased",
+                            "archived"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Prospect",
+                            "Active",
+                            "Inactive",
+                            "Transferred",
+                            "Deceased",
+                            "Archived"
+                        ]
+                    },
+                    "departments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "family_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "membership_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_number",
+                    "full_name",
+                    "preferred_name",
+                    "gender",
+                    "gender_label",
+                    "phone",
+                    "photo_url",
+                    "status",
+                    "status_label",
+                    "family_id",
+                    "membership_date"
+                ],
+                "title": "MemberSummaryResource"
+            },
+            "MembershipType": {
+                "type": "string",
+                "description": "The allowed membership type values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "full",
+                    "associate",
+                    "affiliate"
+                ],
+                "title": "MembershipType"
+            },
+            "MilestoneType": {
+                "type": "string",
+                "description": "The allowed milestone type values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "dedication",
+                    "baptism",
+                    "confirmation",
+                    "first_communion",
+                    "membership_class"
+                ],
+                "title": "MilestoneType"
+            },
+            "OtpRequestedResource": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "const": "OTP sent"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "message",
+                    "expires_in"
+                ],
+                "title": "OtpRequestedResource"
+            },
+            "RequestOtpRequest": {
+                "type": "object",
+                "description": "Validates a request to be sent a sign-in code.",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    }
+                },
+                "required": [
+                    "phone"
+                ],
+                "title": "RequestOtpRequest"
+            },
+            "SignInResource": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UserResource"
+                    },
+                    "church": {
+                        "$ref": "#/components/schemas/ChurchResource"
+                    }
+                },
+                "required": [
+                    "user",
+                    "church"
+                ],
+                "additionalProperties": {},
+                "title": "SignInResource"
+            },
+            "StaffSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "StaffSummaryResource"
+            },
+            "StoreFamilyRequest": {
+                "type": "object",
+                "description": "Validates a new family. An optional head must be an existing member of this church.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "head_member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreFamilyRequest"
+            },
+            "StoreMemberRequest": {
+                "type": "object",
+                "description": "Validates a new member. The route's policy check has already run, so authorize() lets it through.",
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "middle_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "preferred_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "gender": {
+                        "$ref": "#/components/schemas/Gender"
+                    },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "phone_secondary": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "nearest_landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "digital_address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "national_id_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "national_id_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "marital_status": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/MaritalStatus"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "occupation": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "tribe": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "language_preference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "educational_level": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/EducationalLevel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "membership_type": {
+                        "$ref": "#/components/schemas/MembershipType"
+                    },
+                    "membership_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "family_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "family_role": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/FamilyRole"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "assigned_pastor_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "whatsapp_opted_in": {
+                        "type": "boolean"
+                    },
+                    "sms_opted_in": {
+                        "type": "boolean"
+                    },
+                    "department_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "prospect",
+                            "active"
+                        ]
+                    }
+                },
+                "title": "StoreMemberRequest"
+            },
+            "StoreMilestoneRequest": {
+                "type": "object",
+                "description": "Validates a new milestone (baptism, confirmation, ...). It cannot be dated in the future.",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/MilestoneType"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "officiant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "cohort": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "type",
+                    "occurred_at"
+                ],
+                "title": "StoreMilestoneRequest"
+            },
+            "UpdateFamilyRequest": {
+                "type": "object",
+                "description": "Validates a family update. The head is changed through the members' roles, not here, so two people\ncan never both hold the head role.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "title": "UpdateFamilyRequest"
+            },
+            "UpdateMemberStatusRequest": {
+                "type": "object",
+                "description": "Validates a status change. The note is the reason kept in the change log.",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/MemberStatus"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "status"
+                ],
+                "title": "UpdateMemberStatusRequest"
+            },
+            "UploadMemberPhotoRequest": {
+                "type": "object",
+                "description": "Validates a member photo upload: JPG or PNG, up to 5 MB and 4096 pixels on a side (docs/08).\nThe file type is read from the file's contents, not from its name or the Content-Type header.\nThe pixel limit also bounds the memory needed to decode it.",
+                "properties": {
+                    "photo": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "Maximum file size: 5120 kilobytes."
+                    }
+                },
+                "required": [
+                    "photo"
+                ],
+                "title": "UploadMemberPhotoRequest"
+            },
+            "UserResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "phone",
+                    "email",
+                    "roles",
+                    "permissions"
+                ],
+                "title": "UserResource"
+            },
+            "VerifyOtpRequest": {
+                "type": "object",
+                "description": "Validates a sign-in code submission.",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "otp": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "phone",
+                    "otp"
+                ],
+                "title": "VerifyOtpRequest"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthorizationException": {
+                "description": "Authorization error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

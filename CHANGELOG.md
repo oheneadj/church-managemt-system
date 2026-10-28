@@ -11,7 +11,193 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > Changes staged but not yet in a versioned release.
 
+### Change record
+
+Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
+
+#### feat(api): add the OpenAPI spec, docs route and the simplicity rule
+- **What:** Added `dedoc/scramble`, generated and committed the OpenAPI 3.1 spec at `docs/openapi.json`, served interactive docs at `/docs/api`, and added a test and a CI step that fail when the spec is out of date, has an untyped field, or misses an endpoint. Typed the fields Scramble could not work out. Added the rule "keep code simple, framework first, no hard-coding, clear comments" to the project and Universal `CLAUDE.md`. Gave the test run 512 MB of memory. Documented the changelog format below.
+- **Why:** Section 35 of the agreement requires a committed spec that CI checks and docs that are not public in production. The docs path also had to be kept out of the React catch-all route. The rule and the changelog format were requested by the Product Owner. The full test run had reached PHP's 128 MB limit.
+- **Files:** `composer.json`, `composer.lock`, `config/scramble.php`, `docs/openapi.json`, `docs/08-api.md`, `docs/10-definition-of-done.md`, `docs/13-decision-log.md` (D-035), `.github/workflows/ci.yml`, `routes/web.php`, `phpunit.xml`, `CLAUDE.md`, `Universal CLAUDE.md`, `app/Providers/AppServiceProvider.php`, `app/DTOs/Auth/OtpChallenge.php`, `app/DTOs/Members/GivingSummary.php`, `app/Services/MemberSummaries.php`, the Resources, Requests and Controllers that needed a type or response annotation (`app/Http/Resources/` ×5, `app/Http/Requests/` ×4, `app/Http/Controllers/` ×3), `tests/Feature/Operations/ApiDocsTest.php`, `tests/Unit/Services/MemberSummariesTest.php`
+- **Commit:** `PENDING`
+
+#### refactor(auth): replace role and permission strings with enums
+- **What:** Replace role and permission strings with enums.
+- **Why:** The agreement forbids magic strings, so roles and permissions became enums.
+- **Files:** `CHANGELOG.md`, `app/Actions/Members/` (4 files), `app/Enums/StaffPermission.php`, `app/Enums/StaffRole.php`, `app/Http/Resources/MemberResource.php`, `app/Models/Member.php`, `app/Policies/DepartmentPolicy.php`, `app/Policies/FamilyPolicy.php`, `app/Policies/MemberPolicy.php`, `database/seeders/DatabaseSeeder.php`, `database/seeders/RolesAndPermissionsSeeder.php`, `tests/Unit/Enums/StaffRoleTest.php` — 15 files in total
+- **Commit:** `2d036a4` (2026-10-28)
+
+#### test(members): add concurrency tests, inverse relationships and factory use
+- **What:** Add concurrency tests, inverse relationships and factory use.
+- **Why:** The agreement requires a concurrency test for contested slots, relationships defined on both sides, and factories for test data.
+- **Files:** `CHANGELOG.md`, `app/Models/Department.php`, `app/Models/FundType.php`, `app/Models/Member.php`, `app/Models/Service.php`, `app/Models/User.php`, `phpunit.xml`, `tests/Concurrency/ContestedSlotsTest.php`, `tests/Feature/Database/RelationshipsTest.php`, `tests/Feature/Members/` (3 files), `tests/Pest.php` — 13 files in total
+- **Commit:** `b3402cb` (2026-10-28)
+
+#### docs(code): add a description docblock to every class and method
+- **What:** Add a description docblock to every class and method.
+- **Why:** The agreement requires a plain-language docblock on every class and method.
+- **Files:** `app/Actions/` (22 files), `app/Console/` (2 files), `app/Contracts/SmsProvider.php`, `app/DTOs/` (27 files), `app/Events/` (4 files), `app/Exceptions/` (3 files), `app/Http/` (58 files), `app/Jobs/SendSmsJob.php`, `app/Listeners/RecordMemberAudit.php`, `app/Models/` (18 files), `app/Observers/UserObserver.php`, `app/Policies/` (3 files), `app/Providers/` (3 files), `app/Repositories/` (20 files), `app/Scopes/ChurchScope.php`, `app/Services/` (9 files), `app/Support/EnvironmentCheck.php`, `app/Traits/BelongsToChurch.php`, `app/ValueObjects/` (2 files) — 178 files in total
+- **Commit:** `6ecd913` (2026-10-28)
+
+#### feat(api): add labels, nested resources, collections and a view log
+- **What:** Add labels, nested resources, collections and a view log.
+- **Why:** The addendum requires a label beside every enum value, nested resources and collection classes, and the agreement requires personal-data access to be logged.
+- **Files:** `CHANGELOG.md`, `app/Actions/Members/ShowMemberAction.php`, `app/Enums/AuditEvent.php`, `app/Events/MemberViewed.php`, `app/Http/` (16 files), `app/Listeners/RecordMemberAudit.php`, `app/ValueObjects/Money.php`, `docs/07-data-model.md`, `docs/08-api.md`, `docs/13-decision-log.md`, `tests/Feature/Members/MemberApiTest.php`, `tests/Unit/` (3 files) — 29 files in total
+- **Commit:** `6b4e750` (2026-10-28)
+
+#### refactor(auth): move sign-in and health behind Actions and Repositories
+- **What:** Move sign-in and health behind Actions and Repositories.
+- **Why:** The same layer rules apply to the Sprint 1 sign-in and health code, which still queried models directly.
+- **Files:** `ARCHITECTURE.md`, `CHANGELOG.md`, `app/Actions/` (6 files), `app/Console/Commands/ResetOtpLockout.php`, `app/Contracts/` (9 files), `app/DTOs/` (8 files), `app/Http/` (10 files), `app/Jobs/SendSmsJob.php`, `app/Providers/RepositoryServiceProvider.php`, `app/Repositories/` (11 files), `app/Services/OtpService.php`, `tests/Feature/Auth/SendSmsJobTest.php`, `tests/Pest.php`, `tests/Unit/` (16 files) — 68 files in total
+- **Commit:** `2ecac33` (2026-10-28)
+
+#### refactor(members): adopt Actions, DTOs and Repositories
+- **What:** Adopt Actions, DTOs and Repositories.
+- **Why:** The Universal agreement and Laravel addendum require Controller, Form Request, DTO, Action, Service, Repository, with Actions owning the transaction and firing events. Nine empty interface stubs from the generator were committed here by mistake in app/Contracts/Repositories; they were removed in 2ecac33.
+- **Files:** `ARCHITECTURE.md`, `CHANGELOG.md`, `CLAUDE.md`, `app/Actions/` (16 files), `app/Contracts/` (9 files), `app/DTOs/` (18 files), `app/Events/` (3 files), `app/Http/` (35 files), `app/Listeners/RecordMemberAudit.php`, `app/Models/Member.php`, `app/Policies/MemberPolicy.php`, `app/Providers/` (2 files), `app/Repositories/` (18 files), `app/Services/` (9 files), `bootstrap/providers.php`, `docs/09-engineering-principles.md`, `docs/13-decision-log.md`, `tests/Pest.php`, `tests/Unit/` (18 files) — 138 files in total
+- **Commit:** `c33eb0d` (2026-10-28)
+
+#### refactor(members): use single-action controllers
+- **What:** Use single-action controllers.
+- **Why:** The project rules say one public method per action, and the sign-in controllers already worked that way, so the member controllers were brought in line.
+- **Files:** `CHANGELOG.md`, `app/Http/Controllers/` (19 files), `app/Http/Resources/` (2 files), `app/Services/DepartmentService.php`, `routes/api.php` — 24 files in total
+- **Commit:** `1a28889` (2026-10-28)
+
+#### feat(members): define youth by age, with a per-church limit
+- **What:** Define youth by age, with a per-church limit.
+- **Why:** The documents said the youth pastor sees "youth only" without saying what that means. The Product Owner chose an age limit that each church can set.
+- **Files:** `CHANGELOG.md`, `app/Models/Church.php`, `app/Models/Member.php`, `config/members.php`, `docs/03-member-lifecycle.md`, `docs/08-api.md`, `docs/13-decision-log.md`, `tests/Feature/Members/MemberApiTest.php` — 8 files in total
+- **Commit:** `c5fa465` (2026-10-28)
+
+#### feat(members): add member photo upload
+- **What:** Add member photo upload.
+- **Why:** Each member can have a profile photo. It is stored privately and re-encoded so hidden location data in the picture is removed.
+- **Files:** `.github/workflows/ci.yml`, `CHANGELOG.md`, `app/Http/Controllers/Api/V1/MemberController.php`, `app/Http/Requests/Members/UploadMemberPhotoRequest.php`, `app/Http/Resources/` (2 files), `app/Models/Member.php`, `app/Providers/AppServiceProvider.php`, `app/Services/MemberPhotoService.php`, `composer.json`, `composer.lock`, `deploy/Dockerfile`, `docs/08-api.md`, `docs/13-decision-log.md`, `docs/14-integrations.md`, `docs/16-deployment-and-ops.md`, `routes/api.php`, `tests/Feature/Members/MemberPhotoApiTest.php` — 18 files in total
+- **Commit:** `12ba9c5` (2026-10-28)
+
+#### feat(members): add member milestones
+- **What:** Add member milestones.
+- **Why:** Baptisms, confirmations and similar milestones are part of a member's record, and only some roles may see them.
+- **Files:** `CHANGELOG.md`, `app/Http/Controllers/Api/V1/MemberController.php`, `app/Http/Requests/Members/StoreMilestoneRequest.php`, `app/Http/Resources/` (2 files), `app/Services/MemberService.php`, `database/seeders/RolesAndPermissionsSeeder.php`, `docs/08-api.md`, `docs/13-decision-log.md`, `routes/api.php`, `tests/Feature/Members/MemberMilestoneApiTest.php` — 11 files in total
+- **Commit:** `00ef836` (2026-10-28)
+
+#### feat(members): add department endpoints
+- **What:** Add department endpoints.
+- **Why:** Members serve in ministries such as the choir, so departments and their members can be managed.
+- **Files:** `CHANGELOG.md`, `app/Http/Controllers/Api/V1/DepartmentController.php`, `app/Http/Requests/` (5 files), `app/Http/Resources/DepartmentResource.php`, `app/Models/Department.php`, `app/Models/MemberDepartment.php`, `app/Policies/DepartmentPolicy.php`, `app/Services/DepartmentService.php`, `docs/08-api.md`, `routes/api.php`, `tests/Feature/Members/DepartmentApiTest.php` — 15 files in total
+- **Commit:** `37f1062` (2026-10-28)
+
+#### feat(members): add family endpoints
+- **What:** Add family endpoints.
+- **Why:** Churches think in households, so members can be grouped into families with one head.
+- **Files:** `CHANGELOG.md`, `app/Http/Controllers/Api/V1/FamilyController.php`, `app/Http/Requests/` (3 files), `app/Http/Resources/FamilyResource.php`, `app/Models/Family.php`, `app/Policies/FamilyPolicy.php`, `app/Services/FamilyService.php`, `docs/08-api.md`, `routes/api.php`, `tests/Feature/Members/FamilyApiTest.php` — 12 files in total
+- **Commit:** `6e9d29b` (2026-10-28)
+
+#### feat(members): add the member directory API
+- **What:** Add the member directory API.
+- **Why:** Sprint 2 goal: the church can manage its people. This is the list, view, add, edit and status endpoints.
+- **Files:** `CHANGELOG.md`, `app/Enums/EducationalLevel.php`, `app/Http/Controllers/` (2 files), `app/Http/Requests/` (5 files), `app/Http/Resources/` (2 files), `app/Models/Department.php`, `app/Models/Member.php`, `app/Models/MemberMilestone.php`, `app/Policies/MemberPolicy.php`, `app/Services/MemberNumberGenerator.php`, `app/Services/MemberService.php`, `app/Services/MemberSummaries.php`, `database/seeders/RolesAndPermissionsSeeder.php`, `docs/08-api.md`, `docs/13-decision-log.md`, `routes/api.php`, `tests/Feature/Members/` (2 files) — 24 files in total
+- **Commit:** `9b8c6f0` (2026-10-28)
+
+#### feat(members): add member numbering, audit log and pastor edit rights
+- **What:** Add member numbering, audit log and pastor edit rights.
+- **Why:** The member documents require numbered members, a change log and pastor edit rights, but none of them existed yet.
+- **Files:** `CHANGELOG.md`, `app/Enums/AuditEvent.php`, `app/Exceptions/MemberNumberPrefixMissingException.php`, `app/Models/AuditLog.php`, `app/Models/Church.php`, `app/Services/AuditLogger.php`, `app/Services/MemberNumberGenerator.php`, `database/factories/AuditLogFactory.php`, `database/factories/ChurchFactory.php`, `database/migrations/2026_10_28_101135_add_member_numbering_to_churches_table.php`, `database/migrations/2026_10_28_101136_create_audit_logs_table.php`, `database/seeders/DatabaseSeeder.php`, `database/seeders/RolesAndPermissionsSeeder.php`, `docs/06-architecture.md`, `docs/07-data-model.md`, `docs/13-decision-log.md`, `tests/Feature/Members/` (3 files) — 19 files in total
+- **Commit:** `9c761b2` (2026-10-28)
+
+#### feat(deploy): add Dockerfile, role-based start scripts and Coolify docs
+- **What:** Add Dockerfile, role-based start scripts and Coolify docs.
+- **Why:** Staging and production run in Docker behind Coolify, with one image that can act as the web server, the queue worker or the scheduler.
+- **Files:** `.dockerignore`, `.github/dependabot.yml`, `.github/workflows/ci.yml`, `CHANGELOG.md`, `config/logging.php`, `deploy/Dockerfile`, `deploy/bin/healthcheck`, `deploy/bin/start`, `deploy/supervisor/supervisord.conf`, `docs/13-decision-log.md`, `docs/16-deployment-and-ops.md` — 11 files in total
+- **Commit:** `909159b` (2026-10-28)
+
+#### fix(deploy): make dev-only packages optional and trust the proxy
+- **What:** Make dev-only packages optional and trust the proxy.
+- **Why:** The production image is built without development packages, so a development-only tool could not be required at start-up. The app also has to trust the proxy so it knows requests are HTTPS.
+- **Files:** `.env.example`, `CHANGELOG.md`, `app/Providers/AppServiceProvider.php`, `app/Support/EnvironmentCheck.php`, `bootstrap/providers.php`, `composer.json`, `config/trustedproxy.php`, `docs/17-monitoring-and-alerting.md`, `tests/Feature/Operations/` (3 files) — 11 files in total
+- **Commit:** `c7f4b07` (2026-10-28)
+
+#### docs(integrations): record the verified R2 behaviour
+- **What:** Record the verified R2 behaviour.
+- **Why:** The R2 behaviour was tested against a real bucket; the verified facts are recorded so nobody relies on a guess.
+- **Files:** `CHANGELOG.md`, `docs/14-integrations.md`
+- **Commit:** `c47a76e` (2026-10-28)
+
+#### docs(architecture): add ARCHITECTURE.md and record the layering decision
+- **What:** Add ARCHITECTURE.md and record the layering decision.
+- **Why:** The agreement requires the layers of the code base to be written down so they are not forgotten.
+- **Files:** `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/13-decision-log.md`
+- **Commit:** `8d780ee` (2026-10-28)
+
+#### chore(ci): add GitHub Actions workflow and Dependabot
+- **What:** Add GitHub Actions workflow and Dependabot.
+- **Why:** Every change must run the style, type, test and audit checks automatically, and dependencies must be kept up to date.
+- **Files:** `.github/dependabot.yml`, `.github/workflows/ci.yml`, `CHANGELOG.md`, `docs/16-deployment-and-ops.md`
+- **Commit:** `fb262f5` (2026-10-28)
+
+#### docs(integrations): cite the real source for the separate backup bucket
+- **What:** Cite the real source for the separate backup bucket.
+- **Why:** A document cited the wrong source for the separate backup bucket; it now cites the real one.
+- **Files:** `docs/14-integrations.md`
+- **Commit:** `df22a2a` (2026-10-28)
+
+#### chore(storage): add Cloudflare R2 disks and prune the AWS SDK
+- **What:** Add Cloudflare R2 disks and prune the AWS SDK.
+- **Why:** Member photos and exports live in Cloudflare R2. The AWS library it needs was 1 GB on disk, so only the S3 part is kept.
+- **Files:** `.env.example`, `CHANGELOG.md`, `composer.json`, `composer.lock`, `config/filesystems.php`, `docs/14-integrations.md`, `docs/16-deployment-and-ops.md`, `tests/Feature/Storage/R2DiskTest.php` — 8 files in total
+- **Commit:** `d6d3ec2` (2026-10-28)
+
+#### chore(tooling): add Laravel Boost MCP server and skills
+- **What:** Add Laravel Boost MCP server and skills.
+- **Why:** Lets the AI assistant read the real Laravel documentation and database schema instead of guessing from memory.
+- **Files:** `.claude/skills/` (34 files), `.mcp.json`, `CHANGELOG.md`, `CLAUDE.md`, `boost.json`, `composer.json`, `composer.lock` — 40 files in total
+- **Commit:** `002556e` (2026-10-28)
+
+#### feat(ops): add health endpoint, request ids, JSON logs and environment checks
+- **What:** Add health endpoint, request ids, JSON logs and environment checks.
+- **Why:** Problems must be found quickly and a mis-configured server must refuse to start: a health check, a request id on every request, JSON logs and an environment check.
+- **Files:** `.env.example`, `CHANGELOG.md`, `app/Console/Commands/CheckEnvironment.php`, `app/Http/Controllers/HealthController.php`, `app/Http/Middleware/` (3 files), `app/Providers/AppServiceProvider.php`, `app/Services/HealthCheck.php`, `app/Support/EnvironmentCheck.php`, `bootstrap/app.php`, `config/health.php`, `config/logging.php`, `docs/16-deployment-and-ops.md`, `docs/17-monitoring-and-alerting.md`, `phpunit.xml`, `routes/health.php`, `tests/Feature/Operations/` (3 files) — 20 files in total
+- **Commit:** `15afab4` (2026-10-28)
+
+#### feat(auth): keep browser users signed in with Sanctum cookie sessions
+- **What:** Keep browser users signed in with Sanctum cookie sessions.
+- **Why:** A page refresh must not sign staff out (decision D-027), so the browser now holds a secure session cookie instead of a token.
+- **Files:** `.env.example`, `CHANGELOG.md`, `app/Http/` (4 files), `app/Providers/AppServiceProvider.php`, `app/Services/` (2 files), `bootstrap/app.php`, `config/sanctum.php`, `docs/08-api.md`, `docs/13-decision-log.md`, `docs/15-security.md`, `docs/qa/QA-01-authentication.md`, `phpunit.xml`, `resources/js/` (14 files), `routes/api.php`, `tests/Feature/` (2 files) — 33 files in total
+- **Commit:** `0856e95` (2026-10-28)
+
+#### feat(frontend): add React SPA shell with OTP sign-in
+- **What:** Add React SPA shell with OTP sign-in.
+- **Why:** Staff need a screen to sign in and a shell to work in, built mobile-first for churches that use cheap phones.
+- **Files:** `.prettierignore`, `.prettierrc.json`, `CHANGELOG.md`, `components.json`, `docs/06-architecture.md`, `docs/13-decision-log.md`, `eslint.config.js`, `package-lock.json`, `package.json`, `resources/css/app.css`, `resources/js/` (29 files), `resources/views/` (2 files), `routes/web.php`, `tsconfig.json`, `vite.config.js`, `vite.config.ts` — 45 files in total
+- **Commit:** `165ae72` (2026-10-28)
+
+#### fix(auth): align OTP with QA-01 and revoke tokens on deactivation
+- **What:** Align OTP with QA-01 and revoke tokens on deactivation.
+- **Why:** The first sign-in code did not match the QA-01 test cases, and a staff member who was deactivated could keep using an old token.
+- **Files:** `CHANGELOG.md`, `app/Console/Commands/ResetOtpLockout.php`, `app/Exceptions/InvalidOtpException.php`, `app/Exceptions/TooManyOtpAttemptsException.php`, `app/Models/User.php`, `app/Observers/UserObserver.php`, `app/Services/OtpService.php`, `docs/06-architecture.md`, `docs/16-deployment-and-ops.md`, `docs/17-monitoring-and-alerting.md`, `docs/qa/QA-01-authentication.md`, `tests/Feature/Auth/` (3 files) — 14 files in total
+- **Commit:** `755c58e` (2026-10-28)
+
+#### feat(auth): add OTP sign-in with per-church codes and a critical SMS queue
+- **What:** Add OTP sign-in with per-church codes and a critical SMS queue.
+- **Why:** Staff sign in with a phone number and a code, not a password. The code is checked per church, and sign-in texts get their own queue so a slow job can never delay them.
+- **Files:** `CHANGELOG.md`, `CLAUDE.md`, `README.md`, `app/Contracts/SmsProvider.php`, `app/DTOs/OutboundSms.php`, `app/Exceptions/` (2 files), `app/Http/` (8 files), `app/Jobs/SendSmsJob.php`, `app/Models/` (3 files), `app/Providers/` (2 files), `app/Services/` (3 files), `app/ValueObjects/PhoneNumber.php`, `bootstrap/app.php`, `bootstrap/providers.php`, `config/otp.php`, `config/permission.php`, `config/services.php`, `database/seeders/` (2 files), `docs/08-api.md`, `docs/13-decision-log.md`, `routes/api.php`, `tests/Feature/` (4 files), `tests/Unit/PhoneNumberTest.php` — 40 files in total
+- **Commit:** `6db7eb7` (2026-10-28)
+
+#### feat(tenancy): add enums, models, factories and tenant resolution
+- **What:** Add enums, models, factories and tenant resolution.
+- **Why:** Every church shares one database, so each row must belong to a church and every query must be limited to the current church. This keeps one church from ever seeing another's data.
+- **Files:** `CHANGELOG.md`, `app/Enums/` (22 files), `app/Http/Middleware/ResolveTenant.php`, `app/Models/` (18 files), `app/Providers/AppServiceProvider.php`, `app/Scopes/ChurchScope.php`, `app/Traits/BelongsToChurch.php`, `bootstrap/app.php`, `config/tenancy.php`, `database/factories/` (17 files), `docs/08-api.md`, `docs/13-decision-log.md`, `phpstan.neon`, `routes/api.php`, `tests/Feature/` (3 files), `tests/Pest.php` — 72 files in total
+- **Commit:** `7354d30` (2026-10-28)
+
+#### chore(tooling): add Pest, Pint strict types and Larastan level 8
+- **What:** Add Pest, Pint strict types and Larastan level 8.
+- **Why:** Tests, a code formatter and static analysis are required on every project, so they had to exist before any feature code.
+- **Files:** `CHANGELOG.md`, `app/Http/Controllers/Controller.php`, `app/Models/User.php`, `app/Providers/` (2 files), `bootstrap/app.php`, `bootstrap/providers.php`, `composer.json`, `composer.lock`, `config/app.php`, `config/auth.php`, `config/cache.php`, `config/database.php`, `config/filesystems.php`, `config/logging.php`, `config/mail.php`, `config/permission.php`, `config/queue.php`, `config/sanctum.php`, `config/services.php`, `config/session.php`, `config/telescope.php`, `database/factories/UserFactory.php`, `database/migrations/` (22 files), `database/seeders/DatabaseSeeder.php`, `phpstan.neon`, `phpunit.xml`, `pint.json`, `public/index.php`, `routes/console.php`, `routes/web.php`, `tests/Feature/` (2 files), `tests/Pest.php`, `tests/TestCase.php`, `tests/Unit/ExampleTest.php` — 57 files in total
+- **Commit:** `269d265` (2026-10-28)
+
 ### Added
+- OpenAPI 3.1 spec generated by Scramble and committed at `docs/openapi.json`, with interactive docs at `/docs/api` (staff with settings access outside local development), a test and a CI step that fail when the spec is out of date or has untyped fields, and a check that every API route is documented (D-035)
+- Project and Universal `CLAUDE.md`: a rule to keep code simple, use the framework before the language, avoid hard-coded values and write clear comments and docblocks
 - Concurrency tests (`tests/Concurrency`) that prove, with two real database connections, that only one of two simultaneous requests can take a family's head role or the next member number; they fail when the row locks are removed
 - Inverse relationships on every model that was missing one (staff to their members and departments, member to department links, family head, pledges, change history, fund and service to gifts), with tests
 - Youth age limit: the youth pastor's view goes by date of birth (younger than the church's `youth_age_limit` setting, default 25), falling back to educational level when there is no birth date (D-031)

@@ -9,6 +9,7 @@ use App\DTOs\Departments\AddDepartmentMemberDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Departments\AddDepartmentMemberRequest;
 use App\Http\Resources\DepartmentMemberResource;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -24,6 +25,8 @@ class AddDepartmentMemberController extends Controller
     /**
      * Runs AddDepartmentMemberAction for this request and returns the JsonResponse.
      */
+    #[Response(status: 201, description: 'The member was added to the department.', type: 'array{data: array{department_id: string, member_id: string, role: string|null, joined_at: string|null}}')]
+    #[Response(status: 200, description: 'The member already served there, so only their role changed.', type: 'array{data: array{department_id: string, member_id: string, role: string|null, joined_at: string|null}}')]
     public function __invoke(AddDepartmentMemberRequest $request): JsonResponse
     {
         $membership = $this->action->execute(AddDepartmentMemberDTO::fromRequest($request));

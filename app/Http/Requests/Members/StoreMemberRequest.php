@@ -39,6 +39,7 @@ class StoreMemberRequest extends MemberInputRequest
         return [
             ...$this->memberRules(),
             // A new person is either a prospect or already received; the other statuses are for later.
+            /** @var 'prospect'|'active' */
             'status' => ['sometimes', Rule::in([MemberStatus::Prospect->value, MemberStatus::Active->value])],
         ];
     }

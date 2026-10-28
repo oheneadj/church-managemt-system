@@ -76,12 +76,15 @@ abstract class MemberInputRequest extends FormRequest
             'educational_level' => ['nullable', Rule::enum(EducationalLevel::class)],
             'membership_type' => ['sometimes', Rule::enum(MembershipType::class)],
             'membership_date' => ['nullable', 'date_format:Y-m-d'],
+            /** @var string|null */
             'family_id' => ['nullable', 'ulid', Rule::exists('families', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
             'family_role' => ['nullable', Rule::enum(FamilyRole::class), 'required_with:family_id'],
+            /** @var string|null */
             'assigned_pastor_id' => ['nullable', 'ulid', Rule::exists('users', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
             'whatsapp_opted_in' => ['sometimes', 'boolean'],
             'sms_opted_in' => ['sometimes', 'boolean'],
             'department_ids' => ['sometimes', 'array'],
+            /** @var string */
             'department_ids.*' => ['ulid', 'distinct', Rule::exists('departments', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
         ];
     }

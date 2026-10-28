@@ -31,6 +31,7 @@ class AddDepartmentMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            /** @var string */
             'member_id' => [
                 'required', 'ulid',
                 Rule::exists('members', 'id')->where('church_id', app('current.church')->getKey())->whereNull('deleted_at'),

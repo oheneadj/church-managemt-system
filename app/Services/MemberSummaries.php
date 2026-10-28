@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\Members\GivingSummary;
 use App\Models\Member;
 use App\Repositories\AttendanceRecordRepositoryInterface;
 use App\Repositories\ContributionRepositoryInterface;
@@ -24,16 +25,14 @@ class MemberSummaries
 
     /**
      * The member's giving this year, this month and all time, as exact decimal strings.
-     *
-     * @return array{this_year: string, this_month: string, all_time: string}
      */
-    public function giving(Member $member): array
+    public function giving(Member $member): GivingSummary
     {
-        return [
-            'this_year' => $this->contributions->totalForMember($member->getKey(), now()->startOfYear()),
-            'this_month' => $this->contributions->totalForMember($member->getKey(), now()->startOfMonth()),
-            'all_time' => $this->contributions->totalForMember($member->getKey(), null),
-        ];
+        return new GivingSummary(
+            thisYear: $this->contributions->totalForMember($member->getKey(), now()->startOfYear()),
+            thisMonth: $this->contributions->totalForMember($member->getKey(), now()->startOfMonth()),
+            allTime: $this->contributions->totalForMember($member->getKey(), null),
+        );
     }
 
     /**

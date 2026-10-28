@@ -34,6 +34,7 @@ class StoreFamilyRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            /** @var string|null */
             'head_member_id' => [
                 'nullable', 'ulid',
                 Rule::exists('members', 'id')->where('church_id', app('current.church')->getKey())->whereNull('deleted_at'),

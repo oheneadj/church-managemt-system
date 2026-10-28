@@ -19,7 +19,9 @@ it('totals giving for the year, the month and all time as exact decimal strings'
     $this->contributions->shouldReceive('totalForMember')->with('01memberunit', Mockery::on(fn ($d) => $d?->toDateString() === '2026-10-01'))->andReturn('200.00');
     $this->contributions->shouldReceive('totalForMember')->with('01memberunit', null)->andReturn('8650.00');
 
-    expect($this->summaries->giving(unitMember()))->toBe(['this_year' => '2400.00', 'this_month' => '200.00', 'all_time' => '8650.00']);
+    $giving = $this->summaries->giving(unitMember());
+
+    expect($giving->thisYear)->toBe('2400.00')->and($giving->thisMonth)->toBe('200.00')->and($giving->allTime)->toBe('8650.00');
 });
 
 it('counts attendance over the last 4, 8 and 12 weeks', function (): void {

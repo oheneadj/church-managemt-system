@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 
-// The single page the React app mounts into (D-022). Every path that is not the API, a framework
-// endpoint or Telescope falls through to it, and React Router decides what to show.
-// 'tenant' makes an unknown church subdomain a 404 here too, before any JavaScript loads.
+// Paths that belong to the API, the framework or a tool. Everything else is a screen of the React app.
+$notReactScreens = ['api', 'up', 'docs', 'telescope', 'sanctum'];
+
+// The single page the React app mounts into (D-022). Every other path falls through to it, and React Router
+// decides what to show. 'tenant' makes an unknown church subdomain a 404 here too, before any JavaScript loads.
 Route::view('/{any?}', 'app')
-    ->where('any', '^(?!api|up|telescope|sanctum).*$')
+    ->where('any', '^(?!'.implode('|', $notReactScreens).').*$')
     ->middleware('tenant')
     ->name('spa');

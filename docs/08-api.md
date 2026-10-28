@@ -6,6 +6,12 @@
 
 ---
 
+## Machine-readable spec
+
+The OpenAPI 3.1 spec of this API is committed at `docs/openapi.json` and generated from the code by Scramble, so it cannot drift: `php artisan test` and a CI step fail when it is out of date. After changing an endpoint, run `php artisan scramble:export` and commit the result. The interactive docs are at `/docs/api` (and the JSON at `/docs/api.json`) on every church host; they are open in local development and, everywhere else, only for staff who may change church settings (D-035). This hand-written page explains the conventions; the spec is the contract.
+
+---
+
 ## Base URL
 
 Every request targets the church's subdomain:

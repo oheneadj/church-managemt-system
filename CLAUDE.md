@@ -57,6 +57,16 @@ No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithme
 
 ### 7. `APP_DEBUG=false` in production. Always.
 
+### 8. Simple, Framework-First, No Hard-Coding
+Write simple code that anyone can read at a glance. This applies to every project and sits beside the other principles; it never replaces them.
+
+- **No hard-coding.** Do not scatter fixed values (limits, sizes, durations, names, URLs, rates, status text) through the code. Put them in config, an enum, a constant or a named value, and read them from there.
+- **Keep it simple and straightforward.** Prefer short, plain, obvious logic. Do not write complex logic; if a piece of code is hard to follow, break it into small named steps or find the simpler way.
+- **Framework first, then the language.** Use the framework's own tools before reaching for raw language features, and use the language's standard features before writing anything custom.
+- **Comments that help.** Write comments and docblocks that are well structured and clearly written, so a developer who has never seen the code understands what it does and why. Explain intent, not the obvious.
+- **Apply all of this together with the other principles** (layers, tests, types, security). Simplicity is never a reason to skip a rule, and a rule is never a reason to write something harder to understand than it needs to be.
+
+
 ---
 
 ## Project Structure (Laravel API)
@@ -184,6 +194,12 @@ ProcessPaystackWebhookJob::dispatch(...)->onQueue('payments');
 | Cloudflare R2 | `filesystems.disks.r2` | `league/flysystem-aws-s3-v3` |
 
 Full integration details: `docs/14-integrations.md`
+
+---
+
+## Changelog
+
+Before every commit, add an entry to `CHANGELOG.md` under `Change record`. Each entry states **what** was done, **why** it was done, **which files** were affected, and **the commit** (add the hash right after committing). The short Added / Changed bullets stay as a summary.
 
 ---
 

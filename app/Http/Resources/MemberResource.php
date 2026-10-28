@@ -39,6 +39,7 @@ class MemberResource extends JsonResource
             'phone' => $this->phone,
             'phone_secondary' => $this->phone_secondary,
             'email' => $this->email,
+            /** @var string|null */
             'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
             'address' => $this->address,
             'nearest_landmark' => $this->nearest_landmark,
@@ -62,6 +63,7 @@ class MemberResource extends JsonResource
             'milestones' => $this->whenLoaded('milestones', fn () => MemberMilestoneResource::collection($this->milestones)),
             'assigned_pastor' => $this->whenLoaded('assignedPastor', fn () => $this->assignedPastor === null ? null : new StaffSummaryResource($this->assignedPastor)),
             'giving_summary' => $this->when($request->user()?->can(StaffPermission::GivingSummary->value) === true, fn () => new GivingSummaryResource(app(MemberSummaries::class)->giving($this->resource))),
+            /** @var array{last_4_weeks: int, last_8_weeks: int, last_12_weeks: int} */
             'attendance_summary' => app(MemberSummaries::class)->attendance($this->resource),
             'whatsapp_opted_in' => $this->whatsapp_opted_in,
             'sms_opted_in' => $this->sms_opted_in,

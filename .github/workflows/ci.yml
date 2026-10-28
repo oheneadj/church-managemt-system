@@ -89,6 +89,12 @@ jobs:
       - name: Dependency audit
         run: composer audit
 
+      # The committed OpenAPI spec must match the code (agreement section 35). Regenerate it with `php artisan scramble:export`.
+      - name: OpenAPI spec is up to date
+        run: |
+          php artisan scramble:export --path=openapi.generated.json --fail-on-unknown
+          diff docs/openapi.json openapi.generated.json
+
       - name: Tests (Pest)
         run: php artisan test
 

@@ -38,10 +38,14 @@ class ListMembersRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(MemberStatus::class)],
             'gender' => ['sometimes', Rule::enum(Gender::class)],
             'educational_level' => ['sometimes', Rule::enum(EducationalLevel::class)],
+            /** @var string */
             'department_id' => ['sometimes', 'ulid'],
+            /** @var string */
             'family_id' => ['sometimes', 'ulid'],
             'search' => ['sometimes', 'string', 'max:100'],
+            /** @var 'last_name'|'first_name'|'created_at'|'membership_date' */
             'sort' => ['sometimes', Rule::in(['last_name', 'first_name', 'created_at', 'membership_date'])],
+            /** @var 'asc'|'desc' */
             'direction' => ['sometimes', Rule::in(['asc', 'desc'])],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];

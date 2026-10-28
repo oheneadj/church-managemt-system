@@ -25,6 +25,9 @@ class MemberPhotoResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return ['photo_url' => app(MemberPhotoService::class)->url($this->photo_url)];
+        return [
+            /** @var string|null */
+            'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
+        ];
     }
 }

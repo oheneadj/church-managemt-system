@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Enums\StaffPermission;
 use App\Http\Middleware\ResolveTenant;
 use App\Models\Department;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\PersonalAccessToken;
+use App\Models\User;
 use App\Services\HealthCheck;
 use App\Support\EnvironmentCheck;
 use App\ValueObjects\PhoneNumber;
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -57,6 +60,9 @@ class AppServiceProvider extends ServiceProvider
         Route::model('member', Member::class);
         Route::model('family', Family::class);
         Route::model('department', Department::class);
+
+        // The interactive API docs are open locally and, everywhere else, only for staff who may change church settings.
+        Gate::define('viewApiDocs', fn (?User $user = null): bool => $user?->can(StaffPermission::ChurchSettings->value) === true);
 
         Date::use(CarbonImmutable::class);
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);

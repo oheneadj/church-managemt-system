@@ -27,7 +27,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'phone' => $this->phone,
             'email' => $this->email,
+            /** @var list<string> */
             'roles' => $this->getRoleNames()->values(),
+            /** @var list<string> */
             'permissions' => $this->getAllPermissions()->pluck('name')->values(),
         ];
     }
