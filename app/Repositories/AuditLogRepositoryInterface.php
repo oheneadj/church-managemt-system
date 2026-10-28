@@ -24,4 +24,9 @@ interface AuditLogRepositoryInterface
      * Replaces the personal values in a record's history with a marker, keeping every line and the names of the fields. This is the one change ever made to history, required by the right to erasure.
      */
     public function anonymiseSubject(Model $subject): void;
+
+    /**
+     * Masks the values in every line of the current church's history, keeping the lines and field names. Used when a cancelled church is purged.
+     */
+    public function anonymiseAll(): void;
 }

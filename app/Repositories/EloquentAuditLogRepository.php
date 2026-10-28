@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\AuditLog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,6 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class EloquentAuditLogRepository implements AuditLogRepositoryInterface
 {
+    /** The batch size when masking a long history. */
+    private const BATCH = 100;
+
     /**
      * Adds one line to the history. Lines are never changed or removed.
      */
@@ -25,18 +29,33 @@ class EloquentAuditLogRepository implements AuditLogRepositoryInterface
      */
     public function anonymiseSubject(Model $subject): void
     {
-        AuditLog::query()
-            ->where('auditable_type', $subject->getMorphClass())
-            ->where('auditable_id', $subject->getKey())
-            ->chunkById(100, function ($lines): void {
-                foreach ($lines as $line) {
-                    $line->update([
-                        'old_values' => $this->masked($line->old_values),
-                        'new_values' => $this->masked($line->new_values),
-                        'reason' => $line->reason === null ? null : config('privacy.erased_marker'),
-                    ]);
-                }
-            });
+        $this->mask(AuditLog::query()->where('auditable_type', $subject->getMorphClass())->where('auditable_id', $subject->getKey()));
+    }
+
+    /**
+     * Masks every line of the current church's history, for a church purge.
+     */
+    public function anonymiseAll(): void
+    {
+        $this->mask(AuditLog::query());
+    }
+
+    /**
+     * Masks the values and the reason of every line the query finds, a batch at a time.
+     *
+     * @param  Builder<AuditLog>  $lines
+     */
+    private function mask(Builder $lines): void
+    {
+        $lines->chunkById(self::BATCH, function ($found): void {
+            foreach ($found as $line) {
+                $line->update([
+                    'old_values' => $this->masked($line->old_values),
+                    'new_values' => $this->masked($line->new_values),
+                    'reason' => $line->reason === null ? null : config('privacy.erased_marker'),
+                ]);
+            }
+        });
     }
 
     /**

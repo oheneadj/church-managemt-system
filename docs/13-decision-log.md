@@ -750,6 +750,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-042 — Cancelling a church and purging its data
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/05-data-safety.md` and agreement section 34
+**Status:** Active
+
+**Decision:**
+1. Cancelling sets `churches.cancelled_at`. The church stays active for 90 days so its admin can export their data; `purged_at` records the purge. There is no settings page yet, so cancelling is the support command `church:cancel {slug}`; the self-service button comes with story 5.14.
+2. A daily command queues one `PurgeChurchJob` per church whose grace period is over. The job is unique per church, retries three times, and logs a critical line if it still fails, because personal data staying past its date needs a person.
+3. The purge reuses the single-member erasure for every member, then cleans staff, families, visitors, attendance visitor names and contribution notes, deletes messages and files, masks the whole change history, removes the church's own contact and payout details, soft-deletes the church and changes its slug to `{slug}-deleted-{id}` so the address can be used again.
+4. Money records stay for the 7-year rule. When Sprint 4 adds anything that holds a name or phone (receipt text, donor details), the purge repository must clear it too.
+5. The database part is one transaction; deleting files comes after and is safe to repeat, so a half-finished run is fixed by running it again.
+6. A church is not locked during the grace period. Making it read-only, and the 'your data will be deleted on…' notice, belong with billing (Sprint 5).
+
+**Rationale:** docs/05 promises exports for 90 days and a purge after that; the agreement requires atomic offboarding with a grace period, an export before deletion, and retention enforced by a job.
+
+**Revisit when:** billing exists (read-only grace period and reminders), or the church's export is built (stories 5.8, 5.9).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

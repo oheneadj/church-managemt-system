@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\ChurchPlan;
 use App\Enums\MomoNetwork;
 use App\Enums\PayoutMethod;
+use Carbon\CarbonImmutable;
 use Database\Factories\ChurchFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The tenant root: one row per church. Every other tenant-owned table points back here.
  *
+ * @property string $id
+ * @property string $slug
  * @property ChurchPlan $plan
+ * @property CarbonImmutable|null $cancelled_at
+ * @property CarbonImmutable|null $purged_at
  */
 class Church extends Model
 {
@@ -54,6 +59,8 @@ class Church extends Model
         'member_number_seq',
         'settings',
         'is_active',
+        'cancelled_at',
+        'purged_at',
     ];
 
     /**
@@ -75,6 +82,8 @@ class Church extends Model
             'whatsapp_opted_in' => 'boolean',
             'settings' => 'array',
             'is_active' => 'boolean',
+            'cancelled_at' => 'immutable_datetime',
+            'purged_at' => 'immutable_datetime',
         ];
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Church;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Eloquent implementation of the church queries.
@@ -62,5 +64,33 @@ class EloquentChurchRepository implements ChurchRepositoryInterface
         $church->increment('member_number_seq');
 
         return $church;
+    }
+
+    /**
+     * Saves a changed church.
+     */
+    public function save(Church $church): Church
+    {
+        $church->save();
+
+        return $church;
+    }
+
+    /**
+     * Soft-deletes the church. The row stays, so records that point to it keep working.
+     */
+    public function delete(Church $church): void
+    {
+        $church->delete();
+    }
+
+    /**
+     * The churches that cancelled on or before this moment and have not been purged yet.
+     *
+     * @return Collection<int, Church>
+     */
+    public function cancelledBefore(CarbonInterface $cutoff): Collection
+    {
+        return Church::query()->whereNotNull('cancelled_at')->where('cancelled_at', '<=', $cutoff)->whereNull('purged_at')->get();
     }
 }

@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 
 // Deletes records past their retention period (config/retention.php). 03:00 UTC, when the platform is quietest (docs/05).
 Schedule::command('model:prune')->dailyAt('03:00')->timezone('UTC')->onOneServer();
+
+// Queues the purge of churches whose 90-day grace period after cancelling is over (docs/05). 03:30 UTC, after the prune above.
+Schedule::command('churches:purge-cancelled')->dailyAt('03:30')->timezone('UTC')->onOneServer();

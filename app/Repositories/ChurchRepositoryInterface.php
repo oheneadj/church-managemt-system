@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Church;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Every query the member code needs on churches lives behind this contract.
@@ -42,4 +44,21 @@ interface ChurchRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): Church;
+
+    /**
+     * Saves a changed church.
+     */
+    public function save(Church $church): Church;
+
+    /**
+     * Soft-deletes the church. The row stays, so records that point to it keep working.
+     */
+    public function delete(Church $church): void;
+
+    /**
+     * The churches that cancelled on or before this moment and have not been purged yet.
+     *
+     * @return Collection<int, Church>
+     */
+    public function cancelledBefore(CarbonInterface $cutoff): Collection;
 }

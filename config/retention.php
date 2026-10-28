@@ -14,4 +14,14 @@ return [
     'message_logs_months' => 12,
     'webhook_logs_days' => 90,
 
+    /*
+    |--------------------------------------------------------------------------
+    | After a church cancels (docs/05, "Data Export")
+    |--------------------------------------------------------------------------
+    | The church keeps working for this many days so it can export its data. Then its personal data is purged:
+    | members are erased, staff and visitor details removed, messages deleted and the history masked. Money
+    | records stay for 7 years with no personal details left in them.
+    */
+    'cancelled_church_grace_days' => 90,
+
 ];
