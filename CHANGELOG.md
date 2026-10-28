@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Directory search now also matches a typed phone number written as `0201234567`, `233201234567` or `+233201234567` against the stored international number. The duplicate-phone error now reads "A member with this phone number already exists." The tests pin `TENANT_BASE_DOMAIN=localhost` in `phpunit.xml`.
 - **Why:** QA-04 TC-04-08 requires searching by the local phone format, and TC-04-02 gives the exact duplicate-phone message. The tenant domain was pinned because setting it to `church.test` in a developer's `.env` for Valet made every test host return 404: tests must not depend on a local `.env`.
 - **Files:** `app/Models/Member.php`, `app/Http/Requests/Members/MemberInputRequest.php`, `phpunit.xml`, `tests/Feature/Members/MemberApiTest.php`
-- **Commit:** `PENDING`
+- **Commit:** `d80b99c` (2026-10-28)
 
 #### refactor(errors): use named exceptions and match the addendum's test layout
 - **What:** Domain rules now throw named exceptions instead of the generic validation or runtime ones: `FamilyHeadAlreadyTakenException`, `FamilyRoleNeedsFamilyException` and `MemberAlreadyInFamilyException` (all 422 with the field named, through the shared `FieldRuleException`), `PhotoNotStoredException`, `SmsProviderUnavailableException` and `MisconfiguredEnvironmentException`. Member feature tests now sign in with Sanctum's `actingAs`. `PhoneNumberTest` moved to `tests/Unit/ValueObjects`, and unit tests were added for the `MemberStatus` and `EducationalLevel` enums and the `Member` and `Church` models.
