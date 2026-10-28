@@ -264,8 +264,11 @@ foreach ($lowBalanceChurches as $church) {
 | 4xx error rate (non-auth) | > 10% of requests in 5 min | Check for attack or broken frontend |
 | API response time p99 | > 2 seconds | Check slow query log; check queue saturation |
 | Failed job count | > 5 accumulated | Review with `php artisan queue:failed` |
-| Payments queue depth | > 10 | Workers may be stuck; check worker logs |
-| Health check failure | Any check != ok | See on-call runbook |
+| Payments queue depth | > 10 | Workers may be stuck; see [queue worker stopped](runbooks/queue-worker-stopped.md) and [payment provider errors](runbooks/payment-provider-errors.md) |
+| Health check failure | Any check != ok | [Database](runbooks/database-connections-exhausted.md), [disk](runbooks/disk-space-critical.md) or [queue](runbooks/queue-worker-stopped.md) runbook, by the failing check |
+| SMS circuit opened | `Circuit opened` in the log | [SMS provider down](runbooks/sms-provider-down.md) |
+| Church purge failed | `Church purge failed` (critical) | [Church purge failed](runbooks/church-purge-failed.md) |
+| Backup failed | `db:backup` fails (reported to Sentry) | [Restore from backup](runbooks/restore-from-backup.md), after fixing the backup |
 
 ### Business Alerts
 
@@ -448,22 +451,16 @@ OTP failures mean members can't log in.
 |---|---|---|---|
 | Application logs | `storage/logs/` | 14 days | Laravel `daily` driver rotation |
 | Failed jobs | `failed_jobs` table | Manual review | Pruned after retry/resolution |
-| Webhook logs | `webhook_logs` table | 90 days | `php artisan webhook-logs:prune` (weekly cron) |
-| Message logs | `message_logs` table | 12 months | `php artisan message-logs:prune` (monthly cron) |
+| Webhook logs | `webhook_logs` table | 90 days | `model:prune`, daily 03:00 UTC (`config/retention.php`) |
+| Message logs | `message_logs` table | 12 months | `model:prune`, daily 03:00 UTC (`config/retention.php`) |
+| Cancelled church's personal data | all tenant tables | 90 days after cancelling | `churches:purge-cancelled`, daily 03:30 UTC (D-042) |
 | Auth logs | `personal_access_tokens` | Until revoked | `php artisan sanctum:prune-expired --hours=8` (daily cron) |
 
 ---
 
 ## Incident Severity Levels
 
-| Severity | Definition | Response time | Who |
-|---|---|---|---|
-| P0 — Critical | Platform down for all churches; payments failing; data breach | Immediate | Lead Engineer |
-| P1 — High | One or more churches can't use core feature (giving, attendance); data loss risk | < 1 hour | Lead Engineer |
-| P2 — Medium | Degraded performance; non-critical feature broken; alerts firing but workaround exists | < 4 hours | Lead Engineer |
-| P3 — Low | Minor bug; cosmetic issue; non-urgent alert | Next business day | Lead Engineer |
-
-All incidents → post-mortem. Template in `docs/reference/post-mortems/`.
+See [`docs/18-incident-response.md`](./18-incident-response.md): P1 Critical, P2 High, P3 Medium and P4 Low, with who responds and when. (This section used P0 to P3; P0 is now P1, P1 is P2, and so on.) The step-by-step guides are in [`docs/runbooks/`](./runbooks/README.md); the short runbook above is kept for the alerts it covers.
 
 ---
 

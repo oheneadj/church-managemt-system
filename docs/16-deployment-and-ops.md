@@ -259,63 +259,17 @@ With rolling updates enabled on `chms-web` (needs the health check, default cont
 | `.env` file | Manual — in 1Password | On change | Indefinite | 1Password |
 | Coolify config | Coolify export | Weekly | 4 copies | R2 backup bucket |
 
-### Database Backup Script
+### Database Backup (built)
 
-Runs as a scheduled Laravel command at 02:00 UTC:
+`php artisan db:backup` (`app/Console/Commands/BackupDatabase.php`) runs every day at 02:00 UTC from the scheduler and never twice at once:
 
-```php
-// app/Console/Commands/BackupDatabase.php
-class BackupDatabase extends Command
-{
-    protected $signature = 'db:backup';
+1. `pg_dump -Fc` writes a compressed dump to a private work folder. The database password goes in `PGPASSWORD` in the process environment, never on the command line.
+2. `gpg --encrypt` encrypts it for `BACKUP_GPG_RECIPIENT`, the **public** key. The server can write backups but cannot read them; the private key stays offline (1Password).
+3. The encrypted file is streamed to the `r2-backup` disk (the separate bucket with its own credentials) under `backups/database/backup-YYYY-MM-DD-HH-MM-SS.dump.gpg`.
+4. Backups older than 30 days (`config/backup.php`) are removed.
+5. The plain dump and the encrypted copy are deleted from the server afterwards, even when a step fails. A failure is reported to Sentry and the command exits with an error. With no `BACKUP_GPG_RECIPIENT` it refuses to make an unencrypted backup, and `env:check` fails outside development.
 
-    public function handle(): void
-    {
-        $filename  = 'backup-' . now()->format('Y-m-d-H-i-s') . '.dump.gpg';
-        $tmpPath   = '/tmp/' . $filename;
-        $s3Path    = 'backups/database/' . $filename;
-
-        // Dump (custom format is already compressed). Password via PGPASSWORD, never on the command line.
-        $dumpCmd = sprintf(
-            'PGPASSWORD=%s pg_dump -Fc -h %s -U %s %s',
-            escapeshellarg(config('database.connections.pgsql.password')),
-            escapeshellarg(config('database.connections.pgsql.host')),
-            escapeshellarg(config('database.connections.pgsql.username')),
-            escapeshellarg(config('database.connections.pgsql.database')),
-        );
-
-        // Encrypt with GPG
-        $gpgCmd = sprintf(
-            '%s | gpg --batch --yes --recipient %s --output %s --encrypt',
-            $dumpCmd,
-            config('backup.gpg_recipient'),
-            $tmpPath,
-        );
-
-        exec($gpgCmd, $output, $exitCode);
-
-        if ($exitCode !== 0) {
-            Log::error('Database backup failed', ['exit_code' => $exitCode]);
-            return;
-        }
-
-        // Upload to R2
-        Storage::disk('r2-backup')->put($s3Path, file_get_contents($tmpPath));
-        unlink($tmpPath);
-
-        Log::info('Database backup complete', ['path' => $s3Path]);
-
-        // Prune backups older than 30 days
-        $this->pruneOldBackups();
-    }
-}
-```
-
-**Add to schedule:**
-```php
-// app/Console/Kernel.php
-$schedule->command('db:backup')->dailyAt('02:00');
-```
+Tested with faked `pg_dump`, `gpg` and bucket, and once for real against the development database (encrypted, unreadable with another key, same row counts after decrypting). The full restore into a new database still has to be rehearsed on staging: [restore runbook](runbooks/restore-from-backup.md).
 
 ### Restore Procedure
 

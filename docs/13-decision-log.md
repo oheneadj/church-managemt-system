@@ -769,6 +769,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-043 — Incident response, circuit breaker and backups
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 37
+**Status:** Active
+
+**Decision:**
+1. Severity is P1 to P4 (`docs/18-incident-response.md`); the older P0 to P3 table in docs/17 points there. Nine runbooks live in `docs/runbooks/`, each with symptom, contain, diagnose, resolve and verify, and the alert table links to them.
+2. **The SMS provider has a circuit breaker.** After 5 failures in 2 minutes it opens for a minute, then lets one test message through. Held messages wait on the queue for up to 30 minutes; only real failures count against a message (three). `sms:pause` and `sms:resume` are the manual switch. A message the provider refuses for good does not count as the provider being down.
+3. **The daily database backup is built** (`db:backup`): encrypted for a public key so the server cannot read its own backups, sent to the separate bucket, 30 days kept, and the plain dump never kept. A missed backup is reported to Sentry.
+4. **Open items:** there is no general feature-flag system; each risky feature (broadcasts, payments) must ship with its own off switch like `sms:pause`. The runbooks and the full restore are written but not rehearsed, because there is no staging. Neither Coolify rollback nor the Docker commands have been tried.
+
+**Rationale:** The agreement requires severity levels, runbooks in the repository, circuit breakers on external providers, a tested backup and a post-mortem process before launch.
+
+**Revisit when:** staging exists (rehearse every runbook and the restore), or the second SMS provider is added (the circuit is per provider name).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

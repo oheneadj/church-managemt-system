@@ -10,7 +10,7 @@
 |---|---|
 | **Date** | YYYY-MM-DD |
 | **Duration** | e.g. 47 minutes |
-| **Severity** | P0 / P1 / P2 / P3 |
+| **Severity** | P1 / P2 / P3 / P4 (see docs/18) |
 | **Affected churches** | e.g. All / 3 churches / Grace Assembly only |
 | **Impact** | e.g. Giving page unavailable, members could not check in |
 | **Detection** | e.g. UptimeRobot alert / Customer report / Engineer noticed |
