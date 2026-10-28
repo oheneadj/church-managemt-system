@@ -226,7 +226,7 @@ Permission: members.view
 
 **Default view:** with no `status` and no `search`, only `prospect` and `active` members are listed. Inactive, transferred, deceased and archived members stay out of the default view but are found by `search` or an explicit `status` (docs/03).
 
-**Who sees whom (D-031):** the church admin, pastor and finance secretary see every member. A department head sees members of the departments they head. A youth pastor sees youth members (every educational level except `graduate`). Asking for a member outside that view returns `403`. Invalid filters return `422`.
+**Who sees whom (D-031):** the church admin, pastor and finance secretary see every member. A department head sees members of the departments they head. A youth pastor sees youth members: younger than the church's youth age limit (default 25), or, with no date of birth, any educational level except `graduate`. Asking for a member outside that view returns `403`. Invalid filters return `422`.
 
 **Response `200`:** Paginated collection of member summaries.
 
@@ -939,7 +939,8 @@ Permission: church-admin
     "receipt_on_cash": true,
     "checkin_method": ["whatsapp", "manual"],
     "weekly_report_day": "monday",
-    "birthday_alert_days_before": 7
+    "birthday_alert_days_before": 7,
+    "youth_age_limit": 25
   }
 }
 ```

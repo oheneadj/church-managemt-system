@@ -77,6 +77,14 @@ class Church extends Model
     }
 
     /**
+     * The age below which a member counts as youth. The church's own setting wins over the default (D-031).
+     */
+    public function youthAgeLimit(): int
+    {
+        return max(1, (int) data_get($this->settings, 'youth_age_limit', config('members.youth_age_limit')));
+    }
+
+    /**
      * @return HasMany<User, $this>
      */
     public function users(): HasMany

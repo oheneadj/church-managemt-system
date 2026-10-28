@@ -181,17 +181,33 @@ class Member extends Model
             }
 
             if ($user->hasRole('youth-pastor')) {
-                $youth = array_values(array_map(
-                    fn (EducationalLevel $level) => $level->value,
-                    array_filter(EducationalLevel::cases(), fn (EducationalLevel $level) => $level->isYouth()),
-                ));
-                $visible->orWhereIn('educational_level', $youth);
+                $this->addYouthBranch($visible, Church::query()->whereKey($user->church_id)->firstOrFail());
             }
 
             // A user with neither role matches nothing.
             if (! $user->hasAnyRole(['department-head', 'youth-pastor'])) {
                 $visible->whereIn('id', []);
             }
+        });
+    }
+
+    /**
+     * Adds members who count as youth, as an OR branch of the surrounding group (D-031). With a birth date,
+     * youth means younger than the church's age limit. With no birth date, the educational level decides:
+     * any level except graduate.
+     *
+     * @param  Builder<Member>  $query
+     */
+    private function addYouthBranch(Builder $query, Church $church): void
+    {
+        $levels = array_values(array_map(
+            fn (EducationalLevel $level) => $level->value,
+            array_filter(EducationalLevel::cases(), fn (EducationalLevel $level) => $level->isYouth()),
+        ));
+
+        $query->orWhere(function (Builder $youth) use ($church, $levels): void {
+            $youth->where('date_of_birth', '>', today()->subYears($church->youthAgeLimit()))
+                ->orWhere(fn (Builder $undated) => $undated->whereNull('date_of_birth')->whereIn('educational_level', $levels));
         });
     }
 

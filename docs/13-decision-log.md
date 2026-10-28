@@ -565,11 +565,11 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ### D-031 — Who can see which members, and who can deactivate
 **Date:** October 2026
-**Decided by:** Lead Engineer, from `docs/03` (assumptions flagged for Product Owner review)
+**Decided by:** Lead Engineer, from `docs/03`; the youth rule was set by the Product Owner
 **Status:** Active
 
 **Decision:**
-1. **Directory visibility.** `church-admin`, `pastor` and `finance-secretary` see all members. `department-head` sees members of departments where they are `head_user_id`. `youth-pastor` sees members whose educational level is anything except `graduate` (the docs say "youth only" without defining it). A user with several of these roles sees the union. Enforced by `Member::scopeVisibleTo` and `MemberPolicy::view`.
+1. **Directory visibility.** `church-admin`, `pastor` and `finance-secretary` see all members. `department-head` sees members of departments where they are `head_user_id`. `youth-pastor` sees youth members. Youth is defined by age (Product Owner, Sprint 2): younger than the church's `settings.youth_age_limit`, default 25 (`config/members.php`). A member with no date of birth falls back to the educational level: anything except `graduate`. The docs said "youth only" without defining it. A user with several of these roles sees the union. Enforced by `Member::scopeVisibleTo` and `MemberPolicy::view`.
 2. **Deactivation.** A new permission `members.deactivate`, held only by `church-admin`, is required to move a member to inactive, transferred, deceased or archived. `members.edit` is enough to move to prospect or active. This matches the `docs/03` table (pastors add and edit, only the admin deactivates).
 3. **Default directory.** With no status filter and no search, only prospects and active members are listed. Everything else is reachable by search or an explicit status.
 4. **Milestones.** A new permission `milestones.view`, held by `church-admin`, `pastor` and `youth-pastor`, controls whether Get Member includes milestones (docs/03: finance secretaries and department heads may not see them). Adding a milestone needs `members.edit`.
@@ -577,7 +577,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 **Rationale:** `docs/03` states these rules in prose and a table, but `docs/08` only mentions `members.view` and `members.edit`.
 
-**Revisit when:** the Product Owner defines "youth" precisely (for example by age), or a church needs per-department editing rights.
+**Revisit when:** a church needs per-department editing rights.
 
 ---
 

@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Changes staged but not yet in a versioned release.
 
 ### Added
+- Youth age limit: the youth pastor's view goes by date of birth (younger than the church's `youth_age_limit` setting, default 25), falling back to educational level when there is no birth date (D-031)
 - Member photo upload (story 2.4): `POST /api/v1/members/{id}/photo` checks the file's real type and size, rotates, crops and re-encodes it (dropping EXIF/GPS data), stores it in the private bucket and returns a signed link; `photo_url` is now on the member record and directory. Adds `intervention/image` and the `gd` and `exif` PHP extensions (D-032)
 - Member milestones (story 2.9): `POST /api/v1/members/{id}/milestones`; milestones show on the member record only for roles with the new `milestones.view` permission
 - Department endpoints (story 2.8): list, create and update departments, add and remove members; adding twice only changes the role, removing keeps the history

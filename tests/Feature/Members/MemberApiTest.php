@@ -191,6 +191,59 @@ describe('listing', function (): void {
     });
 });
 
+describe('the youth pastor\'s view', function (): void {
+    beforeEach(function (): void {
+        $this->youthPastor = staffWithRole($this->church, 'youth-pastor');
+    });
+
+    it('goes by birth date: younger than the age limit is youth, whatever the level says', function (): void {
+        $young = newMember($this->church, ['date_of_birth' => today()->subYears(20), 'educational_level' => EducationalLevel::Graduate]);
+        $old = newMember($this->church, ['date_of_birth' => today()->subYears(40), 'educational_level' => EducationalLevel::Jhs1]);
+
+        $ids = collect(as_($this->youthPastor)->getJson(MEMBERS)->json('data'))->pluck('id');
+
+        expect($ids)->toContain($young->id)->not->toContain($old->id);
+    });
+
+    it('draws the line at the default of 25', function (): void {
+        $justUnder = newMember($this->church, ['date_of_birth' => today()->subYears(25)->addDay()]);
+        $exactly = newMember($this->church, ['date_of_birth' => today()->subYears(25)]);
+
+        $ids = collect(as_($this->youthPastor)->getJson(MEMBERS)->json('data'))->pluck('id');
+
+        expect($ids)->toContain($justUnder->id)->not->toContain($exactly->id);
+    });
+
+    it('uses the church\'s own age limit when it sets one', function (): void {
+        $this->church->update(['settings' => ['youth_age_limit' => 18]]);
+        $nineteen = newMember($this->church, ['date_of_birth' => today()->subYears(19)]);
+        $seventeen = newMember($this->church, ['date_of_birth' => today()->subYears(17)]);
+
+        $ids = collect(as_($this->youthPastor)->getJson(MEMBERS)->json('data'))->pluck('id');
+
+        expect($ids)->toContain($seventeen->id)->not->toContain($nineteen->id);
+    });
+
+    it('falls back to the educational level when there is no birth date', function (): void {
+        $student = newMember($this->church, ['date_of_birth' => null, 'educational_level' => EducationalLevel::Shs2]);
+        $adult = newMember($this->church, ['date_of_birth' => null, 'educational_level' => EducationalLevel::Graduate]);
+        $unknown = newMember($this->church, ['date_of_birth' => null, 'educational_level' => null]);
+
+        $ids = collect(as_($this->youthPastor)->getJson(MEMBERS)->json('data'))->pluck('id');
+
+        expect($ids)->toContain($student->id)->not->toContain($adult->id)->not->toContain($unknown->id);
+    });
+
+    it('does not use another church\'s age limit', function (): void {
+        $this->other->update(['settings' => ['youth_age_limit' => 60]]);
+        $thirty = newMember($this->church, ['date_of_birth' => today()->subYears(30)]);
+
+        $ids = collect(as_($this->youthPastor)->getJson(MEMBERS)->json('data'))->pluck('id');
+
+        expect($ids)->not->toContain($thirty->id);
+    });
+});
+
 describe('showing', function (): void {
     it('returns the full record', function (): void {
         $family = Family::factory()->create(['church_id' => $this->church->id, 'name' => 'Mensah Family']);
