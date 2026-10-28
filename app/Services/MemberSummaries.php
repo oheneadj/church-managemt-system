@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\AttendanceRecord;
-use App\Models\Contribution;
 use App\Models\Member;
+use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\ContributionRepositoryInterface;
 
 /**
  * The totals shown on a member's profile: what they gave and how often they came.
@@ -14,17 +14,20 @@ use App\Models\Member;
  */
 class MemberSummaries
 {
+    public function __construct(
+        private readonly ContributionRepositoryInterface $contributions,
+        private readonly AttendanceRecordRepositoryInterface $attendance,
+    ) {}
+
     /**
      * @return array{this_year: string, this_month: string, all_time: string}
      */
     public function giving(Member $member): array
     {
-        $given = fn () => Contribution::query()->where('member_id', $member->getKey())->where('is_voided', false);
-
         return [
-            'this_year' => $this->money($given()->where('contributed_at', '>=', now()->startOfYear())->sum('amount')),
-            'this_month' => $this->money($given()->where('contributed_at', '>=', now()->startOfMonth())->sum('amount')),
-            'all_time' => $this->money($given()->sum('amount')),
+            'this_year' => $this->contributions->totalForMember($member->getKey(), now()->startOfYear()),
+            'this_month' => $this->contributions->totalForMember($member->getKey(), now()->startOfMonth()),
+            'all_time' => $this->contributions->totalForMember($member->getKey(), null),
         ];
     }
 
@@ -33,18 +36,10 @@ class MemberSummaries
      */
     public function attendance(Member $member): array
     {
-        $since = fn (int $weeks) => AttendanceRecord::query()
-            ->where('member_id', $member->getKey())
-            ->where('checked_in_at', '>=', now()->subWeeks($weeks))
-            ->count();
-
-        return ['last_4_weeks' => $since(4), 'last_8_weeks' => $since(8), 'last_12_weeks' => $since(12)];
-    }
-
-    private function money(mixed $sum): string
-    {
-        $value = (string) $sum;
-
-        return is_numeric($value) ? bcadd($value, '0', 2) : '0.00';
+        return [
+            'last_4_weeks' => $this->attendance->countForMemberSince($member->getKey(), now()->subWeeks(4)),
+            'last_8_weeks' => $this->attendance->countForMemberSince($member->getKey(), now()->subWeeks(8)),
+            'last_12_weeks' => $this->attendance->countForMemberSince($member->getKey(), now()->subWeeks(12)),
+        ];
     }
 }

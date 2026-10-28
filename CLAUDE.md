@@ -47,7 +47,7 @@ SendSmsJob::dispatch($phone, $message)->onQueue('notifications');
 HTTP calls in a request lifecycle cause timeouts and slow responses.
 
 ### 4. No business logic in controllers
-Controllers are thin. They: validate (via Form Request), authorise (via Policy), call a Service, return a Resource. That's it.
+Controllers are thin and single-action. They: build a DTO from the validated Form Request, call one Action, return a Resource. Authorisation happens in the Form Request's `authorize()`, which asks a Policy. The layers are Controller → Form Request → DTO → Action → Service → Repository → Model (Universal §6, Laravel addendum §5, D-033).
 
 ### 5. No hard deletes. Ever.
 All models use `SoftDeletes`. Contributions use `is_voided` flag, not deletion. Void requires a reason.
@@ -66,8 +66,11 @@ app/
 ├── Console/Commands/       — Artisan commands (backup, prune, monitor)
 ├── Events/                 — Domain events (ContributionReceived, etc.)
 ├── Exceptions/             — Custom exception classes
+├── Actions/                — One class per user intent. execute(DTO). Owns the transaction.
+├── DTOs/                   — Typed input for one operation
+├── Repositories/           — Interface + Eloquent implementation per model
 ├── Http/
-│   ├── Controllers/        — Thin. One public method per action.
+│   ├── Controllers/        — Thin, single-action (__invoke).
 │   ├── Middleware/         — ResolveTenant, SecurityHeaders
 │   ├── Requests/           — Form Request validation classes
 │   └── Resources/          — API Resource serialisation classes
@@ -86,26 +89,33 @@ app/
 
 ## Key Patterns
 
-### Controller → Form Request → Service → Resource
+### Controller → Form Request → DTO → Action → Resource
 ```php
-public function store(StoreMemberRequest $request): JsonResponse
+// app/Http/Controllers/Api/V1/Members/StoreMemberController.php
+public function __invoke(StoreMemberRequest $request): JsonResponse
 {
-    $this->authorize('create', Member::class);
-    $member = $this->memberService->create($request->validated());
-    return new MemberResource($member);
+    $member = $this->action->execute(CreateMemberDTO::fromRequest($request));
+
+    return (new MemberResource($member))->response()->setStatusCode(201);
 }
 ```
 
-### Service Class
+### Action (one user intent, owns the transaction, fires events)
 ```php
-class MemberService
+final class CreateMemberAction
 {
-    public function create(array $data): Member
+    public function execute(CreateMemberDTO $dto): Member
     {
-        return Member::create($data); // church_id auto-set by BelongsToChurch
+        return DB::transaction(function () use ($dto): Member {
+            $member = $this->members->save(new Member($dto->attributes())); // church_id set by BelongsToChurch
+            MemberCreated::dispatch($member, $dto->actor);
+
+            return $member;
+        });
     }
 }
 ```
+Services hold rules shared by several Actions and never open a transaction. Queries live in a Repository (`MemberRepositoryInterface`), never in an Action, Service or Controller.
 
 ### Policy (always check church_id)
 ```php

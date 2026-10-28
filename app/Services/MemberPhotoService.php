@@ -29,8 +29,8 @@ class MemberPhotoService
     private const LINK_LIFETIME_MINUTES = 60;
 
     /**
-     * Stores the photo and saves its path on the member. The key is fixed per member, so a new photo
-     * replaces the old one and nothing is left behind in the bucket.
+     * Stores the processed photo and returns its path; the Action saves the path on the member. The key is
+     * fixed per member, so a new photo replaces the old one and nothing is left behind in the bucket.
      */
     public function store(Member $member, UploadedFile $file): string
     {
@@ -44,8 +44,6 @@ class MemberPhotoService
         if ($path === false) {
             throw new RuntimeException('The photo could not be stored.');
         }
-
-        $member->update(['photo_url' => $path]);
 
         return $path;
     }

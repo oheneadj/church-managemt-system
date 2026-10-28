@@ -9,6 +9,11 @@ namespace App\Http\Requests\Departments;
  */
 class UpdateDepartmentRequest extends DepartmentInputRequest
 {
+    public function authorize(): bool
+    {
+        return $this->allowed('update', $this->department());
+    }
+
     /**
      * @return array<string, list<mixed>>
      */

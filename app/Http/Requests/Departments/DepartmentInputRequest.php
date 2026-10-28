@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Departments;
 
+use App\Http\Requests\Concerns\DelegatesToPolicy;
 use App\Models\Department;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,10 +14,7 @@ use Illuminate\Validation\Rule;
  */
 abstract class DepartmentInputRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use DelegatesToPolicy;
 
     /**
      * @return array<string, list<mixed>>

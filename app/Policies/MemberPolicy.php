@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Enums\MemberStatus;
 use App\Models\Member;
 use App\Models\User;
+use App\Repositories\MemberRepositoryInterface;
 
 /**
  * Who may do what to a member. Every method checks the church as well as the permission, even though the
@@ -14,6 +15,8 @@ use App\Models\User;
  */
 class MemberPolicy
 {
+    public function __construct(private readonly MemberRepositoryInterface $members) {}
+
     /** Statuses that take a member out of active life; moving to one needs members.deactivate (docs/03). */
     private const LEAVING = [
         MemberStatus::Inactive,
@@ -31,7 +34,7 @@ class MemberPolicy
     {
         return $user->church_id === $member->church_id
             && $user->hasPermissionTo('members.view')
-            && Member::query()->visibleTo($user)->whereKey($member->getKey())->exists();
+            && $this->members->isVisibleTo($user, $member);
     }
 
     public function create(User $user): bool

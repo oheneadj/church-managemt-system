@@ -7,6 +7,8 @@ namespace App\Http\Requests\Members;
 use App\Enums\EducationalLevel;
 use App\Enums\Gender;
 use App\Enums\MemberStatus;
+use App\Http\Requests\Concerns\DelegatesToPolicy;
+use App\Models\Member;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,9 +17,11 @@ use Illuminate\Validation\Rule;
  */
 class ListMembersRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('viewAny', Member::class);
     }
 
     /**

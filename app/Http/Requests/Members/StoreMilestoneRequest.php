@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Members;
 
 use App\Enums\MilestoneType;
+use App\Http\Requests\Concerns\DelegatesToPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,9 +14,11 @@ use Illuminate\Validation\Rule;
  */
 class StoreMilestoneRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('update', $this->member());
     }
 
     /**

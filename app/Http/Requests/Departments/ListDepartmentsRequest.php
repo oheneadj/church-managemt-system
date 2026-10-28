@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Departments;
 
+use App\Http\Requests\Concerns\DelegatesToPolicy;
+use App\Models\Department;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -11,9 +13,11 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class ListDepartmentsRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('viewAny', Department::class);
     }
 
     /**

@@ -524,7 +524,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-028 — Controller → Form Request → Service; no Action or Repository layers yet
 **Date:** October 2026
 **Decided by:** Lead Engineer (reconciling the Universal agreement §6 with `docs/09-engineering-principles.md`)
-**Status:** Active
+**Status:** Superseded by D-033
 
 **Decision:** Backend code is layered Controller → Form Request → Service → Model, as `docs/09-engineering-principles.md` specifies. Services own `DB::transaction()` boundaries and dispatch jobs and events. We do not add Action classes (one per operation) or Repository classes (all queries for a model) until a real need appears: an Action when one operation is triggered from several entry points, a Repository when a second data source exists. The layers, their duties and their prohibitions are written down in `ARCHITECTURE.md`.
 
@@ -591,6 +591,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 **Rationale:** `docs/08` returns the new signed link in the upload response, which a queued job cannot do, and the rule against inline outbound calls exists for slow third-party services (SMS, payments), not our own storage. The file-upload pattern prefers a queue; if photo volume or size grows (for example batch imports), move processing to a job and return `202`.
 
 **Revisit when:** uploads are slow on the 3G target, or a bulk import of photos is built.
+
+---
+
+### D-033 — Follow the Universal layer stack in full: Actions, DTOs and Repositories
+**Date:** October 2026
+**Decided by:** Product Owner (instructed that the code must match the Universal agreement and the Laravel addendum exactly)
+**Status:** Active. Supersedes D-028.
+
+**Decision:** Backend code is layered Controller → Form Request → DTO → Action → Service → Repository → Model, as Universal section 6 and the Laravel addendum (sections 3, 5, 6, 7, 11 and 12) describe.
+- One `final` Action per user intent in `app/Actions`, with a single `execute(DTO)` method. It owns `DB::transaction()` and fires domain events. An Action never calls another Action.
+- Services in `app/Services` hold rules shared by several Actions and never own a transaction.
+- Every Eloquent model that Actions touch has a Repository interface and an Eloquent implementation in `app/Repositories`, bound in `RepositoryServiceProvider`. Controllers, Actions and Services do not query models directly.
+- Controllers are single-action (`__invoke`) and only build a DTO, call one Action and return a Resource. Form Requests authorise through a Policy.
+- Events are fired by Actions (`MemberCreated`, `MemberUpdated`, `MemberStatusChanged`); the audit line is written by a synchronous listener inside the transaction, so a rolled-back change leaves no history.
+- Unit tests for Actions and Services use mocked repositories and no database; Feature tests remain for every endpoint.
+
+**Rationale:** D-028 skipped these layers on YAGNI grounds, but the Universal agreement sits at the top of the precedence order and the project documents never explicitly removed them. The addendum's checklist requires Actions to own transactions and fire events, which the earlier Service-only code could not satisfy.
+
+**Revisit when:** a rule in the agreement is changed by the Product Owner.
 
 ---
 

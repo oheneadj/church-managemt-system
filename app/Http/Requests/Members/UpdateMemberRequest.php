@@ -13,14 +13,12 @@ class UpdateMemberRequest extends MemberInputRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('update', $this->member());
     }
 
-    protected function member(): ?Member
+    protected function subject(): ?Member
     {
-        $member = $this->route('member');
-
-        return $member instanceof Member ? $member : null;
+        return $this->member();
     }
 
     /**

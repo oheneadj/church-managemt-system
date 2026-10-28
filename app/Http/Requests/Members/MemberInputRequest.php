@@ -9,6 +9,7 @@ use App\Enums\FamilyRole;
 use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MembershipType;
+use App\Http\Requests\Concerns\DelegatesToPolicy;
 use App\Models\Member;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,8 +22,10 @@ use Illuminate\Validation\Rule;
  */
 abstract class MemberInputRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     /** The member being updated, or null on create. */
-    abstract protected function member(): ?Member;
+    abstract protected function subject(): ?Member;
 
     protected function prepareForValidation(): void
     {
@@ -38,7 +41,7 @@ abstract class MemberInputRequest extends FormRequest
      */
     protected function memberRules(): array
     {
-        $partial = $this->member() !== null;
+        $partial = $this->subject() !== null;
         $required = $partial ? ['sometimes', 'required'] : ['required'];
         $churchId = app('current.church')->getKey();
 
@@ -52,7 +55,7 @@ abstract class MemberInputRequest extends FormRequest
             'phone' => [
                 ...$required, 'string', 'regex:/^\+[1-9]\d{7,14}$/',
                 // Unique among this church's members who are not deleted (docs/03, data integrity rule 1).
-                Rule::unique('members', 'phone')->where('church_id', $churchId)->withoutTrashed()->ignore($this->member()?->getKey()),
+                Rule::unique('members', 'phone')->where('church_id', $churchId)->withoutTrashed()->ignore($this->subject()?->getKey()),
             ],
             'phone_secondary' => ['nullable', 'string', 'regex:/^\+[1-9]\d{7,14}$/'],
             'email' => ['nullable', 'email:rfc', 'max:255'],

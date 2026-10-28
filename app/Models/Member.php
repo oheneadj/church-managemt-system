@@ -181,7 +181,7 @@ class Member extends Model
             }
 
             if ($user->hasRole('youth-pastor')) {
-                $this->addYouthBranch($visible, Church::query()->whereKey($user->church_id)->firstOrFail());
+                $this->addYouthBranch($visible, app('current.church'));
             }
 
             // A user with neither role matches nothing.

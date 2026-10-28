@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Members;
 
+use App\Http\Requests\Concerns\DelegatesToPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
@@ -15,9 +16,11 @@ use Illuminate\Validation\Rules\File;
  */
 class UploadMemberPhotoRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('update', $this->member());
     }
 
     /**

@@ -15,10 +15,10 @@ class StoreMemberRequest extends MemberInputRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('create', Member::class);
     }
 
-    protected function member(): ?Member
+    protected function subject(): ?Member
     {
         return null;
     }

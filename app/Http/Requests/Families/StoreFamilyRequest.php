@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Families;
 
+use App\Http\Requests\Concerns\DelegatesToPolicy;
+use App\Models\Family;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,9 +14,11 @@ use Illuminate\Validation\Rule;
  */
 class StoreFamilyRequest extends FormRequest
 {
+    use DelegatesToPolicy;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->allowed('create', Family::class);
     }
 
     /**

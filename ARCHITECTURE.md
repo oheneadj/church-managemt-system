@@ -13,38 +13,51 @@ One PostgreSQL database holds every church. A row belongs to a church through `c
 
 ## Backend layers
 
+This is the Universal agreement's layered stack (section 6) and the Laravel addendum's layer rules, followed in full (D-033).
+
 ```
 Route                routes/api.php, routes/health.php, routes/web.php
   ↓
 Middleware           tenant, auth, request id, rate limits
   ↓
-Form Request         app/Http/Requests      validates and normalises input
+Controller           app/Http/Controllers   single-action: receive, build a DTO, call one Action, return a Resource
   ↓
-Controller           app/Http/Controllers   thin: receive, call one service, return a Resource
+Form Request         app/Http/Requests      validates and normalises input; authorize() asks a Policy
   ↓
-Service              app/Services           the business logic; owns DB::transaction()
+DTO                  app/DTOs               typed input for one operation, built with fromRequest()
   ↓
-Model + Scope        app/Models, app/Scopes structure, relationships, casts, tenant scope
+Action               app/Actions            one user intent; execute(DTO); owns the transaction; fires events
+  ↓
+Service              app/Services           reusable rules shared by several Actions; no transactions
+  ↓
+Repository           app/Repositories       every query for one model, behind an interface
+  ↓
+Model + Scope        app/Models, app/Scopes structure, relationships, casts, scopes, tenant scope
   ↓
 PostgreSQL
 
 Response shaping     app/Http/Resources     every API body goes through a Resource
-Side effects         app/Jobs, app/Events, app/Listeners   anything slow or external is queued
+Authorisation        app/Policies           decisions only, reached through Form Request authorize()
+Side effects         app/Events, app/Listeners, app/Jobs   events are fired by Actions; slow or external work is queued
 Outside world        app/Contracts + app/Services/<Area>   third parties sit behind an interface
 ```
 
 | Layer | Owns | Must never contain |
 |---|---|---|
-| Controller | HTTP in and out, authorisation call, one service call | Business rules, queries, validation, `$request->validate()` |
-| Form Request | Validation, input normalisation (phone numbers), `authorize()` | Business logic |
-| Service | Business rules, transactions, dispatching jobs and events | `$request`, HTTP responses, provider SDKs |
+| Controller | HTTP in and out: one `__invoke`, one Action call | Business rules, queries, validation, authorisation, `$request->validate()` |
+| Form Request | Validation, input normalisation (phone numbers), `authorize()` delegating to a Policy | Business logic, hard-coded role checks |
+| DTO | The typed data one operation needs, built by `fromRequest()` | Behaviour beyond mapping its own fields |
+| Action | One operation, `final`, a single public `execute()`, `DB::transaction()`, firing events | `$request`, HTTP responses, queries (use a Repository), calls to other Actions |
+| Service | Rules reused by several Actions (member numbers, family rules, photo processing) | Transactions, `$request`, HTTP, provider SDKs |
+| Repository | All Eloquent queries for one model; interface plus `Eloquent…` class, bound in `RepositoryServiceProvider` | Business rules |
 | Model | Casts, relationships, scopes, fillable list | Business logic, HTTP, queues |
 | Resource | The exact shape of each API response | Queries (use `whenLoaded`), authorisation decisions |
+| Event / Listener | One side effect per listener; the audit line for a member change | Anything that must finish before the Action returns, unless it runs inside the transaction on purpose |
 | Job | One unit of async work with `tries`, `timeout`, `backoff`, `failed()` | Anything that must finish before the response |
 | Contract + driver | One third-party capability behind an interface, chosen by config | Provider-specific errors or shapes leaking out |
 | Policy | Authorisation decisions only | Everything else |
 
-**Services, not Actions or Repositories (D-028).** The Universal agreement describes Action and Repository layers. This project uses Controller → Form Request → Service, as `docs/09-engineering-principles.md` specifies. Services own the transaction boundary. A Repository is added only when a second data source exists, and an Action only when one operation is triggered from several entry points.
+Names follow the addendum: `CreateMemberAction`, `CreateMemberDTO`, `MemberRepositoryInterface` and `EloquentMemberRepository`. A controller never calls a Repository, and an Action never calls another Action; shared steps become a Service. A model reaches an Action through explicit route model binding (`AppServiceProvider::boot`), and another church's id is a 404 because the church scope hides it. Unit tests for Actions and Services use mocked repositories and no database (`tests/Unit`); Feature tests cover each endpoint end to end.
 
 Value objects (`app/ValueObjects`, for example `PhoneNumber`) replace primitive strings that carry rules. DTOs (`app/DTOs`, for example `OutboundSms`) move typed data into queued jobs. Enums (`app/Enums`) back every fixed-value column; the column is a plain string, never a database enum (D-017).
 
@@ -100,7 +113,7 @@ Server data lives in TanStack Query. Filters and pagination belong in the URL. M
 
 | You are adding | It goes in |
 |---|---|
-| An endpoint | `routes/api.php` (inside the `tenant` group), a Form Request, a thin controller, a Service, a Resource, a Policy, and tests including cross-tenant |
+| An endpoint | `routes/api.php` (inside the `tenant` group), a single-action controller, a Form Request that authorises through a Policy, a DTO, an Action, a Repository method if it needs a new query, a Resource, and tests: a unit test for the Action and Feature tests including cross-tenant |
 | A table | A migration with a working `down()`, a model with `BelongsToChurch` + `HasUlids` + `SoftDeletes`, a factory, and `docs/07-data-model.md` |
 | A fixed set of values | An enum in `app/Enums` with `label()`, mirrored in `resources/js/types` |
 | A call to an outside service | A contract, a driver, a queued job, and a row in `message_logs` or the relevant log table |

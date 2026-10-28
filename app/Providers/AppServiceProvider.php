@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Middleware\ResolveTenant;
+use App\Models\Department;
+use App\Models\Family;
+use App\Models\Member;
 use App\Models\PersonalAccessToken;
 use App\Services\HealthCheck;
 use App\Support\EnvironmentCheck;
@@ -17,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 use RuntimeException;
@@ -44,6 +48,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The Form Requests read these models from the route, and single-action controllers do not type-hint them,
+        // so I bind them explicitly. The church scope still applies, so another church's id is a 404.
+        Route::model('member', Member::class);
+        Route::model('family', Family::class);
+        Route::model('department', Department::class);
+
         Date::use(CarbonImmutable::class);
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
