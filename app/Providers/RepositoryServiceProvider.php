@@ -19,6 +19,7 @@ use App\Repositories\EloquentConsentRepository;
 use App\Repositories\EloquentContributionRepository;
 use App\Repositories\EloquentDepartmentRepository;
 use App\Repositories\EloquentFamilyRepository;
+use App\Repositories\EloquentFundTypeRepository;
 use App\Repositories\EloquentHandledWhatsappMessageRepository;
 use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
@@ -29,6 +30,7 @@ use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
 use App\Repositories\EloquentWebhookLogRepository;
 use App\Repositories\FamilyRepositoryInterface;
+use App\Repositories\FundTypeRepositoryInterface;
 use App\Repositories\HandledWhatsappMessageRepositoryInterface;
 use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
@@ -50,6 +52,7 @@ class RepositoryServiceProvider extends ServiceProvider
         MemberRepositoryInterface::class => EloquentMemberRepository::class,
         FamilyRepositoryInterface::class => EloquentFamilyRepository::class,
         DepartmentRepositoryInterface::class => EloquentDepartmentRepository::class,
+        FundTypeRepositoryInterface::class => EloquentFundTypeRepository::class,
         MemberDepartmentRepositoryInterface::class => EloquentMemberDepartmentRepository::class,
         MemberMilestoneRepositoryInterface::class => EloquentMemberMilestoneRepository::class,
         AuditLogRepositoryInterface::class => EloquentAuditLogRepository::class,

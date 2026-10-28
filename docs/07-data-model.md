@@ -302,7 +302,7 @@ Configurable per church. Controls the categories contributions can be assigned t
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, is_active)`
+**Index:** `(church_id, is_active)`; unique `(church_id, lower(name))` where `deleted_at` is null, so a church cannot have two funds with the same name whatever the capitals.
 
 ---
 

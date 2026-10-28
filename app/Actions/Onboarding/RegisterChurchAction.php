@@ -12,6 +12,7 @@ use App\Exceptions\ChurchSlugTakenException;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Services\ChurchSlugGenerator;
+use App\Services\DefaultFundTypes;
 use App\Services\OnboardingOtpService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ final class RegisterChurchAction
         private readonly UserRepositoryInterface $users,
         private readonly ChurchSlugGenerator $slugs,
         private readonly OnboardingOtpService $otp,
+        private readonly DefaultFundTypes $defaultFundTypes,
     ) {}
 
     /**
@@ -71,7 +73,7 @@ final class RegisterChurchAction
     }
 
     /**
-     * Saves the church and its admin and announces it. Runs inside the transaction.
+     * Saves the church, its admin and its starting fund types, and announces it. Runs inside the transaction.
      */
     private function create(RegisterChurchDTO $dto, string $slug): RegisteredChurch
     {
@@ -89,6 +91,7 @@ final class RegisterChurchAction
             'phone' => $dto->adminPhone->e164,
         ]);
         $admin->assignRole(StaffRole::ChurchAdmin);
+        $this->defaultFundTypes->createFor($church);
 
         ChurchRegistered::dispatch($church, $admin);
 

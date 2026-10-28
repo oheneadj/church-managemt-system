@@ -679,6 +679,108 @@
                 }
             }
         },
+        "/v1/fund-types": {
+            "get": {
+                "operationId": "fund-types.index",
+                "summary": "Runs ListFundTypesAction for this request and returns the FundTypeCollection",
+                "tags": [
+                    "ListFundTypes"
+                ],
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FundTypeCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FundTypeCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "fund-types.store",
+                "summary": "Runs CreateFundTypeAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreFundType"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreFundTypeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`FundTypeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FundTypeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members": {
             "get": {
                 "operationId": "members.index",
@@ -2049,6 +2151,126 @@
                 }
             }
         },
+        "/v1/fund-types/{fund_type}": {
+            "put": {
+                "operationId": "fund-types.update",
+                "summary": "Runs UpdateFundTypeAction for this request and returns the FundTypeResource",
+                "tags": [
+                    "UpdateFundType"
+                ],
+                "parameters": [
+                    {
+                        "name": "fund_type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The fund type ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFundTypeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`FundTypeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FundTypeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "fund-types.patch",
+                "summary": "Runs UpdateFundTypeAction for this request and returns the FundTypeResource",
+                "tags": [
+                    "UpdateFundType"
+                ],
+                "parameters": [
+                    {
+                        "name": "fund_type",
+                        "in": "path",
+                        "required": true,
+                        "description": "The fund type ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFundTypeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`FundTypeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FundTypeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}/status": {
             "patch": {
                 "operationId": "members.status",
@@ -2803,6 +3025,44 @@
                     "dependent"
                 ],
                 "title": "FamilyRole"
+            },
+            "FundTypeCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/FundTypeResource"
+                },
+                "title": "FundTypeCollection"
+            },
+            "FundTypeResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "is_active",
+                    "sort_order"
+                ],
+                "title": "FundTypeResource"
             },
             "Gender": {
                 "type": "string",
@@ -4435,6 +4695,35 @@
                 ],
                 "title": "StoreFamilyRequest"
             },
+            "StoreFundTypeRequest": {
+                "type": "object",
+                "description": "Validates a new fund type.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreFundTypeRequest"
+            },
             "StoreMemberRequest": {
                 "type": "object",
                 "description": "Validates a new member. The route's policy check has already run, so authorize() lets it through.",
@@ -4719,6 +5008,32 @@
                     }
                 },
                 "title": "UpdateFamilyRequest"
+            },
+            "UpdateFundTypeRequest": {
+                "type": "object",
+                "description": "Validates a fund type update. Any subset of fields may be sent. Setting is_active to false switches the fund off.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateFundTypeRequest"
             },
             "UpdateMemberStatusRequest": {
                 "type": "object",

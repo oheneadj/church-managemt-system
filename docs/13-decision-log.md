@@ -830,6 +830,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-046 — How Sprint 4 (giving) is built, and in what order
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/04, docs/08, QA-06, QA-07, QA-10 and D-018 to D-020
+**Status:** Active
+
+**Decision:**
+1. **Cash giving comes first; digital payments wait.** D-018 says a legal opinion on the Bank of Ghana position for receiving and forwarding third-party funds must be settled before Sprint 4 handles money, and PayPerlez's webhook event names are still unconfirmed. Everything that moves no money is built now, in this order: (a) fund types, (b) cash contributions with list, show and void, (c) pledges and their paid amount, (d) the Sunday offering report, (e) receipts by SMS, (f) the screens. Then the digital path: PayPerlez collection and automatic disbursement (D-018), and Paystack cards (D-020).
+2. **The story list is read through the later decisions.** Stories 4.1, 4.4 and 4.5 say "Paystack MoMo" and 4.8 says "Africa's Talking"; D-020 moved MoMo and payouts to PayPerlez, kept Paystack for cards only, and SMS already runs on PayPerlez (story 4.8 is done).
+3. **Who may see gifts.** docs/08 gave the list `giving.summary`, but QA-06 TC-06-18, QA-10 and docs/03 say a pastor (who has only `giving.summary`) must not see individual gifts. So: listing, reading, recording and voiding single gifts need `giving.record` or `giving.edit` (church admin and finance secretary); reports and totals need `giving.summary` (also the pastor). Members will see their own history through the member portal later.
+4. **Fund types:** every signed-in role may read them, only the church admin (`fund-types.manage`) may change them, and a church starts with seven defaults (`config/giving.php`). Names are unique per church ignoring capitals, held by a validation rule and by a unique index. A fund is switched off, never deleted.
+
+**Rationale:** The agreement asks for the simplest working slice first, with money-moving code only after its open legal and provider questions are closed. Cash giving is also what most churches do every Sunday.
+
+**Revisit when:** the legal opinion and the PayPerlez event names are settled (start the digital slices), or a church asks for a pastor view that names givers (docs/04 says this is configurable per church).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

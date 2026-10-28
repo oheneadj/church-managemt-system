@@ -6,6 +6,7 @@ use App\Enums\StaffRole;
 use App\Events\ChurchRegistered;
 use App\Jobs\SendSmsJob;
 use App\Models\Church;
+use App\Models\FundType;
 use App\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -109,6 +110,17 @@ it('lets the new admin sign in on the new church', function (): void {
     $this->postJson('http://victory-chapel.localhost/api/v1/auth/otp/request', ['phone' => '+233244300001'])->assertOk();
 
     Queue::assertPushed(SendSmsJob::class, fn (SendSmsJob $job): bool => $job->sms->churchId !== null);
+});
+
+it('starts the new church with the default fund types, in order, and only for that church', function (): void {
+    $other = Church::factory()->create(['slug' => 'older']);
+
+    $this->postJson(REGISTER, signUp())->assertCreated();
+
+    $new = Church::query()->where('slug', 'victory-chapel')->firstOrFail();
+    $names = FundType::query()->withoutGlobalScopes()->where('church_id', $new->id)->orderBy('sort_order')->pluck('name')->all();
+    expect($names)->toBe(collect(config('giving.default_fund_types'))->pluck('name')->all())
+        ->and(FundType::query()->withoutGlobalScopes()->where('church_id', $other->id)->count())->toBe(0);
 });
 
 it('starts the new church with no members and no data from other churches', function (): void {

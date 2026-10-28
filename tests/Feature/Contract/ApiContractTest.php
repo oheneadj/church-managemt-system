@@ -114,6 +114,16 @@ describe('members', function (): void {
     });
 });
 
+describe('fund types', function (): void {
+    it('list, create and update', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/fund-types'), 'GET', '/v1/fund-types', 200);
+        $created = $this->postJson(CHURCH_HOST.'/fund-types', ['name' => 'Harvest']);
+        assertMatchesSpec($created, 'POST', '/v1/fund-types', 201);
+
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/fund-types/'.$created->json('data.id'), ['name' => 'Harvest Offering']), 'PUT', '/v1/fund-types/{fund_type}', 200);
+    });
+});
+
 describe('families and departments', function (): void {
     it('families list', fn () => assertMatchesSpec($this->getJson(CHURCH_HOST.'/families'), 'GET', '/v1/families', 200));
 

@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(giving): add fund types with default funds for every church (2026-10-28)
+- **What:** Built Sprint 4 story 4.2. GET /fund-types lists a church's giving categories in order (any signed-in role, paginated, optional active filter); POST, PUT and PATCH /fund-types add, rename, reorder or switch off a fund (church admin only, fund-types.manage). A name is unique inside a church ignoring capitals: a new validation rule (UniqueFundTypeName) says so as a 422, and a unique index on (church_id, lower(name)) holds it when two requests race. There is no delete; a fund is switched off and past gifts keep pointing at it. A new church gets seven default funds from config/giving.php when it registers, and the demo seeder gives them to the demo church. Recorded the order of Sprint 4 in D-046 (cash giving first; digital payments wait for the legal opinion and PayPerlez event names in D-018) and the rule that listing single gifts needs giving.record while reports need giving.summary.
+- **Why:** docs/11 story 4.2, docs/04 Fund Types, docs/08 Fund Types and QA-10. The agreement asks for the simplest working slice first and database guarantees for natural keys (sections 3, 8, 11); Laravel's own unique rule is case-sensitive, so the browser-visible 422 and the case-insensitive index would have disagreed and a duplicate would have been a server error; a test caught that and the custom rule fixes it. Every other giving record points at a fund type, so it comes first.
+- **Files:** app/Actions/FundTypes/, app/DTOs/FundTypes/, app/Http/Controllers/Api/V1/FundTypes/, app/Http/Requests/FundTypes/, app/Http/Requests/Concerns/DelegatesToPolicy.php, app/Http/Resources/FundType*.php, app/Policies/FundTypePolicy.php, app/Repositories/ (FundType interface and Eloquent), app/Rules/UniqueFundTypeName.php, app/Services/DefaultFundTypes.php, app/Actions/Onboarding/RegisterChurchAction.php, app/Providers/ (App, Repository), routes/api.php, config/giving.php, database/migrations (unique name index), database/seeders/DatabaseSeeder.php, docs/ (04 unchanged, 07, 08, 11, 13, openapi.json), and new Pest tests (feature, policy, onboarding, contract)
+- **Commit:** pending
+
 #### test(attendance-ui): add a browser test for the QR check-in page (2026-10-28)
 - **What:** Added a Playwright test: staff open check-in, click Show QR code, see the QR image and its address, and the address opened in a separate signed-out browser shows the member's check-in page for that service.
 - **Why:** The QR screens were only covered by component tests; a real browser proves the public page works with no sign-in and the address in the QR code is right (QA-05 TC-05-09).
@@ -436,6 +442,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- Fund types (story 4.2, D-046): list, add, rename and switch off a church's giving categories; every new church starts with seven defaults; names are unique ignoring capitals
 - WhatsApp CHECKIN (story 3.3, D-045): members text CHECKIN (or CHECKIN and the service code) to the shared church WhatsApp number and are recorded and answered; the Meta webhook proves its sender, keeps every payload and works on a worker; WhatsApp answers sit behind a provider interface, a circuit breaker and a pause switch
 - Church onboarding (story 2.1): a public sign-up page where a church proves the admin's phone with a texted code, picks a web address and member number letters, and gets its first admin (D-037)
 - Family pages (story 2.13): a searchable list of families with a New family dialog, and a family view with its members and a rename option

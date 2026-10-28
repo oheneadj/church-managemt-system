@@ -1045,7 +1045,16 @@ POST   /api/v1/fund-types
 PUT    /api/v1/fund-types/{id}
 PATCH  /api/v1/fund-types/{id}   { "is_active": false }
 ```
-Permission: `church-admin` only.
+Permission: `church-admin` only (`fund-types.manage`).
+
+**List:** every signed-in role may read it (the giving screens and reports show fund names). Paginated (`per_page`), in display order (`sort_order`, then name), optional `?is_active=1`. Each fund: `id`, `name`, `description`, `is_active`, `sort_order`.
+
+**Body (create; any subset on update):** `name` (required on create, up to 100 characters), `description`, `sort_order` (0 to 1000), `is_active`. PUT and PATCH do the same thing: change the fields that were sent.
+
+- A name is unique among a church's fund types **whatever its capitals** ("Tithe" and "TITHE" clash); another church may use it. A clash is `422` on `name`, and a unique index in the database holds it when two requests race.
+- There is no delete. A fund that is no longer used is switched off (`is_active: false`): it stays in the history and past gifts keep pointing at it.
+- Every new church starts with the funds in `config/giving.php`: Tithe, Sunday Offering, Building Fund, Benevolence, Missions, Special Offering and Other. "Pledge" is not a fund: a gift that pays a pledge is linked to the pledge itself.
+- A fund type of another church is `404`.
 
 ---
 

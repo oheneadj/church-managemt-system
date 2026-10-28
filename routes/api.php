@@ -24,6 +24,9 @@ use App\Http\Controllers\Api\V1\Families\ListFamiliesController;
 use App\Http\Controllers\Api\V1\Families\ShowFamilyController;
 use App\Http\Controllers\Api\V1\Families\StoreFamilyController;
 use App\Http\Controllers\Api\V1\Families\UpdateFamilyController;
+use App\Http\Controllers\Api\V1\FundTypes\ListFundTypesController;
+use App\Http\Controllers\Api\V1\FundTypes\StoreFundTypeController;
+use App\Http\Controllers\Api\V1\FundTypes\UpdateFundTypeController;
 use App\Http\Controllers\Api\V1\Members\EraseMemberController;
 use App\Http\Controllers\Api\V1\Members\ExportMemberDataController;
 use App\Http\Controllers\Api\V1\Members\ListMembersController;
@@ -101,6 +104,11 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('services/{service}/qr', IssueQrCodeController::class)->name('services.qr');
         Route::get('attendance/absent', ListAbsentMembersController::class)->name('attendance.absent');
         Route::get('members/{member}/attendance', ShowMemberAttendanceController::class)->name('members.attendance');
+
+        Route::get('fund-types', ListFundTypesController::class)->name('fund-types.index');
+        Route::post('fund-types', StoreFundTypeController::class)->name('fund-types.store');
+        Route::put('fund-types/{fund_type}', UpdateFundTypeController::class)->name('fund-types.update');
+        Route::patch('fund-types/{fund_type}', UpdateFundTypeController::class)->name('fund-types.patch');
 
         Route::get('departments', ListDepartmentsController::class)->name('departments.index');
         Route::post('departments', StoreDepartmentController::class)->name('departments.store');

@@ -6,7 +6,9 @@ namespace Database\Seeders;
 
 use App\Enums\StaffRole;
 use App\Models\Church;
+use App\Models\FundType;
 use App\Models\User;
+use App\Services\DefaultFundTypes;
 use Illuminate\Database\Seeder;
 
 /**
@@ -32,5 +34,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Demo Admin'],
         );
         $admin->assignRole(StaffRole::ChurchAdmin);
+
+        if (! FundType::query()->withoutGlobalScopes()->where('church_id', $church->id)->exists()) {
+            app(DefaultFundTypes::class)->createFor($church);
+        }
     }
 }

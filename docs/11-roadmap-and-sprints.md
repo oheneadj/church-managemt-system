@@ -239,9 +239,17 @@ Blocked: [anything blocking me / none]
 
 ## Current Sprint
 
-> **Sprint 3** — Attendance
+> **Sprint 4** — Giving & Contributions
 > Started: 2026-10-28 · Updated: 2026-10-28
-> Sprint 2 (Member Directory) is complete. The design for Sprint 3 is in D-044.
+> Sprint 3 (Attendance) is complete. The order of work for Sprint 4 is in D-046: cash giving first, digital payments after the legal and provider questions in D-018 are closed.
+
+| Done | Stories |
+|---|---|
+| Backend | 4.2 fund types (list, create, change, switch off; seven defaults for a new church), 4.8 `SendSmsJob` (done in Sprint 1, on PayPerlez) |
+| Next | 4.3 cash contributions, 4.11 void, 4.9 and 4.10 pledges, 4.12 Sunday offering report, 4.7 receipts, then the screens 4.13 to 4.18 |
+| Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
+
+> **Sprint 3** — Attendance (finished). The design is in D-044 and D-045.
 
 | Done | Stories |
 |---|---|

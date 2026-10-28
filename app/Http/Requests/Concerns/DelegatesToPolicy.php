@@ -6,6 +6,7 @@ namespace App\Http\Requests\Concerns;
 
 use App\Models\Department;
 use App\Models\Family;
+use App\Models\FundType;
 use App\Models\Member;
 use App\Models\Service;
 use LogicException;
@@ -64,5 +65,15 @@ trait DelegatesToPolicy
         $department = $this->route('department');
 
         return $department instanceof Department ? $department : throw new LogicException('This route has no department.');
+    }
+
+    /**
+     * The fund type that route binding found for this request.
+     */
+    public function fundType(): FundType
+    {
+        $fundType = $this->route('fund_type');
+
+        return $fundType instanceof FundType ? $fundType : throw new LogicException('This route has no fund type.');
     }
 }

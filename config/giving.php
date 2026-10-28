@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default fund types (docs/04, Fund Types)
+    |--------------------------------------------------------------------------
+    | Every new church starts with these. The church admin can rename them, add more or switch them off.
+    | "Pledge" is not a fund: a gift that pays a pledge is linked to the pledge itself.
+    */
+    // The largest sort position a fund type may be given.
+    'sort_order_max' => 1000,
+
+    'default_fund_types' => [
+        ['name' => 'Tithe', 'description' => 'One tenth of income, given by committed members.'],
+        ['name' => 'Sunday Offering', 'description' => 'The general offering taken at a service.'],
+        ['name' => 'Building Fund', 'description' => 'Giving towards the church building.'],
+        ['name' => 'Benevolence', 'description' => 'Support for members in need.'],
+        ['name' => 'Missions', 'description' => 'Giving towards missions and outreach.'],
+        ['name' => 'Special Offering', 'description' => 'Giving for one particular cause or event.'],
+        ['name' => 'Other', 'description' => null],
+    ],
+
+];

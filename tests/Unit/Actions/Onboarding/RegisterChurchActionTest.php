@@ -9,6 +9,7 @@ use App\Exceptions\InvalidOtpException;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Services\ChurchSlugGenerator;
+use App\Services\DefaultFundTypes;
 use App\Services\OnboardingOtpService;
 use App\ValueObjects\PhoneNumber;
 
@@ -21,7 +22,7 @@ beforeEach(function (): void {
     $this->users = Mockery::mock(UserRepositoryInterface::class);
     $this->slugs = Mockery::mock(ChurchSlugGenerator::class);
     $this->otp = Mockery::mock(OnboardingOtpService::class);
-    $this->action = new RegisterChurchAction($this->churches, $this->users, $this->slugs, $this->otp);
+    $this->action = new RegisterChurchAction($this->churches, $this->users, $this->slugs, $this->otp, Mockery::mock(DefaultFundTypes::class));
     $this->dto = fn (?string $slug = 'grace') => new RegisterChurchDTO(
         churchName: 'Grace Assembly',
         slug: $slug,
