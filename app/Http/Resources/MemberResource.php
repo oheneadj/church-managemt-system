@@ -59,12 +59,7 @@ class MemberResource extends JsonResource
                 'name' => $department->name,
                 'role' => $department->pivot?->getAttribute('role'),
             ])->values()),
-            'milestones' => $this->whenLoaded('milestones', fn () => $this->milestones->map(fn ($milestone) => [
-                'id' => $milestone->id,
-                'type' => $milestone->type,
-                'occurred_at' => $milestone->occurred_at->toDateString(),
-                'officiant' => $milestone->officiant,
-            ])->values()),
+            'milestones' => $this->whenLoaded('milestones', fn () => MemberMilestoneResource::collection($this->milestones)),
             'assigned_pastor' => $this->whenLoaded('assignedPastor', fn () => $this->assignedPastor === null ? null : [
                 'id' => $this->assignedPastor->id,
                 'name' => $this->assignedPastor->name,

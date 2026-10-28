@@ -17,7 +17,7 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     /** @var list<string> */
     private const PERMISSIONS = [
-        'members.view', 'members.edit', 'members.deactivate', 'members.export',
+        'members.view', 'members.edit', 'members.deactivate', 'members.export', 'milestones.view',
         'giving.summary', 'giving.record', 'giving.edit', 'giving.export',
         'sms.send',
         'reports.view', 'reports.export',
@@ -34,10 +34,10 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $roles = [
             'church-admin' => self::PERMISSIONS,
-            'pastor' => ['members.view', 'members.edit', 'giving.summary', 'reports.view', 'sms.send'],
+            'pastor' => ['members.view', 'members.edit', 'milestones.view', 'giving.summary', 'reports.view', 'sms.send'],
             'finance-secretary' => ['members.view', 'giving.summary', 'giving.record', 'giving.edit', 'giving.export', 'reports.view', 'reports.export'],
             'department-head' => ['members.view'],
-            'youth-pastor' => ['members.view'],
+            'youth-pastor' => ['members.view', 'milestones.view'],
         ];
 
         foreach ($roles as $role => $permissions) {

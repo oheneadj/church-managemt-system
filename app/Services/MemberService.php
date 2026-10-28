@@ -10,6 +10,7 @@ use App\Enums\MemberStatus;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\MemberDepartment;
+use App\Models\MemberMilestone;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,6 +61,34 @@ class MemberService
     }
 
     /**
+     * Loads everything the full member record shows. Milestones are only loaded for roles allowed to see
+     * them (docs/03: finance secretaries and department heads may not).
+     */
+    public function detail(Member $member, User $viewer): Member
+    {
+        $member->load(['family', 'departments', 'assignedPastor']);
+
+        if ($viewer->can('milestones.view')) {
+            $member->load('milestones');
+        }
+
+        return $member;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data  validated input
+     */
+    public function addMilestone(User $actor, Member $member, array $data): MemberMilestone
+    {
+        return MemberMilestone::create([
+            ...$data,
+            'church_id' => $member->church_id,
+            'member_id' => $member->getKey(),
+            'created_by' => $actor->getKey(),
+        ]);
+    }
+
+    /**
      * @param  array<string, mixed>  $data  validated input
      */
     public function create(User $actor, array $data): Member
@@ -81,7 +110,7 @@ class MemberService
 
             $this->audit->record($member, AuditEvent::Created, $actor, new: $this->forAudit($member->getAttributes()));
 
-            return $member->load(['family', 'departments', 'milestones', 'assignedPastor']);
+            return $this->detail($member, $actor);
         });
     }
 
@@ -117,7 +146,7 @@ class MemberService
                 $this->audit->record($member, AuditEvent::Updated, $actor, $this->forAudit($old), $this->forAudit($changed));
             }
 
-            return $member->load(['family', 'departments', 'milestones', 'assignedPastor']);
+            return $this->detail($member, $actor);
         });
     }
 
@@ -141,7 +170,7 @@ class MemberService
                 $note,
             );
 
-            return $member->load(['family', 'departments', 'milestones', 'assignedPastor']);
+            return $this->detail($member, $actor);
         });
     }
 

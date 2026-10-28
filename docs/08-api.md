@@ -425,7 +425,13 @@ Permission: members.edit
 }
 ```
 
-**Response `201`:** Milestone resource.
+`type` is one of `dedication`, `baptism`, `confirmation`, `first_communion`, `membership_class`. `occurred_at` cannot be in the future. `cohort` is optional (for example "Confirmation Class 2026"). The acting user is recorded as `created_by`.
+
+**Response `201`:** `{ "data": { "id", "type", "occurred_at", "officiant", "cohort", "notes" } }`
+
+**Errors:** `403` without `members.edit`, or when the member is deceased. `404` for another church's member.
+
+Milestones appear on Get Member only for roles with `milestones.view` (church admin, pastor, youth pastor); for other roles the key is absent (docs/03).
 
 ---
 

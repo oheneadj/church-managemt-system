@@ -7,8 +7,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Members\ListMembersRequest;
 use App\Http\Requests\Members\StoreMemberRequest;
+use App\Http\Requests\Members\StoreMilestoneRequest;
 use App\Http\Requests\Members\UpdateMemberRequest;
 use App\Http\Requests\Members\UpdateMemberStatusRequest;
+use App\Http\Resources\MemberMilestoneResource;
 use App\Http\Resources\MemberResource;
 use App\Http\Resources\MemberSummaryResource;
 use App\Models\Member;
@@ -37,7 +39,7 @@ class MemberController extends Controller
     {
         Gate::authorize('view', $member);
 
-        return new MemberResource($member->load(['family', 'departments', 'milestones', 'assignedPastor']));
+        return new MemberResource($this->members->detail($member, $this->staff($request)));
     }
 
     public function store(StoreMemberRequest $request): JsonResponse
@@ -66,5 +68,14 @@ class MemberController extends Controller
             $request->status(),
             $request->validated('note'),
         ));
+    }
+
+    public function storeMilestone(StoreMilestoneRequest $request, Member $member): JsonResponse
+    {
+        Gate::authorize('update', $member);
+
+        $milestone = $this->members->addMilestone($this->staff($request), $member, $request->validated());
+
+        return (new MemberMilestoneResource($milestone))->response()->setStatusCode(201);
     }
 }
