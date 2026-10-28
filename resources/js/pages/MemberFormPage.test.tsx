@@ -38,7 +38,7 @@ describe('MemberFormPage', () => {
         vi.mocked(departmentsApi.list).mockResolvedValue(
             pageOf([{ id: 'dept-1', name: 'Choir', description: null, head_user_id: null, is_active: true }]),
         );
-        vi.mocked(familiesApi.list).mockResolvedValue(pageOf([family()]));
+        vi.mocked(familiesApi.listAll).mockResolvedValue([family()]);
         vi.mocked(membersApi.create).mockResolvedValue(member({ id: 'new-member' }));
         vi.mocked(membersApi.get).mockResolvedValue(
             member({ occupation: 'Teacher', departments: [{ id: 'dept-1', name: 'Choir', role: null }] }),

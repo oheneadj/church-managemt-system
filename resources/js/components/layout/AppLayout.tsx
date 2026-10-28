@@ -8,6 +8,7 @@ import { useChurchStore } from '@/stores/useChurchStore';
 const NAV_ITEMS = [
     { label: 'Dashboard', to: ROUTES.DASHBOARD },
     { label: 'Members', to: ROUTES.MEMBERS },
+    { label: 'Families', to: ROUTES.FAMILIES },
 ] as const;
 
 /**

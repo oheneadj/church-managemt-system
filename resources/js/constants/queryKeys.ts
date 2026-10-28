@@ -12,7 +12,8 @@ export const QUERY_KEYS = {
     },
     families: {
         all: ['families'] as const,
-        list: (search: string) => ['families', 'list', { search }] as const,
+        list: (params: { search: string; page: number }) => ['families', 'list', params] as const,
+        picker: ['families', 'picker'] as const,
         detail: (id: string) => ['families', 'detail', id] as const,
     },
     departments: {

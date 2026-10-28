@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(members-ui): add the family list and family view pages
+- **What:** Built story 2.13. A Families page lists the church's households with their member counts, searchable by name, paged, with the search and page in the URL, and a "New family" dialog for staff who may edit (it opens the new family afterwards). A family page shows the name, notes and members with the head first, each one tap from their profile, and staff who may edit can rename it. Added a Families item to the navigation. The member form's family picker now reads every page of families, so a church with more than 100 families is not cut off. The search box is now one shared component used by the member and family lists. Added direct tests of every API service function.
+- **Why:** Sprint 2 story 2.13, and a family cannot be used from the member form unless it can be created and reached somewhere. The React addendum requires every API service function to be covered by tests and filters and pages to live in the URL.
+- **Files:** `resources/js/pages/FamiliesPage.tsx`, `resources/js/pages/FamilyDetailPage.tsx`, `resources/js/components/Families/` (FamilyFormDialog, FamilyListItem, FamilyMemberList), `resources/js/components/ui/SearchBox.tsx`, `resources/js/components/Members/MemberFilterBar.tsx`, `resources/js/components/Members/ChurchFields.tsx`, `resources/js/hooks/useFamilyFilters.ts`, `resources/js/hooks/useFamilies.ts`, `resources/js/services/api/families.ts`, `resources/js/constants/queryKeys.ts`, `resources/js/router/index.tsx`, `resources/js/components/layout/AppLayout.tsx`, and 6 new Vitest test files
+- **Commit:** `PENDING`
+
 #### feat(members-ui): add the add and edit member form
 - **What:** Built story 2.12. One screen at `/members/new` and `/members/:id/edit` adds or edits a member in three short steps (who they are, how to reach them, church life). Each step is checked before moving on, Enter moves to the next step and only the last step saves, the step is kept in the URL, and a message from the server appears beside its box and takes the user back to the step that holds it. The save button is disabled while saving. Departments and messaging choices are native tick boxes, the family picker asks for a role once a family is chosen, and the national ID is only sent when typed. A new member chooses a starting status (prospect or active); editing leaves status to the profile. Staff without the edit permission and records of deceased members get a plain message. The phone rule is now shared with the login page, and the date helper with the milestone dialog.
 - **Why:** Sprint 2 story 2.12 and QA-04 TC-04-01 to TC-04-03. The React addendum requires React Hook Form with Zod, a label on every input, server errors mapped back to fields, and `isSubmitting`-style double-submit protection; the agreement requires a mobile-friendly form.
@@ -244,6 +250,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `269d265` (2026-10-28)
 
 ### Added
+- Family pages (story 2.13): a searchable list of families with a New family dialog, and a family view with its members and a rename option
 - Add and edit member form (story 2.12): three steps, checked one at a time, with the step in the URL and server messages beside their boxes
 - Member profile page (story 2.11): Profile, Giving and Attendance tabs, photo upload, status change with confirmation, and milestones
 - Member directory page (story 2.10): search and filter members by status, gender and department, one tap to a profile, with filters in the URL (D-036)

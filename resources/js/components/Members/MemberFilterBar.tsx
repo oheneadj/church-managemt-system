@@ -1,8 +1,6 @@
-import type { SyntheticEvent } from 'react';
 import { SelectField } from '@/components/form/SelectField';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SearchBox } from '@/components/ui/SearchBox';
 import { GENDERS, MEMBER_STATUSES } from '@/constants/enums';
 import { useDepartments } from '@/hooks/useDepartments';
 import type { MemberFilters } from '@/types/members';
@@ -22,32 +20,15 @@ export function MemberFilterBar({ filters, onChange, onClear }: MemberFilterBarP
     const departmentOptions = (departments.data?.data ?? []).map((department) => ({ value: department.id, label: department.name }));
     const hasFilters = filters.search !== '' || filters.status !== '' || filters.gender !== '' || filters.department_id !== '';
 
-    function search(event: SyntheticEvent<HTMLFormElement>) {
-        event.preventDefault();
-        const text = new FormData(event.currentTarget).get('search');
-        onChange('search', typeof text === 'string' ? text.trim() : '');
-    }
-
     return (
         <section aria-label="Find members" className="flex flex-col gap-3">
-            <form onSubmit={search} role="search" className="flex items-end gap-2">
-                <div className="flex flex-1 flex-col gap-1.5">
-                    <Label htmlFor="member-search">Search members</Label>
-                    {/* The key restarts the box when the URL changes, for example after Clear. */}
-                    <Input
-                        key={filters.search}
-                        id="member-search"
-                        name="search"
-                        type="search"
-                        className="h-10"
-                        placeholder="Name, phone or member number"
-                        defaultValue={filters.search}
-                    />
-                </div>
-                <Button type="submit" size="lg" className="h-10">
-                    Search
-                </Button>
-            </form>
+            <SearchBox
+                id="member-search"
+                label="Search members"
+                placeholder="Name, phone or member number"
+                value={filters.search}
+                onSearch={(text) => onChange('search', text)}
+            />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <SelectField
                     id="filter-status"

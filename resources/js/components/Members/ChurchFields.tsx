@@ -5,7 +5,7 @@ import { TextField } from '@/components/form/TextField';
 import type { MemberFormValues } from '@/components/Members/memberFormSchema';
 import { EDUCATIONAL_LEVELS, FAMILY_ROLES, MEMBERSHIP_TYPES, NEW_MEMBER_STATUSES } from '@/constants/enums';
 import { useDepartments } from '@/hooks/useDepartments';
-import { useFamilies } from '@/hooks/useFamilies';
+import { useAllFamilies } from '@/hooks/useFamilies';
 
 interface ChurchFieldsProps {
     /** A new member chooses a starting status; an existing one changes status from the profile instead. */
@@ -18,11 +18,11 @@ interface ChurchFieldsProps {
 export function ChurchFields({ editing }: ChurchFieldsProps) {
     const { register, watch, formState } = useFormContext<MemberFormValues>();
     const { errors } = formState;
-    const families = useFamilies();
+    const families = useAllFamilies();
     const departments = useDepartments();
     const inAFamily = watch('family_id') !== '';
 
-    const familyOptions = (families.data?.data ?? []).map((family) => ({ value: family.id, label: family.name }));
+    const familyOptions = (families.data ?? []).map((family) => ({ value: family.id, label: family.name }));
 
     return (
         <div className="flex flex-col gap-2">

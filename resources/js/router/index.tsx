@@ -31,6 +31,14 @@ export const router = createBrowserRouter([
                                 lazy: async () => ({ Component: (await import('@/pages/MembersPage')).MembersPage }),
                             },
                             {
+                                path: ROUTES.FAMILIES,
+                                lazy: async () => ({ Component: (await import('@/pages/FamiliesPage')).FamiliesPage }),
+                            },
+                            {
+                                path: ROUTE_PATTERNS.FAMILY,
+                                lazy: async () => ({ Component: (await import('@/pages/FamilyDetailPage')).FamilyDetailPage }),
+                            },
+                            {
                                 path: ROUTES.MEMBER_NEW,
                                 lazy: async () => ({ Component: (await import('@/pages/MemberFormPage')).MemberFormPage }),
                             },
