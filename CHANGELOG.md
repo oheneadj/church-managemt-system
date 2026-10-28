@@ -50,6 +50,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
 
 ### Changed
+- Member, family and department endpoints are now single-action controllers (one invokable class per route), with response shaping moved into resources and "member not in department" raised by the service
 - OTP errors and lockout now follow QA-01 ("Invalid code"; the 5th wrong code returns 429); the ops runbook and queue lists include the `critical` queue
 - Database is now PostgreSQL instead of MySQL; data model, CI, backup and restore docs updated (D-021)
 - React SPA now lives in the Laravel repo (`resources/js`) behind one Blade shell view, no Inertia; replaces the separate `chms-frontend` repo (D-022, amends D-008)

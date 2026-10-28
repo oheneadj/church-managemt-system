@@ -10,6 +10,7 @@ use App\Models\MemberDepartment;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
@@ -91,15 +92,13 @@ class DepartmentService
     }
 
     /**
-     * Returns false when the member was not in the department.
+     * @throws ModelNotFoundException when the member is not in the department
      */
-    public function removeMember(Department $department, string $memberId): bool
+    public function removeMember(Department $department, string $memberId): void
     {
-        $link = $this->findLink($department, $memberId);
+        $link = $this->findLink($department, $memberId) ?? throw (new ModelNotFoundException)->setModel(MemberDepartment::class);
 
-        $link?->delete();
-
-        return $link !== null;
+        $link->delete();
     }
 
     private function findLink(Department $department, string $memberId): ?MemberDepartment

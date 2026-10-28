@@ -6,9 +6,22 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
-use App\Http\Controllers\Api\V1\DepartmentController;
-use App\Http\Controllers\Api\V1\FamilyController;
-use App\Http\Controllers\Api\V1\MemberController;
+use App\Http\Controllers\Api\V1\Departments\AddDepartmentMemberController;
+use App\Http\Controllers\Api\V1\Departments\ListDepartmentsController;
+use App\Http\Controllers\Api\V1\Departments\RemoveDepartmentMemberController;
+use App\Http\Controllers\Api\V1\Departments\StoreDepartmentController;
+use App\Http\Controllers\Api\V1\Departments\UpdateDepartmentController;
+use App\Http\Controllers\Api\V1\Families\ListFamiliesController;
+use App\Http\Controllers\Api\V1\Families\ShowFamilyController;
+use App\Http\Controllers\Api\V1\Families\StoreFamilyController;
+use App\Http\Controllers\Api\V1\Families\UpdateFamilyController;
+use App\Http\Controllers\Api\V1\Members\ListMembersController;
+use App\Http\Controllers\Api\V1\Members\ShowMemberController;
+use App\Http\Controllers\Api\V1\Members\StoreMemberController;
+use App\Http\Controllers\Api\V1\Members\StoreMemberMilestoneController;
+use App\Http\Controllers\Api\V1\Members\UpdateMemberController;
+use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
+use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API routes (prefix /api/v1, set in bootstrap/app.php).
@@ -23,23 +36,23 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('auth/logout', LogoutController::class)->name('auth.logout');
         Route::get('auth/me', MeController::class)->name('auth.me');
 
-        Route::get('members', [MemberController::class, 'index'])->name('members.index');
-        Route::post('members', [MemberController::class, 'store'])->name('members.store');
-        Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');
-        Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
-        Route::patch('members/{member}/status', [MemberController::class, 'updateStatus'])->name('members.status');
-        Route::post('members/{member}/photo', [MemberController::class, 'uploadPhoto'])->middleware('throttle:uploads')->name('members.photo');
-        Route::post('members/{member}/milestones', [MemberController::class, 'storeMilestone'])->name('members.milestones.store');
+        Route::get('members', ListMembersController::class)->name('members.index');
+        Route::post('members', StoreMemberController::class)->name('members.store');
+        Route::get('members/{member}', ShowMemberController::class)->name('members.show');
+        Route::put('members/{member}', UpdateMemberController::class)->name('members.update');
+        Route::patch('members/{member}/status', UpdateMemberStatusController::class)->name('members.status');
+        Route::post('members/{member}/photo', UploadMemberPhotoController::class)->middleware('throttle:uploads')->name('members.photo');
+        Route::post('members/{member}/milestones', StoreMemberMilestoneController::class)->name('members.milestones.store');
 
-        Route::get('families', [FamilyController::class, 'index'])->name('families.index');
-        Route::post('families', [FamilyController::class, 'store'])->name('families.store');
-        Route::get('families/{family}', [FamilyController::class, 'show'])->name('families.show');
-        Route::put('families/{family}', [FamilyController::class, 'update'])->name('families.update');
+        Route::get('families', ListFamiliesController::class)->name('families.index');
+        Route::post('families', StoreFamilyController::class)->name('families.store');
+        Route::get('families/{family}', ShowFamilyController::class)->name('families.show');
+        Route::put('families/{family}', UpdateFamilyController::class)->name('families.update');
 
-        Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
-        Route::post('departments', [DepartmentController::class, 'store'])->name('departments.store');
-        Route::put('departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
-        Route::post('departments/{department}/members', [DepartmentController::class, 'addMember'])->name('departments.members.add');
-        Route::delete('departments/{department}/members/{member}', [DepartmentController::class, 'removeMember'])->name('departments.members.remove');
+        Route::get('departments', ListDepartmentsController::class)->name('departments.index');
+        Route::post('departments', StoreDepartmentController::class)->name('departments.store');
+        Route::put('departments/{department}', UpdateDepartmentController::class)->name('departments.update');
+        Route::post('departments/{department}/members', AddDepartmentMemberController::class)->name('departments.members.add');
+        Route::delete('departments/{department}/members/{member}', RemoveDepartmentMemberController::class)->name('departments.members.remove');
     });
 });
