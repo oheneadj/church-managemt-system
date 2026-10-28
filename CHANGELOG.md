@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### test(members-ui): fix the leaving-status drift test
+- **What:** The test that compares the frontend `LEAVING_STATUSES` list with `MemberStatus::leavesActiveLife()` compared array keys as well as values; it now compares values only.
+- **Why:** It was committed in the profile page commit while failing, because the check result was not looked at before committing. The suite is green again.
+- **Files:** `tests/Feature/Operations/FrontendEnumsTest.php`
+- **Commit:** `PENDING`
+
 #### feat(members-ui): add the member profile page
 - **What:** Built story 2.11. A member's page has a header (photo, name, number, status) and three tabs: Profile (contact, personal, church life, family link, departments, milestones), Giving (this month, this year and all time as the API formatted them) and Attendance (last 4, 8 and 12 weeks). The selected tab is kept in the URL. Staff who may edit can change the photo (JPG or PNG under 5 MB, checked before upload), change the status with an optional reason, and add milestones. Moving someone out of active life asks "Are you sure?" first and is offered only to staff with the deactivate permission. A deceased member's record is read-only. Server validation messages appear next to their fields. Also added a timezone-safe date formatter, a full-name helper, a shared field-error helper (moved out of the login page), and a test that checks the "leaving" status list against the PHP enum.
 - **Why:** Sprint 2 story 2.11 and QA-04 (lifecycle changes, photo, milestones, no timezone shift on dates). The agreement requires confirmation for destructive actions, errors shown on the field, accessible labels, and no money arithmetic in the browser.

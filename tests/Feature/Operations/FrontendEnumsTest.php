@@ -56,7 +56,7 @@ it('lists exactly the statuses that take a member out of active life', function 
     preg_match('/LEAVING_STATUSES: readonly MemberStatus\\[\\] = \\[(.*?)\\]/s', $source, $block);
     preg_match_all("/'([a-z_]+)'/", $block[1] ?? '', $values);
 
-    $expected = collect(MemberStatus::cases())->filter(fn (MemberStatus $status) => $status->leavesActiveLife())->map(fn (MemberStatus $status) => $status->value)->all();
+    $expected = collect(MemberStatus::cases())->filter(fn (MemberStatus $status) => $status->leavesActiveLife())->map(fn (MemberStatus $status) => $status->value)->values()->all();
 
     expect($values[1])->toEqualCanonicalizing($expected);
 });
