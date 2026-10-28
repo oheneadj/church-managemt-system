@@ -52,7 +52,7 @@ class EloquentMemberRepository implements MemberRepositoryInterface
      */
     public function loadForExport(Member $member): Member
     {
-        return $member->load(['family', 'departments', 'milestones', 'auditLogs']);
+        return $member->load(['family', 'departments', 'milestones', 'auditLogs', 'consents']);
     }
 
     /**

@@ -733,6 +733,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-041 — Consent history for messages
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36
+**Status:** Active
+
+**Decision:**
+1. A `consents` table keeps one row for every time a member agreed to receive texts or WhatsApp messages: purpose, time, privacy policy version and who recorded it. Withdrawing sets `withdrawn_at`; agreeing again adds a new row. The database allows only one open row per member and purpose.
+2. The rows are written by a listener on the member events, in the same transaction as the change, from the member's own `sms_opted_in` and `whatsapp_opted_in` choices. Erasing a member withdraws everything. The member's data export lists the history.
+3. **Open point for the Product Owner:** `sms_opted_in` is on by default for a new member, which the agreement does not accept as consent (pre-ticked boxes are not valid). Transactional messages such as receipts and sign-in codes do not need it, but broadcasts do. Before the Sprint 5 broadcasts, decide whether the default becomes off, or whether the church confirms consent when adding a member. The history is already right either way.
+4. Members who exist before this table have no rows until their choices next change; a backfill is not needed because nothing is in production.
+
+**Rationale:** The agreement requires consent to be recorded with a timestamp, purpose and policy version, and to be withdrawable with immediate effect.
+
+**Revisit when:** broadcasts are built (story 5.1, 5.2), or members can change their own choices (story 5.16).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

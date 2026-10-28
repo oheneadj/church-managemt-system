@@ -281,6 +281,16 @@ class Member extends Model
     }
 
     /**
+     * The agreements this member has made to receive messages, including withdrawn ones.
+     *
+     * @return HasMany<Consent, $this>
+     */
+    public function consents(): HasMany
+    {
+        return $this->hasMany(Consent::class);
+    }
+
+    /**
      * The pledges this member has made.
      *
      * @return HasMany<Pledge, $this>

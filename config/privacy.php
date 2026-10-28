@@ -13,4 +13,13 @@ return [
     */
     'erased_marker' => '[deleted]',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Privacy policy version
+    |--------------------------------------------------------------------------
+    | Recorded with every consent, so it is known which policy a member agreed under. Change it when the
+    | policy changes in a way that needs members to agree again.
+    */
+    'policy_version' => '1.0',
+
 ];

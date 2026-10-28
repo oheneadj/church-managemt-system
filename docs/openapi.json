@@ -2197,6 +2197,39 @@
                             ]
                         }
                     },
+                    "consents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "purpose": {
+                                    "type": "string",
+                                    "enum": [
+                                        "sms",
+                                        "whatsapp"
+                                    ]
+                                },
+                                "consented_at": {
+                                    "type": "string"
+                                },
+                                "withdrawn_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "policy_version": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "purpose",
+                                "consented_at",
+                                "withdrawn_at",
+                                "policy_version"
+                            ]
+                        }
+                    },
                     "history": {
                         "type": "array",
                         "items": {
@@ -2257,6 +2290,7 @@
                     "family",
                     "departments",
                     "milestones",
+                    "consents",
                     "history"
                 ],
                 "title": "MemberDataExportResource"

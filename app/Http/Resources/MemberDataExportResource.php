@@ -74,6 +74,12 @@ class MemberDataExportResource extends JsonResource
                 'cohort' => $milestone->cohort,
                 'notes' => $milestone->notes,
             ])->all(),
+            'consents' => $member->consents->map(fn ($consent): array => [
+                'purpose' => $consent->purpose->value,
+                'consented_at' => $consent->consented_at->toIso8601String(),
+                'withdrawn_at' => $consent->withdrawn_at?->toIso8601String(),
+                'policy_version' => $consent->policy_version,
+            ])->all(),
             'history' => $member->auditLogs->map(fn ($line): array => [
                 'event' => $line->event->value,
                 'changed_fields' => $line->changed_fields,

@@ -63,7 +63,7 @@ describe('export', function (): void {
             ->assertJsonPath('member.email', 'abena@example.com')
             ->assertJsonPath('family.name', 'Asante Family')
             ->assertJsonPath('milestones.0.notes', 'Baptised with her sister')
-            ->assertJsonStructure(['exported_at', 'member', 'family', 'departments', 'milestones', 'history']);
+            ->assertJsonStructure(['exported_at', 'member', 'family', 'departments', 'milestones', 'consents', 'history']);
     });
 
     it('never exposes an integer key', function (): void {

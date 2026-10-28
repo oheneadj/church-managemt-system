@@ -476,7 +476,7 @@ GET /api/v1/members/{id}/data-export
 ```
 **Permission:** `members.export`, and the member must be visible to the caller. `403` otherwise; `404` for another church's member.
 
-**Response `200`:** `exported_at`, `member` (every personal field, with the encrypted address and ID number readable), `family` (name and role), `departments`, `milestones` and `history` (each change: event, field names, who, reason, when). The photo file is not part of the JSON. Each export is recorded in the member's change log (`exported`), without the data.
+**Response `200`:** `exported_at`, `member` (every personal field, with the encrypted address and ID number readable), `family` (name and role), `departments`, `milestones`, `consents` (each agreement to receive texts or WhatsApp messages: purpose, when, withdrawn when, policy version) and `history` (each change: event, field names, who, reason, when). The photo file is not part of the JSON. Each export is recorded in the member's change log (`exported`), without the data.
 
 ---
 

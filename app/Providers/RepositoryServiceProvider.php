@@ -7,11 +7,13 @@ namespace App\Providers;
 use App\Repositories\AttendanceRecordRepositoryInterface;
 use App\Repositories\AuditLogRepositoryInterface;
 use App\Repositories\ChurchRepositoryInterface;
+use App\Repositories\ConsentRepositoryInterface;
 use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\DepartmentRepositoryInterface;
 use App\Repositories\EloquentAttendanceRecordRepository;
 use App\Repositories\EloquentAuditLogRepository;
 use App\Repositories\EloquentChurchRepository;
+use App\Repositories\EloquentConsentRepository;
 use App\Repositories\EloquentContributionRepository;
 use App\Repositories\EloquentDepartmentRepository;
 use App\Repositories\EloquentFamilyRepository;
@@ -46,5 +48,6 @@ class RepositoryServiceProvider extends ServiceProvider
         AttendanceRecordRepositoryInterface::class => EloquentAttendanceRecordRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
         MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
+        ConsentRepositoryInterface::class => EloquentConsentRepository::class,
     ];
 }

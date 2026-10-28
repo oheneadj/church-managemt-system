@@ -421,6 +421,26 @@ First-time visitors who haven't yet become members.
 
 ---
 
+### `consents`
+
+Every time a member agreed to receive a kind of message (agreement section 36). Written by the application whenever a member's `sms_opted_in` or `whatsapp_opted_in` choice changes (D-041).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `member_id` | CHAR(26) | No | FK → members |
+| `purpose` | VARCHAR(30) | No | `ConsentPurpose`: sms, whatsapp. |
+| `consented_at` | TIMESTAMP | No | When the agreement was recorded. |
+| `withdrawn_at` | TIMESTAMP | Yes | Set when the member takes it back. A later agreement is a new row. |
+| `policy_version` | VARCHAR(20) | No | The privacy policy version in force (`config/privacy.php`). |
+| `recorded_by` | CHAR(26) | Yes | FK → users: the staff member who recorded it. |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+**Indexes:** `(church_id, member_id, purpose)`; unique `(member_id, purpose)` where `withdrawn_at` is null, so a member has at most one open agreement per purpose.
+
+---
+
 ### `message_logs`
 
 Every outbound SMS, WhatsApp, or email sent by the system.
