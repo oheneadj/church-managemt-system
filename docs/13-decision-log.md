@@ -808,6 +808,28 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-045 — How the WhatsApp CHECKIN is built (Sprint 3, story 3.3)
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/14 section 3, QA-05 TC-05-03 to TC-05-07 and TC-05-13, and the agreement sections 10, 11, 15, 34 and 37
+**Status:** Active (the Meta driver is untested against Meta until the account is approved, R2)
+
+**Decision:**
+1. **One webhook for every church, on the platform address.** `GET` answers Meta's check with `META_VERIFY_TOKEN`; `POST` is refused unless `X-Hub-Signature-256` is the HMAC-SHA256 of the raw body made with `META_APP_SECRET` (with no secret set, nothing passes). A valid post is kept encrypted in `webhook_logs`, queued on `notifications` and answered `200` at once; the work happens on a worker.
+2. **The sender is matched across churches, on purpose.** There is one shared WhatsApp number, so the church cannot come from the address. The two queries that look past the church scope (`findLivingByPhoneInAnyChurch`, `findByCheckinCode`, `findOpenInChurches`) are named for that, and the church is put in context only while the work runs (`TenantContext`, restored afterwards, even on an error). A code of another church, a deceased member, a switched-off church and an unknown number all get the same answer.
+3. **Which service:** a code names one service (codes are unique across churches, D-044). Without a code it is the service opened first in the member's church (`services.checkin_opened_at`, not moved by opening an open service again). A number in two churches that both have a service open must send a code.
+4. **No double check-in, three layers.** Meta's message id is stored in `handled_whatsapp_messages` in the same transaction as the attendance (the insert ignores a clash, so two deliveries at once cannot both win; the work rolls back with the id if it fails, so Meta's retry works); the unique row per member and service is the second guard; the job is safe to run again.
+5. **The provider is behind an interface.** `WhatsAppGateway` has a `log` driver (development only, refused in production) and a `meta` driver; `WHATSAPP_DRIVER` picks one. Answers go through `SendWhatsAppReplyJob`, logged in `message_logs`, behind a circuit breaker named `whatsapp`; `whatsapp:pause` holds the answers (check-ins still count) and `whatsapp:resume` sends them. A number on no church's list is logged without the number.
+6. **A first message is the member's agreement to WhatsApp** (docs/14, Opt-In): `whatsapp_opted_in` is set and a consent record written (D-041).
+7. **Cost control:** at most 5 answers a minute to one number; the check-in still counts.
+8. **No polling fallback, on purpose.** The agreement asks for one beside every webhook, but Meta has no way to list messages we missed; it resends for 24 hours and our handling is idempotent, and every payload is kept in `webhook_logs` so a failed one can be looked at and replayed.
+9. **Left out:** falling back to SMS when a WhatsApp answer fails (the check-in is saved and the answer is a courtesy); template messages (answers go out inside the 24-hour window the member opened by writing to us); a re-run command for failed webhook logs.
+
+**Rationale:** The agreement requires provider integrations behind an interface with a circuit breaker and a manual switch, webhooks that prove their sender and are idempotent, and tenant context set explicitly in background work. The simplest design that meets them keeps the controller thin and puts every rule in an Action.
+
+**Revisit when:** Meta approves the account (test the `meta` driver against a sandbox number; check the Graph API version in `META_GRAPH_VERSION`), or a church needs answers when WhatsApp is down (add the SMS fallback).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

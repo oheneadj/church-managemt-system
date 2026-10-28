@@ -24,6 +24,9 @@ return [
     'checkin_otp_per_hour_per_ip' => 20,
     'checkin_verify_per_minute_per_ip' => 10,
 
+    // Meta delivers every church's WhatsApp messages to one address, from many of its own servers, so this is per address and generous.
+    'webhooks_per_minute' => 600,
+
     // Starting a church sends a code to a stranger's phone, so it is limited like sign-in: tightly per number and per IP address.
     'onboarding_otp_per_minute' => 1,
     'onboarding_otp_per_hour' => 3,

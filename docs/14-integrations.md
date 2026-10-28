@@ -307,7 +307,9 @@ Redis::del("otp:{$phone}"); // Single-use
 - Verified Meta Business Account
 - WhatsApp Business Phone Number
 - Approved message templates for all outbound messages
-- Webhook registered at `/api/webhooks/whatsapp`
+- Webhook registered at `https://{platform domain}/api/v1/webhooks/whatsapp`, with `META_VERIFY_TOKEN` as its verify token. The app secret (`META_APP_SECRET`) signs every post; the credentials are `META_ACCESS_TOKEN` and `META_PHONE_NUMBER_ID` (`config/services.php`).
+
+> **What is built (D-045).** The sketches below are the original design. The real code differs in these ways, all from the agreement: the webhook checks `X-Hub-Signature-256` before reading anything; the controller keeps the payload and queues a job (`ReceiveWhatsAppWebhookAction`, `ProcessWhatsAppWebhookJob`); the command is parsed by `CheckinCommandParser`; the member is found across churches (one shared number) and the church is set as context only while the work runs (`TenantContext`); a service code is unique across churches; the message id is stored in the same transaction as the attendance; sending goes through the `WhatsAppGateway` interface (`log` driver now, `meta` once the account is approved) in `SendWhatsAppReplyJob`, behind a circuit breaker with `whatsapp:pause` and `whatsapp:resume`. The Meta driver was written from this document and has never talked to Meta: try it against a sandbox number first.
 
 ### Webhook Setup
 
@@ -462,7 +464,9 @@ Meta requires that members opt in to receive WhatsApp messages. The opt-in is re
 | Error | Response |
 |---|---|
 | Member phone not found | Reply: "We couldn't find your number..." |
-| No open service | Reply: "No service is currently open..." |
+| No open service | Reply: "No service is currently open for check-in." |
+| Our answer is refused by Meta for good (for example the 24-hour window closed) | Logged as `failed` in `message_logs`; not retried. The check-in itself is already saved. |
+| Meta is down or slow | The answer is retried for 30 minutes; after 5 failures in 2 minutes the circuit opens (`config/resilience.php`) |
 | Template rejected by Meta | Fall back to SMS via Africa's Talking |
 | Meta API rate limit (1,000 messages/second) | Queue with rate limiting (100/second to be safe) |
 | Webhook delivery failure | Meta retries for 24 hours. Our processing is idempotent. |

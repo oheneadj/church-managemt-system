@@ -50,4 +50,19 @@ return [
         'timeout_seconds' => 10,
     ],
 
+    // Which WhatsAppGateway sends WhatsApp messages ('log' while Meta has not approved the account), and the Meta credentials (docs/14, section 3).
+    'whatsapp' => [
+        'driver' => env('WHATSAPP_DRIVER', 'log'),
+    ],
+
+    'meta' => [
+        'verify_token' => env('META_VERIFY_TOKEN'),
+        'app_secret' => env('META_APP_SECRET'),
+        'access_token' => env('META_ACCESS_TOKEN'),
+        'phone_number_id' => env('META_PHONE_NUMBER_ID'),
+        'graph_url' => env('META_GRAPH_URL', 'https://graph.facebook.com'),
+        'graph_version' => env('META_GRAPH_VERSION', 'v18.0'),
+        'timeout_seconds' => 10,
+    ],
+
 ];

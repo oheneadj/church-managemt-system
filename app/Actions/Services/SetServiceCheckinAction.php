@@ -19,11 +19,16 @@ final class SetServiceCheckinAction
     public function __construct(private readonly ServiceRepositoryInterface $services) {}
 
     /**
-     * Sets the open flag.
+     * Sets the open flag. The time it was opened is kept only when check-in actually opens, so asking to open an
+     * open service again does not move it to the back of the queue for WhatsApp CHECKIN.
      */
     public function execute(SetServiceCheckinDTO $dto): Service
     {
         $service = $dto->service->forceFill(['is_open' => $dto->isOpen]);
+
+        if ($dto->isOpen && ! $dto->service->getOriginal('is_open')) {
+            $service->checkin_opened_at = now();
+        }
 
         return $this->services->withAttendanceCount($this->services->save($service));
     }

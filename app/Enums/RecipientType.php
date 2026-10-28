@@ -13,6 +13,7 @@ enum RecipientType: string
     case User = 'user';
     case Visitor = 'visitor';
     case Applicant = 'applicant';
+    case Unknown = 'unknown';
 
     /**
      * Human-readable text for screens and messages.
@@ -24,6 +25,7 @@ enum RecipientType: string
             self::User => 'User',
             self::Visitor => 'Visitor',
             self::Applicant => 'Applicant',
+            self::Unknown => 'Unknown number',
         };
     }
 }

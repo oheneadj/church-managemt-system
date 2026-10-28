@@ -14,7 +14,7 @@ function goodConfig(array $overrides = []): Repository
         'tenancy' => ['base_domain' => 'example.com'],
         'session' => ['domain' => null, 'secure' => true],
         'trustedproxy' => ['proxies' => ['10.0.0.0/8']],
-        'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender']],
+        'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender'], 'whatsapp' => ['driver' => 'meta'], 'meta' => ['access_token' => 'token', 'phone_number_id' => '123', 'verify_token' => 'verify', 'app_secret' => 'secret']],
         'filesystems' => ['default' => 'r2'],
         'sentry' => ['dsn' => 'https://key@o0.ingest.sentry.io/1'],
         'backup' => ['gpg_recipient' => 'backups@example.com'],
@@ -88,3 +88,18 @@ it('requires the backup key recipient outside development', function (): void {
 
     expect($problems)->toBe(['BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.']);
 });
+
+it('requires a real WhatsApp driver and the webhook secrets outside development', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['services' => ['whatsapp' => ['driver' => 'log'], 'meta' => ['verify_token' => '', 'app_secret' => '']]]));
+
+    expect($problems)->toBe([
+        'WHATSAPP_DRIVER must not be "log" outside development.',
+        'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.',
+    ]);
+});
+
+it('requires the Meta token and phone number id when Meta sends the WhatsApp messages', function (string $missing): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['services' => ['meta' => [$missing => '']]]));
+
+    expect($problems)->toBe(['META_ACCESS_TOKEN and META_PHONE_NUMBER_ID must be set when WHATSAPP_DRIVER is "meta".']);
+})->with(['access_token', 'phone_number_id']);

@@ -9,6 +9,7 @@ Commands are run from the application folder on the server (in Coolify: the appl
 | [Database connections exhausted](database-connections-exhausted.md) | The database check fails or requests fail with "too many connections" |
 | [Queue worker stopped](queue-worker-stopped.md) | Codes or messages do not arrive, or a queue grows |
 | [SMS provider down](sms-provider-down.md) | PayPerlez fails, the circuit opened, or texts are going wrong |
+| [WhatsApp down](whatsapp-provider-down.md) | Members get no answer to CHECKIN, Meta cannot reach the webhook, or the circuit opened |
 | [Payment provider errors](payment-provider-errors.md) | Giving fails or confirmations stop (from Sprint 4) |
 | [Disk space critical](disk-space-critical.md) | The disk alert fires |
 | [Deployment rollback](deployment-rollback.md) | A deploy made things worse |

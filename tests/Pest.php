@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature');
@@ -84,4 +85,31 @@ function unitLink(string $departmentId = '01deptunit'): MemberDepartment
 function withoutDatabaseTransactions(): void
 {
     DB::shouldReceive('transaction')->andReturnUsing(fn (Closure $callback) => $callback());
+}
+
+/*
+|--------------------------------------------------------------------------
+| WhatsApp webhook helpers
+|--------------------------------------------------------------------------
+| Shared by the webhook and CHECKIN tests: a payload as Meta sends it, and a post signed the way Meta signs it.
+*/
+
+const WHATSAPP_WEBHOOK = 'http://localhost/api/v1/webhooks/whatsapp';
+
+/** A payload as Meta sends it, holding one text message. */
+function metaPayload(string $text = 'CHECKIN', string $from = '233244123456', string $id = 'wamid.ONE', string $type = 'text'): array
+{
+    $message = ['from' => $from, 'id' => $id, 'timestamp' => '1761383000', 'type' => $type];
+    $message[$type] = ['body' => $text];
+
+    return ['object' => 'whatsapp_business_account', 'entry' => [['id' => '1', 'changes' => [['field' => 'messages', 'value' => ['messaging_product' => 'whatsapp', 'messages' => [$message]]]]]]];
+}
+
+/** Posts a payload the way Meta does: raw JSON with an HMAC-SHA256 signature of the body. */
+function metaPost(array|string $payload, ?string $signature = null): TestResponse
+{
+    $body = is_array($payload) ? json_encode($payload) : $payload;
+    $signature ??= 'sha256='.hash_hmac('sha256', $body, 'app-secret');
+
+    return test()->call('POST', WHATSAPP_WEBHOOK, [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_HUB_SIGNATURE_256' => $signature], $body);
 }

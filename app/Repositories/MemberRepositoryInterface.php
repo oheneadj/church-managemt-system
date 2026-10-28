@@ -66,6 +66,15 @@ interface MemberRepositoryInterface
     public function findByPhone(string $e164): ?Member;
 
     /**
+     * Every living member, in any active church, who has this phone number. A WhatsApp message arrives on one shared
+     * number with no church attached, so this is the one query that deliberately looks past the church scope. The caller
+     * must put each result's church in context before it touches anything else (agreement section 34).
+     *
+     * @return Collection<int, Member>
+     */
+    public function findLivingByPhoneInAnyChurch(string $e164): Collection;
+
+    /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.
      */
     public function delete(Member $member): void;

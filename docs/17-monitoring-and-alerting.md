@@ -267,6 +267,7 @@ foreach ($lowBalanceChurches as $church) {
 | Payments queue depth | > 10 | Workers may be stuck; see [queue worker stopped](runbooks/queue-worker-stopped.md) and [payment provider errors](runbooks/payment-provider-errors.md) |
 | Health check failure | Any check != ok | [Database](runbooks/database-connections-exhausted.md), [disk](runbooks/disk-space-critical.md) or [queue](runbooks/queue-worker-stopped.md) runbook, by the failing check |
 | SMS circuit opened | `Circuit opened` in the log | [SMS provider down](runbooks/sms-provider-down.md) |
+| WhatsApp circuit opened | `Circuit opened` for provider `whatsapp` in the log | [WhatsApp down](runbooks/whatsapp-provider-down.md) |
 | Church purge failed | `Church purge failed` (critical) | [Church purge failed](runbooks/church-purge-failed.md) |
 | Backup failed | `db:backup` fails (reported to Sentry) | [Restore from backup](runbooks/restore-from-backup.md), after fixing the backup |
 

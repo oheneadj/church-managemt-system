@@ -9,6 +9,7 @@ use App\Enums\FamilyRole;
 use App\Enums\MemberStatus;
 use App\Models\Member;
 use App\Models\User;
+use App\Scopes\ChurchScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -125,6 +126,22 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     public function findByPhone(string $e164): ?Member
     {
         return Member::query()->where('phone', $e164)->first();
+    }
+
+    /**
+     * Every living member, in any active church, who has this phone number.
+     *
+     * @return Collection<int, Member>
+     */
+    public function findLivingByPhoneInAnyChurch(string $e164): Collection
+    {
+        return Member::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->with('church')
+            ->where('phone', $e164)
+            ->where('status', '!=', MemberStatus::Deceased)
+            ->whereHas('church', fn (Builder $church) => $church->where('is_active', true))
+            ->get();
     }
 
     /**

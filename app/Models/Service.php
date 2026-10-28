@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $starts_at
  * @property string|null $ends_at
  * @property bool $is_open
+ * @property CarbonImmutable|null $checkin_opened_at
  * @property int|null $headcount_override
  * @property string|null $notes
  * @property CarbonImmutable|null $created_at
@@ -47,6 +48,7 @@ class Service extends Model
         'starts_at',
         'ends_at',
         'is_open',
+        'checkin_opened_at',
         'headcount_override',
         'notes',
         'created_by',
@@ -63,6 +65,7 @@ class Service extends Model
             'type' => ServiceType::class,
             'service_date' => 'immutable_date',
             'is_open' => 'boolean',
+            'checkin_opened_at' => 'immutable_datetime',
             'headcount_override' => 'integer',
         ];
     }

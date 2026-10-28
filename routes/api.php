@@ -40,6 +40,8 @@ use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
 use App\Http\Controllers\Api\V1\Services\ShowServiceController;
 use App\Http\Controllers\Api\V1\Services\StoreServiceController;
 use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
+use App\Http\Controllers\Api\V1\Webhooks\ReceiveWhatsAppWebhookController;
+use App\Http\Controllers\Api\V1\Webhooks\VerifyWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API routes (prefix /api/v1, set in bootstrap/app.php).
@@ -50,6 +52,12 @@ use Illuminate\Support\Facades\Route;
 Route::domain(config('tenancy.base_domain'))->prefix('onboarding')->name('onboarding.')->group(function (): void {
     Route::post('otp', RequestChurchOtpController::class)->middleware('throttle:onboarding-otp')->name('otp');
     Route::post('churches', RegisterChurchController::class)->middleware('throttle:onboarding-register')->name('churches.store');
+});
+
+// Meta calls one address for every church, so the webhook lives on the platform host with no church in the request (docs/08, Webhooks).
+Route::domain(config('tenancy.base_domain'))->prefix('webhooks')->name('webhooks.')->group(function (): void {
+    Route::get('whatsapp', VerifyWhatsAppWebhookController::class)->name('whatsapp.verify');
+    Route::post('whatsapp', ReceiveWhatsAppWebhookController::class)->middleware(['throttle:webhooks', 'meta.signature'])->name('whatsapp.receive');
 });
 
 Route::middleware('tenant')->group(function (): void {

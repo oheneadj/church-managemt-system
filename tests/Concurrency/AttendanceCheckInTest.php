@@ -8,6 +8,7 @@ use App\Models\Church;
 use App\Models\Member;
 use App\Models\Service;
 use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\HandledWhatsappMessageRepositoryInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -69,4 +70,32 @@ it('leaves one row when two requests check the same member in together', functio
 
     expect($ignored)->toBe(0)
         ->and(AttendanceRecord::query()->withoutGlobalScopes()->where('service_id', $service->id)->where('member_id', $member->id)->count())->toBe(1);
+});
+
+it('handles a WhatsApp message once when Meta delivers it twice at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $messages = app(HandledWhatsappMessageRepositoryInterface::class);
+
+    // Delivery A claims the message and has not committed yet.
+    DB::beginTransaction();
+    expect($messages->claim('wamid.RACE'))->toBeTrue();
+
+    // Delivery B, on its own connection, has to wait for A instead of claiming the same id.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function (): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('handled_whatsapp_messages')->insertOrIgnore(['id' => (string) Str::ulid(), 'message_id' => 'wamid.RACE', 'created_at' => now()]);
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B's claim is ignored, so only A's delivery is handled.
+    DB::commit();
+
+    expect($messages->claim('wamid.RACE'))->toBeFalse()
+        ->and(DB::table('handled_whatsapp_messages')->where('message_id', 'wamid.RACE')->count())->toBe(1);
 });

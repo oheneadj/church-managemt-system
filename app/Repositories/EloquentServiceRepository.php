@@ -6,9 +6,11 @@ namespace App\Repositories;
 
 use App\DTOs\Services\ListServicesDTO;
 use App\Models\Service;
+use App\Scopes\ChurchScope;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Eloquent implementation of the service queries.
@@ -77,6 +79,32 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     public function checkinCodeExists(string $code): bool
     {
         return Service::query()->withoutGlobalScopes()->withTrashed()->where('checkin_code', $code)->exists();
+    }
+
+    /**
+     * The service that uses this check-in code, in any church.
+     */
+    public function findByCheckinCode(string $code): ?Service
+    {
+        return Service::query()->withoutGlobalScope(ChurchScope::class)->with('church')->where('checkin_code', $code)->first();
+    }
+
+    /**
+     * The services open for check-in in these churches, the one opened first at the top.
+     *
+     * @param  array<int, string>  $churchIds
+     * @return Collection<int, Service>
+     */
+    public function findOpenInChurches(array $churchIds): Collection
+    {
+        return Service::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->with('church')
+            ->whereIn('church_id', $churchIds)
+            ->where('is_open', true)
+            ->orderBy('checkin_opened_at')
+            ->orderBy('id')
+            ->get();
     }
 
     /**

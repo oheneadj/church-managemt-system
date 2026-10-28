@@ -1205,6 +1205,76 @@
                 "security": []
             }
         },
+        "/v1/webhooks/whatsapp": {
+            "post": {
+                "operationId": "webhooks.whatsapp.receive",
+                "summary": "Hands the payload to ReceiveWhatsAppWebhookAction and answers 200 at once, as Meta requires",
+                "tags": [
+                    "ReceiveWhatsAppWebhook"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "ok"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            },
+            "get": {
+                "operationId": "webhooks.whatsapp.verify",
+                "summary": "Echoes Meta's challenge as plain text. The request class has already checked the verify token",
+                "tags": [
+                    "VerifyWhatsAppWebhook"
+                ],
+                "parameters": [
+                    {
+                        "name": "hub_challenge",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/onboarding/churches": {
             "post": {
                 "operationId": "onboarding.churches.store",
@@ -4887,8 +4957,8 @@
                     }
                 }
             },
-            "AuthenticationException": {
-                "description": "Unauthenticated",
+            "AuthorizationException": {
+                "description": "Authorization error",
                 "content": {
                     "application/json": {
                         "schema": {
@@ -4906,8 +4976,8 @@
                     }
                 }
             },
-            "AuthorizationException": {
-                "description": "Authorization error",
+            "AuthenticationException": {
+                "description": "Unauthenticated",
                 "content": {
                     "application/json": {
                         "schema": {

@@ -245,8 +245,8 @@ Blocked: [anything blocking me / none]
 
 | Done | Stories |
 |---|---|
-| Backend | 3.1 services, 3.2 manual bulk check-in, 3.5 idempotent check-in, 3.6 visitor capture, 3.7 attendance reports (per service and per member), 3.13 absent members (computed on request) |
-| Frontend | 3.8 services list and create, 3.9 live check-in (polls every 10 seconds), 3.10 manual check-in with member search, 3.12 attendance report (the Attendance tab) |
-| Still open | 3.3 WhatsApp CHECKIN (needs the Meta account, built against a mock first), 3.4 QR check-in and 3.11 QR display page |
+| Backend | 3.1 services, 3.2 manual bulk check-in, 3.3 WhatsApp CHECKIN (D-045; the Meta driver is built from the docs and not yet tried against Meta), 3.4 QR check-in, 3.5 idempotent check-in, 3.6 visitor capture, 3.7 attendance reports (per service and per member), 3.13 absent members (computed on request) |
+| Frontend | 3.8 services list and create, 3.9 live check-in (polls every 10 seconds), 3.10 manual check-in with member search, 3.11 QR display page and the page a member lands on, 3.12 attendance report (the Attendance tab) |
+| Still open | Nothing in the sprint. Waiting on the Meta account: try the `meta` driver against a sandbox number (R2) |
 
 Update this section at the start of each sprint.

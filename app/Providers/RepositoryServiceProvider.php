@@ -19,6 +19,7 @@ use App\Repositories\EloquentConsentRepository;
 use App\Repositories\EloquentContributionRepository;
 use App\Repositories\EloquentDepartmentRepository;
 use App\Repositories\EloquentFamilyRepository;
+use App\Repositories\EloquentHandledWhatsappMessageRepository;
 use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
 use App\Repositories\EloquentMemberRepository;
@@ -26,7 +27,9 @@ use App\Repositories\EloquentMessageLogRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
+use App\Repositories\EloquentWebhookLogRepository;
 use App\Repositories\FamilyRepositoryInterface;
+use App\Repositories\HandledWhatsappMessageRepositoryInterface;
 use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
@@ -34,6 +37,7 @@ use App\Repositories\MessageLogRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Repositories\VisitorRecordRepositoryInterface;
+use App\Repositories\WebhookLogRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -58,5 +62,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,
         ServiceRepositoryInterface::class => EloquentServiceRepository::class,
         VisitorRecordRepositoryInterface::class => EloquentVisitorRecordRepository::class,
+        WebhookLogRepositoryInterface::class => EloquentWebhookLogRepository::class,
+        HandledWhatsappMessageRepositoryInterface::class => EloquentHandledWhatsappMessageRepository::class,
     ];
 }

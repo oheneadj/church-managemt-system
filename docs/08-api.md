@@ -683,11 +683,16 @@ POST /api/v1/checkin/qr                     (public) { "token": "...", "phone": 
 
 ---
 
-### WhatsApp Check-in (Internal — called by webhook handler)
-```
-POST /api/v1/checkin/whatsapp
-```
-Internal endpoint called by the WhatsApp webhook processor. Not called by the SPA directly.
+### WhatsApp Check-in (through the webhook)
+
+There is no endpoint for the app to call. A member texts `CHECKIN` or `CHECKIN GRA7F2` (the service's check-in code) to the platform's one WhatsApp number, and Meta posts it to the webhook below. A worker then checks them in and answers on WhatsApp. The webhook answers `200` at once and the work happens on the `notifications` queue (D-045).
+
+- **Command:** the word `CHECKIN` in any capitals, then an optional service code. Anything else a member sends is ignored (no answer). Images, reactions and delivery receipts are ignored too.
+- **Who:** the sender's phone is matched to a living member (inactive members can check in; a deceased member cannot) of any active church, because one shared number serves every church. The code names one service in one church. Without a code it is the service opened first in the member's church (QA-05 TC-05-13); a number that is a member of two churches that both have a service open must send a code.
+- **Answers** (wording in `config/whatsapp.php`): the welcome `✅ Checked in to {service} — {date}. Welcome, {name}! God bless you. 🙏`; `You're already checked in! See you inside. 🙏`; `We couldn't find your number in our records. Please contact the church office.` (unknown number, a code of another church, a deceased member, a switched-off church: all the same words, so nothing is revealed); `No service is currently open for check-in.`; and, for the two-church case, a request to add the code.
+- **Twice:** Meta's message id is stored in the same transaction as the attendance, so a repeat delivery is ignored, and the unique row per member and service is the second guard. A member who sends `CHECKIN` again gets the "already checked in" answer.
+- **Agreement:** a member's first message counts as agreeing to WhatsApp messages (docs/14, Opt-In): `whatsapp_opted_in` is set and a consent record is written (D-041).
+- **Cost control:** a number gets at most 5 answers a minute (`config/whatsapp.php`); past that the check-in still counts but nobody answers.
 
 ---
 
@@ -1125,9 +1130,13 @@ Handled events: `charge.success`, `charge.failed`, `refund.processed`
 ```
 GET  /api/v1/webhooks/whatsapp   (Meta verification challenge)
 POST /api/v1/webhooks/whatsapp   (Incoming messages)
+Header: X-Hub-Signature-256: sha256={hmac_sha256 of the raw body with the app secret}
 ```
+Served on the platform address (`yourapp.com`), not on a church's address, because Meta calls one URL for every church.
 
-Handled message types: `text` (for CHECKIN command parsing), `status` (delivery receipts)
+- **GET:** Meta sends `hub.mode=subscribe`, `hub.verify_token` and `hub.challenge`. The challenge is echoed as plain text when the token is the one in `META_VERIFY_TOKEN`; anything else is `403`.
+- **POST:** `403` unless the signature matches the body (checked before anything is read; with no `META_APP_SECRET` set nothing passes). A valid post is kept exactly as received in `webhook_logs` (encrypted), queued, and answered `200 {"status":"ok"}` at once, even for a body that is not JSON or holds nothing we use, because Meta resends anything else. Limited to 600 a minute per address.
+- Handled: `text` messages (the CHECKIN command, see above). Delivery receipts (`status`) are logged and ignored.
 
 ---
 

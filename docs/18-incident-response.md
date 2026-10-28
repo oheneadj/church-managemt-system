@@ -45,6 +45,7 @@ One per failure we expect, in `docs/runbooks/`. Each has the same parts: symptom
 | [Database connections exhausted](runbooks/database-connections-exhausted.md) | The health check says the database is failing, or requests fail with "too many connections" |
 | [Queue worker stopped](runbooks/queue-worker-stopped.md) | Sign-in codes or messages do not arrive, or a queue keeps growing |
 | [SMS provider down](runbooks/sms-provider-down.md) | PayPerlez is failing, the circuit opened, or text messages are going wrong |
+| [WhatsApp down](runbooks/whatsapp-provider-down.md) | Members get no answer to CHECKIN, Meta cannot reach the webhook, or the circuit opened |
 | [Payment provider errors](runbooks/payment-provider-errors.md) | Giving fails or confirmations stop (applies from Sprint 4) |
 | [Disk space critical](runbooks/disk-space-critical.md) | The disk alert fires, or the health check says free space is low |
 | [Deployment rollback](runbooks/deployment-rollback.md) | A deploy made things worse |
@@ -59,6 +60,7 @@ Every alert message should link to its runbook (the table in docs/17 does).
 | Switch | What it does | Command |
 |---|---|---|
 | Pause text messages | Holds every text on the queue; nothing is lost | `php artisan sms:pause`, then `sms:resume` |
+| Pause WhatsApp answers | Holds every WhatsApp answer on the queue; check-ins still count | `php artisan whatsapp:pause`, then `whatsapp:resume` |
 | SMS circuit breaker | Opens by itself after 5 failures in 2 minutes, tries again after a minute (`config/resilience.php`) | automatic; `sms:resume` clears it |
 | Roll back a deploy | Coolify keeps the previous release | [Deployment rollback](runbooks/deployment-rollback.md) |
 | Cancel or reinstate a church | Stops or restores a church's grace period | `church:cancel`, `church:reinstate` |

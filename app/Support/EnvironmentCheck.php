@@ -72,6 +72,18 @@ final class EnvironmentCheck
             $problems[] = 'PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".';
         }
 
+        if ($config->get('services.whatsapp.driver') === 'log') {
+            $problems[] = 'WHATSAPP_DRIVER must not be "log" outside development.';
+        }
+
+        if ($config->get('services.whatsapp.driver') === 'meta' && (blank($config->get('services.meta.access_token')) || blank($config->get('services.meta.phone_number_id')))) {
+            $problems[] = 'META_ACCESS_TOKEN and META_PHONE_NUMBER_ID must be set when WHATSAPP_DRIVER is "meta".';
+        }
+
+        if (blank($config->get('services.meta.verify_token')) || blank($config->get('services.meta.app_secret'))) {
+            $problems[] = 'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.';
+        }
+
         if (blank($config->get('backup.gpg_recipient'))) {
             $problems[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
         }

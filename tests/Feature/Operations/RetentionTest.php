@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Church;
+use App\Models\HandledWhatsappMessage;
 use App\Models\MessageLog;
 use App\Models\WebhookLog;
 use Illuminate\Console\Scheduling\Schedule;
@@ -31,6 +32,15 @@ it('deletes webhook payloads older than ninety days and keeps newer ones', funct
     $this->artisan('model:prune', ['--model' => WebhookLog::class])->assertSuccessful();
 
     expect(WebhookLog::query()->pluck('id')->all())->toBe([$kept->id]);
+});
+
+it('deletes the record of handled WhatsApp messages after ninety days, long after Meta stops retrying', function (): void {
+    HandledWhatsappMessage::factory()->create(['created_at' => now()->subDays(91)]);
+    $kept = HandledWhatsappMessage::factory()->create(['created_at' => now()->subDays(89)]);
+
+    $this->artisan('model:prune', ['--model' => HandledWhatsappMessage::class])->assertSuccessful();
+
+    expect(HandledWhatsappMessage::query()->pluck('id')->all())->toBe([$kept->id]);
 });
 
 it('runs the prune every day at 03:00 UTC', function (): void {

@@ -152,6 +152,21 @@ describe('showing and changing', function (): void {
         $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => false])->assertOk()->assertJsonPath('data.is_open', false);
     });
 
+    it('notes when check-in was opened, and keeps the first time when it is opened again', function (): void {
+        $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => true])->assertOk();
+        $first = $this->service->fresh()->checkin_opened_at;
+        expect($first)->not->toBeNull();
+
+        $this->travel(5)->minutes();
+        $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => true])->assertOk();
+        expect($this->service->fresh()->checkin_opened_at->equalTo($first))->toBeTrue();
+
+        $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => false])->assertOk();
+        $this->travel(5)->minutes();
+        $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => true])->assertOk();
+        expect($this->service->fresh()->checkin_opened_at->greaterThan($first))->toBeTrue();
+    });
+
     it('needs is_open to be true or false', function (): void {
         $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', [])->assertUnprocessable()->assertJsonValidationErrors('is_open');
         $this->patchJson(SERVICES.'/'.$this->service->id.'/checkin', ['is_open' => 'maybe'])->assertUnprocessable();

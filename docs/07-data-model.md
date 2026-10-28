@@ -256,6 +256,7 @@ Every church service or event that attendance can be recorded for.
 | `starts_at` | TIME | Yes | |
 | `ends_at` | TIME | Yes | |
 | `is_open` | BOOLEAN | No | Default: false. True = check-in active. |
+| `checkin_opened_at` | TIMESTAMP | Yes | When check-in was last opened (not moved by opening an open service again). A WhatsApp CHECKIN without a code goes to the service opened first (QA-05 TC-05-13). |
 | `headcount_override` | INT | Yes | Manual count (e.g. paper count) if digital check-in not used |
 | `notes` | TEXT | Yes | |
 | `created_by` | CHAR(26) | No | FK → users |
@@ -451,7 +452,7 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | Yes | FK → churches. Null only for a platform message sent before a church exists (the sign-up code); church screens never see those rows (D-037). |
 | `channel` | VARCHAR(30) | No | `MessageChannel`: sms, whatsapp, email. |
-| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church). |
+| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church), unknown (a WhatsApp number on no church's list; its phone number is not stored). |
 | `recipient_id` | CHAR(26) | Yes | FK to the relevant table |
 | `recipient_phone` | VARCHAR(20) | Yes | |
 | `recipient_email` | VARCHAR(255) | Yes | |
@@ -506,6 +507,20 @@ Raw incoming webhook payloads. Never lose a webhook event.
 **Index:** `(source, event, processed)`, `(created_at)` — for pruning
 
 **Retention:** 90 days (pruned by scheduled command)
+
+---
+
+### `handled_whatsapp_messages`
+
+Meta's id for each WhatsApp CHECKIN message already handled, so a repeat delivery is recognised (agreement section 11, layer 5; D-045). Not tenant-scoped: it is written before the church is known. Holds no personal data.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `message_id` | VARCHAR(100) | No | Meta's message id (`wamid...`). Unique: the guarantee when two deliveries race. |
+| `created_at` | TIMESTAMP | No | |
+
+**Index:** `(created_at)` for pruning. **Retention:** 90 days (`model:prune`), far longer than the 24 hours Meta retries for.
 
 ---
 

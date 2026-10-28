@@ -158,6 +158,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('checkin-verify', fn (Request $request) => Limit::perMinute(config('limits.checkin_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
 
         // Uploads are CPU heavy (every photo is re-encoded), so they get a tighter limit than other calls.
+        // Meta's servers call the webhook, so it is limited per address and generously (the signature is the real guard).
+        RateLimiter::for('webhooks', fn (Request $request) => Limit::perMinute(config('limits.webhooks_per_minute'))->by($request->ip()));
+
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(config('limits.uploads_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
         RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(config('limits.otp_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
