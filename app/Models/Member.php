@@ -136,7 +136,7 @@ class Member extends Model
      */
     protected function fullName(): Attribute
     {
-        return Attribute::get(fn (): string => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"));
+        return Attribute::get(fn (): string => collect([$this->first_name, $this->middle_name, $this->last_name])->filter()->implode(' '));
     }
 
     /**

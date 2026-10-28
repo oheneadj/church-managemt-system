@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### fix(members): stop a missing middle name leaving a double space in the full name (2026-10-28)
+- **What:** A member's full name is now built from the parts that exist, joined with single spaces. Before, a member with no middle name came out as 'Emmanuel  Asante' with two spaces everywhere the full name is shown.
+- **Why:** Found by a gift list test. The two spaces showed in lists, search results, receipts and exports for most members, since most have no middle name.
+- **Files:** app/Models/Member.php, tests/Unit/Models/MemberTest.php
+- **Commit:** pending
+
 #### feat(api): add Idempotency-Key support for writes that record money (2026-10-28)
 - **What:** Added a reusable idempotent route middleware. A write sent with an Idempotency-Key header runs once: the first successful answer is kept for 24 hours and sent again, marked Idempotent-Replayed, when the same key comes back. The same key with a different request is a 422; a missing or badly shaped key is a 400; two requests with one key at the same moment take turns using a cache lock, and one that waits too long gets a 409. Failed requests are not kept so a corrected request can reuse its key, and keys are private to the church and the person. Documented in docs/08 Conventions. Nothing uses it yet: the cash gift endpoint is next.
 - **Why:** Agreement section 11 (layer 1) requires an idempotency key on any endpoint that creates a record or starts a payment. A finance secretary who double-clicks Save would otherwise record the same cash gift twice, and money records are never deleted, only voided. It is built first, on its own, so every money endpoint of Sprint 4 can use it.
