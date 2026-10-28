@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Message logs older than 12 months and webhook payloads older than 90 days are now deleted by a daily job (Laravel's `model:prune`, scheduled at 03:00 UTC on one server). The periods live in `config/retention.php`. Money records and audit logs are not touched.
 - **Why:** docs/05 and docs/07 promise these retention periods, and the agreement requires retention to be enforced by an automated job, never by hand. The job looks across all churches on purpose (it is not a church's request).
 - **Files:** `config/retention.php`, `app/Models/MessageLog.php`, `app/Models/WebhookLog.php`, `routes/console.php`, `tests/Feature/Operations/RetentionTest.php`
-- **Commit:** pending
+- **Commit:** `e803237` (2026-10-28)
 
 #### feat(sms): send text messages through PayPerlez
 - **What:** Added the PayPerlez SMS adapter behind the existing provider interface. The interface now takes the whole message and a retry key and returns a receipt. A message gets one retry key when its job is created and keeps it across retries, so a retry after a timeout never sends twice. Rate limits, server errors and lost connections retry; any other refusal fails the job at once and is logged with the provider's error code and request id only. The message log keeps PayPerlez's reference and the safe parts of its reply (never the phone or text). The app refuses to start with this provider unless the API key and an approved sender id are set, and `env:check` says so too. Wrote the verified request, reply and error details into docs/14 and recorded D-038 (we keep making our own sign-in codes).
