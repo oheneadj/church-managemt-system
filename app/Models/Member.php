@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $date_of_birth
  * @property string $phone
  * @property string|null $address
+ * @property string|null $photo_url the storage path of the photo, not a link; the API signs it on the way out
  * @property MaritalStatus|null $marital_status
  * @property EducationalLevel|null $educational_level
  * @property MembershipType $membership_type

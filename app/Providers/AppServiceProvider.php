@@ -104,6 +104,9 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Uploads are CPU heavy (every photo is re-encoded), so they get a tighter limit than other calls.
+        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+
         RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(10)->by($this->tenantKey($request).':'.$request->ip()));
     }
 

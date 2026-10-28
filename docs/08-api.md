@@ -399,12 +399,16 @@ Permission: members.edit
 Content-Type: multipart/form-data
 ```
 
-**Body:** `photo` field — JPG or PNG, max 5MB.
+**Body:** `photo` field: JPG or PNG, up to 5 MB and 4096 pixels on a side. The type is read from the file's contents, so a renamed script or SVG is rejected.
+
+The photo is rotated to match the camera, cropped to a 512 pixel square and re-encoded as JPEG, which removes EXIF data such as GPS positions. It is stored in the private bucket at `churches/{church_id}/members/{member_id}/photo.jpg`; a new upload replaces the old one. The client's file name is never used.
 
 **Response `200`:**
 ```json
-{ "photo_url": "https://r2.yourapp.com/..." }
+{ "photo_url": "https://<signed link, valid for 1 hour>" }
 ```
+
+`photo_url` on Get Member and List Members is a fresh signed link on every response, or `null` when the member has none. **Errors:** `403` without `members.edit` or for a deceased member; `404` for another church's member; `422` for an invalid file; `429` after 20 uploads a minute.
 
 ---
 

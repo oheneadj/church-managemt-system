@@ -212,7 +212,7 @@ These were read from documentation but not yet proven, because no Docker build h
 github.com/yourorg/chms   (Laravel API + React 19 SPA in resources/js — one repo, D-022)
 ```
 
-Local development is native (no Docker, D-023). Staging and production build the Docker image from `deploy/Dockerfile`; that file is the source of truth for the PHP version and extensions (`pdo_pgsql`, `redis`, `bcmath`, `intl`).
+Local development is native (no Docker, D-023). Staging and production build the Docker image from `deploy/Dockerfile`; that file is the source of truth for the PHP version and extensions (`pdo_pgsql`, `redis`, `bcmath`, `intl`, `gd`, `exif`).
 
 ### GitHub Actions Workflow
 
@@ -222,7 +222,7 @@ The pipeline is `.github/workflows/ci.yml` (the file is the source of truth; thi
 |---|---|---|
 | `backend` | every push and PR to `main` / `staging` | PHP 8.4, PostgreSQL 18 and Redis 8 services (same majors as local, D-023). Migrations go up, down and up again; Pint; PHPStan level 8; `composer audit`; Pest. |
 | `frontend` | same | Node 24: `npm ci`, TypeScript, ESLint + Prettier, Vitest, production build, `npm audit --audit-level=high`. |
-| `image` | same | hadolint on `deploy/Dockerfile`, builds the image (amd64), then checks it has `pdo_pgsql`, `redis`, `bcmath`, `intl`, Supervisor and the built assets, and no Telescope. |
+| `image` | same | hadolint on `deploy/Dockerfile`, builds the image (amd64), then checks it has `pdo_pgsql`, `redis`, `bcmath`, `intl`, `gd`, `exif`, Supervisor and the built assets, and no Telescope. |
 | `deploy-staging` | push to `staging`, after all three jobs pass | `POST` to the Coolify webhook, then a smoke test of `/api/health` (retries for about 5 minutes). |
 | `deploy-production` | push to `main`, after all three jobs pass | Same, behind the `production` environment, whose **required reviewers** are the manual approval step. |
 

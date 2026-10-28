@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Member;
+use App\Services\MemberPhotoService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,7 @@ class MemberSummaryResource extends JsonResource
             'preferred_name' => $this->preferred_name,
             'gender' => $this->gender,
             'phone' => $this->phone,
+            'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
             'status' => $this->status,
             'departments' => $this->whenLoaded('departments', fn () => $this->departments->pluck('name')->values()),
             'family_id' => $this->family_id,

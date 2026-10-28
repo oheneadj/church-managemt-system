@@ -28,6 +28,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');
         Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
         Route::patch('members/{member}/status', [MemberController::class, 'updateStatus'])->name('members.status');
+        Route::post('members/{member}/photo', [MemberController::class, 'uploadPhoto'])->middleware('throttle:uploads')->name('members.photo');
         Route::post('members/{member}/milestones', [MemberController::class, 'storeMilestone'])->name('members.milestones.store');
 
         Route::get('families', [FamilyController::class, 'index'])->name('families.index');

@@ -10,10 +10,12 @@ use App\Http\Requests\Members\StoreMemberRequest;
 use App\Http\Requests\Members\StoreMilestoneRequest;
 use App\Http\Requests\Members\UpdateMemberRequest;
 use App\Http\Requests\Members\UpdateMemberStatusRequest;
+use App\Http\Requests\Members\UploadMemberPhotoRequest;
 use App\Http\Resources\MemberMilestoneResource;
 use App\Http\Resources\MemberResource;
 use App\Http\Resources\MemberSummaryResource;
 use App\Models\Member;
+use App\Services\MemberPhotoService;
 use App\Services\MemberService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,7 +28,10 @@ use Illuminate\Support\Facades\Gate;
  */
 class MemberController extends Controller
 {
-    public function __construct(private readonly MemberService $members) {}
+    public function __construct(
+        private readonly MemberService $members,
+        private readonly MemberPhotoService $photos,
+    ) {}
 
     public function index(ListMembersRequest $request): AnonymousResourceCollection
     {
@@ -77,5 +82,14 @@ class MemberController extends Controller
         $milestone = $this->members->addMilestone($this->staff($request), $member, $request->validated());
 
         return (new MemberMilestoneResource($milestone))->response()->setStatusCode(201);
+    }
+
+    public function uploadPhoto(UploadMemberPhotoRequest $request, Member $member): JsonResponse
+    {
+        Gate::authorize('update', $member);
+
+        $this->photos->store($member, $request->file('photo'));
+
+        return response()->json(['photo_url' => $this->photos->url($member->photo_url)]);
     }
 }

@@ -581,6 +581,19 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-032 — Member photos: processed in the request, stored in the default disk
+**Date:** October 2026
+**Decided by:** Lead Engineer (reconciling `docs/08` with the "queue every outbound call" rule)
+**Status:** Active
+
+**Decision:** A member photo is validated, re-encoded to a 512 pixel JPEG and written to object storage during the upload request, using Laravel's image API (`intervention/image` ^4, GD). Writing to our own private R2 bucket is treated like a database write, not as a third-party API call, so it is not queued. The limits that make this safe are a 5 MB and 4096 pixel cap, a 20 per minute rate limit, and a fixed storage key per member so replacements leave nothing behind.
+
+**Rationale:** `docs/08` returns the new signed link in the upload response, which a queued job cannot do, and the rule against inline outbound calls exists for slow third-party services (SMS, payments), not our own storage. The file-upload pattern prefers a queue; if photo volume or size grows (for example batch imports), move processing to a job and return `202`.
+
+**Revisit when:** uploads are slow on the 3G target, or a bulk import of photos is built.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

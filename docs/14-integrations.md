@@ -566,28 +566,25 @@ churches/{church_id}/exports/{export_id}/members-{date}.csv
 
 ### Uploading a Photo
 
+`MemberPhotoService::store()` uses Laravel's image API (`Image::fromUpload()`, powered by `intervention/image` ^4 and the GD extension, with `exif` for rotation). It never stores the upload as received: it applies the camera rotation, crops to a 512 pixel square, encodes as JPEG at quality 82, and writes to the default disk, which is `r2` outside local development.
+
 ```php
-public function uploadPhoto(Member $member, UploadedFile $file): string
-{
-    $path = "churches/{$member->church_id}/members/{$member->id}/photo.jpg";
-
-    // No visibility argument: R2 has no object ACLs. The bucket is private and access is by signed URL only.
-    Storage::disk('r2')->put($path, file_get_contents($file->getRealPath()));
-
-    $member->update(['photo_url' => $path]);
-    return $path;
-}
+Image::fromUpload($file)->orient()->cover(512, 512)->toJpg()->quality(82)
+    ->storeAs("churches/{$member->church_id}/members/{$member->getKey()}", 'photo.jpg');
 ```
+
+Re-encoding drops EXIF (GPS positions) and anything hidden in the file, as `patterns/Pattern — File Uploads & Media.md` requires. R2 has no object ACLs, so there is no visibility argument: the bucket is private and access is by signed URL only. The key is fixed per member, so a new photo replaces the old one.
+
+The upload is processed inside the request, not on the queue: the file is capped at 5 MB and 4096 pixels, the endpoint is limited to 20 a minute, and the response has to carry the new signed link. Writing to object storage is treated like writing to the database, not as a third-party API call (D-032).
 
 ### Signed URLs (Time-Limited Access)
 
 Photos are private. Return a signed URL on every API response — valid for 1 hour:
 
 ```php
-// In MemberResource
-'photo_url' => $this->photo_url
-    ? Storage::disk('r2')->temporaryUrl($this->photo_url, now()->addHour())
-    : null,
+// In MemberResource and MemberSummaryResource, through MemberPhotoService::url()
+'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
+// which is Storage::temporaryUrl($path, now()->addMinutes(60)), or null when there is no photo
 ```
 
 ### Cost Estimate

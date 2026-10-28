@@ -41,7 +41,7 @@ USER root
 # Supervisor comes from the Debian release repo; pinning an apt version would break the build whenever Debian
 # replaces that package.
 # hadolint ignore=DL3008
-RUN install-php-extensions bcmath intl \
+RUN install-php-extensions bcmath intl gd exif \
     && apt-get update \
     && apt-get install -y --no-install-recommends supervisor \
     && rm -rf /var/lib/apt/lists/*
