@@ -239,8 +239,14 @@ Blocked: [anything blocking me / none]
 
 ## Current Sprint
 
-> **Sprint 1** — Foundation
-> Start: TBD (when scaffold begins)
-> End: TBD + 14 days
+> **Sprint 2** — Member Directory
+> Started: 2026-10-26 · Updated: 2026-10-28
+> Sprint 1 (Foundation) is done apart from the ops stories that need accounts and servers: 1.3 and 1.4 (Oracle and wildcard SSL), 1.6 (auto-deploy) and 1.10 (queue workers under Coolify). Docker files for them are written (D-029) but have not been built or deployed.
+
+| Done | Stories |
+|---|---|
+| Backend | 2.2 to 2.9 (members, policy, photo upload, resources, requests, families, departments, milestones) |
+| Frontend | 2.10 directory, 2.11 profile, 2.12 add/edit form, 2.13 family pages |
+| Still open | 2.1 church onboarding |
 
 Update this section at the start of each sprint.

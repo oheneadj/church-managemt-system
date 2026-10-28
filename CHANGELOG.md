@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### docs(roadmap): bring the current sprint up to date
+- **What:** The "Current Sprint" section of the roadmap said Sprint 1 with no dates. It now says Sprint 2, lists which stories are done, names the one still open (2.1 church onboarding) and records which Sprint 1 ops stories wait on accounts and servers. `composer audit` was re-run: no advisories (Packagist timed out, so it used the local cache).
+- **Why:** The agreement requires the current sprint to be checked at session start, so it has to be true.
+- **Files:** `docs/11-roadmap-and-sprints.md`
+- **Commit:** pending
+
 #### refactor(members): offer male and female only for gender
 - **What:** Removed "Other" from the gender list on both sides: the PHP `Gender` enum, the frontend `GENDERS` list, the data model doc and the committed OpenAPI spec. Added a test that the API rejects `gender: other`. The drift test that compares the two lists needed no change; it passes with both lists reduced. The unfinished edits that added a Visitor membership type and webp/avif photo types were reverted, because the server does not support them (a visitor is a separate record, docs/03; photos are jpg or png, D-032).
 - **Why:** Product decision from the project owner: gender is male or female. No stored member had "other", and the column is a plain string, so no migration is needed.
