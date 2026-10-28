@@ -124,9 +124,45 @@ jobs:
       - name: Dependency audit (fails on high severity)
         run: npm audit --audit-level=high
 
+  image:
+    name: Docker image (hadolint, build, smoke check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint the Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: deploy/Dockerfile
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          push: false
+          tags: chms:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The image must carry what production needs and nothing from --dev (Telescope), in every role.
+      - name: Smoke check the image
+        run: |
+          docker run --rm --entrypoint php chms:ci -m | grep -qx pdo_pgsql
+          docker run --rm --entrypoint php chms:ci -m | grep -qx redis
+          docker run --rm --entrypoint php chms:ci -m | grep -qx bcmath
+          docker run --rm --entrypoint php chms:ci -m | grep -qx intl
+          docker run --rm --entrypoint sh chms:ci -c 'test ! -d vendor/laravel/telescope && command -v supervisord'
+          docker run --rm --entrypoint sh chms:ci -c 'test -f public/build/manifest.json || test -f public/build/.vite/manifest.json'
+
   deploy-staging:
     name: Deploy to staging
-    needs: [backend, frontend]
+    needs: [backend, frontend, image]
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     environment: staging
@@ -150,7 +186,7 @@ jobs:
 
   deploy-production:
     name: Deploy to production
-    needs: [backend, frontend]
+    needs: [backend, frontend, image]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Required reviewers on this environment provide the manual approval step.

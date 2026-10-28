@@ -534,6 +534,19 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-029 — One image with runtime roles, deployed as three Coolify Applications
+**Date:** October 2026
+**Decided by:** Lead Engineer (from Coolify and serversideup/php documentation)
+**Status:** Active
+
+**Decision:** `deploy/Dockerfile` builds one image on `serversideup/php` (pinned tag). `CONTAINER_ROLE` (`web`, `worker`, `scheduler`) selects the process at start-up. It is deployed as three Coolify Applications, not Docker Compose. Only `web` runs migrations and seeding, from the start script, which always runs `env:check` first. Telescope is registered only in the `local` environment so a `--no-dev` image boots. Logs go to stderr as JSON. Queue workers run under Supervisor inside the `worker` container.
+
+**Rationale:** Coolify does not support rolling updates for Compose applications, and the Dockerfile build pack has no start-command override, so roles must be chosen by environment variable. One image keeps web, worker and scheduler on identical code.
+
+**Revisit when:** Coolify documents rolling updates for Compose, or worker load needs more than one container.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

@@ -114,7 +114,8 @@ return [
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
-            'formatter' => env('LOG_STDERR_FORMATTER'),
+            // Containers log to stderr so Coolify can show the output; LOG_FORMAT=json makes each line one record (docs/17).
+            'formatter' => env('LOG_FORMAT', 'default') === 'json' ? JsonFormatter::class : env('LOG_STDERR_FORMATTER'),
             'processors' => [PsrLogMessageProcessor::class],
         ],
 

@@ -1,0 +1,34 @@
+#!/bin/sh
+# Health check for all three roles; exit 0 means healthy. Coolify uses the image's HEALTHCHECK, and for the web
+# role it waits for this to pass before it switches traffic and removes the old container.
+set -u
+
+case "${CONTAINER_ROLE:-web}" in
+    web)
+        # Readiness, not just "nginx is up": database, cache, queue, storage and disk (GET /api/health).
+        # Docker reads 0 as healthy and 1 as unhealthy (2 is reserved), so curl's own exit codes are folded into 1.
+        curl --silent --fail --max-time 3 "http://localhost:${NGINX_HTTP_PORT:-8080}/api/health" > /dev/null 2>&1 || exit 1
+        exit 0
+        ;;
+    worker)
+        # Every program Supervisor manages must be RUNNING.
+        status="$(supervisorctl --configuration /etc/supervisor/supervisord.conf status 2>&1)" || exit 1
+        [ -n "$status" ] || exit 1
+        if printf '%s\n' "$status" | grep -qv 'RUNNING'; then
+            exit 1
+        fi
+        exit 0
+        ;;
+    scheduler)
+        # The "[s]" keeps this grep from matching its own command line.
+        for cmdline in /proc/[0-9]*/cmdline; do
+            if grep -qa '[s]chedule:work' "$cmdline" 2>/dev/null; then
+                exit 0
+            fi
+        done
+        exit 1
+        ;;
+    *)
+        exit 1
+        ;;
+esac
