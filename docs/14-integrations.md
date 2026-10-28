@@ -543,7 +543,7 @@ All emails are dispatched via `Mail::to(...)->queue(...)` — never `send()`.
 
 Package: `league/flysystem-aws-s3-v3`. It pulls in `aws/aws-sdk-php`, which unpacks to about 1 GB because it ships every AWS service; `composer.json` therefore prunes it to S3 only (`extra["aws/aws-sdk-php"] = ["S3"]` plus `Aws\Script\Composer\Composer::removeUnusedServices` on `pre-autoload-dump`), leaving about 37 MB.
 
-The disks are defined in `config/filesystems.php`: `r2` for live files and `r2-backup` for database backups (separate bucket, separate key pair, D-029 in `05-data-safety.md`'s spirit). Both follow Cloudflare's own SDK example: region `auto`, endpoint `https://<account id>.r2.cloudflarestorage.com` (`CLOUDFLARE_R2_URL`), virtual-hosted style by default (`CLOUDFLARE_R2_USE_PATH_STYLE=true` to switch), `visibility` `private`, and `throw` `true` so a failed upload raises instead of returning `false`. There is deliberately **no `url`** setting: the bucket is never public, so `Storage::url()` must not be used.
+The disks are defined in `config/filesystems.php`: `r2` for live files and `r2-backup` for database backups (a separate bucket and key pair, as `docs/05-data-safety.md` requires). Both follow Cloudflare's own SDK example: region `auto`, endpoint `https://<account id>.r2.cloudflarestorage.com` (`CLOUDFLARE_R2_URL`), virtual-hosted style by default (`CLOUDFLARE_R2_USE_PATH_STYLE=true` to switch), `visibility` `private`, and `throw` `true` so a failed upload raises instead of returning `false`. There is deliberately **no `url`** setting: the bucket is never public, so `Storage::url()` must not be used.
 
 ```env
 CLOUDFLARE_R2_URL=https://<account id>.r2.cloudflarestorage.com
