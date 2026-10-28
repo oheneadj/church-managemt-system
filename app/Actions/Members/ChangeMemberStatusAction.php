@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Members;
 
 use App\DTOs\Members\ChangeMemberStatusDTO;
+use App\Enums\StaffPermission;
 use App\Events\MemberStatusChanged;
 use App\Models\Member;
 use App\Repositories\MemberRepositoryInterface;
@@ -38,7 +39,7 @@ final class ChangeMemberStatusAction
 
             MemberStatusChanged::dispatch($member, $dto->actor, $previous, $dto->note);
 
-            return $this->members->loadDetail($member, $dto->actor->can('milestones.view'));
+            return $this->members->loadDetail($member, $dto->actor->can(StaffPermission::MilestonesView->value));
         });
     }
 }

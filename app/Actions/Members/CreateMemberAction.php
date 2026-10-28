@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Members;
 
 use App\DTOs\Members\CreateMemberDTO;
+use App\Enums\StaffPermission;
 use App\Events\MemberCreated;
 use App\Models\Member;
 use App\Repositories\MemberRepositoryInterface;
@@ -48,7 +49,7 @@ final class CreateMemberAction
 
             MemberCreated::dispatch($member, $dto->actor);
 
-            return $this->members->loadDetail($member, $dto->actor->can('milestones.view'));
+            return $this->members->loadDetail($member, $dto->actor->can(StaffPermission::MilestonesView->value));
         });
     }
 }

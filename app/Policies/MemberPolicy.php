@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\MemberStatus;
+use App\Enums\StaffPermission;
 use App\Models\Member;
 use App\Models\User;
 use App\Repositories\MemberRepositoryInterface;
@@ -33,7 +34,7 @@ class MemberPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('members.view');
+        return $user->hasPermissionTo(StaffPermission::MembersView);
     }
 
     /**
@@ -42,7 +43,7 @@ class MemberPolicy
     public function view(User $user, Member $member): bool
     {
         return $user->church_id === $member->church_id
-            && $user->hasPermissionTo('members.view')
+            && $user->hasPermissionTo(StaffPermission::MembersView)
             && $this->members->isVisibleTo($user, $member);
     }
 
@@ -51,14 +52,14 @@ class MemberPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('members.edit');
+        return $user->hasPermissionTo(StaffPermission::MembersEdit);
     }
 
     /** A deceased member's record is read-only (docs/03, Stage 4). */
     public function update(User $user, Member $member): bool
     {
         return $user->church_id === $member->church_id
-            && $user->hasPermissionTo('members.edit')
+            && $user->hasPermissionTo(StaffPermission::MembersEdit)
             && $member->status !== MemberStatus::Deceased
             && $this->view($user, $member);
     }
@@ -68,10 +69,10 @@ class MemberPolicy
      */
     public function changeStatus(User $user, Member $member, MemberStatus $target): bool
     {
-        if ($user->church_id !== $member->church_id || ! $user->hasPermissionTo('members.edit') || ! $this->view($user, $member)) {
+        if ($user->church_id !== $member->church_id || ! $user->hasPermissionTo(StaffPermission::MembersEdit) || ! $this->view($user, $member)) {
             return false;
         }
 
-        return in_array($target, self::LEAVING, true) ? $user->hasPermissionTo('members.deactivate') : true;
+        return in_array($target, self::LEAVING, true) ? $user->hasPermissionTo(StaffPermission::MembersDeactivate) : true;
     }
 }

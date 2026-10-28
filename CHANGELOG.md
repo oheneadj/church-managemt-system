@@ -52,6 +52,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
 
 ### Changed
+- Roles and permissions are now the `StaffRole` and `StaffPermission` enums, used by the seeder, policies, scopes and resources instead of bare strings
 - Every class and method now has a plain-language description docblock, as the agreement requires
 - API responses send a `_label` beside every enum value, nest Resources for related records, page lists through `MemberCollection`, `FamilyCollection` and `DepartmentCollection`, and show money through the new `Money` value object with a `_formatted` sibling (D-034)
 - Opening a member's full record is written to the change log as `viewed`, because it shows the encrypted address (D-034)

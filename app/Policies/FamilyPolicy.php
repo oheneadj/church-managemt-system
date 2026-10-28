@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\StaffPermission;
 use App\Models\Family;
 use App\Models\User;
 
@@ -17,7 +18,7 @@ class FamilyPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('members.view');
+        return $user->hasPermissionTo(StaffPermission::MembersView);
     }
 
     /**
@@ -25,7 +26,7 @@ class FamilyPolicy
      */
     public function view(User $user, Family $family): bool
     {
-        return $user->church_id === $family->church_id && $user->hasPermissionTo('members.view');
+        return $user->church_id === $family->church_id && $user->hasPermissionTo(StaffPermission::MembersView);
     }
 
     /**
@@ -33,7 +34,7 @@ class FamilyPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('members.edit');
+        return $user->hasPermissionTo(StaffPermission::MembersEdit);
     }
 
     /**
@@ -41,6 +42,6 @@ class FamilyPolicy
      */
     public function update(User $user, Family $family): bool
     {
-        return $user->church_id === $family->church_id && $user->hasPermissionTo('members.edit');
+        return $user->church_id === $family->church_id && $user->hasPermissionTo(StaffPermission::MembersEdit);
     }
 }

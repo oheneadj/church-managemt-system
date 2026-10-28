@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\StaffPermission;
 use App\Models\Department;
 use App\Models\User;
 
@@ -17,7 +18,7 @@ class DepartmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('members.view');
+        return $user->hasPermissionTo(StaffPermission::MembersView);
     }
 
     /**
@@ -25,7 +26,7 @@ class DepartmentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('members.edit');
+        return $user->hasPermissionTo(StaffPermission::MembersEdit);
     }
 
     /**
@@ -33,6 +34,6 @@ class DepartmentPolicy
      */
     public function update(User $user, Department $department): bool
     {
-        return $user->church_id === $department->church_id && $user->hasPermissionTo('members.edit');
+        return $user->church_id === $department->church_id && $user->hasPermissionTo(StaffPermission::MembersEdit);
     }
 }

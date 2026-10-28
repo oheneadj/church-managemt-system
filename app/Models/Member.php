@@ -10,6 +10,7 @@ use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
+use App\Enums\StaffRole;
 use App\Traits\BelongsToChurch;
 use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
@@ -187,21 +188,21 @@ class Member extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->hasAnyRole(['church-admin', 'pastor', 'finance-secretary'])) {
+        if ($user->hasAnyRole([StaffRole::ChurchAdmin, StaffRole::Pastor, StaffRole::FinanceSecretary])) {
             return;
         }
 
         $query->where(function (Builder $visible) use ($user): void {
-            if ($user->hasRole('department-head')) {
+            if ($user->hasRole(StaffRole::DepartmentHead)) {
                 $visible->orWhereHas('departments', fn (Builder $d) => $d->where('departments.head_user_id', $user->getKey()));
             }
 
-            if ($user->hasRole('youth-pastor')) {
+            if ($user->hasRole(StaffRole::YouthPastor)) {
                 $this->addYouthBranch($visible, app('current.church'));
             }
 
             // A user with neither role matches nothing.
-            if (! $user->hasAnyRole(['department-head', 'youth-pastor'])) {
+            if (! $user->hasAnyRole([StaffRole::DepartmentHead, StaffRole::YouthPastor])) {
                 $visible->whereIn('id', []);
             }
         });

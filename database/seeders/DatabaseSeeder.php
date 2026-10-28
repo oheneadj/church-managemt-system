@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\StaffRole;
 use App\Models\Church;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -30,6 +31,6 @@ class DatabaseSeeder extends Seeder
             ['church_id' => $church->id, 'phone' => '+233200000000'],
             ['name' => 'Demo Admin'],
         );
-        $admin->assignRole('church-admin');
+        $admin->assignRole(StaffRole::ChurchAdmin);
     }
 }

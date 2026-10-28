@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\StaffPermission;
 use App\Models\Member;
 use App\Services\MemberPhotoService;
 use App\Services\MemberSummaries;
@@ -60,7 +61,7 @@ class MemberResource extends JsonResource
             'departments' => $this->whenLoaded('departments', fn () => MemberDepartmentResource::collection($this->departments)),
             'milestones' => $this->whenLoaded('milestones', fn () => MemberMilestoneResource::collection($this->milestones)),
             'assigned_pastor' => $this->whenLoaded('assignedPastor', fn () => $this->assignedPastor === null ? null : new StaffSummaryResource($this->assignedPastor)),
-            'giving_summary' => $this->when($request->user()?->can('giving.summary') === true, fn () => new GivingSummaryResource(app(MemberSummaries::class)->giving($this->resource))),
+            'giving_summary' => $this->when($request->user()?->can(StaffPermission::GivingSummary->value) === true, fn () => new GivingSummaryResource(app(MemberSummaries::class)->giving($this->resource))),
             'attendance_summary' => app(MemberSummaries::class)->attendance($this->resource),
             'whatsapp_opted_in' => $this->whatsapp_opted_in,
             'sms_opted_in' => $this->sms_opted_in,
