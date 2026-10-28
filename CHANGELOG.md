@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(onboarding): let a new church start itself
+- **What:** Built the backend of story 2.1. Two public calls on the platform's own host: one texts a sign-up code to the phone of the person starting a church, the other creates the church (plan starter) and its first church-admin together, only if the code is right. The web address is typed or built from the church name; a taken one returns free alternatives and does not use up the code; names kept for the platform (www, api, admin, docs and others) are refused; a deleted church's address stays taken. The member number prefix is asked here. Sign-up codes reuse the sign-in code rules (hashed, 10 minutes, 5 tries, 15-minute lockout) under their own scope, and are limited per phone and per IP address. The shared code steps were split out of `OtpService` into `issue` and `check`. The platform host now serves the app page without needing a church. The code's text message is logged with no church, so `message_logs.church_id` is nullable (the down step deletes those rows). Recorded as D-037, with the QA-03 differences written into QA-03.
+- **Why:** Sprint 2 story 2.1, and nobody can use the system until a church can exist. Proving the phone first means no half-made churches and no squatting on addresses. The agreement requires atomic provisioning, a separate rate limit on cost-triggering calls, a committed OpenAPI spec and tests for every endpoint.
+- **Files:** `app/Actions/Onboarding/`, `app/DTOs/Onboarding/`, `app/Http/Controllers/Api/V1/Onboarding/`, `app/Http/Requests/Onboarding/`, `app/Http/Resources/ChurchRegisteredResource.php`, `app/Services/` (ChurchSlugGenerator, OnboardingOtpService, OtpService), `app/Exceptions/ChurchSlugTakenException.php`, `app/Events/ChurchRegistered.php`, `app/Listeners/LogChurchRegistered.php`, `app/Repositories/` (church and user: slug check, create), `app/DTOs/OutboundSms.php`, `app/Enums/RecipientType.php`, `app/Providers/AppServiceProvider.php`, `routes/api.php`, `routes/web.php`, `config/onboarding.php`, `config/limits.php`, `database/migrations/2026_10_28_141726_allow_platform_message_logs_on_message_logs_table.php`, `docs/openapi.json`, `docs/07-data-model.md`, `docs/08-api.md`, `docs/13-decision-log.md`, `docs/qa/QA-03-onboarding.md`, and new Pest tests (feature: request code and register church; unit: slug generator and register action; the SMS job test)
+- **Commit:** pending
+
 #### docs(roadmap): bring the current sprint up to date
 - **What:** The "Current Sprint" section of the roadmap said Sprint 1 with no dates. It now says Sprint 2, lists which stories are done, names the one still open (2.1 church onboarding) and records which Sprint 1 ops stories wait on accounts and servers. `composer audit` was re-run: no advisories (Packagist timed out, so it used the local cache).
 - **Why:** The agreement requires the current sprint to be checked at session start, so it has to be true.
@@ -274,6 +280,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `269d265` (2026-10-28)
 
 ### Added
+- Church onboarding (story 2.1): a public sign-up page where a church proves the admin's phone with a texted code, picks a web address and member number letters, and gets its first admin (D-037)
 - Family pages (story 2.13): a searchable list of families with a New family dialog, and a family view with its members and a rename option
 - Add and edit member form (story 2.12): three steps, checked one at a time, with the step in the URL and server messages beside their boxes
 - Member profile page (story 2.11): Profile, Giving and Attendance tabs, photo upload, status change with confirmation, and milestones

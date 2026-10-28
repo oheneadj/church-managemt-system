@@ -42,3 +42,17 @@ it('declares retry settings and a timeout', function (): void {
 
     expect($job->tries)->toBe(3)->and($job->timeout)->toBe(30)->and($job->backoff)->not->toBeEmpty();
 });
+
+it('logs a sign-up code that belongs to no church, and no church can see it', function (): void {
+    $provider = Mockery::mock(SmsProvider::class);
+    $provider->shouldReceive('send')->once();
+    $sms = new OutboundSms(null, '+233244300001', 'Your code is 123456', 'onboarding_otp', RecipientType::Applicant, null, '[otp redacted]');
+
+    (new SendSmsJob($sms))->handle($provider, app(MessageLogRepositoryInterface::class));
+
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+
+    expect(MessageLog::query()->withoutGlobalScopes()->whereNull('church_id')->count())->toBe(1)
+        ->and(MessageLog::query()->count())->toBe(0);
+});

@@ -127,6 +127,20 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Starting a church texts a code to a stranger's phone, so it is limited per number and per IP address.
+        RateLimiter::for('onboarding-otp', function (Request $request): array {
+            $phone = PhoneNumber::tryFrom((string) $request->input('admin_phone'))->e164 ?? 'invalid';
+            $key = 'onboarding:'.hash('sha256', $phone);
+
+            return [
+                Limit::perMinute(config('limits.onboarding_otp_per_minute'))->by($key),
+                Limit::perHour(config('limits.onboarding_otp_per_hour'))->by($key),
+                Limit::perHour(config('limits.onboarding_otp_per_hour_per_ip'))->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('onboarding-register', fn (Request $request) => Limit::perHour(config('limits.onboarding_register_per_hour_per_ip'))->by($request->ip()));
+
         // Uploads are CPU heavy (every photo is re-encoded), so they get a tighter limit than other calls.
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(config('limits.uploads_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 

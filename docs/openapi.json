@@ -638,6 +638,41 @@
                 }
             }
         },
+        "/v1/onboarding/churches": {
+            "post": {
+                "operationId": "onboarding.churches.store",
+                "summary": "Runs RegisterChurchAction for this request and returns the ChurchRegisteredResource with 201",
+                "tags": [
+                    "RegisterChurch"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterChurchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ChurchRegisteredResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChurchRegisteredResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/departments/{department}/members/{member}": {
             "delete": {
                 "operationId": "departments.members.remove",
@@ -682,6 +717,41 @@
                         "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
+            }
+        },
+        "/v1/onboarding/otp": {
+            "post": {
+                "operationId": "onboarding.otp",
+                "summary": "Runs RequestChurchOtpAction for this request and returns the OtpRequestedResource",
+                "tags": [
+                    "RequestChurchOtp"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestChurchOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OtpRequestedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpRequestedResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
             }
         },
         "/v1/auth/otp/request": {
@@ -1225,6 +1295,65 @@
                     "member_id"
                 ],
                 "title": "AddDepartmentMemberRequest"
+            },
+            "ChurchRegisteredResource": {
+                "type": "object",
+                "properties": {
+                    "church": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "member_number_prefix": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "url": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "slug",
+                            "member_number_prefix",
+                            "url"
+                        ]
+                    },
+                    "admin": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "login_url": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "church",
+                    "admin",
+                    "login_url"
+                ],
+                "title": "ChurchRegisteredResource"
             },
             "ChurchResource": {
                 "type": "object",
@@ -2272,6 +2401,77 @@
                     "expires_in"
                 ],
                 "title": "OtpRequestedResource"
+            },
+            "RegisterChurchRequest": {
+                "type": "object",
+                "description": "Validates the sign-up of a new church: its name, web address, member number prefix, first admin and the\ncode texted to that admin's phone.",
+                "properties": {
+                    "church_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                        "minLength": 3,
+                        "maxLength": 40
+                    },
+                    "denomination": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "member_number_prefix": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 6
+                    },
+                    "admin_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "admin_phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "otp": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "church_name",
+                    "member_number_prefix",
+                    "admin_name",
+                    "admin_phone",
+                    "otp"
+                ],
+                "title": "RegisterChurchRequest"
+            },
+            "RequestChurchOtpRequest": {
+                "type": "object",
+                "description": "Validates the request to text a sign-up code to the phone of the person starting a church.",
+                "properties": {
+                    "admin_phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    }
+                },
+                "required": [
+                    "admin_phone"
+                ],
+                "title": "RequestChurchOtpRequest"
             },
             "RequestOtpRequest": {
                 "type": "object",

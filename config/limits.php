@@ -18,6 +18,12 @@ return [
     'otp_request_per_hour_per_ip' => 20,
     'otp_verify_per_minute_per_ip' => 10,
 
+    // Starting a church sends a code to a stranger's phone, so it is limited like sign-in: tightly per number and per IP address.
+    'onboarding_otp_per_minute' => 1,
+    'onboarding_otp_per_hour' => 3,
+    'onboarding_otp_per_hour_per_ip' => 10,
+    'onboarding_register_per_hour_per_ip' => 10,
+
     /*
     |--------------------------------------------------------------------------
     | Page size

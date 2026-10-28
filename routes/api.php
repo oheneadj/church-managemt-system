@@ -22,10 +22,19 @@ use App\Http\Controllers\Api\V1\Members\StoreMemberMilestoneController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
 use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
+use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
+use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API routes (prefix /api/v1, set in bootstrap/app.php).
 // Every group must use the 'tenant' middleware; see docs/08-api.md.
+
+// Starting a church happens on the platform's own host (the bare base domain), before any church exists, so
+// these routes sit outside the 'tenant' group and are not reachable on a church's subdomain.
+Route::domain(config('tenancy.base_domain'))->prefix('onboarding')->name('onboarding.')->group(function (): void {
+    Route::post('otp', RequestChurchOtpController::class)->middleware('throttle:onboarding-otp')->name('otp');
+    Route::post('churches', RegisterChurchController::class)->middleware('throttle:onboarding-register')->name('churches.store');
+});
 
 Route::middleware('tenant')->group(function (): void {
     // Public: sign-in. Both are rate limited; the request limiter also protects SMS cost.

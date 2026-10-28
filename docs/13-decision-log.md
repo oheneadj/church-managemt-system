@@ -663,6 +663,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-037 — How a church is started
+**Date:** October 2026
+**Decided by:** Product Owner (phone check and reserved names), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **The phone is proven before anything is created.** The person asks for a code on the platform host, then sends the church details with the code; the church and its first admin are created in one transaction only if the code is right. Nothing half-made is ever stored, and no one can hold a web address without owning a phone. (QA-03 TC-03-01 describes creating a "pending" church first; this order replaces it, so there is no pending state to clean up.)
+2. **Sign-up codes use the same rules as sign-in codes** (hashed, 10 minutes, 5 tries, 15-minute lockout) under their own scope. They are limited more tightly because they text a stranger: 1 a minute and 3 an hour per phone, 10 an hour per IP.
+3. **The web address** is typed or built from the church name. It is lowercase letters, numbers and single hyphens, 3 to 40 characters. Names kept for the platform (`www`, `api`, `admin`, `docs` and others in `config/onboarding.php`) are refused. A taken typed address returns free alternatives and does not use up the code. A deleted church's address stays taken.
+4. **The member number prefix** (2 to 6 letters) is asked at sign-up, as D-030 decided.
+5. **After creating the church the admin signs in on the new address with a new code**, because a session cookie belongs to one host (D-027). Handing a session from the platform host to the church host would need a one-time link; it is left out until it is wanted. (QA-03 TC-03-01 expects the admin to be signed in straight away.)
+6. **The sign-up code's text message is logged with no church**, so `message_logs.church_id` is now nullable. Rolling that migration back deletes those rows.
+7. **Left for later stories:** the bank or MoMo payout details and Paystack subaccount (story 4.1, QA-03 TC-03-05), inviting a second admin (story 5.15; the sign-up page only recommends it, as TC-03-06 allows), and a welcome email (the platform has no email sender yet).
+
+**Rationale:** The agreement requires provisioning to be atomic (section 34) and every cost-triggering endpoint to be separately rate limited (section 16). Proving the phone first keeps abusive sign-ups cheap to refuse.
+
+**Revisit when:** a one-time sign-in link is wanted, or churches can be started by the platform's own staff.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

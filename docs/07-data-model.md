@@ -428,9 +428,9 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
-| `church_id` | CHAR(26) | No | FK → churches |
+| `church_id` | CHAR(26) | Yes | FK → churches. Null only for a platform message sent before a church exists (the sign-up code); church screens never see those rows (D-037). |
 | `channel` | VARCHAR(30) | No | `MessageChannel`: sms, whatsapp, email. |
-| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor. |
+| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church). |
 | `recipient_id` | CHAR(26) | Yes | FK to the relevant table |
 | `recipient_phone` | VARCHAR(20) | Yes | |
 | `recipient_email` | VARCHAR(255) | Yes | |

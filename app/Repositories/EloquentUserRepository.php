@@ -18,4 +18,14 @@ class EloquentUserRepository implements UserRepositoryInterface
     {
         return User::query()->where('phone', $phone)->where('is_active', true)->first();
     }
+
+    /**
+     * Adds a staff user.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): User
+    {
+        return User::query()->create($attributes);
+    }
 }

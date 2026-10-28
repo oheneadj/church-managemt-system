@@ -36,6 +36,25 @@ class EloquentChurchRepository implements ChurchRepositoryInterface
     }
 
     /**
+     * Whether a church, including a deleted one, already holds this subdomain slug. A deleted church still owns
+     * its row, and the unique index covers it.
+     */
+    public function slugExists(string $slug): bool
+    {
+        return Church::query()->withTrashed()->where('slug', $slug)->exists();
+    }
+
+    /**
+     * Adds a church.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): Church
+    {
+        return Church::query()->create($attributes);
+    }
+
+    /**
      * Moves the member number counter forward by one.
      */
     public function incrementMemberNumberSequence(Church $church): Church

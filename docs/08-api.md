@@ -106,6 +106,58 @@ All authenticated endpoints accept **either**:
 
 ---
 
+## Onboarding Endpoints (start a church)
+
+These two calls go to the **platform's own host** (`https://yourapp.com/api/v1/...`, no church subdomain), because no church exists yet. On a church subdomain they answer `404`. They need no sign-in.
+
+### Request a sign-up code
+```
+POST /api/v1/onboarding/otp
+```
+
+**Body:** `{ "admin_phone": "+233244300001" }` (a local number such as `0244300001` is accepted).
+
+**Response `200`:** `{ "message": "OTP sent", "expires_in": 600 }`
+
+**Rate limit:** 1 per phone per minute, 3 per phone per hour, 10 per IP per hour. The code is texted on the `critical` queue; it proves the person owns the phone (D-037).
+
+### Start a church
+```
+POST /api/v1/onboarding/churches
+```
+
+**Body:**
+```json
+{
+  "church_name": "Victory Chapel International",
+  "slug": "victory-chapel",
+  "denomination": "Pentecostal",
+  "city": "Kumasi",
+  "member_number_prefix": "VCI",
+  "admin_name": "Kofi Mensah",
+  "admin_phone": "+233244300001",
+  "otp": "123456"
+}
+```
+`slug`, `denomination` and `city` are optional. Without a `slug` the address is built from the church name (`grace-assembly`, then `grace-assembly-2` if taken). A typed `slug` is lowercase letters, numbers and single hyphens, 3 to 40 characters, and not one of the names kept for the platform (`config/onboarding.php`). `member_number_prefix` is 2 to 6 letters and is stored in capitals.
+
+**Response `201`:**
+```json
+{
+  "church": { "id": "ulid", "name": "Victory Chapel International", "slug": "victory-chapel", "member_number_prefix": "VCI", "url": "https://victory-chapel.yourapp.com" },
+  "admin": { "id": "ulid", "name": "Kofi Mensah" },
+  "login_url": "https://victory-chapel.yourapp.com/login"
+}
+```
+
+The church (plan `starter`, no payment) and its first admin (role `church-admin`) are created together, or not at all. The admin then signs in on `login_url` with a new code.
+
+**Errors:** `422` with `{"message": "Invalid code"}` for a wrong, used or expired code; `429` after five wrong codes for a phone (15-minute lockout); `422` on `slug` when the address is taken, with free alternatives in the message (the code is not used up); `422` per field for the rest.
+
+**Rate limit:** 10 per IP per hour.
+
+---
+
 ## Auth Endpoints
 
 ### Request OTP
@@ -989,6 +1041,8 @@ Handled message types: `text` (for CHECKIN command parsing), `status` (delivery 
 |---|---|
 | `POST /api/v1/auth/otp/request` | 1 per phone per minute, 5 per phone per hour, 20 per IP per hour |
 | `POST /api/v1/auth/otp/verify` | 5 wrong codes per phone, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |
+| `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | All other authenticated endpoints | 300 per minute per token |
 

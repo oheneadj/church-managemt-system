@@ -14,6 +14,15 @@
 
 ---
 
+## How v1 differs from these cases (D-037)
+
+- **TC-03-01:** the phone is proven *before* the church exists, so there is no `pending_onboarding` church. After creating it the admin signs in on the new address with a new code instead of being signed in straight away. The field is `admin_phone`, and the sign-up page is on the platform host.
+- **TC-03-02:** the error is `422` on `slug` with free alternatives such as `grace-assembly-gh`.
+- **TC-03-05, TC-07-01:** the Paystack subaccount and payout details come with story 4.1, not sign-up.
+- **TC-03-06:** the sign-up result recommends a second admin; inviting one is story 5.15.
+
+---
+
 ## Test Cases
 
 ### TC-03-01 — Successful church signup

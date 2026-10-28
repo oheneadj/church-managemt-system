@@ -30,4 +30,16 @@ interface ChurchRepositoryInterface
      * The church with this custom domain, if any.
      */
     public function findByCustomDomain(string $domain): ?Church;
+
+    /**
+     * Whether a church, including a deleted one, already holds this subdomain slug.
+     */
+    public function slugExists(string $slug): bool;
+
+    /**
+     * Adds a church.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): Church;
 }
