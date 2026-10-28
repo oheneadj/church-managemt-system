@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\MemberDepartmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Pivot row linking a member to a department, with their role there.
+ *
+ * @property string $department_id
+ * @property string $member_id
+ * @property string|null $role
+ * @property CarbonImmutable|null $joined_at
  */
 class MemberDepartment extends Model
 {

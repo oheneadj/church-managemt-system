@@ -17,6 +17,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * A ministry department such as the choir or ushers.
  *
+ * @property string $id
+ * @property string $church_id
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $head_user_id
+ * @property bool $is_active
  * @property Pivot|null $pivot the member_departments row, when loaded through a member
  */
 class Department extends Model

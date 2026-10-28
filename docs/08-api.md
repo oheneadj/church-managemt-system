@@ -882,18 +882,27 @@ Permission: `church-admin` only.
 
 ## Departments
 
-### List / Create / Update
+Permissions: `members.view` to list, `members.edit` for everything else. A department of another church returns `404`.
+
+### List Departments
 ```
-GET    /api/v1/departments
-POST   /api/v1/departments
-PUT    /api/v1/departments/{id}
+GET /api/v1/departments
 ```
+**Query params:** `is_active` (`0` or `1`), `per_page` (1 to 100, default 25). Paginated, ordered by name. Each department has `id`, `name`, `description`, `head_user_id`, `is_active` and `members_count`; the count only includes members the caller may see (D-031).
+
+### Create / Update
+```
+POST /api/v1/departments
+PUT  /api/v1/departments/{id}
+```
+**Body:** `name` (required on create, unique among this church's departments), `description`, `head_user_id` (an active staff member of this church), `is_active`. Update accepts any subset; `is_active: false` retires a department. **Response:** `201` on create, `200` on update, with the department.
 
 ### Add / Remove Member from Department
 ```
 POST   /api/v1/departments/{id}/members   { "member_id": "ulid", "role": "Member" }
 DELETE /api/v1/departments/{id}/members/{member_id}
 ```
+Adding returns `201` with `{ "data": { "department_id", "member_id", "role", "joined_at" } }`. If the member already serves in the department their role is changed and the reply is `200`, so a retried request is harmless. `member_id` must belong to this church (`422` otherwise). Removing returns `204` and soft deletes the link so the history is kept; `404` if the member is not in the department. A member can also be placed in departments with `department_ids` on Create Member and Update Member.
 
 ---
 

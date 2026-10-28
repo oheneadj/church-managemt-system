@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
+use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\FamilyController;
 use App\Http\Controllers\Api\V1\MemberController;
 use Illuminate\Support\Facades\Route;
@@ -32,5 +33,11 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('families', [FamilyController::class, 'store'])->name('families.store');
         Route::get('families/{family}', [FamilyController::class, 'show'])->name('families.show');
         Route::put('families/{family}', [FamilyController::class, 'update'])->name('families.update');
+
+        Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
+        Route::post('departments', [DepartmentController::class, 'store'])->name('departments.store');
+        Route::put('departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+        Route::post('departments/{department}/members', [DepartmentController::class, 'addMember'])->name('departments.members.add');
+        Route::delete('departments/{department}/members/{member}', [DepartmentController::class, 'removeMember'])->name('departments.members.remove');
     });
 });
