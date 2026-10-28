@@ -26,6 +26,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - React 19 SPA in `resources/js` served through one Blade shell (`/{any?}` catch-all, 404 for unknown churches): passwordless OTP sign-in (React Hook Form + Zod), auth guard, sidebar app layout, church context and a dashboard placeholder. Sessions are httpOnly Sanctum cookies, so a refresh keeps the user signed in; bearer tokens remain for non-browser clients (D-027)
 - Vitest + Testing Library suite (16 tests), ESLint 9 with jsx-a11y and react-hooks, Prettier, strict TypeScript
 - shadcn/ui primitives (button, input, label, card) and the Tailwind v4 theme
+- `GET /api/health` readiness probe (database, cache, queue, storage, disk) and Laravel's `/up` liveness probe; `X-Request-ID` on every response with the id, church and user added to log context and queued jobs; JSON log format for production; `php artisan env:check` and a fail-fast guard so a misconfigured deploy stops at start-up
+- `.env.example` rewritten for this stack (PostgreSQL, Redis, tenancy, SMS, health)
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
 
 ### Fixed

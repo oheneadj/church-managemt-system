@@ -6,16 +6,20 @@ namespace App\Providers;
 
 use App\Http\Middleware\ResolveTenant;
 use App\Models\PersonalAccessToken;
+use App\Services\HealthCheck;
+use App\Support\EnvironmentCheck;
 use App\ValueObjects\PhoneNumber;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(HealthCheck::class, fn () => HealthCheck::standard());
     }
 
     /**
@@ -38,8 +42,30 @@ class AppServiceProvider extends ServiceProvider
         // I fail loudly in dev and tests so an N+1 query is caught before it reaches production.
         Model::preventLazyLoading(! $this->app->isProduction());
 
+        $this->failFastOnBadEnvironment();
         $this->resolveTenantFirst();
+
+        // Every log line says which service and environment wrote it, as the JSON log format requires.
+        Context::add('service', 'chms');
+        Context::add('environment', $this->app->environment());
         $this->configureRateLimiting();
+    }
+
+    /**
+     * Stops a deployed web request from running on a broken configuration. Console commands are exempt
+     * so the image can be built without production secrets; the container runs `env:check` at start-up.
+     */
+    private function failFastOnBadEnvironment(): void
+    {
+        if ($this->app->runningInConsole() || ! $this->app->environment(['production', 'staging'])) {
+            return;
+        }
+
+        $problems = EnvironmentCheck::problems($this->app->make('config'));
+
+        if ($problems !== []) {
+            throw new RuntimeException('The environment is misconfigured: '.implode(' ', $problems));
+        }
     }
 
     /**

@@ -343,6 +343,9 @@ Coolify runs the app's deploy script after pulling the new image:
 #!/bin/bash
 set -e
 
+echo "=== Checking the environment ==="
+php artisan env:check
+
 echo "=== Running migrations ==="
 php artisan migrate --force
 
@@ -367,17 +370,7 @@ Coolify uses a rolling restart strategy with Docker:
 4. Switches Nginx upstream to new container
 5. Stops old container
 
-**The `/api/health` endpoint:**
-```php
-Route::get('/health', function () {
-    return response()->json([
-        'status'    => 'ok',
-        'db'        => DB::connection()->getPdo() ? 'ok' : 'error',
-        'redis'     => Redis::ping() === 'PONG' ? 'ok' : 'error',
-        'timestamp' => now()->toIso8601String(),
-    ]);
-}); // No auth middleware — health check must be publicly reachable
-```
+**The `/api/health` endpoint** (`HealthController`, `HealthCheck` service): public, unversioned, no tenant. It runs `database`, `cache`, `queue`, `storage` and `disk` checks and returns `200 {status:"ok", checks:{...}}` or `503 {status:"degraded", ...}`. Each check reports only `ok` or `error`; the reason goes to the log. Laravel's built-in `GET /up` is the liveness probe (is the process running?), `/api/health` is readiness (can it serve?). The `disk` check fails when less than `HEALTH_MIN_FREE_DISK_PERCENT` (default 10) of the disk holding `storage/` is free.
 
 ---
 

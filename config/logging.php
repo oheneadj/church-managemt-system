@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -73,6 +74,8 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            // Production sets LOG_FORMAT=json so each line is one machine-readable record (docs/17).
+            'formatter' => env('LOG_FORMAT', 'default') === 'json' ? JsonFormatter::class : 'default',
         ],
 
         'monthly' => [

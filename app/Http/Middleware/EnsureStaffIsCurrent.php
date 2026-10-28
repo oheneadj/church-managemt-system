@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Services\AuthSessionService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -34,6 +35,8 @@ class EnsureStaffIsCurrent
 
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
+
+        Context::add('user_id', $user->getKey());
 
         return $next($request);
     }

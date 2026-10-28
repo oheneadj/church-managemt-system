@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Models\Church;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -24,6 +25,8 @@ class ResolveTenant
         }
 
         app()->instance('current.church', $church);
+        // The church id is an opaque ULID, so it is safe in logs and lets support filter one church's activity.
+        Context::add('church_id', $church->getKey());
 
         return $next($request);
     }
