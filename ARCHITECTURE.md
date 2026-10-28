@@ -42,20 +42,20 @@ Side effects         app/Events, app/Listeners, app/Jobs   events are fired by A
 Outside world        app/Contracts + app/Services/<Area>   third parties sit behind an interface
 ```
 
-| Layer | Owns | Must never contain |
-|---|---|---|
-| Controller | HTTP in and out: one `__invoke`, one Action call | Business rules, queries, validation, authorisation, `$request->validate()` |
-| Form Request | Validation, input normalisation (phone numbers), `authorize()` delegating to a Policy | Business logic, hard-coded role checks |
-| DTO | The typed data one operation needs, built by `fromRequest()` | Behaviour beyond mapping its own fields |
-| Action | One operation, `final`, a single public `execute()`, `DB::transaction()`, firing events | `$request`, HTTP responses, queries (use a Repository), calls to other Actions |
-| Service | Rules reused by several Actions (member numbers, family rules, photo processing) | Transactions, `$request`, HTTP, provider SDKs |
-| Repository | All Eloquent queries for one model; interface plus `Eloquent…` class, bound in `RepositoryServiceProvider` | Business rules |
-| Model | Casts, relationships, scopes, fillable list | Business logic, HTTP, queues |
-| Resource | The exact shape of each API response | Queries (use `whenLoaded`), authorisation decisions |
-| Event / Listener | One side effect per listener; the audit line for a member change | Anything that must finish before the Action returns, unless it runs inside the transaction on purpose |
-| Job | One unit of async work with `tries`, `timeout`, `backoff`, `failed()` | Anything that must finish before the response |
-| Contract + driver | One third-party capability behind an interface, chosen by config | Provider-specific errors or shapes leaking out |
-| Policy | Authorisation decisions only | Everything else |
+| Layer             | Owns                                                                                                       | Must never contain                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Controller        | HTTP in and out: one `__invoke`, one Action call                                                           | Business rules, queries, validation, authorisation, `$request->validate()`                            |
+| Form Request      | Validation, input normalisation (phone numbers), `authorize()` delegating to a Policy                      | Business logic, hard-coded role checks                                                                |
+| DTO               | The typed data one operation needs, built by `fromRequest()`                                               | Behaviour beyond mapping its own fields                                                               |
+| Action            | One operation, `final`, a single public `execute()`, `DB::transaction()`, firing events                    | `$request`, HTTP responses, queries (use a Repository), calls to other Actions                        |
+| Service           | Rules reused by several Actions (member numbers, family rules, photo processing)                           | Transactions, `$request`, HTTP, provider SDKs                                                         |
+| Repository        | All Eloquent queries for one model; interface plus `Eloquent…` class, bound in `RepositoryServiceProvider` | Business rules                                                                                        |
+| Model             | Casts, relationships, scopes, fillable list                                                                | Business logic, HTTP, queues                                                                          |
+| Resource          | The exact shape of each API response                                                                       | Queries (use `whenLoaded`), authorisation decisions                                                   |
+| Event / Listener  | One side effect per listener; the audit line for a member change                                           | Anything that must finish before the Action returns, unless it runs inside the transaction on purpose |
+| Job               | One unit of async work with `tries`, `timeout`, `backoff`, `failed()`                                      | Anything that must finish before the response                                                         |
+| Contract + driver | One third-party capability behind an interface, chosen by config                                           | Provider-specific errors or shapes leaking out                                                        |
+| Policy            | Authorisation decisions only                                                                               | Everything else                                                                                       |
 
 Names follow the addendum: `CreateMemberAction`, `CreateMemberDTO`, `MemberRepositoryInterface` and `EloquentMemberRepository`. A controller never calls a Repository, and an Action never calls another Action; shared steps become a Service. A model reaches an Action through explicit route model binding (`AppServiceProvider::boot`), and another church's id is a 404 because the church scope hides it. Unit tests for Actions and Services use mocked repositories and no database (`tests/Unit`); Feature tests cover each endpoint end to end.
 
@@ -95,29 +95,35 @@ An interface in `app/Contracts` (`SmsProvider`), a driver in `app/Services/<Area
 ## Frontend layers (`resources/js`)
 
 ```
-pages/          one component per route; thin, reads stores and hooks
-components/     layout/ (shell, guard) and ui/ (shadcn/ui primitives); render and emit events only
-hooks/          reusable logic: useSignIn, useSignOut (TanStack Query mutations)
-services/api/   the only place HTTP is called; typed functions returning unwrapped data
+pages/          one component per route; thin, reads hooks and composes components (lazy loaded)
+components/     layout/ (shell, guard), ui/ (shadcn primitives and our generic pieces such as PageHeader,
+                Pagination, EmptyState, ConfirmDialog, MoneyDisplay), form/ (labelled fields for React Hook Form),
+                and one folder per feature (Members/) for pieces used by that feature only
+hooks/          reusable logic: queries (useMembers), mutations (useMemberMutations), URL state (useMemberFilters), useCan
+services/api/   the only place HTTP is called; typed functions returning unwrapped data (members, families, departments)
 services/index  the one axios instance: cookies, CSRF handshake, error normalisation
 stores/         Zustand: client state only (auth user, church); never server data
-lib/            queryClient, restoreSession, small utilities
-constants/      ROUTES and other values used in more than one place
-types/          API shapes mirrored from the backend
+lib/            queryClient, restoreSession
+constants/      ROUTES, QUERY_KEYS, and mirrors of backend enums (enums.ts) and permissions (permissions.ts)
+types/          API shapes mirrored from the backend (api.ts, members.ts)
+utils/          small pure helpers (initialsOf)
+test/           render helper and data fixtures shared by the tests
 router/         every route in one file, pages lazy loaded, guard wrapping private routes
 ```
+
+A backend test (`FrontendEnumsTest`) fails when a mirrored enum list drifts from its PHP enum. The production build fails when a script passes 180 kB gzipped (`vite.config.ts`).
 
 Server data lives in TanStack Query. Filters and pagination belong in the URL. Money is formatted in one place only (a `MoneyDisplay` component, when money first appears). The session is a cookie the browser holds; JavaScript never sees a credential.
 
 ## Where things go
 
-| You are adding | It goes in |
-|---|---|
-| An endpoint | `routes/api.php` (inside the `tenant` group), a single-action controller, a Form Request that authorises through a Policy, a DTO, an Action, a Repository method if it needs a new query, a Resource, and tests: a unit test for the Action and Feature tests including cross-tenant |
-| A table | A migration with a working `down()`, a model with `BelongsToChurch` + `HasUlids` + `SoftDeletes`, a factory, and `docs/07-data-model.md` |
-| A fixed set of values | An enum in `app/Enums` with `label()`, mirrored in `resources/js/types` |
-| A call to an outside service | A contract, a driver, a queued job, and a row in `message_logs` or the relevant log table |
-| A screen | A lazy page in `pages/`, a route in `router/index.tsx` and `constants/routes.ts`, hooks for its data, tests |
+| You are adding               | It goes in                                                                                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| An endpoint                  | `routes/api.php` (inside the `tenant` group), a single-action controller, a Form Request that authorises through a Policy, a DTO, an Action, a Repository method if it needs a new query, a Resource, and tests: a unit test for the Action and Feature tests including cross-tenant |
+| A table                      | A migration with a working `down()`, a model with `BelongsToChurch` + `HasUlids` + `SoftDeletes`, a factory, and `docs/07-data-model.md`                                                                                                                                             |
+| A fixed set of values        | An enum in `app/Enums` with `label()`, mirrored in `resources/js/types`                                                                                                                                                                                                              |
+| A call to an outside service | A contract, a driver, a queued job, and a row in `message_logs` or the relevant log table                                                                                                                                                                                            |
+| A screen                     | A lazy page in `pages/`, a route in `router/index.tsx` and `constants/routes.ts`, hooks for its data, tests                                                                                                                                                                          |
 
 ## Checks that must pass before anything is done
 

@@ -5,7 +5,10 @@ import { useSignOut } from '@/hooks/useSignOut';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useChurchStore } from '@/stores/useChurchStore';
 
-const NAV_ITEMS = [{ label: 'Dashboard', to: ROUTES.DASHBOARD }] as const;
+const NAV_ITEMS = [
+    { label: 'Dashboard', to: ROUTES.DASHBOARD },
+    { label: 'Members', to: ROUTES.MEMBERS },
+] as const;
 
 /**
  * The signed-in shell: a sidebar for navigation and a header with the church and the sign-out button.

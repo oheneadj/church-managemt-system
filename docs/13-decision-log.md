@@ -643,6 +643,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-036 — How the member screens are built
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the React addendum and `docs/patterns/Pattern — State Management.md`
+**Status:** Active
+
+**Decision:**
+1. **Filters and the page number live in the URL** (`useMemberFilters`), so a refresh, the back button and a shared link show the same view. Unknown values in the URL are ignored.
+2. **Search runs when the user presses Search or Enter**, not on every key press, which is gentler on a slow connection and needs no timer.
+3. **Drop-downs are the browser's own `<select>`**, which is the easiest control on a cheap phone and fully accessible. The generated shadcn Select is not used.
+4. **Buttons are hidden by permission** (`useCan`) for a cleaner screen; the API still answers 403, which is what actually protects the data.
+5. **Money is never calculated in the browser.** `MoneyDisplay` shows the `_formatted` text the API sends.
+6. **Backend enums and permissions are mirrored** in `constants/enums.ts` and `constants/permissions.ts`, guarded by a backend test so they cannot drift.
+7. **UI parts come from the official shadcn registry** (`npx shadcn add`) and are formatted to the project style. `next-themes`, which the toast wrapper wanted, was dropped because the app has no theme switch.
+
+**Rationale:** Each point follows the React addendum (state in the right place, no business logic in components, no magic strings) and the agreement's accessibility and mobile-first rules.
+
+**Revisit when:** a theme switch is added, or a list gets long enough to need virtualisation.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
