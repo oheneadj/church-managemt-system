@@ -16,6 +16,7 @@ function goodConfig(array $overrides = []): Repository
         'trustedproxy' => ['proxies' => ['10.0.0.0/8']],
         'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender']],
         'filesystems' => ['default' => 'r2'],
+        'sentry' => ['dsn' => 'https://key@o0.ingest.sentry.io/1'],
     ];
 
     return new Repository(array_replace_recursive($base, $overrides));
@@ -46,7 +47,7 @@ it('rejects unsafe values', function (): void {
         'trustedproxy' => ['proxies' => ['*']],
     ]));
 
-    expect($problems)->toHaveCount(6);
+    expect($problems)->toHaveCount(6); // the bad config sets six wrong values; the Sentry DSN is still set
 });
 
 it('requires HTTPS and secure cookies, because TLS ends at the proxy', function (): void {
@@ -74,3 +75,9 @@ it('requires the PayPerlez key and sender id when PayPerlez sends the SMS', func
 
     expect($problems)->toBe(['PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".']);
 })->with(['api_key', 'sender_id']);
+
+it('requires the error monitor DSN outside development', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['sentry' => ['dsn' => '']]));
+
+    expect($problems)->toBe(['SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.']);
+});

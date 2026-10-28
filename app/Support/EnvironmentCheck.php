@@ -72,6 +72,10 @@ final class EnvironmentCheck
             $problems[] = 'PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".';
         }
 
+        if (blank($config->get('sentry.dsn'))) {
+            $problems[] = 'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.';
+        }
+
         if ($config->get('filesystems.default') === 'local') {
             $problems[] = 'FILESYSTEM_DISK must be an object-storage disk (r2), not "local".';
         }

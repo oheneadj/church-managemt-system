@@ -720,6 +720,19 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-040 — Sentry for error monitoring
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 27 (supersedes the "Sentry is v2" note in docs/17)
+**Status:** Active
+
+**Decision:** The Sentry Laravel SDK is installed and every unhandled exception is reported to it once `SENTRY_LARAVEL_DSN` is set. Outside development the app refuses to start without the DSN. Errors carry the staff id, church id and role only. Request bodies, cookies and SQL values are never sent. The React app is not instrumented yet.
+
+**Rationale:** The agreement requires a dedicated error monitor in production, not only log files. Doing it now costs a few lines and keeps the free tier enough for the first churches.
+
+**Revisit when:** the React app needs browser error reporting, or the free tier is outgrown.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

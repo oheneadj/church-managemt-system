@@ -292,8 +292,10 @@ Log::error() with context
 JSON log file (storage/logs/laravel-YYYY-MM-DD.log)
    ↓
 [MVP] Manual log review
-[v2] Sentry — auto-grouped, with stack trace + context
+[built] Sentry — auto-grouped, with stack trace + context (D-040)
 ```
+
+**Sentry is built in and switched on by setting `SENTRY_LARAVEL_DSN`** (`env:check` refuses to start outside development without it). With the DSN empty, as in development, nothing is sent. Every unhandled exception goes to Sentry from `bootstrap/app.php`. Each signed-in request adds the staff id, church id and role to the error (`AddErrorMonitoringContext`), and never a name, phone or email. Request bodies are not sent (`max_request_body_size: none`), `send_default_pii` is off, and SQL values are not recorded. Set `SENTRY_RELEASE` to the commit in the deploy so a new error shows which release brought it. The React app does not report to Sentry yet; that needs a decision on the bundle budget.
 
 ### Configuring Log Alerts (MVP — Slack via Webhook)
 

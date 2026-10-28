@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(monitoring): report errors to Sentry without personal data
+- **What:** Installed the Sentry Laravel SDK. Every unhandled exception is reported once `SENTRY_LARAVEL_DSN` is set, and the app now refuses to start outside development without it (`env:check`). Each signed-in request adds the staff id, church id and role to the error, never a name, phone or email. Request bodies and cookies are not sent, personal data collection is off and SQL values are not recorded. `SENTRY_RELEASE` ties errors to a deploy. With the DSN empty (development) nothing is sent. Updated docs/17 and recorded D-040.
+- **Why:** The agreement (sections 26 and 27) requires a dedicated error monitor in production. The code is done now; only a Sentry project and its DSN are needed to turn it on. The React app is not instrumented yet.
+- **Files:** `composer.json`, `composer.lock`, `config/sentry.php`, `bootstrap/app.php`, `app/Http/Middleware/AddErrorMonitoringContext.php`, `routes/api.php`, `app/Support/EnvironmentCheck.php`, `.env.example`, `docs/17-monitoring-and-alerting.md`, `docs/13-decision-log.md`, `tests/Feature/Operations/ErrorMonitoringTest.php`, `tests/Feature/Operations/EnvironmentCheckTest.php`
+- **Commit:** pending
+
 #### feat(privacy-ui): add download-their-data and erase buttons to the member profile
 - **What:** The member profile now has a Personal data section. Staff with the export permission see 'Download their data', which saves the member's data as a .json file named after their member number. The church admin (erase permission) also sees 'Erase personal data', which opens a dialog that says what is removed and what stays, asks for a reason (kept in the change log, no personal details), and on success returns to the directory. Server messages show beside the reason box.
 - **Why:** The frontend half of the export and erasure endpoints (D-039). Without the buttons a church admin could not use them. The React addendum requires a test for every reusable component and service function, and destructive actions need a confirmation step.
