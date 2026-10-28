@@ -484,6 +484,152 @@
                 }
             }
         },
+        "/v1/contributions": {
+            "get": {
+                "operationId": "contributions.index",
+                "summary": "Runs the action for this request and returns the ContributionCollection",
+                "tags": [
+                    "ListContributions"
+                ],
+                "parameters": [
+                    {
+                        "name": "member_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "service_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fund_type_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "payment_method",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PaymentMethod"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "is_voided",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ContributionCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContributionCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "contributions.store",
+                "summary": "Runs the action for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreContribution"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreContributionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ContributionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContributionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/departments": {
             "get": {
                 "operationId": "departments.index",
@@ -1625,6 +1771,58 @@
                 }
             }
         },
+        "/v1/contributions/{contribution}": {
+            "get": {
+                "operationId": "contributions.show",
+                "summary": "Runs ShowContributionAction for this request and returns the ContributionResource",
+                "tags": [
+                    "ShowContribution"
+                ],
+                "parameters": [
+                    {
+                        "name": "contribution",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contribution ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ContributionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContributionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/families/{family}": {
             "get": {
                 "operationId": "families.show",
@@ -2421,6 +2619,68 @@
                 },
                 "security": []
             }
+        },
+        "/v1/contributions/{contribution}/void": {
+            "patch": {
+                "operationId": "contributions.void",
+                "summary": "Runs the action for this request and returns the ContributionResource",
+                "tags": [
+                    "VoidContribution"
+                ],
+                "parameters": [
+                    {
+                        "name": "contribution",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contribution ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoidContributionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ContributionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContributionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2727,6 +2987,162 @@
                     "sms_credits"
                 ],
                 "title": "ChurchResource"
+            },
+            "ContributionCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/ContributionResource"
+                },
+                "title": "ContributionCollection"
+            },
+            "ContributionResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "full_name"
+                        ]
+                    },
+                    "is_anonymous": {
+                        "type": "boolean"
+                    },
+                    "service": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "service_date": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "service_date"
+                        ]
+                    },
+                    "fund_type": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "amount_formatted": {
+                        "type": "string"
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "enum": [
+                            "momo",
+                            "card",
+                            "cash",
+                            "ussd"
+                        ]
+                    },
+                    "payment_method_label": {
+                        "type": "string",
+                        "enum": [
+                            "Mobile Money",
+                            "Card",
+                            "Cash",
+                            "USSD"
+                        ]
+                    },
+                    "is_voided": {
+                        "type": "boolean"
+                    },
+                    "voided_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "void_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "voided_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recorded_by": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "contributed_at": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member",
+                    "is_anonymous",
+                    "service",
+                    "fund_type",
+                    "amount",
+                    "amount_formatted",
+                    "payment_method",
+                    "payment_method_label",
+                    "is_voided",
+                    "voided_at",
+                    "void_reason",
+                    "voided_by",
+                    "recorded_by",
+                    "notes",
+                    "contributed_at",
+                    "created_at"
+                ],
+                "title": "ContributionResource"
             },
             "CurrentStaffResource": {
                 "type": "object",
@@ -3591,7 +4007,8 @@
                                         "status_changed",
                                         "viewed",
                                         "exported",
-                                        "erased"
+                                        "erased",
+                                        "voided"
                                     ]
                                 },
                                 "changed_fields": {
@@ -4276,6 +4693,17 @@
                 ],
                 "title": "OtpRequestedResource"
             },
+            "PaymentMethod": {
+                "type": "string",
+                "description": "The allowed payment method values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "momo",
+                    "card",
+                    "cash",
+                    "ussd"
+                ],
+                "title": "PaymentMethod"
+            },
             "QrCheckInRequest": {
                 "type": "object",
                 "description": "Validates confirming a QR check-in: the scanned code, the phone number and the texted code.",
@@ -4667,6 +5095,56 @@
                     "name"
                 ],
                 "title": "StaffSummaryResource"
+            },
+            "StoreContributionRequest": {
+                "type": "object",
+                "description": "Validates a cash gift. Everything it points at must belong to this church; a member who has died cannot be given\na new gift, and a fund that was switched off cannot be chosen. Only cash is recorded here: mobile money and cards\nstart a payment instead and are recorded when the provider confirms it.",
+                "properties": {
+                    "member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "service_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "fund_type_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "maximum": 999999.99
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "description": "The allowed payment method values, stored as a plain string column (D-017).\n",
+                        "const": "cash"
+                    },
+                    "contributed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "fund_type_id",
+                    "amount",
+                    "payment_method"
+                ],
+                "title": "StoreContributionRequest"
             },
             "StoreFamilyRequest": {
                 "type": "object",
@@ -5239,6 +5717,21 @@
                     "follow_up_status_label"
                 ],
                 "title": "VisitorResource"
+            },
+            "VoidContributionRequest": {
+                "type": "object",
+                "description": "Validates a void. A reason is required, so every void can be explained later (docs/04, Corrections and Voids).",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "VoidContributionRequest"
             }
         },
         "responses": {

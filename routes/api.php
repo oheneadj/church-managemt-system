@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
+use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
+use App\Http\Controllers\Api\V1\Contributions\ShowContributionController;
+use App\Http\Controllers\Api\V1\Contributions\StoreContributionController;
+use App\Http\Controllers\Api\V1\Contributions\VoidContributionController;
 use App\Http\Controllers\Api\V1\Departments\AddDepartmentMemberController;
 use App\Http\Controllers\Api\V1\Departments\ListDepartmentsController;
 use App\Http\Controllers\Api\V1\Departments\RemoveDepartmentMemberController;
@@ -104,6 +108,11 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('services/{service}/qr', IssueQrCodeController::class)->name('services.qr');
         Route::get('attendance/absent', ListAbsentMembersController::class)->name('attendance.absent');
         Route::get('members/{member}/attendance', ShowMemberAttendanceController::class)->name('members.attendance');
+
+        Route::get('contributions', ListContributionsController::class)->name('contributions.index');
+        Route::post('contributions', StoreContributionController::class)->middleware('idempotent')->name('contributions.store');
+        Route::get('contributions/{contribution}', ShowContributionController::class)->name('contributions.show');
+        Route::patch('contributions/{contribution}/void', VoidContributionController::class)->name('contributions.void');
 
         Route::get('fund-types', ListFundTypesController::class)->name('fund-types.index');
         Route::post('fund-types', StoreFundTypeController::class)->name('fund-types.store');

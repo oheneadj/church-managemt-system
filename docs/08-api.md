@@ -748,8 +748,9 @@ Active members who missed each of the last `consecutive` services (default: the 
 ```
 GET /api/v1/contributions
 Authorization: Bearer {token}
-Permission: giving.summary
+Permission: giving.view
 ```
+Church admin and finance secretary have `giving.view`; the pastor does not and gets `403` (QA-06 TC-06-18): the pastor sees totals through the reports, which need `giving.summary` (D-046). Newest first by the day the giving happened, in pages (`per_page`). Each gift: `id`, `member` (`id`, `full_name`) or `null`, `is_anonymous`, `service` (`id`, `name`, `service_date`) or `null`, `fund_type` (`id`, `name`), `amount` (a decimal string such as `"150.00"`) with `amount_formatted` (`"GHS 150.00"`), `payment_method` and its label, `is_voided`, `voided_at`, `void_reason`, `voided_by`, `recorded_by`, `notes`, `contributed_at`, `created_at`.
 
 **Query params:**
 | Param | Type | Example |
@@ -760,7 +761,7 @@ Permission: giving.summary
 | `payment_method` | string | `momo`, `card`, `cash` |
 | `from` | date | `2026-01-01` |
 | `to` | date | `2026-12-31` |
-| `is_voided` | boolean | `false` (default excludes voided) |
+| `is_voided` | boolean | `false` (default: voided gifts are left out; `true` lists only the voided ones) |
 
 ---
 
@@ -768,8 +769,9 @@ Permission: giving.summary
 ```
 GET /api/v1/contributions/{id}
 Authorization: Bearer {token}
-Permission: giving.summary
+Permission: giving.view
 ```
+`404` for a gift of another church.
 
 ---
 
@@ -794,9 +796,13 @@ Permission: giving.record
 }
 ```
 
-**Response `201`:** Full contribution resource.
+**Header:** `Idempotency-Key` is required (see Conventions), so a double click records one gift.
 
-**Side effect:** `ContributionReceived` event fired → `SendContributionReceiptJob` queued.
+**Rules:** `fund_type_id` and `amount` are required. The fund must be one of this church's and switched on; `member_id` and `service_id` must belong to this church, and a member who has died cannot be given a gift (an inactive member can). A gift with no `member_id` is anonymous. `amount` is GHS with at most two decimals, above 0 and at most 999,999.99 (`config/giving.php`). `payment_method` must be `cash`: mobile money and cards start a payment instead (below). `contributed_at` is when the giving happened, never in the future, and defaults to now; it is kept apart from the day the record was entered. The church comes from the sign-in, never from the body. The gift and its change-history line are saved together.
+
+**Response `201`:** Full contribution resource. Cash has no processing fee, no payment reference and no status: a gift exists once it is recorded. `422` for bad values, `400` without an `Idempotency-Key`, `403` without `giving.record`.
+
+**Not built yet:** the `ContributionReceived` event and the SMS receipt (story 4.7) and linking a gift to a pledge (`pledge_id`, with the pledge slice).
 
 ---
 
@@ -845,7 +851,7 @@ Permission: giving.edit
 }
 ```
 
-**Response `200`:** Updated contribution resource with `is_voided: true`.
+**Response `200`:** Updated contribution resource with `is_voided: true`, `voided_at`, `void_reason` and `voided_by`. The reason is required (3 to 2,000 characters). A gift is never deleted (`DELETE` is `405`); it stays, marked, and drops out of every total. Voiding twice is `422` ("This contribution has already been voided."); the row is locked while it is checked, so two voids at the same moment cannot both succeed. Each void is written to the change history with its reason. To correct an amount, void the gift and record a new one. `403` without `giving.edit`, `404` for a gift of another church.
 
 ---
 

@@ -246,7 +246,8 @@ Blocked: [anything blocking me / none]
 | Done | Stories |
 |---|---|
 | Backend | 4.2 fund types (list, create, change, switch off; seven defaults for a new church), 4.8 `SendSmsJob` (done in Sprint 1, on PayPerlez) |
-| Next | 4.3 cash contributions, 4.11 void, 4.9 and 4.10 pledges, 4.12 Sunday offering report, 4.7 receipts, then the screens 4.13 to 4.18 |
+| | 4.3 cash contributions (record, list, show; `giving.view` added), 4.11 void, the `Idempotency-Key` for writes that record money |
+| Next | 4.9 and 4.10 pledges, 4.12 Sunday offering report, 4.7 receipts, then the screens 4.13 to 4.18 |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
 > **Sprint 3** — Attendance (finished). The design is in D-044 and D-045.

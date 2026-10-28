@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\ChurchSlugTakenException;
+use App\Exceptions\ContributionAlreadyVoidedException;
 use App\Exceptions\FieldRuleException;
 use App\Exceptions\InvalidOtpException;
 use App\Exceptions\MemberNumberPrefixMissingException;
@@ -53,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             TooManyOtpAttemptsException::class,
             ChurchSlugTakenException::class,
             FieldRuleException::class,
+            ContributionAlreadyVoidedException::class,
             MemberNumberPrefixMissingException::class,
         ]);
 

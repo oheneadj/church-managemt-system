@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\ContributionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,24 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A single giving transaction. Never deleted; mistakes are voided with a reason.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string|null $member_id
+ * @property string|null $service_id
+ * @property string $fund_type_id
+ * @property string $amount
+ * @property PaymentMethod $payment_method
+ * @property bool $is_voided
+ * @property CarbonImmutable|null $voided_at
+ * @property string|null $voided_by
+ * @property string|null $void_reason
+ * @property string $recorded_by
+ * @property string|null $notes
+ * @property CarbonImmutable $contributed_at
+ * @property CarbonImmutable|null $created_at
+ * @property-read FundType $fundType
+ * @property-read User $recordedBy
  */
 class Contribution extends Model
 {
@@ -114,5 +133,25 @@ class Contribution extends Model
     public function disbursement(): HasOne
     {
         return $this->hasOne(Disbursement::class);
+    }
+
+    /**
+     * The staff member who recorded or confirmed this gift.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function recordedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    /**
+     * The staff member who voided this gift, if it was voided.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
     }
 }

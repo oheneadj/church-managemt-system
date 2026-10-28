@@ -5,9 +5,12 @@ declare(strict_types=1);
 use App\Enums\CheckInMethod;
 use App\Models\AttendanceRecord;
 use App\Models\Church;
+use App\Models\Contribution;
 use App\Models\Member;
 use App\Models\Service;
+use App\Models\User;
 use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\HandledWhatsappMessageRepositoryInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -98,4 +101,36 @@ it('handles a WhatsApp message once when Meta delivers it twice at the same mome
 
     expect($messages->claim('wamid.RACE'))->toBeFalse()
         ->and(DB::table('handled_whatsapp_messages')->where('message_id', 'wamid.RACE')->count())->toBe(1);
+});
+
+it('voids a gift once when two voids arrive at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $gift = Contribution::factory()->create(['church_id' => $church->id]);
+    $staff = User::factory()->create(['church_id' => $church->id]);
+    $contributions = app(ContributionRepositoryInterface::class);
+
+    // Void A: has locked the gift and marked it voided, and has not committed yet.
+    DB::beginTransaction();
+    $locked = $contributions->lockForUpdate($gift);
+    expect($locked->is_voided)->toBeFalse();
+    $contributions->markVoided($locked, $staff, 'First void', now());
+
+    // Void B, on its own connection, has to wait for A: with a short wait it times out instead of reading "not voided".
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($gift): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('contributions')->where('id', $gift->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B reads the committed row and sees it is already voided, so its check refuses.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->table('contributions')->where('id', $gift->id)->lockForUpdate()->first();
+
+    expect((bool) $seenByB->is_voided)->toBeTrue()->and($seenByB->void_reason)->toBe('First void');
 });

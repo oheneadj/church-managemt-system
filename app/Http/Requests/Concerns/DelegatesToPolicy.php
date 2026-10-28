@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Concerns;
 
+use App\Models\Contribution;
 use App\Models\Department;
 use App\Models\Family;
 use App\Models\FundType;
@@ -75,5 +76,15 @@ trait DelegatesToPolicy
         $fundType = $this->route('fund_type');
 
         return $fundType instanceof FundType ? $fundType : throw new LogicException('This route has no fund type.');
+    }
+
+    /**
+     * The contribution that route binding found for this request.
+     */
+    public function contribution(): Contribution
+    {
+        $contribution = $this->route('contribution');
+
+        return $contribution instanceof Contribution ? $contribution : throw new LogicException('This route has no contribution.');
     }
 }

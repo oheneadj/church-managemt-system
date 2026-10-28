@@ -39,7 +39,7 @@ enum StaffRole: string
         return match ($this) {
             self::ChurchAdmin => StaffPermission::cases(),
             self::Pastor => [StaffPermission::MembersView, StaffPermission::MembersEdit, StaffPermission::MilestonesView, StaffPermission::GivingSummary, StaffPermission::ReportsView, StaffPermission::SmsSend],
-            self::FinanceSecretary => [StaffPermission::MembersView, StaffPermission::GivingSummary, StaffPermission::GivingRecord, StaffPermission::GivingEdit, StaffPermission::GivingExport, StaffPermission::ReportsView, StaffPermission::ReportsExport],
+            self::FinanceSecretary => [StaffPermission::MembersView, StaffPermission::GivingSummary, StaffPermission::GivingView, StaffPermission::GivingRecord, StaffPermission::GivingEdit, StaffPermission::GivingExport, StaffPermission::ReportsView, StaffPermission::ReportsExport],
             self::DepartmentHead => [StaffPermission::MembersView],
             self::YouthPastor => [StaffPermission::MembersView, StaffPermission::MilestonesView],
         };

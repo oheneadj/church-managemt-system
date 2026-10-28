@@ -6,6 +6,7 @@ use App\Jobs\SendSmsJob;
 use App\Models\Church;
 use App\Models\Department;
 use App\Models\Family;
+use App\Models\FundType;
 use App\Models\Member;
 use App\Models\MemberMilestone;
 use App\Models\Service;
@@ -111,6 +112,19 @@ describe('members', function (): void {
 
     it('not found', function (): void {
         $this->getJson(CHURCH_HOST.'/members/01doesnotexist00000000000')->assertNotFound();
+    });
+});
+
+describe('contributions', function (): void {
+    it('record, list, show and void a cash gift', function (): void {
+        $fund = FundType::factory()->create(['church_id' => $this->church->id]);
+        $created = $this->postJson(CHURCH_HOST.'/contributions', ['fund_type_id' => $fund->id, 'amount' => '150.00', 'payment_method' => 'cash', 'member_id' => $this->member->id], ['Idempotency-Key' => 'contract-key-0001']);
+        assertMatchesSpec($created, 'POST', '/v1/contributions', 201);
+        $id = $created->json('data.id');
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/contributions'), 'GET', '/v1/contributions', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/contributions/'.$id), 'GET', '/v1/contributions/{contribution}', 200);
+        assertMatchesSpec($this->patchJson(CHURCH_HOST.'/contributions/'.$id.'/void', ['reason' => 'Entered in error']), 'PATCH', '/v1/contributions/{contribution}/void', 200);
     });
 });
 

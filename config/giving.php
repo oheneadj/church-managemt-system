@@ -11,6 +11,9 @@ return [
     | Every new church starts with these. The church admin can rename them, add more or switch them off.
     | "Pledge" is not a fund: a gift that pays a pledge is linked to the pledge itself.
     */
+    // The most a single cash gift may be, in GHS (QA-06 TC-06-05). A digital gift has its own, lower, limit (D-018).
+    'cash_max' => '999999.99',
+
     // The largest sort position a fund type may be given.
     'sort_order_max' => 1000,
 

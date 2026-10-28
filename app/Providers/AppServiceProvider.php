@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Enums\StaffPermission;
 use App\Exceptions\MisconfiguredEnvironmentException;
 use App\Http\Middleware\ResolveTenant;
+use App\Models\Contribution;
 use App\Models\Department;
 use App\Models\Family;
 use App\Models\FundType;
@@ -63,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('family', Family::class);
         Route::model('department', Department::class);
         Route::model('fund_type', FundType::class);
+        Route::model('contribution', Contribution::class);
         Route::model('service', Service::class);
 
         // The interactive API docs are open locally and, everywhere else, only for staff who may change church settings.

@@ -15,6 +15,7 @@ enum AuditEvent: string
     case Viewed = 'viewed';
     case Exported = 'exported';
     case Erased = 'erased';
+    case Voided = 'voided';
 
     /**
      * Human-readable text for screens and messages.
@@ -28,6 +29,7 @@ enum AuditEvent: string
             self::Viewed => 'Viewed',
             self::Exported => 'Data exported',
             self::Erased => 'Personal data erased',
+            self::Voided => 'Voided',
         };
     }
 }

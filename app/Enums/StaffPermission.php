@@ -16,6 +16,7 @@ enum StaffPermission: string
     case MembersErase = 'members.erase';
     case MilestonesView = 'milestones.view';
     case GivingSummary = 'giving.summary';
+    case GivingView = 'giving.view';
     case GivingRecord = 'giving.record';
     case GivingEdit = 'giving.edit';
     case GivingExport = 'giving.export';
@@ -39,6 +40,7 @@ enum StaffPermission: string
             self::MembersErase => 'Erase a member\'s personal data',
             self::MilestonesView => 'View member milestones',
             self::GivingSummary => 'View giving summaries',
+            self::GivingView => 'View individual gifts',
             self::GivingRecord => 'Record giving',
             self::GivingEdit => 'Void and correct giving',
             self::GivingExport => 'Export giving',
