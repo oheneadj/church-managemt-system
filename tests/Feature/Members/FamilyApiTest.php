@@ -79,7 +79,7 @@ describe('listing', function (): void {
         $department = Department::factory()->create(['church_id' => $this->church->id, 'head_user_id' => $head->id]);
         $visible = Member::factory()->create(['church_id' => $this->church->id, 'family_id' => $family->id, 'family_role' => FamilyRole::Child, 'educational_level' => EducationalLevel::Graduate]);
         Member::factory()->create(['church_id' => $this->church->id, 'family_id' => $family->id, 'family_role' => FamilyRole::Child, 'educational_level' => EducationalLevel::Graduate]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $visible->id, 'department_id' => $department->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $visible->id, 'department_id' => $department->id]);
 
         familyAs($head)->getJson(FAMILIES)->assertJsonPath('data.0.members_count', 1);
     });
@@ -107,7 +107,7 @@ describe('showing', function (): void {
         $department = Department::factory()->create(['church_id' => $this->church->id, 'head_user_id' => $head->id]);
         $mine = Member::factory()->create(['church_id' => $this->church->id, 'family_id' => $family->id, 'family_role' => FamilyRole::Child, 'educational_level' => EducationalLevel::Graduate]);
         Member::factory()->create(['church_id' => $this->church->id, 'family_id' => $family->id, 'family_role' => FamilyRole::Child, 'educational_level' => EducationalLevel::Graduate]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $mine->id, 'department_id' => $department->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $mine->id, 'department_id' => $department->id]);
 
         familyAs($head)->getJson(FAMILIES.'/'.$family->id)->assertJsonCount(1, 'data.members')->assertJsonPath('data.members.0.id', $mine->id);
     });

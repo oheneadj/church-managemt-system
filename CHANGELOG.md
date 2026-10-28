@@ -12,6 +12,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Changes staged but not yet in a versioned release.
 
 ### Added
+- Concurrency tests (`tests/Concurrency`) that prove, with two real database connections, that only one of two simultaneous requests can take a family's head role or the next member number; they fail when the row locks are removed
+- Inverse relationships on every model that was missing one (staff to their members and departments, member to department links, family head, pledges, change history, fund and service to gifts), with tests
 - Youth age limit: the youth pastor's view goes by date of birth (younger than the church's `youth_age_limit` setting, default 25), falling back to educational level when there is no birth date (D-031)
 - Member photo upload (story 2.4): `POST /api/v1/members/{id}/photo` checks the file's real type and size, rotates, crops and re-encodes it (dropping EXIF/GPS data), stores it in the private bucket and returns a signed link; `photo_url` is now on the member record and directory. Adds `intervention/image` and the `gd` and `exif` PHP extensions (D-032)
 - Member milestones (story 2.9): `POST /api/v1/members/{id}/milestones`; milestones show on the member record only for roles with the new `milestones.view` permission
@@ -50,6 +52,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
 
 ### Changed
+- Every class and method now has a plain-language description docblock, as the agreement requires
 - API responses send a `_label` beside every enum value, nest Resources for related records, page lists through `MemberCollection`, `FamilyCollection` and `DepartmentCollection`, and show money through the new `Money` value object with a `_formatted` sibling (D-034)
 - Opening a member's full record is written to the change log as `viewed`, because it shows the encrypted address (D-034)
 - Sign-in, sign-out, the current-user endpoint, the OTP lockout command and the health check now go through Actions, DTOs and Resources too; every remaining direct model query (tenant lookup, OTP user lookup, message log) moved behind a Repository; repositories call `Model::query()->create()`, never static `Model::create()`; unit-test helpers build models with factories

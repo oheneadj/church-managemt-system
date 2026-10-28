@@ -46,7 +46,7 @@ describe('listing', function (): void {
         $choir = Department::factory()->create(['church_id' => $this->church->id, 'name' => 'Choir']);
         Department::factory()->create(['church_id' => $this->church->id, 'name' => 'Ushers']);
         $member = Member::factory()->create(['church_id' => $this->church->id]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
 
         deptAs($this->admin)->getJson(DEPARTMENTS)
             ->assertOk()
@@ -68,8 +68,8 @@ describe('listing', function (): void {
         $department = Department::factory()->create(['church_id' => $this->church->id, 'head_user_id' => $head->id]);
         $outside = Department::factory()->create(['church_id' => $this->church->id]);
         $member = Member::factory()->create(['church_id' => $this->church->id, 'educational_level' => EducationalLevel::Graduate]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $department->id]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $outside->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $department->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $outside->id]);
 
         $counts = collect(deptAs($head)->getJson(DEPARTMENTS)->json('data'))->pluck('members_count', 'id');
 
@@ -211,7 +211,7 @@ describe('members of a department', function (): void {
     });
 
     it('removes a member by soft deleting the link', function (): void {
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $this->member->id, 'department_id' => $this->department->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $this->member->id, 'department_id' => $this->department->id]);
 
         deptAs($this->admin)->deleteJson(DEPARTMENTS.'/'.$this->department->id.'/members/'.$this->member->id)->assertNoContent();
 
@@ -225,7 +225,7 @@ describe('members of a department', function (): void {
     it('returns 404 for another church\'s department or member', function (): void {
         $foreignDepartment = Department::factory()->create(['church_id' => $this->other->id]);
         $foreignMember = Member::factory()->create(['church_id' => $this->other->id]);
-        MemberDepartment::create(['church_id' => $this->other->id, 'member_id' => $foreignMember->id, 'department_id' => $foreignDepartment->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->other->id, 'member_id' => $foreignMember->id, 'department_id' => $foreignDepartment->id]);
 
         deptAs($this->admin)->postJson(DEPARTMENTS.'/'.$foreignDepartment->id.'/members', ['member_id' => $this->member->id])->assertNotFound();
         deptAs($this->admin)->deleteJson(DEPARTMENTS.'/'.$foreignDepartment->id.'/members/'.$foreignMember->id)->assertNotFound();

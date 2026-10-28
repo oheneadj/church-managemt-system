@@ -125,7 +125,7 @@ describe('listing', function (): void {
         $choir = Department::factory()->create(['church_id' => $this->church->id]);
         $sister = newMember($this->church, ['gender' => 'female', 'family_id' => $family->id, 'family_role' => FamilyRole::Child]);
         newMember($this->church, ['gender' => 'male']);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $sister->id, 'department_id' => $choir->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $sister->id, 'department_id' => $choir->id]);
 
         as_($this->admin)->getJson(MEMBERS.'?gender=female')->assertJsonCount(1, 'data');
         as_($this->admin)->getJson(MEMBERS.'?family_id='.$family->id)->assertJsonCount(1, 'data');
@@ -167,8 +167,8 @@ describe('listing', function (): void {
         $inTheirs = newMember($this->church, ['educational_level' => EducationalLevel::Graduate]);
         $schoolChild = newMember($this->church, ['educational_level' => EducationalLevel::Jhs2]);
         $adult = newMember($this->church, ['educational_level' => EducationalLevel::Graduate]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $inMine->id, 'department_id' => $ownDepartment->id]);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $inTheirs->id, 'department_id' => $otherDepartment->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $inMine->id, 'department_id' => $ownDepartment->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $inTheirs->id, 'department_id' => $otherDepartment->id]);
 
         as_($head)->getJson(MEMBERS)->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $inMine->id);
         as_($youthPastor)->getJson(MEMBERS)->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $schoolChild->id);
@@ -531,7 +531,7 @@ describe('updating', function (): void {
         $choir = Department::factory()->create(['church_id' => $this->church->id]);
         $ushers = Department::factory()->create(['church_id' => $this->church->id]);
         $member = newMember($this->church);
-        MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
+        MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
 
         as_($this->admin)->putJson(MEMBERS.'/'.$member->id, ['department_ids' => [$ushers->id]])
             ->assertOk()->assertJsonCount(1, 'data.departments')->assertJsonPath('data.departments.0.id', $ushers->id);
@@ -623,7 +623,7 @@ describe('department membership', function (): void {
     it('ignores soft-deleted department links when reading a member\'s departments', function (): void {
         $choir = Department::factory()->create(['church_id' => $this->church->id]);
         $member = newMember($this->church);
-        $link = MemberDepartment::create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
+        $link = MemberDepartment::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'department_id' => $choir->id]);
         $link->delete();
 
         expect($member->departments()->count())->toBe(0)->and($choir->members()->count())->toBe(0);

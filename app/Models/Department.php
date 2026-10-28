@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -71,5 +72,15 @@ class Department extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(Member::class, 'member_departments', 'department_id', 'member_id')->withPivot('role', 'joined_at')->withTimestamps()->wherePivotNull('deleted_at');
+    }
+
+    /**
+     * The links between this department and its members, including the role each holds.
+     *
+     * @return HasMany<MemberDepartment, $this>
+     */
+    public function memberLinks(): HasMany
+    {
+        return $this->hasMany(MemberDepartment::class);
     }
 }

@@ -62,4 +62,14 @@ class Service extends Model
     {
         return $this->hasMany(AttendanceRecord::class);
     }
+
+    /**
+     * The gifts given at this service.
+     *
+     * @return HasMany<Contribution, $this>
+     */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class);
+    }
 }

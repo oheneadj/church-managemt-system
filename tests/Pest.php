@@ -9,6 +9,7 @@ use App\Models\Family;
 use App\Models\Member;
 use App\Models\MemberDepartment;
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -16,6 +17,9 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature');
 pest()->extend(TestCase::class)->in('Unit');
+
+// Concurrency tests must really commit, so two connections can contend. They clean up by truncating instead of rolling back.
+pest()->extend(TestCase::class)->use(DatabaseTruncation::class)->in('Concurrency');
 
 /*
 |--------------------------------------------------------------------------

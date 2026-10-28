@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -242,5 +244,45 @@ class Member extends Model
                 }
             });
         }
+    }
+
+    /**
+     * The links between this member and their departments, including the role in each.
+     *
+     * @return HasMany<MemberDepartment, $this>
+     */
+    public function departmentLinks(): HasMany
+    {
+        return $this->hasMany(MemberDepartment::class);
+    }
+
+    /**
+     * The family this member is the head of, if any.
+     *
+     * @return HasOne<Family, $this>
+     */
+    public function headedFamily(): HasOne
+    {
+        return $this->hasOne(Family::class, 'head_member_id');
+    }
+
+    /**
+     * The pledges this member has made.
+     *
+     * @return HasMany<Pledge, $this>
+     */
+    public function pledges(): HasMany
+    {
+        return $this->hasMany(Pledge::class);
+    }
+
+    /**
+     * The change history of this member.
+     *
+     * @return MorphMany<AuditLog, $this>
+     */
+    public function auditLogs(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable');
     }
 }

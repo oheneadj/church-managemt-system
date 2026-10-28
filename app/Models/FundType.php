@@ -9,6 +9,7 @@ use Database\Factories\FundTypeFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -41,5 +42,25 @@ class FundType extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    /**
+     * The gifts given to this fund.
+     *
+     * @return HasMany<Contribution, $this>
+     */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
+    /**
+     * The pledges made to this fund.
+     *
+     * @return HasMany<Pledge, $this>
+     */
+    public function pledges(): HasMany
+    {
+        return $this->hasMany(Pledge::class);
     }
 }
