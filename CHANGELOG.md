@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Installed Playwright and wrote four tests that drive the real Chrome on this machine against the running local sites: a church signs up with a texted code and gets its own address; mistakes at sign-up (a platform name, a wrong code) are refused beside their boxes; an admin signs in with a texted code, adds a member in three steps and finds them by name and by local phone; and a visitor who is not signed in is sent to the login page. The tests read sign-in codes from the log, so they need the log SMS driver and a running `critical` queue worker. `npm run e2e` runs them. They are not in CI yet because there is no staging copy to run against.
 - **Why:** The React addendum requires end-to-end tests of the critical user flows, and the earlier work had only unit and component tests. The first run found two real problems: the pages had no main heading, and wrong codes were logged as errors (both fixed in their own commits).
 - **Files:** `playwright.config.ts`, `e2e/` (specs, helpers, tsconfig), `package.json`, `package-lock.json`, `.gitignore`, `CLAUDE.md`
-- **Commit:** pending
+- **Commit:** `ebf48e1` (2026-10-28)
 
 #### fix(a11y): give the sign-in and sign-up pages a real main heading
 - **What:** The titles of the sign-in and start-a-church cards are now `h1` headings. They were plain `div`s, so a screen reader found no heading on either page. The sign-up page has a test for it.
