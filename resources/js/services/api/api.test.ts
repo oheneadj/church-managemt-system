@@ -124,3 +124,22 @@ describe('departmentsApi', () => {
         expect(api.get).toHaveBeenCalledWith('/departments', { params: { per_page: 100, is_active: 1 } });
     });
 });
+
+describe('membersApi privacy calls', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('reads the data export without unwrapping it', async () => {
+        vi.mocked(api.get).mockReturnValue(respond({ exported_at: 'now', member: {} }));
+
+        expect(await membersApi.exportData('member-1')).toEqual({ exported_at: 'now', member: {} });
+        expect(api.get).toHaveBeenCalledWith('/members/member-1/data-export');
+    });
+
+    it('erases with a reason', async () => {
+        vi.mocked(api.post).mockReturnValue(respond(undefined));
+
+        await membersApi.erase('member-1', 'Member request');
+
+        expect(api.post).toHaveBeenCalledWith('/members/member-1/erasure', { reason: 'Member request' });
+    });
+});

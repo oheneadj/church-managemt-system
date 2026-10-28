@@ -4,6 +4,7 @@ import { ChangeStatusDialog } from '@/components/Members/ChangeStatusDialog';
 import { MemberAttendanceTab } from '@/components/Members/MemberAttendanceTab';
 import { MemberGivingTab } from '@/components/Members/MemberGivingTab';
 import { MemberHeader } from '@/components/Members/MemberHeader';
+import { MemberPrivacyActions } from '@/components/Members/MemberPrivacyActions';
 import { MemberProfileTab } from '@/components/Members/MemberProfileTab';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,6 +76,7 @@ export function MemberDetailPage() {
                     <MemberAttendanceTab summary={record.attendance_summary} />
                 </TabsContent>
             </Tabs>
+            <MemberPrivacyActions memberId={record.id} memberNumber={record.member_number} fullName={fullName} />
             {editable && <ChangeStatusDialog member={record} fullName={fullName} open={changingStatus} onOpenChange={setChangingStatus} />}
         </div>
     );

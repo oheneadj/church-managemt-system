@@ -31,6 +31,13 @@ export function useMemberMutations() {
             onSuccess: refresh,
         }),
 
+        exportData: useMutation({ mutationFn: (id: string) => membersApi.exportData(id) }),
+
+        erase: useMutation({
+            mutationFn: ({ id, reason }: { id: string; reason: string }) => membersApi.erase(id, reason),
+            onSuccess: refresh,
+        }),
+
         addMilestone: useMutation({
             mutationFn: ({ id, input }: { id: string; input: MilestoneInput }) => membersApi.addMilestone(id, input),
             onSuccess: refresh,

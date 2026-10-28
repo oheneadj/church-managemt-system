@@ -36,6 +36,12 @@ export const membersApi = {
         return api.post<{ photo_url: string }>(`/members/${id}/photo`, body).then((r) => r.data.photo_url);
     },
 
+    /** Everything held about the member, for a subject access request. The shape is the JSON the server sends. */
+    exportData: (id: string): Promise<unknown> => api.get<unknown>(`/members/${id}/data-export`).then((r) => r.data),
+
+    /** Erases the member's personal data. The record stays but it cannot be undone. */
+    erase: (id: string, reason: string): Promise<void> => api.post(`/members/${id}/erasure`, { reason }).then(() => undefined),
+
     addMilestone: (id: string, input: MilestoneInput): Promise<Milestone> =>
         api.post<{ data: Milestone }>(`/members/${id}/milestones`, input).then((r) => r.data.data),
 };
