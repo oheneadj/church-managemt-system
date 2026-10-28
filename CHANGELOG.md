@@ -12,6 +12,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Changes staged but not yet in a versioned release.
 
 ### Added
+- Member directory API (stories 2.2, 2.3, 2.5, 2.6): `GET/POST /api/v1/members`, `GET/PUT /api/v1/members/{id}` and `PATCH /api/v1/members/{id}/status`, with `MemberPolicy`, form requests, `MemberService`, and list/full resources. Search, filters, sort and pagination; role-scoped visibility for department heads and youth pastors; one head per family; departments set with the member; every create, edit and status change in the change log with the reason (D-031)
+- `members.deactivate` permission, held by the church admin only
 - Sprint 2 groundwork (D-030): per-church member number prefix and a locked sequence so numbers like `GRC-0042` are unique and never reused, an append-only `audit_logs` table with an `AuditLogger` for member change history, and `members.edit` for the pastor role
 - Docker and Coolify deployment (D-029): one image from `deploy/Dockerfile` with `web`, `worker` and `scheduler` roles chosen by `CONTAINER_ROLE`, a start script (env check, migrate, seed, optimize), role-aware health check, Supervisor config for the six queues, `.dockerignore`, a CI `image` job (hadolint, build, smoke check) and Dependabot for Docker; Coolify setup documented in `docs/16`
 - Laravel 13 application scaffold in the repo root, alongside `docs/` (D-022)

@@ -17,9 +17,9 @@ class MemberNumberGenerator
     /**
      * Must run inside a transaction: the row lock lasts only until the transaction ends.
      */
-    public function next(Church $church): string
+    public function next(string $churchId): string
     {
-        $locked = Church::query()->whereKey($church->getKey())->lockForUpdate()->firstOrFail();
+        $locked = Church::query()->whereKey($churchId)->lockForUpdate()->firstOrFail();
 
         if ($locked->member_number_prefix === null) {
             throw new MemberNumberPrefixMissingException;

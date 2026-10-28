@@ -563,6 +563,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-031 — Who can see which members, and who can deactivate
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/03` (assumptions flagged for Product Owner review)
+**Status:** Active
+
+**Decision:**
+1. **Directory visibility.** `church-admin`, `pastor` and `finance-secretary` see all members. `department-head` sees members of departments where they are `head_user_id`. `youth-pastor` sees members whose educational level is anything except `graduate` (the docs say "youth only" without defining it). A user with several of these roles sees the union. Enforced by `Member::scopeVisibleTo` and `MemberPolicy::view`.
+2. **Deactivation.** A new permission `members.deactivate`, held only by `church-admin`, is required to move a member to inactive, transferred, deceased or archived. `members.edit` is enough to move to prospect or active. This matches the `docs/03` table (pastors add and edit, only the admin deactivates).
+3. **Default directory.** With no status filter and no search, only prospects and active members are listed. Everything else is reachable by search or an explicit status.
+4. **Deceased is read-only.** `MemberPolicy::update` refuses a deceased member (docs/03, Stage 4). A status change is still allowed so a mistake can be corrected.
+
+**Rationale:** `docs/03` states these rules in prose and a table, but `docs/08` only mentions `members.view` and `members.edit`.
+
+**Revisit when:** the Product Owner defines "youth" precisely (for example by age), or a church needs per-department editing rights.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

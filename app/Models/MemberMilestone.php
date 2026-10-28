@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\MilestoneType;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\MemberMilestoneFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A spiritual milestone such as baptism or confirmation.
+ *
+ * @property string $id
+ * @property MilestoneType $type
+ * @property CarbonImmutable $occurred_at
+ * @property string|null $officiant
  */
 class MemberMilestone extends Model
 {

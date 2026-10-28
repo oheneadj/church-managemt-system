@@ -219,9 +219,14 @@ Permission: members.view
 | `department_id` | ulid | |
 | `family_id` | ulid | |
 | `educational_level` | string | `jhs_1`, `shs_3` |
-| `search` | string | Name or phone search |
-| `sort` | string | `last_name`, `created_at`, `membership_date` |
-| `direction` | string | `asc`, `desc` |
+| `search` | string | Every word must match the first, middle, last or preferred name, the phone or the member number, ignoring case. `%` and `_` are plain characters. |
+| `sort` | string | `last_name` (default), `first_name`, `created_at`, `membership_date` |
+| `direction` | string | `asc` (default), `desc` |
+| `per_page` | integer | 1 to 100, default 25 |
+
+**Default view:** with no `status` and no `search`, only `prospect` and `active` members are listed. Inactive, transferred, deceased and archived members stay out of the default view but are found by `search` or an explicit `status` (docs/03).
+
+**Who sees whom (D-031):** the church admin, pastor and finance secretary see every member. A department head sees members of the departments they head. A youth pastor sees youth members (every educational level except `graduate`). Asking for a member outside that view returns `403`. Invalid filters return `422`.
 
 **Response `200`:** Paginated collection of member summaries.
 
@@ -312,7 +317,9 @@ Permission: members.view
 }
 ```
 
-**Note:** `giving_summary` is omitted for roles without `giving.summary` permission. `address` is decrypted server-side before returning (never the encrypted blob).
+**Note:** `giving_summary` is omitted (the key is absent) for roles without `giving.summary` permission. Its amounts are decimal strings in GHS, for example `"2400.00"`, and voided contributions never count. `address` is decrypted server-side before returning (never the encrypted blob). `national_id_number` is never returned. `photo_url` arrives with the photo endpoint. The record also carries `status_changed_at` and `status_note`.
+
+**Errors:** `403` for a member outside the caller's view; `404` for a member that does not exist, is deleted, or belongs to another church.
 
 ---
 
@@ -340,7 +347,11 @@ Permission: members.edit
 }
 ```
 
+`member_number` is assigned by the server (`GRC-0042`, see D-030) and is ignored if sent. `status` may be `prospect` or `active` (default `active`). `department_ids` and `family_id` must belong to this church. A phone number may be sent as `0244123456` or `+233244123456`; it is stored in international form.
+
 **Response `201`:** Full member resource.
+
+**Errors:** `403` without `members.edit`. `422` for validation failures, including: a `phone` already used by a non-deleted member of this church; a `family_role` without a `family_id`; a second `head` in one family; or a church that has not yet set its member number prefix. Each create is written to the change log.
 
 ---
 
@@ -351,9 +362,11 @@ Authorization: Bearer {token}
 Permission: members.edit
 ```
 
-**Body:** Any subset of member fields. Only provided fields are updated.
+**Body:** Any subset of member fields. Only provided fields are updated. `member_number` and `status` are ignored (status has its own endpoint). Sending `department_ids` makes the member's departments exactly that list. Sending `family_id: null` also clears `family_role`.
 
 **Response `200`:** Updated member resource.
+
+**Errors:** `403` without `members.edit`, or when the member is deceased (the record is read-only). Every change is written to the change log with the old and new values and the acting user; encrypted fields (`address`, `national_id_number`) are logged as `[changed]`, never by value.
 
 ---
 
@@ -373,6 +386,8 @@ Permission: members.edit
 ```
 
 **Response `200`:** Updated member resource.
+
+**Permissions:** `members.edit` to move a member to `prospect` or `active`. Moving to `inactive`, `transferred`, `deceased` or `archived` also needs `members.deactivate` (church admin only), otherwise `403`. The note is kept in the change log as the reason.
 
 ---
 

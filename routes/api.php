@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
+use App\Http\Controllers\Api\V1\MemberController;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API routes (prefix /api/v1, set in bootstrap/app.php).
@@ -19,5 +20,11 @@ Route::middleware('tenant')->group(function (): void {
     Route::middleware(['auth:sanctum', 'staff.current'])->group(function (): void {
         Route::post('auth/logout', LogoutController::class)->name('auth.logout');
         Route::get('auth/me', MeController::class)->name('auth.me');
+
+        Route::get('members', [MemberController::class, 'index'])->name('members.index');
+        Route::post('members', [MemberController::class, 'store'])->name('members.store');
+        Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');
+        Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
+        Route::patch('members/{member}/status', [MemberController::class, 'updateStatus'])->name('members.status');
     });
 });

@@ -17,7 +17,7 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     /** @var list<string> */
     private const PERMISSIONS = [
-        'members.view', 'members.edit', 'members.export',
+        'members.view', 'members.edit', 'members.deactivate', 'members.export',
         'giving.summary', 'giving.record', 'giving.edit', 'giving.export',
         'sms.send',
         'reports.view', 'reports.export',

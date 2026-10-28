@@ -11,10 +11,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A ministry department such as the choir or ushers.
+ *
+ * @property Pivot|null $pivot the member_departments row, when loaded through a member
  */
 class Department extends Model
 {
@@ -55,6 +58,6 @@ class Department extends Model
      */
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(Member::class, 'member_departments', 'department_id', 'member_id')->withPivot('role', 'joined_at')->withTimestamps();
+        return $this->belongsToMany(Member::class, 'member_departments', 'department_id', 'member_id')->withPivot('role', 'joined_at')->withTimestamps()->wherePivotNull('deleted_at');
     }
 }
