@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\ChurchSlugTakenException;
+use App\Exceptions\FieldRuleException;
+use App\Exceptions\InvalidOtpException;
+use App\Exceptions\MemberNumberPrefixMissingException;
+use App\Exceptions\TooManyOtpAttemptsException;
 use App\Http\Middleware\AddErrorMonitoringContext;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureStaffIsCurrent;
@@ -38,6 +43,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Sends unhandled errors to the error monitor (docs/17). It does nothing until SENTRY_LARAVEL_DSN is set.
         Integration::handles($exceptions);
+
+        // A wrong code, a taken address or a rule the user broke is not a fault of ours. These get their 4xx answer
+        // but are not written to the log as errors and not sent to the error monitor.
+        $exceptions->dontReport([
+            InvalidOtpException::class,
+            TooManyOtpAttemptsException::class,
+            ChurchSlugTakenException::class,
+            FieldRuleException::class,
+            MemberNumberPrefixMissingException::class,
+        ]);
 
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
