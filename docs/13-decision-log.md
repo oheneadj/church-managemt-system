@@ -683,6 +683,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-038 — PayPerlez sends our SMS; we keep making our own codes
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the PayPerlez SMS documentation
+**Status:** Active
+
+**Decision:**
+1. **`SMS_PRIMARY_PROVIDER=payperlez` sends every text through `POST /sms/messages`** (docs/14, section 7). The provider interface now takes the whole message and returns a receipt, so the message log keeps PayPerlez's reference and the safe parts of its reply.
+2. **Every message has one retry key**, made when the job is created and kept across retries, so a retry after a timeout can never send a second text.
+3. **Temporary failures retry; refusals do not.** A rate limit, a server error or a lost connection retries with backoff. Any other refusal (unapproved sender, no credit, bad request) fails the job at once and is logged with PayPerlez's error code and request id only.
+4. **Sign-in and sign-up codes stay ours.** PayPerlez's own OTP product is not used, so sign-in is not tied to one provider and the code rules (10 minutes, 5 tries, lockout) stay the same whichever provider sends the text.
+5. **The app refuses to start** with this provider unless the API key and an approved sender id are set (`env:check` and the provider binding both say so).
+
+**Rationale:** The agreement requires every provider to sit behind an interface, retries to be safe, and failures to be normalised at the driver boundary.
+
+**Revisit when:** PayPerlez publishes SMS delivery webhooks (replace polling), or a second SMS provider is added (Africa's Talking is the planned fallback).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

@@ -6,11 +6,14 @@ namespace App\Jobs;
 
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
+use App\DTOs\SmsReceipt;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
+use App\Exceptions\SmsRejectedException;
 use App\Repositories\MessageLogRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -28,19 +31,32 @@ class SendSmsJob implements ShouldQueue
     /** @var list<int> */
     public array $backoff = [5, 20, 60];
 
-    /**
-     * Takes the SMS.
-     */
-    public function __construct(public readonly OutboundSms $sms) {}
+    /** The key that makes every retry of this one message look the same to the provider, so it is never sent twice. */
+    public readonly string $idempotencyKey;
 
     /**
-     * Sends the text through the active provider and records it as sent.
+     * Takes the SMS and makes its retry key. The key is saved with the job, so retries reuse it.
+     */
+    public function __construct(public readonly OutboundSms $sms)
+    {
+        $this->idempotencyKey = 'sms-'.Str::ulid();
+    }
+
+    /**
+     * Sends the text through the active provider and records it as sent. A message the provider refuses for good
+     * is not retried: the job fails at once and failed() records it.
      */
     public function handle(SmsProvider $provider, MessageLogRepositoryInterface $logs): void
     {
-        $provider->send($this->sms->phone, $this->sms->message);
+        try {
+            $receipt = $provider->send($this->sms, $this->idempotencyKey);
+        } catch (SmsRejectedException $rejected) {
+            $this->fail($rejected);
 
-        $this->record($logs, MessageStatus::Sent);
+            return;
+        }
+
+        $this->record($logs, MessageStatus::Sent, $receipt);
     }
 
     /**
@@ -54,7 +70,7 @@ class SendSmsJob implements ShouldQueue
     /**
      * Writes one line to the message log with the given outcome.
      */
-    private function record(MessageLogRepositoryInterface $logs, MessageStatus $status): void
+    private function record(MessageLogRepositoryInterface $logs, MessageStatus $status, ?SmsReceipt $receipt = null): void
     {
         $logs->create([
             'church_id' => $this->sms->churchId,
@@ -65,6 +81,8 @@ class SendSmsJob implements ShouldQueue
             'message_type' => $this->sms->messageType,
             'content' => $this->sms->logContent ?? $this->sms->message,
             'status' => $status,
+            'provider_reference' => $receipt?->reference,
+            'provider_response' => $receipt?->response,
             'sent_at' => $status === MessageStatus::Sent ? now() : null,
         ]);
     }

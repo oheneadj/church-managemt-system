@@ -68,6 +68,10 @@ final class EnvironmentCheck
             $problems[] = 'SMS_PRIMARY_PROVIDER must not be "log" outside development.';
         }
 
+        if ($config->get('services.sms.primary') === 'payperlez' && (blank($config->get('services.payperlez.api_key')) || blank($config->get('services.payperlez.sender_id')))) {
+            $problems[] = 'PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".';
+        }
+
         if ($config->get('filesystems.default') === 'local') {
             $problems[] = 'FILESYSTEM_DISK must be an object-storage disk (r2), not "local".';
         }

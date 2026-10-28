@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Contracts\SmsProvider;
 use App\Exceptions\SmsProviderUnavailableException;
 use App\Services\Sms\LogSmsProvider;
+use App\Services\Sms\PayperlezSmsProvider;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -29,8 +30,21 @@ class ProviderServiceProvider extends ServiceProvider
 
             return match ($driver) {
                 'log' => new LogSmsProvider,
+                'payperlez' => $this->payperlez(),
                 default => throw new SmsProviderUnavailableException("SMS provider [{$driver}] is not implemented yet."),
             };
         });
+    }
+
+    /**
+     * The PayPerlez SMS provider, once its key and sender id are set. Without them every send would fail, so I stop early.
+     */
+    private function payperlez(): PayperlezSmsProvider
+    {
+        if (blank(config('services.payperlez.api_key')) || blank(config('services.payperlez.sender_id'))) {
+            throw new SmsProviderUnavailableException('PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set to use PayPerlez.');
+        }
+
+        return new PayperlezSmsProvider;
     }
 }

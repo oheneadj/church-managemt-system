@@ -886,27 +886,30 @@ PAYMENT_PROVIDER_PAYPERLEZ=true
 
 ### SMS Send
 
-```php
-// app/Services/Sms/PayPerlez SmsProvider.php
-class PayPerlezSmsProvider implements SmsProvider
-{
-    public function send(string $phone, string $message): void
-    {
-        Http::withHeader('X-API-Key', config('services.payperlez.api_key'))
-            ->post(config('services.payperlez.base_url') . '/messaging/sms', [
-                'to'      => $phone,
-                'message' => $message,
-            ])
-            ->throw(); // throws on 4xx/5xx — job's retry handles it
-    }
-}
+Verified against `biz.payperlez.org/docs/sms` and its endpoint pages (28 Oct 2026). Implemented in `App\Services\Sms\PayperlezSmsProvider`.
+
+```
+POST https://api.payperlez.org/api/v1/sms/messages
+X-API-Key: {PAYPERLEZ_API_KEY}            (scope sms:send)
+Idempotency-Key: sms-{ulid}               (required, 8-100 chars: letters, digits . _ : -)
+{ "sender_id": "{approved sender UUID}", "recipient": "0244123456", "message": "..." }
 ```
 
-> **Note:** Confirm the exact endpoint path and request body against PayPerlez docs before Sprint 1. The shape above follows their documented pattern; the specific field names may differ.
+- **Reply `202`:** `data.reference`, `data.status` (`queued`, `processing`, `submitted`, `delivered`, `undeliverable`, `failed`, `unknown`), `segments_per_recipient`, `credits`, `encoding` (`GSM-7` or `UTF-16`), `is_test`, `idempotent_replay`, and `meta.request_id`. A `202` means *queued*, not delivered.
+- **Errors:** `{ success: false, error: { code, message, fields }, meta: { request_id } }`. `400` bad or missing Idempotency-Key, `401` bad key, `403` missing scope or live approval, `409` retry conflict or unapproved sender, `422` validation or not enough credit, `429` rate limit. The docs list no `error.code` values and no 5xx behaviour.
+- **Our handling:** `429`, `5xx` and connection failures are temporary, so the job retries (3 tries, backoff). Any other failure is a `SmsRejectedException`: the job fails at once and the message log records it. The log line holds the status, error code and request id, never the phone or text.
+- **Retry safety:** each job makes one `Idempotency-Key` when it is created and keeps it across retries, so a retry after a timeout replays the original and never sends twice. If an outcome is unknown, PayPerlez keeps the credits reserved and does not resend by itself.
+- **Recipient:** a Ghana number is sent in local form (`0244123456`), as the docs show; other numbers stay international.
+- **Billing:** 160 characters in the first segment, 153 in each later one, at most 10 segments. SMS credits are separate from the GHS balance. `GET /sms/balance` (scope `sms:balance:read`) returns `available_credits`, `reserved_credits`, `spent_credits`, `price_per_segment`.
+- **What the message log keeps:** `provider_reference` and `provider_response` (status, segments, credits, encoding, `is_test`, `idempotent_replay`, `request_id`); the recipient and text are left out.
+- **Needs from the PayPerlez workspace:** an API key with `sms:send`, and a sender id that is registered and approved for the environment (test or live). Integration keys cannot register sender ids or buy credits.
+- **Not documented, so not built:** SMS delivery webhooks (the webhooks guide lists no SMS events), rate limits and sender id format rules. Delivery status can be read with `GET /sms/messages/{reference}`; a poller for it belongs with Sprint 4 story 4.8.
 
 ### OTP via PayPerlez
 
-PayPerlez has a native OTP endpoint — use it instead of building our own via plain SMS:
+> **Decision (D-038):** staff sign-in codes and sign-up codes are made by us (hashed in the cache, 10 minutes, 5 tries, lockout) and sent as ordinary SMS through the provider interface. PayPerlez's OTP product (`POST /sms/otp/challenges`, 5-minute expiry, 60-second cooldown) would tie sign-in to one provider and has no published price, so it is not used. The text below is kept as the reference for it.
+
+PayPerlez has a native OTP endpoint:
 
 ```php
 // Send OTP

@@ -14,7 +14,7 @@ function goodConfig(array $overrides = []): Repository
         'tenancy' => ['base_domain' => 'example.com'],
         'session' => ['domain' => null, 'secure' => true],
         'trustedproxy' => ['proxies' => ['10.0.0.0/8']],
-        'services' => ['sms' => ['primary' => 'payperlez']],
+        'services' => ['sms' => ['primary' => 'payperlez'], 'payperlez' => ['api_key' => 'key', 'sender_id' => 'sender']],
         'filesystems' => ['default' => 'r2'],
     ];
 
@@ -68,3 +68,9 @@ it('fails the env:check command on a bad configuration', function (): void {
 
     $this->artisan('env:check')->assertFailed();
 });
+
+it('requires the PayPerlez key and sender id when PayPerlez sends the SMS', function (string $missing): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['services' => ['payperlez' => [$missing => '']]]));
+
+    expect($problems)->toBe(['PAYPERLEZ_API_KEY and PAYPERLEZ_SMS_SENDER_ID must be set when SMS_PRIMARY_PROVIDER is "payperlez".']);
+})->with(['api_key', 'sender_id']);
