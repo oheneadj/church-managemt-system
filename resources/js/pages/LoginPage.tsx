@@ -72,7 +72,9 @@ export function LoginPage() {
         <main className="flex min-h-svh items-center justify-center p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle>Sign in</CardTitle>
+                    <CardTitle>
+                        <h1>Sign in</h1>
+                    </CardTitle>
                     <CardDescription>
                         {phone === null ? 'Enter your phone number and we will text you a code.' : 'Enter the 6-digit code we sent you.'}
                     </CardDescription>

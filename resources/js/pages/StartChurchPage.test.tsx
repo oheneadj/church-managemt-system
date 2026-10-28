@@ -43,6 +43,12 @@ async function fillDetails() {
 describe('StartChurchPage', () => {
     beforeEach(() => vi.clearAllMocks());
 
+    it('has one main heading', () => {
+        renderPage();
+
+        expect(screen.getByRole('heading', { level: 1, name: 'Start your church' })).toBeInTheDocument();
+    });
+
     it('shows the labelled boxes and no code box until a code is sent', () => {
         renderPage();
 

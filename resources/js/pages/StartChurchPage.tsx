@@ -9,7 +9,9 @@ export function StartChurchPage() {
         <main className="flex min-h-svh items-center justify-center p-4">
             <Card className="w-full max-w-lg">
                 <CardHeader>
-                    <CardTitle>Start your church</CardTitle>
+                    <CardTitle>
+                        <h1>Start your church</h1>
+                    </CardTitle>
                     <CardDescription>It takes a few minutes. There is nothing to pay to begin.</CardDescription>
                 </CardHeader>
                 <CardContent>
