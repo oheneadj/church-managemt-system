@@ -236,7 +236,8 @@ All side effects that don't need to be synchronous are queued:
 
 | Job | Queue | Priority |
 |---|---|---|
-| `SendSmsJob` | `notifications` | Normal |
+| `SendSmsJob` (OTP) | `critical` | Highest (D-025) |
+| `SendSmsJob` (receipts, broadcasts) | `notifications` | Normal |
 | `SendWhatsAppJob` | `notifications` | Normal |
 | `SendEmailJob` | `notifications` | Low |
 | `ProcessPaystackWebhookJob` | `payments` | High |

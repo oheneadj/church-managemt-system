@@ -8,13 +8,13 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Thrown for a wrong, expired or unknown code. One message for all three cases, so a caller
- * cannot tell whether the phone number exists or how the code failed.
+ * Thrown for a wrong, expired or unknown code. One message for all three cases (QA-01 TC-01-03),
+ * so a caller cannot tell whether the phone number exists or how the code failed.
  */
 class InvalidOtpException extends Exception
 {
     public function render(): JsonResponse
     {
-        return response()->json(['message' => 'The code is invalid or has expired.'], 422);
+        return response()->json(['message' => 'Invalid code'], 422);
     }
 }

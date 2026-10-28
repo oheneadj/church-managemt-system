@@ -99,7 +99,7 @@ Route::get('/health', function () {
 
 ```php
 Route::get('/health/queues', function () {
-    $queues = ['notifications', 'payments', 'reports', 'exports', 'scheduled'];
+    $queues = ['critical', 'notifications', 'payments', 'reports', 'exports', 'scheduled'];
     $sizes  = [];
 
     foreach ($queues as $queue) {
@@ -148,6 +148,7 @@ class MonitorQueueDepth extends Command
 
     // Thresholds: alert if any queue exceeds this depth
     private array $thresholds = [
+        'critical'      => 3,    // OTPs: a backlog here means people cannot sign in
         'payments'      => 10,   // Payments queue should clear fast
         'notifications' => 50,
         'reports'       => 20,

@@ -64,21 +64,40 @@ it('gives the same answer for a wrong code and for no code at all', function ():
     $wrong = $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '000000']);
     $none = $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233200999999', 'otp' => '000000']);
 
-    $wrong->assertUnprocessable();
+    $wrong->assertUnprocessable()->assertJson(['message' => 'Invalid code']);
     $none->assertUnprocessable();
     expect($wrong->json())->toBe($none->json());
 });
 
-it('locks the phone out after five wrong codes, even for the right code', function (): void {
+it('locks the phone out on the fifth wrong code, even for the right code afterwards', function (): void {
     plantCode($this->church, '+233244123456', '123456');
 
-    foreach (range(1, 5) as $attempt) {
+    foreach (range(1, 4) as $attempt) {
         $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '000000'])->assertUnprocessable();
     }
 
-    $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '123456'])
+    $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '000000'])
         ->assertTooManyRequests()
+        ->assertJson(['message' => 'Too many attempts. Try again in 15 minutes.'])
         ->assertHeader('Retry-After', '900');
+
+    $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '123456'])->assertTooManyRequests();
+});
+
+it('lets the phone sign in again once the lockout is reset', function (): void {
+    plantCode($this->church, '+233244123456', '123456');
+    foreach (range(1, 5) as $attempt) {
+        $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '000000']);
+    }
+
+    $this->artisan('otp:reset-lockout', ['church' => 'grace', 'phone' => '0244123456'])->assertSuccessful();
+    plantCode($this->church, '+233244123456', '123456');
+
+    $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '123456'])->assertOk();
+});
+
+it('fails the reset command for an unknown church', function (): void {
+    $this->artisan('otp:reset-lockout', ['church' => 'nope', 'phone' => '0244123456'])->assertFailed();
 });
 
 it('does not accept a code planted for another church', function (): void {

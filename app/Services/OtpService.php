@@ -44,7 +44,7 @@ class OtpService
         SendSmsJob::dispatch(new OutboundSms(
             churchId: $church->id,
             phone: $phone->e164,
-            message: "Your {$church->name} sign-in code is {$code}. It expires in ".(config('otp.ttl_seconds') / 60).' minutes.',
+            message: 'Your '.config('app.name')." code is: {$code}. Valid for ".(config('otp.ttl_seconds') / 60).' minutes. Do not share.',
             messageType: 'otp',
             recipientType: RecipientType::User,
             recipientId: $user->id,
@@ -70,7 +70,11 @@ class OtpService
 
         if (! is_string($hash) || ! Hash::check($code, $hash)) {
             Cache::add($attemptsKey, 0, config('otp.lockout_seconds'));
-            Cache::increment($attemptsKey);
+
+            // The fifth miss already reports the lockout (QA-01 TC-01-05), not a sixth invalid-code answer.
+            if (Cache::increment($attemptsKey) >= config('otp.max_attempts')) {
+                throw new TooManyOtpAttemptsException;
+            }
 
             throw new InvalidOtpException;
         }
@@ -85,6 +89,15 @@ class OtpService
         Cache::forget($attemptsKey);
 
         return $user;
+    }
+
+    /**
+     * Clears a phone's lockout and any pending code. Used by the support runbook (docs/16).
+     */
+    public function resetLockout(Church $church, PhoneNumber $phone): void
+    {
+        Cache::forget($this->attemptsKey($church, $phone));
+        Cache::forget($this->codeKey($church, $phone));
     }
 
     private function generateCode(): string

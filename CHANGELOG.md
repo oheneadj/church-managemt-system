@@ -19,12 +19,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `ResolveTenant` middleware (subdomain or custom domain, 404 when unknown or suspended), run before auth so tokens only resolve within their own church
 - API is versioned from day one under `/api/v1` (D-024)
 - OTP sign-in: `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`. Codes are bcrypt-hashed in Redis per church, locked out after 5 misses, and sent by a queued `SendSmsJob` on the new `critical` queue (D-025)
+- Tokens are revoked immediately when a staff member is deactivated or changes phone number; `php artisan otp:reset-lockout {church} {phone}` for support
 - `SmsProvider` contract with a development-only log driver; the PayPerlez and Africa's Talking adapters come next
 - Roles and permissions seeder, ULID-keyed `Role` and `Permission` models, `PhoneNumber` value object
 - Tenancy and database-constraint tests (cross-tenant, partial unique indexes, double check-in)
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
 
 ### Changed
+- OTP errors and lockout now follow QA-01 ("Invalid code"; the 5th wrong code returns 429); the ops runbook and queue lists include the `critical` queue
 - Database is now PostgreSQL instead of MySQL; data model, CI, backup and restore docs updated (D-021)
 - React SPA now lives in the Laravel repo (`resources/js`) behind one Blade shell view, no Inertia; replaces the separate `chms-frontend` repo (D-022, amends D-008)
 - Local development is native (PostgreSQL 18, Redis 8, no Docker); staging and production stay on Docker via Coolify (D-023)

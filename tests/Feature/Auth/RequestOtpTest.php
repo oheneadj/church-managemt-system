@@ -27,6 +27,14 @@ it('queues a code on the critical queue for a known staff phone', function (): v
     });
 });
 
+it('sends the message in the documented format', function (): void {
+    Queue::fake();
+
+    $this->postJson('http://grace.localhost/api/v1/auth/otp/request', ['phone' => '+233244123456'])->assertOk();
+
+    Queue::assertPushed(SendSmsJob::class, fn (SendSmsJob $job): bool => preg_match('/^Your .+ code is: \d{6}\. Valid for 10 minutes\. Do not share\.$/', $job->sms->message) === 1);
+});
+
 it('accepts a local Ghana number and normalises it', function (): void {
     Queue::fake();
 

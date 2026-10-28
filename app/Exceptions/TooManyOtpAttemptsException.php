@@ -15,7 +15,7 @@ class TooManyOtpAttemptsException extends Exception
     public function render(): JsonResponse
     {
         return response()->json(
-            ['message' => 'Too many attempts. Please try again later.'],
+            ['message' => 'Too many attempts. Try again in '.(int) ceil(config('otp.lockout_seconds') / 60).' minutes.'],
             429,
             ['Retry-After' => (string) config('otp.lockout_seconds')],
         );

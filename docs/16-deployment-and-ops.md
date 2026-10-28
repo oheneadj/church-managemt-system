@@ -19,7 +19,7 @@ Oracle ARM Instance (4 OCPUs, 24GB RAM)
    │     ├── Laravel API (Docker container, port 8000)
    │     ├── PostgreSQL (Docker container, internal only)
    │     ├── Redis (Docker container, internal only)
-   │     └── Queue Workers (Supervisor — 5 named queues)
+   │     └── Queue Workers (Supervisor — 6 named queues)
    │
    └── Cloudflare R2 (object storage — external, CDN-backed)
 ```
@@ -153,6 +153,16 @@ Coolify handles Let's Encrypt automatically. Configure:
 Add a Supervisor config in Coolify's process manager for queue workers:
 
 ```ini
+[program:queue-critical]
+command=php /var/www/html/artisan queue:work redis --queue=critical --sleep=1 --tries=3 --backoff=5
+numprocs=1
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/www/html/storage/logs/worker-critical.log
+
 [program:queue-notifications]
 command=php /var/www/html/artisan queue:work redis --queue=notifications --sleep=3 --tries=3 --backoff=60
 numprocs=2
@@ -189,7 +199,7 @@ numprocs=1
 autostart=true
 autorestart=true
 stopasgroup=true
-killasfile=true
+killasgroup=true
 redirect_stderr=true
 stdout_logfile=/var/www/html/storage/logs/worker-exports.log
 
@@ -507,9 +517,10 @@ Then create the admin user and invite them via email.
 If a staff member is locked out due to too many OTP attempts:
 
 ```bash
-php artisan tinker
->>> Redis::del('otp_attempts:+233244123456')
+php artisan otp:reset-lockout grace-assembly +233244123456
 ```
+
+The command clears the lockout counter and any pending code for that church and number (the Redis keys are namespaced per church and hashed, so deleting a raw key by hand no longer works).
 
 Confirm the phone number with the church admin before doing this.
 
