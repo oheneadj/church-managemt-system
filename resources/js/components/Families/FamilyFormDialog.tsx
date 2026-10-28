@@ -82,6 +82,7 @@ export function FamilyFormDialog({ family, open, onOpenChange, onSaved }: Family
                     <TextAreaField
                         id="family-notes"
                         label="Notes (optional)"
+                        placeholder="For example: lives in two towns"
                         error={form.formState.errors.notes?.message}
                         {...form.register('notes')}
                     />

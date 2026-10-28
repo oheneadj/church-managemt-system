@@ -29,10 +29,19 @@ export function ContactFields() {
                 label="Second phone number"
                 type="tel"
                 inputMode="tel"
+                placeholder="020 123 4567"
                 error={errors.phone_secondary?.message}
                 {...register('phone_secondary')}
             />
-            <TextField id="email" label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
+            <TextField
+                id="email"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                placeholder="kwame@example.com"
+                error={errors.email?.message}
+                {...register('email')}
+            />
             <TextField
                 id="digital_address"
                 label="Digital address (GPS code)"
@@ -45,6 +54,7 @@ export function ContactFields() {
                     id="address"
                     label="Home address"
                     autoComplete="street-address"
+                    placeholder="House number, street and area"
                     error={errors.address?.message}
                     {...register('address')}
                 />

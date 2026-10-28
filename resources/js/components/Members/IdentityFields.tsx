@@ -19,6 +19,7 @@ export function IdentityFields() {
                 label="First name"
                 required
                 autoComplete="given-name"
+                placeholder="Kwame"
                 error={errors.first_name?.message}
                 {...register('first_name')}
             />
@@ -27,11 +28,24 @@ export function IdentityFields() {
                 label="Last name"
                 required
                 autoComplete="family-name"
+                placeholder="Mensah"
                 error={errors.last_name?.message}
                 {...register('last_name')}
             />
-            <TextField id="middle_name" label="Middle name" error={errors.middle_name?.message} {...register('middle_name')} />
-            <TextField id="preferred_name" label="Known as" error={errors.preferred_name?.message} {...register('preferred_name')} />
+            <TextField
+                id="middle_name"
+                label="Middle name"
+                placeholder="Kofi"
+                error={errors.middle_name?.message}
+                {...register('middle_name')}
+            />
+            <TextField
+                id="preferred_name"
+                label="Known as"
+                placeholder="Kofi"
+                error={errors.preferred_name?.message}
+                {...register('preferred_name')}
+            />
             <SelectField
                 id="gender"
                 label="Gender"

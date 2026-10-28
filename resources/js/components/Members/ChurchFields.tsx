@@ -59,8 +59,14 @@ export function ChurchFields({ editing }: ChurchFieldsProps) {
                     error={errors.educational_level?.message}
                     {...register('educational_level')}
                 />
-                <TextField id="occupation" label="Occupation" error={errors.occupation?.message} {...register('occupation')} />
-                <TextField id="tribe" label="Tribe" error={errors.tribe?.message} {...register('tribe')} />
+                <TextField
+                    id="occupation"
+                    label="Occupation"
+                    placeholder="Teacher"
+                    error={errors.occupation?.message}
+                    {...register('occupation')}
+                />
+                <TextField id="tribe" label="Tribe" placeholder="Akan" error={errors.tribe?.message} {...register('tribe')} />
                 <TextField
                     id="language_preference"
                     label="Preferred language"
@@ -79,6 +85,7 @@ export function ChurchFields({ editing }: ChurchFieldsProps) {
                     id="national_id_number"
                     label={editing ? 'ID number (leave empty to keep the saved one)' : 'ID number'}
                     autoComplete="off"
+                    placeholder="GHA-000000000-0"
                     error={errors.national_id_number?.message}
                     {...register('national_id_number')}
                 />

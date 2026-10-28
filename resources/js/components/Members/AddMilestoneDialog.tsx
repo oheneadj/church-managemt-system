@@ -100,18 +100,21 @@ export function AddMilestoneDialog({ memberId, open, onOpenChange }: AddMileston
                     <TextField
                         id="milestone-officiant"
                         label="Officiant (optional)"
+                        placeholder="Pastor Mensah"
                         error={errors.officiant?.message}
                         {...form.register('officiant')}
                     />
                     <TextField
                         id="milestone-cohort"
                         label="Class or cohort (optional)"
+                        placeholder="Baptism class of 2026"
                         error={errors.cohort?.message}
                         {...form.register('cohort')}
                     />
                     <TextAreaField
                         id="milestone-notes"
                         label="Notes (optional)"
+                        placeholder="Anything worth remembering about this milestone"
                         error={errors.notes?.message}
                         {...form.register('notes')}
                     />
