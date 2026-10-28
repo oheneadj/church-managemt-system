@@ -9,7 +9,7 @@ use App\Models\MemberMilestone;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 
 it('records the milestone on the member with the staff member who entered it', function (): void {
-    $milestone = new MemberMilestone;
+    $milestone = MemberMilestone::factory()->make(['church_id' => '01churchunit', 'member_id' => '01memberunit', 'created_by' => '01userunit']);
     $milestones = Mockery::mock(MemberMilestoneRepositoryInterface::class);
     $milestones->shouldReceive('create')->once()->with([
         'church_id' => '01churchunit',

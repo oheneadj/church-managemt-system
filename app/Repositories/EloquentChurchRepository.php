@@ -16,6 +16,16 @@ class EloquentChurchRepository implements ChurchRepositoryInterface
         return Church::query()->whereKey($churchId)->lockForUpdate()->firstOrFail();
     }
 
+    public function findBySlug(string $slug): ?Church
+    {
+        return Church::query()->where('slug', $slug)->first();
+    }
+
+    public function findByCustomDomain(string $domain): ?Church
+    {
+        return Church::query()->where('custom_domain', $domain)->first();
+    }
+
     public function incrementMemberNumberSequence(Church $church): Church
     {
         $church->increment('member_number_seq');

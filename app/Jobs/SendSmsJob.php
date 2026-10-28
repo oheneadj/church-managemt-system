@@ -8,7 +8,7 @@ use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
-use App\Models\MessageLog;
+use App\Repositories\MessageLogRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -30,21 +30,21 @@ class SendSmsJob implements ShouldQueue
 
     public function __construct(public readonly OutboundSms $sms) {}
 
-    public function handle(SmsProvider $provider): void
+    public function handle(SmsProvider $provider, MessageLogRepositoryInterface $logs): void
     {
         $provider->send($this->sms->phone, $this->sms->message);
 
-        $this->record(MessageStatus::Sent);
+        $this->record($logs, MessageStatus::Sent);
     }
 
     public function failed(Throwable $exception): void
     {
-        $this->record(MessageStatus::Failed);
+        $this->record(app(MessageLogRepositoryInterface::class), MessageStatus::Failed);
     }
 
-    private function record(MessageStatus $status): void
+    private function record(MessageLogRepositoryInterface $logs, MessageStatus $status): void
     {
-        MessageLog::query()->create([
+        $logs->create([
             'church_id' => $this->sms->churchId,
             'channel' => MessageChannel::Sms,
             'recipient_type' => $this->sms->recipientType,

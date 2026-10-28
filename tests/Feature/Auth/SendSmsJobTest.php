@@ -9,6 +9,7 @@ use App\Enums\RecipientType;
 use App\Jobs\SendSmsJob;
 use App\Models\Church;
 use App\Models\MessageLog;
+use App\Repositories\MessageLogRepositoryInterface;
 
 function sampleSms(Church $church): OutboundSms
 {
@@ -20,7 +21,7 @@ it('sends through the provider and logs the redacted message as sent', function 
     $provider = Mockery::mock(SmsProvider::class);
     $provider->shouldReceive('send')->once()->with('+233244123456', 'Your code is 123456');
 
-    (new SendSmsJob(sampleSms($church)))->handle($provider);
+    (new SendSmsJob(sampleSms($church)))->handle($provider, app(MessageLogRepositoryInterface::class));
 
     $log = MessageLog::query()->first();
     expect($log->status)->toBe(MessageStatus::Sent)

@@ -13,6 +13,6 @@ class EloquentMemberMilestoneRepository implements MemberMilestoneRepositoryInte
 {
     public function create(array $attributes): MemberMilestone
     {
-        return MemberMilestone::create($attributes);
+        return MemberMilestone::query()->create($attributes);
     }
 }

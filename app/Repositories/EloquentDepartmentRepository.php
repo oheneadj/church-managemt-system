@@ -30,7 +30,7 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
 
     public function create(array $attributes): Department
     {
-        return Department::create($attributes)->refresh();
+        return Department::query()->create($attributes)->refresh();
     }
 
     public function update(Department $department, array $attributes): Department

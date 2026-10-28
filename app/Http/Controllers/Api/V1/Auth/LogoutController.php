@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Auth\LogoutAction;
+use App\DTOs\Auth\LogoutDTO;
 use App\Http\Controllers\Controller;
-use App\Models\PersonalAccessToken;
-use App\Services\AuthSessionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -15,17 +15,11 @@ use Illuminate\Http\Response;
  */
 class LogoutController extends Controller
 {
-    public function __construct(private readonly AuthSessionService $sessions) {}
+    public function __construct(private readonly LogoutAction $action) {}
 
     public function __invoke(Request $request): Response
     {
-        $token = $request->user()?->currentAccessToken();
-
-        if ($token instanceof PersonalAccessToken) {
-            $token->delete();
-        } elseif ($request->hasSession()) {
-            $this->sessions->endBrowserSession($request->session());
-        }
+        $this->action->execute(LogoutDTO::fromRequest($request));
 
         return response()->noContent();
     }

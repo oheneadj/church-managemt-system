@@ -72,8 +72,8 @@ Value objects (`app/ValueObjects`, for example `PhoneNumber`) replace primitive 
 
 ## Authentication
 
-- Phone number plus a one-time code; there are no passwords (D-012). `OtpService` stores only a bcrypt hash, per church, in Redis, with lockout.
-- The **web app** is signed in by an httpOnly, host-only session cookie (Sanctum stateful, D-027). Other clients get an 8-hour bearer token from the same endpoint. `AuthSessionService` starts and ends both.
+- Phone number plus a one-time code; there are no passwords (D-012). `RequestOtpAction` and `VerifyOtpAction` use `OtpService`, which stores only a bcrypt hash, per church, in Redis, with lockout.
+- The **web app** is signed in by an httpOnly, host-only session cookie (Sanctum stateful, D-027). Other clients get an 8-hour bearer token from the same endpoint. `AuthSessionService` starts and ends both, through `VerifyOtpAction` and `LogoutAction`.
 - `EnsureStaffIsCurrent` ends a session the moment a user is deactivated or changes phone number; `UserObserver` deletes their tokens.
 - Cost-triggering endpoints (sending an SMS) have their own rate limits (D-025).
 

@@ -6,7 +6,6 @@ use App\Actions\Families\CreateFamilyAction;
 use App\DTOs\Families\CreateFamilyDTO;
 use App\Enums\FamilyRole;
 use App\Events\MemberUpdated;
-use App\Models\Family;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Services\MemberFamilyService;
@@ -17,7 +16,7 @@ beforeEach(function (): void {
     Event::fake([MemberUpdated::class]);
     withoutDatabaseTransactions();
     $this->actor = unitUser();
-    $this->family = (new Family)->forceFill(['id' => '01familyunit', 'church_id' => '01churchunit']);
+    $this->family = unitFamily();
     $this->families = Mockery::mock(FamilyRepositoryInterface::class);
     $this->members = Mockery::mock(MemberRepositoryInterface::class);
     $this->memberFamilies = Mockery::mock(MemberFamilyService::class);

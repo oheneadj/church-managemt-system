@@ -18,10 +18,14 @@ use App\Repositories\EloquentFamilyRepository;
 use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
 use App\Repositories\EloquentMemberRepository;
+use App\Repositories\EloquentMessageLogRepository;
+use App\Repositories\EloquentUserRepository;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
+use App\Repositories\MessageLogRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -40,5 +44,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ChurchRepositoryInterface::class => EloquentChurchRepository::class,
         ContributionRepositoryInterface::class => EloquentContributionRepository::class,
         AttendanceRecordRepositoryInterface::class => EloquentAttendanceRecordRepository::class,
+        UserRepositoryInterface::class => EloquentUserRepository::class,
+        MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
     ];
 }

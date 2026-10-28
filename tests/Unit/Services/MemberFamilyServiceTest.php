@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\FamilyRole;
-use App\Models\Family;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Services\MemberFamilyService;
@@ -35,7 +34,7 @@ describe('guard', function (): void {
     });
 
     it('locks the family first, then refuses a second head', function (): void {
-        $this->families->shouldReceive('lock')->once()->with('01family')->andReturn(new Family)->ordered();
+        $this->families->shouldReceive('lock')->once()->with('01family')->andReturn(unitFamily())->ordered();
         $this->members->shouldReceive('familyHasOtherHead')->once()->with('01family', '01memberunit')->andReturnTrue()->ordered();
         $member = unitMember(['family_id' => '01family', 'family_role' => FamilyRole::Head], persisted: true);
 
@@ -43,7 +42,7 @@ describe('guard', function (): void {
     });
 
     it('lets the only head through, and does not exclude a member that is not saved yet', function (): void {
-        $this->families->shouldReceive('lock')->once()->andReturn(new Family);
+        $this->families->shouldReceive('lock')->once()->andReturn(unitFamily());
         $this->members->shouldReceive('familyHasOtherHead')->once()->with('01family', null)->andReturnFalse();
 
         $this->service->guard(unitMember(['family_id' => '01family', 'family_role' => FamilyRole::Head]));
@@ -66,7 +65,7 @@ describe('claimHead', function (): void {
 
 it('assigns a member to a family and returns what changed', function (): void {
     $member = unitMember(['family_id' => null, 'family_role' => null], persisted: true);
-    $this->families->shouldReceive('lock')->once()->andReturn(new Family);
+    $this->families->shouldReceive('lock')->once()->andReturn(unitFamily());
     $this->members->shouldReceive('familyHasOtherHead')->once()->andReturnFalse();
     $this->members->shouldReceive('save')->once()->with($member)->andReturn($member);
     $this->families->shouldReceive('setHead')->once()->with('01family', '01memberunit');

@@ -17,4 +17,8 @@ interface ChurchRepositoryInterface
     public function lock(string $churchId): Church;
 
     public function incrementMemberNumberSequence(Church $church): Church;
+
+    public function findBySlug(string $slug): ?Church;
+
+    public function findByCustomDomain(string $domain): ?Church;
 }

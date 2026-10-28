@@ -11,6 +11,7 @@ use App\Exceptions\TooManyOtpAttemptsException;
 use App\Jobs\SendSmsJob;
 use App\Models\Church;
 use App\Models\User;
+use App\Repositories\UserRepositoryInterface;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -21,13 +22,15 @@ use Illuminate\Support\Facades\Hash;
  */
 class OtpService
 {
+    public function __construct(private readonly UserRepositoryInterface $users) {}
+
     /**
      * Sends a code if the phone belongs to an active staff member of this church.
      * It returns normally either way, so the caller cannot learn which numbers exist.
      */
     public function request(Church $church, PhoneNumber $phone): void
     {
-        $user = User::query()->where('phone', $phone->e164)->where('is_active', true)->first();
+        $user = $this->users->findActiveByPhone($phone->e164);
 
         if ($user === null) {
             // I still pay for one hash so an unknown number takes as long as a known one.
@@ -79,7 +82,7 @@ class OtpService
             throw new InvalidOtpException;
         }
 
-        $user = User::query()->where('phone', $phone->e164)->where('is_active', true)->first();
+        $user = $this->users->findActiveByPhone($phone->e164);
 
         if ($user === null) {
             throw new InvalidOtpException;

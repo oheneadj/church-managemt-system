@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\HealthCheck;
+use App\Actions\Health\CheckHealthAction;
+use App\Http\Resources\HealthReportResource;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -13,15 +14,12 @@ use Illuminate\Http\JsonResponse;
  */
 class HealthController extends Controller
 {
-    public function __invoke(HealthCheck $health): JsonResponse
-    {
-        $checks = $health->run();
-        $healthy = ! in_array('error', $checks, true);
+    public function __construct(private readonly CheckHealthAction $action) {}
 
-        return response()->json([
-            'status' => $healthy ? 'ok' : 'degraded',
-            'checks' => $checks,
-            'timestamp' => now()->toIso8601String(),
-        ], $healthy ? 200 : 503);
+    public function __invoke(): JsonResponse
+    {
+        $report = $this->action->execute();
+
+        return (new HealthReportResource($report))->response()->setStatusCode($report->healthy ? 200 : 503);
     }
 }

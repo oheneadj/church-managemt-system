@@ -7,11 +7,6 @@ use App\Models\Church;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Services\MemberNumberGenerator;
 
-function unitChurch(?string $prefix, int $sequence): Church
-{
-    return (new Church)->forceFill(['id' => '01churchunit', 'member_number_prefix' => $prefix, 'member_number_seq' => $sequence]);
-}
-
 function churchesCounting(Church $church): ChurchRepositoryInterface
 {
     $churches = Mockery::mock(ChurchRepositoryInterface::class);

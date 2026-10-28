@@ -13,6 +13,6 @@ class EloquentAuditLogRepository implements AuditLogRepositoryInterface
 {
     public function append(array $attributes): AuditLog
     {
-        return AuditLog::create($attributes);
+        return AuditLog::query()->create($attributes);
     }
 }

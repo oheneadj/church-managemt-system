@@ -31,7 +31,7 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
 
     public function create(array $attributes): Family
     {
-        return Family::create($attributes)->refresh();
+        return Family::query()->create($attributes)->refresh();
     }
 
     public function update(Family $family, array $attributes): Family

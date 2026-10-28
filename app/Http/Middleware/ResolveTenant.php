@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Church;
+use App\Repositories\ChurchRepositoryInterface;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
@@ -16,6 +17,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ResolveTenant
 {
+    public function __construct(private readonly ChurchRepositoryInterface $churches) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $church = $this->findChurch($request->getHost());
@@ -38,9 +41,9 @@ class ResolveTenant
         if (str_ends_with($host, $suffix)) {
             $slug = substr($host, 0, -strlen($suffix));
 
-            return Church::query()->where('slug', $slug)->first();
+            return $this->churches->findBySlug($slug);
         }
 
-        return Church::query()->where('custom_domain', $host)->first();
+        return $this->churches->findByCustomDomain($host);
     }
 }

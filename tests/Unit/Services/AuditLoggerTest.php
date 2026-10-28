@@ -23,14 +23,14 @@ it('appends a line naming the record, the actor, the changed fields and the requ
         'actor_name' => 'Akosua Mensah',
         'request_id' => 'req-12345678',
         'reason' => 'Promoted',
-    ])->andReturn(new AuditLog);
+    ])->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
     (new AuditLogger($logs))->record(unitMember(), AuditEvent::Updated, unitUser(), ['occupation' => 'Teacher'], ['occupation' => 'Nurse'], 'Promoted');
 });
 
 it('stores nothing for the old or new values of a create or a status change that has none', function (): void {
     $logs = Mockery::mock(AuditLogRepositoryInterface::class);
-    $logs->shouldReceive('append')->once()->withArgs(fn (array $a) => $a['old_values'] === null && $a['new_values'] === null && $a['changed_fields'] === [])->andReturn(new AuditLog);
+    $logs->shouldReceive('append')->once()->withArgs(fn (array $a) => $a['old_values'] === null && $a['new_values'] === null && $a['changed_fields'] === [])->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
     (new AuditLogger($logs))->record(unitMember(), AuditEvent::Created, unitUser());
 });

@@ -8,7 +8,6 @@ use App\Actions\Departments\UpdateDepartmentAction;
 use App\DTOs\Departments\CreateDepartmentDTO;
 use App\DTOs\Departments\ListDepartmentsDTO;
 use App\DTOs\Departments\UpdateDepartmentDTO;
-use App\Models\Department;
 use App\Repositories\DepartmentRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -22,7 +21,7 @@ it('lists a page of departments through the repository', function (): void {
 });
 
 it('creates a department in the staff member\'s church', function (): void {
-    $department = new Department;
+    $department = unitDepartment();
     $departments = Mockery::mock(DepartmentRepositoryInterface::class);
     $departments->shouldReceive('create')->once()->with([
         'church_id' => '01churchunit',
@@ -38,7 +37,7 @@ it('creates a department in the staff member\'s church', function (): void {
 });
 
 it('updates only the fields given', function (): void {
-    $department = new Department;
+    $department = unitDepartment();
     $departments = Mockery::mock(DepartmentRepositoryInterface::class);
     $departments->shouldReceive('update')->once()->with($department, ['is_active' => false])->andReturn($department);
 

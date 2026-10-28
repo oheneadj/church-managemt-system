@@ -24,7 +24,7 @@ class EloquentMemberDepartmentRepository implements MemberDepartmentRepositoryIn
 
     public function create(array $attributes): MemberDepartment
     {
-        return MemberDepartment::create($attributes);
+        return MemberDepartment::query()->create($attributes);
     }
 
     public function changeRole(MemberDepartment $link, ?string $role): MemberDepartment

@@ -8,14 +8,8 @@ use App\Actions\Families\UpdateFamilyAction;
 use App\DTOs\Families\ListFamiliesDTO;
 use App\DTOs\Families\ShowFamilyDTO;
 use App\DTOs\Families\UpdateFamilyDTO;
-use App\Models\Family;
 use App\Repositories\FamilyRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
-
-function unitFamily(): Family
-{
-    return (new Family)->forceFill(['id' => '01familyunit', 'church_id' => '01churchunit', 'name' => 'Mensah Family']);
-}
 
 it('lists a page of families through the repository', function (): void {
     $dto = new ListFamiliesDTO(unitUser(), 'Mensah');
