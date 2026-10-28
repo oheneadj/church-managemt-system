@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The member profile now has a Personal data section. Staff with the export permission see 'Download their data', which saves the member's data as a .json file named after their member number. The church admin (erase permission) also sees 'Erase personal data', which opens a dialog that says what is removed and what stays, asks for a reason (kept in the change log, no personal details), and on success returns to the directory. Server messages show beside the reason box.
 - **Why:** The frontend half of the export and erasure endpoints (D-039). Without the buttons a church admin could not use them. The React addendum requires a test for every reusable component and service function, and destructive actions need a confirmation step.
 - **Files:** `resources/js/components/Members/` (MemberPrivacyActions, EraseMemberDialog), `resources/js/pages/MemberDetailPage.tsx`, `resources/js/utils/downloadJson.ts`, `resources/js/hooks/useMemberMutations.ts`, `resources/js/services/api/members.ts`, `resources/js/constants/permissions.ts`, and new Vitest tests
-- **Commit:** pending
+- **Commit:** `1734761` (2026-10-28)
 
 #### test(members-ui): stop the form tests failing at random on a busy machine
 - **What:** Three changes to the test setup. Each test may take up to 15 seconds (was 5), `findBy` and `waitFor` wait up to 5 seconds (was 1), and the two form tests that clicked Next twice now wait for 'Step 2 of 3' before the second click, so they no longer click the first step's button again. No assertion was changed or removed.
