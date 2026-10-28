@@ -366,7 +366,7 @@ Commitments from members to give a specific amount by a target date.
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Computed:** `amount_outstanding = amount_pledged - amount_paid` — calculated in application, not stored.
+**Computed:** `amount_outstanding = amount_pledged - amount_paid` (never below 0) and `progress_percent` (0 to 100) — calculated in application, not stored. `amount_paid` and `status` are worked out from the pledge's gifts that are not voided, every time one is recorded or voided, and by the daily `pledges:refresh` job (D-047). A gift points to its pledge with `contributions.pledge_id`, which is indexed.
 
 **Index:** `(church_id, member_id, status)`, `(church_id, target_date)`
 

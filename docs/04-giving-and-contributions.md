@@ -175,7 +175,7 @@ As contributions linked to a pledge are recorded, the system tracks:
 - Outstanding balance
 - Progress percentage
 
-When the outstanding balance reaches zero before the target date, the pledge status auto-updates to `fulfilled`.
+When the outstanding balance reaches zero, the pledge status updates to `fulfilled` (even after the target date). After the target date an unpaid pledge becomes `partial` if something was paid and `lapsed` if nothing was; until then it is `active`. A gift names the pledge it pays, and the paid amount is added up again from the gifts that are not voided every time a gift is recorded or voided (D-047).
 
 **Pledge reports:**
 - Per-member pledge status

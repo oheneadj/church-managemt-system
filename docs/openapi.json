@@ -1088,6 +1088,122 @@
                 }
             }
         },
+        "/v1/pledges": {
+            "get": {
+                "operationId": "pledges.index",
+                "summary": "Runs ListPledgesAction for this request and returns the PledgeCollection",
+                "tags": [
+                    "ListPledges"
+                ],
+                "parameters": [
+                    {
+                        "name": "member_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fund_type_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PledgeStatus"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PledgeCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PledgeCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "pledges.store",
+                "summary": "Runs CreatePledgeAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StorePledge"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePledgeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`PledgeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PledgeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}/attendance": {
             "get": {
                 "operationId": "attendance.index",
@@ -2089,6 +2205,117 @@
                 }
             }
         },
+        "/v1/pledges/{pledge}": {
+            "get": {
+                "operationId": "pledges.show",
+                "summary": "Runs ShowPledgeAction for this request and returns the PledgeResource",
+                "tags": [
+                    "ShowPledge"
+                ],
+                "parameters": [
+                    {
+                        "name": "pledge",
+                        "in": "path",
+                        "required": true,
+                        "description": "The pledge ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PledgeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PledgeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "pledges.update",
+                "summary": "Runs UpdatePledgeAction for this request and returns the PledgeResource",
+                "tags": [
+                    "UpdatePledge"
+                ],
+                "parameters": [
+                    {
+                        "name": "pledge",
+                        "in": "path",
+                        "required": true,
+                        "description": "The pledge ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePledgeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PledgeResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PledgeResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/checkin/qr/{token}": {
             "get": {
                 "operationId": "checkin.qr.show",
@@ -3057,6 +3284,24 @@
                         "required": [
                             "id",
                             "name"
+                        ]
+                    },
+                    "pledge": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "description"
                         ]
                     },
                     "amount": {
@@ -4704,6 +4949,139 @@
                 ],
                 "title": "PaymentMethod"
             },
+            "PledgeCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/PledgeResource"
+                },
+                "title": "PledgeCollection"
+            },
+            "PledgeResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "full_name"
+                        ]
+                    },
+                    "fund_type": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "amount_pledged": {
+                        "type": "string"
+                    },
+                    "amount_pledged_formatted": {
+                        "type": "string"
+                    },
+                    "amount_paid": {
+                        "type": "string"
+                    },
+                    "amount_paid_formatted": {
+                        "type": "string"
+                    },
+                    "amount_outstanding": {
+                        "type": "string"
+                    },
+                    "amount_outstanding_formatted": {
+                        "type": "string"
+                    },
+                    "progress_percent": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "target_date": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "fulfilled",
+                            "partial",
+                            "lapsed"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Active",
+                            "Fulfilled",
+                            "Partial",
+                            "Lapsed"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "contributions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContributionResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "member",
+                    "fund_type",
+                    "description",
+                    "amount_pledged",
+                    "amount_pledged_formatted",
+                    "amount_paid",
+                    "amount_paid_formatted",
+                    "amount_outstanding",
+                    "amount_outstanding_formatted",
+                    "progress_percent",
+                    "target_date",
+                    "status",
+                    "status_label",
+                    "created_at"
+                ],
+                "title": "PledgeResource"
+            },
+            "PledgeStatus": {
+                "type": "string",
+                "description": "The allowed pledge status values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "active",
+                    "fulfilled",
+                    "partial",
+                    "lapsed"
+                ],
+                "title": "PledgeStatus"
+            },
             "QrCheckInRequest": {
                 "type": "object",
                 "description": "Validates confirming a QR check-in: the scanned code, the phone number and the texted code.",
@@ -5112,6 +5490,12 @@
                             "null"
                         ]
                     },
+                    "pledge_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "fund_type_id": {
                         "type": "string"
                     },
@@ -5427,6 +5811,38 @@
                 ],
                 "title": "StoreMilestoneRequest"
             },
+            "StorePledgeRequest": {
+                "type": "object",
+                "description": "Validates a new pledge. The member and fund must belong to this church; a member who has died cannot make a pledge,\na fund that was switched off cannot be chosen, and the target date cannot be in the past.",
+                "properties": {
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "fund_type_id": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "amount_pledged": {
+                        "type": "number",
+                        "maximum": 999999.99
+                    },
+                    "target_date": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                },
+                "required": [
+                    "member_id",
+                    "fund_type_id",
+                    "description",
+                    "amount_pledged",
+                    "target_date"
+                ],
+                "title": "StorePledgeRequest"
+            },
             "StoreServiceRequest": {
                 "type": "object",
                 "description": "Validates a new service. The check-in code is never accepted here: the system makes it.",
@@ -5532,6 +5948,25 @@
                     "status"
                 ],
                 "title": "UpdateMemberStatusRequest"
+            },
+            "UpdatePledgeRequest": {
+                "type": "object",
+                "description": "Validates a pledge update. Any of the description, amount and target date may be sent. The member and fund cannot\nchange, because gifts are linked to them (D-047).",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "amount_pledged": {
+                        "type": "number",
+                        "maximum": 999999.99
+                    },
+                    "target_date": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                },
+                "title": "UpdatePledgeRequest"
             },
             "UpdateServiceRequest": {
                 "type": "object",

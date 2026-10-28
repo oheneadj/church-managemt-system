@@ -798,11 +798,11 @@ Permission: giving.record
 
 **Header:** `Idempotency-Key` is required (see Conventions), so a double click records one gift.
 
-**Rules:** `fund_type_id` and `amount` are required. The fund must be one of this church's and switched on; `member_id` and `service_id` must belong to this church, and a member who has died cannot be given a gift (an inactive member can). A gift with no `member_id` is anonymous. `amount` is GHS with at most two decimals, above 0 and at most 999,999.99 (`config/giving.php`). `payment_method` must be `cash`: mobile money and cards start a payment instead (below). `contributed_at` is when the giving happened, never in the future, and defaults to now; it is kept apart from the day the record was entered. The church comes from the sign-in, never from the body. The gift and its change-history line are saved together.
+**Rules:** `fund_type_id` and `amount` are required. `pledge_id` is optional and names the pledge this gift pays (see How a pledge is paid). The fund must be one of this church's and switched on; `member_id` and `service_id` must belong to this church, and a member who has died cannot be given a gift (an inactive member can). A gift with no `member_id` is anonymous. `amount` is GHS with at most two decimals, above 0 and at most 999,999.99 (`config/giving.php`). `payment_method` must be `cash`: mobile money and cards start a payment instead (below). `contributed_at` is when the giving happened, never in the future, and defaults to now; it is kept apart from the day the record was entered. The church comes from the sign-in, never from the body. The gift and its change-history line are saved together.
 
 **Response `201`:** Full contribution resource. Cash has no processing fee, no payment reference and no status: a gift exists once it is recorded. `422` for bad values, `400` without an `Idempotency-Key`, `403` without `giving.record`.
 
-**Not built yet:** the `ContributionReceived` event and the SMS receipt (story 4.7) and linking a gift to a pledge (`pledge_id`, with the pledge slice).
+**Not built yet:** the `ContributionReceived` event and the SMS receipt (story 4.7).
 
 ---
 
@@ -887,16 +887,19 @@ Permission: giving.summary
 ```
 GET /api/v1/pledges
 Authorization: Bearer {token}
-Permission: giving.summary
+Permission: giving.view
 ```
 
-**Query params:** `?member_id=ulid&status=active&fund_type_id=ulid`
+A pledge names a member and an amount, so it is individual giving data like a gift: church admin and finance secretary have `giving.view`, the pastor does not and gets `403` (D-046, D-047).
+
+**Query params:** `?member_id=ulid&status=active&fund_type_id=ulid&per_page=25`. Paginated, those due soonest first. Each pledge: `id`, `member` (`id`, `full_name`), `fund_type` (`id`, `name`), `description`, `amount_pledged`, `amount_paid` and `amount_outstanding` (each an exact decimal string with a `_formatted` sibling such as `"GHS 1,000.00"`), `progress_percent` (0 to 100, a part of a percent is dropped), `target_date`, `status` and `status_label`, `created_at`.
 
 ### Get Pledge
 ```
 GET /api/v1/pledges/{id}
+Permission: giving.view
 ```
-Returns pledge + all linked contributions.
+Returns the pledge and `contributions`: every gift that pays it, newest first, voided ones included and marked `is_voided: true` (they do not count toward `amount_paid`). `404` for a pledge of another church.
 
 ### Create Pledge
 ```
@@ -915,6 +918,21 @@ Permission: giving.record
   "target_date": "2026-12-31"
 }
 ```
+**Header:** `Idempotency-Key` is required (see Conventions). **Rules:** the member and fund must belong to this church; a member who has died cannot make a pledge (inactive is fine) and a fund that is switched off cannot be chosen. `amount_pledged` is GHS above 0 with at most two decimals and at most 999,999.99. `target_date` is `YYYY-MM-DD`, today or later. **Response `201`:** the pledge, `status: active`, `amount_paid: "0.00"`. The creation is written to the change history.
+
+### Update Pledge
+```
+PUT /api/v1/pledges/{id}
+Permission: giving.edit
+```
+Any of `description`, `amount_pledged` and `target_date` (same rules, except the date may be any date). The member and fund cannot be changed, because gifts are linked to them; `amount_paid` and `status` cannot be set by hand. The paid amount and status are recalculated in the same transaction (for example lowering the amount to what was paid fulfils the pledge) and the change, with old and new values, is written to the change history. There is no delete: a pledge that is no longer wanted is lowered to what was paid.
+
+### How a pledge is paid, and its status (D-047)
+A cash gift names its pledge with `pledge_id` (see Record Cash Contribution). The pledge must be one of this church's, for the same member and the same fund as the gift, and not already paid in full; otherwise the gift is `422` on `pledge_id`. Nothing is linked by matching a member and a fund.
+
+`amount_paid` is not counted up or down. After a gift is recorded against a pledge, or voided, the pledge is locked and its paid amount is added up again from its gifts that are not voided, so it cannot drift, a void is undone exactly, and two gifts at the same moment take turns.
+
+Status: `fulfilled` as soon as `amount_paid` reaches `amount_pledged` (even after the date); otherwise `active` until the target date has passed; then `partial` if something was paid or `lapsed` if nothing was. A daily job (`pledges:refresh`, 04:00 UTC) moves pledges over when their date passes. Paying a lapsed or partial pledge in full fulfils it; voiding a gift can move a fulfilled pledge back. A pledge can be paid over (`amount_outstanding` never goes below `"0.00"`).
 
 ---
 

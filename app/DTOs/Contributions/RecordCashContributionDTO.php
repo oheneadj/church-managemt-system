@@ -29,6 +29,7 @@ final readonly class RecordCashContributionDTO
         public ?string $memberId = null,
         public ?string $serviceId = null,
         public ?string $notes = null,
+        public ?string $pledgeId = null,
     ) {}
 
     /**
@@ -46,6 +47,7 @@ final readonly class RecordCashContributionDTO
             $v['member_id'] ?? null,
             $v['service_id'] ?? null,
             $v['notes'] ?? null,
+            $v['pledge_id'] ?? null,
         );
     }
 }

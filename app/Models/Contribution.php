@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $church_id
  * @property string|null $member_id
  * @property string|null $service_id
+ * @property string|null $pledge_id
  * @property string $fund_type_id
  * @property string $amount
  * @property PaymentMethod $payment_method

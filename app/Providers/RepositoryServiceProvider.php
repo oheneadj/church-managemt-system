@@ -25,6 +25,7 @@ use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
 use App\Repositories\EloquentMemberRepository;
 use App\Repositories\EloquentMessageLogRepository;
+use App\Repositories\EloquentPledgeRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
@@ -36,6 +37,7 @@ use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Repositories\MessageLogRepositoryInterface;
+use App\Repositories\PledgeRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Repositories\VisitorRecordRepositoryInterface;
@@ -53,6 +55,7 @@ class RepositoryServiceProvider extends ServiceProvider
         FamilyRepositoryInterface::class => EloquentFamilyRepository::class,
         DepartmentRepositoryInterface::class => EloquentDepartmentRepository::class,
         FundTypeRepositoryInterface::class => EloquentFundTypeRepository::class,
+        PledgeRepositoryInterface::class => EloquentPledgeRepository::class,
         MemberDepartmentRepositoryInterface::class => EloquentMemberDepartmentRepository::class,
         MemberMilestoneRepositoryInterface::class => EloquentMemberMilestoneRepository::class,
         AuditLogRepositoryInterface::class => EloquentAuditLogRepository::class,

@@ -14,6 +14,10 @@ return [
     // The most a single cash gift may be, in GHS (QA-06 TC-06-05). A digital gift has its own, lower, limit (D-018).
     'cash_max' => '999999.99',
 
+    // The most a pledge may promise, in GHS, and how many overdue pledges the daily job loads at a time.
+    'pledge_max' => '999999.99',
+    'pledge_refresh_chunk' => 200,
+
     // The largest sort position a fund type may be given.
     'sort_order_max' => 1000,
 

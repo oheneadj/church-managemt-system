@@ -847,6 +847,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-047 — How pledges work (Sprint 4, stories 4.9 and 4.10)
+**Date:** October 2026
+**Decided by:** Product Owner (the two rules marked), Lead Engineer (the rest), from docs/04 Pledge Tracking, docs/07, docs/08, QA-06 TC-06-14 to TC-06-16
+**Status:** Active
+
+**Decision:**
+1. **A gift names its pledge.** *(Product Owner.)* The gift carries a `pledge_id` that the finance secretary picks; nothing is linked by matching a member and a fund. The pledge must belong to this church, to the same member and to the same fund as the gift, and must not already be paid in full. This follows docs/04 and docs/08; QA-06 TC-06-15 ("a gift to the same fund updates the pledge") is changed to say the gift names the pledge.
+2. **Status rule.** *(Product Owner.)* A pledge is `fulfilled` as soon as `amount_paid` reaches `amount_pledged` (even after the target date). Otherwise it is `active` until its target date has passed; after the date it is `partial` if something was paid and `lapsed` if nothing was. A daily job (`pledges:refresh`, 04:00 UTC) moves pledges over when their date passes. A gift that is later paid in full revives a lapsed or partial pledge to fulfilled; voiding a gift can move a fulfilled pledge back.
+3. **`amount_paid` is recalculated, not counted up.** After a gift is recorded against a pledge or voided, the action recalculates the pledge as the sum of its gifts that are not voided, inside the same transaction, with the pledge row locked first. Recalculating cannot drift, undoes a void exactly, and two gifts at the same moment take turns. This replaces the "observer" in story 4.10: the agreement and the Laravel addendum keep side effects out of observers and in actions.
+4. **Who may see pledges.** A pledge names a member and an amount, so it is individual giving data like a gift (D-046): listing and reading need `giving.view`, creating needs `giving.record`, changing needs `giving.edit`. Campaign totals for the pastor come later through `giving.summary`. docs/08 gave the list `giving.summary`; this overrides it for the same reason as in D-046.
+5. **What can change.** A pledge's description, amount and target date can be changed (`giving.edit`); its member and fund cannot, because gifts are linked to them. There is no delete: a pledge that is no longer wanted is set to the amount already paid, which fulfils it. Every create and change is written to the change history.
+6. **Over-paying is allowed.** A pledge can receive more than it asked (`amount_outstanding` never goes below 0, progress stops at 100%). Only a pledge already paid in full refuses another gift.
+
+**Rationale:** The simplest design that cannot drift: one place computes the paid amount and status, from the gifts themselves. The two business rules were the owner's to set.
+
+**Revisit when:** a church wants pledge reminders (the scheduled `SendPledgeReminders` in docs/06) or campaign reports, which build on this.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

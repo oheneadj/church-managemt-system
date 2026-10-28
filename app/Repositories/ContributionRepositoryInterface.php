@@ -21,6 +21,13 @@ interface ContributionRepositoryInterface
     public function totalForMember(string $memberId, ?DateTimeInterface $since): string;
 
     /**
+     * Total of the gifts that pay a pledge, as an exact decimal string. Voided gifts never count.
+     *
+     * @return numeric-string
+     */
+    public function totalForPledge(string $pledgeId): string;
+
+    /**
      * One page of gifts, newest first, with what the list shows already loaded. Voided gifts are left out unless asked for.
      *
      * @return LengthAwarePaginator<int, Contribution>

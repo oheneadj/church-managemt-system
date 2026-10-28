@@ -7,11 +7,14 @@ use App\Models\AttendanceRecord;
 use App\Models\Church;
 use App\Models\Contribution;
 use App\Models\Member;
+use App\Models\Pledge;
 use App\Models\Service;
 use App\Models\User;
 use App\Repositories\AttendanceRecordRepositoryInterface;
 use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\HandledWhatsappMessageRepositoryInterface;
+use App\Repositories\PledgeRepositoryInterface;
+use App\Services\PledgeProgressService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -133,4 +136,43 @@ it('voids a gift once when two voids arrive at the same moment', function (): vo
     $seenByB = DB::connection('pgsql_b')->table('contributions')->where('id', $gift->id)->lockForUpdate()->first();
 
     expect((bool) $seenByB->is_voided)->toBeTrue()->and($seenByB->void_reason)->toBe('First void');
+});
+
+it('adds up two gifts to one pledge when they are recorded at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $pledge = Pledge::factory()->create(['church_id' => $church->id, 'amount_pledged' => '1000.00']);
+    $progress = app(PledgeProgressService::class);
+    $gift = fn (string $amount) => Contribution::factory()->create(['church_id' => $church->id, 'fund_type_id' => $pledge->fund_type_id, 'member_id' => $pledge->member_id, 'pledge_id' => $pledge->id, 'amount' => $amount]);
+
+    // Gift A: has locked the pledge, saved its gift and recalculated, and has not committed yet.
+    DB::beginTransaction();
+    app(PledgeRepositoryInterface::class)->lockForUpdate($pledge->id);
+    $gift('300.00');
+    expect($progress->refresh($pledge->id)->amount_paid)->toBe('300.00');
+
+    // Gift B, on its own connection, has to wait for A at the pledge row, so it can never recalculate without seeing A.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($pledge): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. B now gets the lock and adds up from committed rows, which include A's gift.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->transaction(function () use ($pledge): array {
+        DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->lockForUpdate()->first();
+
+        return [
+            'paid' => DB::connection('pgsql_b')->table('contributions')->where('pledge_id', $pledge->id)->where('is_voided', false)->sum('amount'),
+            'saved' => DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->value('amount_paid'),
+        ];
+    });
+
+    expect((string) $seenByB['paid'])->toBe('300.00')->and((string) $seenByB['saved'])->toBe('300.00');
 });

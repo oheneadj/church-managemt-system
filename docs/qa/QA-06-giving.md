@@ -151,9 +151,9 @@ Thank you for your faithfulness! – Your Church Family
 - Pledge created with `amount_paid: 0`, `amount_outstanding: 1000.00`
 
 ### TC-06-15 — Pledge amount_paid updates when contribution is recorded
-**Action:** Record a GHS 300 contribution against the same fund type for this member
+**Action:** Record a GHS 300 contribution for this member and fund type, with `pledge_id` set to the pledge (D-047: the gift names its pledge; nothing is matched by guesswork)
 **Expected:**
-- `pledges.amount_paid` = 300.00 (updated by observer)
+- `pledges.amount_paid` = 300.00 (recalculated from the gifts in the same transaction)
 - `amount_outstanding` = 700.00 (computed: pledged_amount - amount_paid)
 
 ### TC-06-16 — Pledge amount_paid reverts on contribution void

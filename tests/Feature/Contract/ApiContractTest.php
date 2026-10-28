@@ -128,6 +128,21 @@ describe('contributions', function (): void {
     });
 });
 
+describe('pledges', function (): void {
+    it('make, list, show and change a pledge, and pay it with a gift', function (): void {
+        $fund = FundType::factory()->create(['church_id' => $this->church->id]);
+        $created = $this->postJson(CHURCH_HOST.'/pledges', ['member_id' => $this->member->id, 'fund_type_id' => $fund->id, 'description' => 'Building Fund 2026 Pledge', 'amount_pledged' => '1000.00', 'target_date' => now()->addMonth()->toDateString()], ['Idempotency-Key' => 'contract-pledge-0001']);
+        assertMatchesSpec($created, 'POST', '/v1/pledges', 201);
+        $id = $created->json('data.id');
+
+        $this->postJson(CHURCH_HOST.'/contributions', ['member_id' => $this->member->id, 'fund_type_id' => $fund->id, 'pledge_id' => $id, 'amount' => '250.00', 'payment_method' => 'cash'], ['Idempotency-Key' => 'contract-pledge-gift-1'])->assertCreated();
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/pledges'), 'GET', '/v1/pledges', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/pledges/'.$id), 'GET', '/v1/pledges/{pledge}', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/pledges/'.$id, ['description' => 'Roof Pledge']), 'PUT', '/v1/pledges/{pledge}', 200);
+    });
+});
+
 describe('fund types', function (): void {
     it('list, create and update', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/fund-types'), 'GET', '/v1/fund-types', 200);

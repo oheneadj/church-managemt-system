@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Family;
 use App\Models\FundType;
 use App\Models\Member;
+use App\Models\Pledge;
 use App\Models\Service;
 use LogicException;
 
@@ -86,5 +87,15 @@ trait DelegatesToPolicy
         $contribution = $this->route('contribution');
 
         return $contribution instanceof Contribution ? $contribution : throw new LogicException('This route has no contribution.');
+    }
+
+    /**
+     * The pledge that route binding found for this request.
+     */
+    public function pledge(): Pledge
+    {
+        $pledge = $this->route('pledge');
+
+        return $pledge instanceof Pledge ? $pledge : throw new LogicException('This route has no pledge.');
     }
 }

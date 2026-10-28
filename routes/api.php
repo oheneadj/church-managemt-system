@@ -42,6 +42,10 @@ use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
 use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
+use App\Http\Controllers\Api\V1\Pledges\ListPledgesController;
+use App\Http\Controllers\Api\V1\Pledges\ShowPledgeController;
+use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
+use App\Http\Controllers\Api\V1\Pledges\UpdatePledgeController;
 use App\Http\Controllers\Api\V1\Services\ListServicesController;
 use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
 use App\Http\Controllers\Api\V1\Services\ShowServiceController;
@@ -113,6 +117,11 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('contributions', StoreContributionController::class)->middleware('idempotent')->name('contributions.store');
         Route::get('contributions/{contribution}', ShowContributionController::class)->name('contributions.show');
         Route::patch('contributions/{contribution}/void', VoidContributionController::class)->name('contributions.void');
+
+        Route::get('pledges', ListPledgesController::class)->name('pledges.index');
+        Route::post('pledges', StorePledgeController::class)->middleware('idempotent')->name('pledges.store');
+        Route::get('pledges/{pledge}', ShowPledgeController::class)->name('pledges.show');
+        Route::put('pledges/{pledge}', UpdatePledgeController::class)->name('pledges.update');
 
         Route::get('fund-types', ListFundTypesController::class)->name('fund-types.index');
         Route::post('fund-types', StoreFundTypeController::class)->name('fund-types.store');

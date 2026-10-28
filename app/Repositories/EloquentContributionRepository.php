@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 class EloquentContributionRepository implements ContributionRepositoryInterface
 {
     /** What every gift shown on screen needs, loaded together so a list is never one query per row. */
-    private const DETAIL = ['member', 'fundType', 'service', 'recordedBy', 'voidedBy'];
+    private const DETAIL = ['member', 'fundType', 'service', 'pledge', 'recordedBy', 'voidedBy'];
 
     /**
      * Total given by a member since a moment (or ever), as an exact decimal string. Voided gifts never count.
@@ -31,6 +31,16 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
             ->sum('amount');
 
         return bcadd((string) $sum, '0', 2);
+    }
+
+    /**
+     * Total of the gifts that pay a pledge, as an exact decimal string. Voided gifts never count.
+     *
+     * @return numeric-string
+     */
+    public function totalForPledge(string $pledgeId): string
+    {
+        return bcadd((string) Contribution::query()->where('pledge_id', $pledgeId)->where('is_voided', false)->sum('amount'), '0', 2);
     }
 
     /**

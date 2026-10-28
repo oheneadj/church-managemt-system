@@ -8,6 +8,7 @@ use App\Enums\MemberStatus;
 use App\Enums\PaymentMethod;
 use App\Http\Requests\Concerns\DelegatesToPolicy;
 use App\Models\Contribution;
+use App\Rules\ValidPledgeForGift;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,6 +44,8 @@ class StoreContributionRequest extends FormRequest
                 Rule::exists('members', 'id')->where('church_id', $churchId)->whereNot('status', MemberStatus::Deceased->value)->whereNull('deleted_at'),
             ],
             'service_id' => ['nullable', 'ulid', Rule::exists('services', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
+            /** @var string|null */
+            'pledge_id' => ['nullable', 'ulid', new ValidPledgeForGift],
             'fund_type_id' => ['required', 'ulid', Rule::exists('fund_types', 'id')->where('church_id', $churchId)->where('is_active', true)->whereNull('deleted_at')],
             'amount' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:'.config('giving.cash_max')],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)->only([PaymentMethod::Cash])],
