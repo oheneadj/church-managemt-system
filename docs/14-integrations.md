@@ -555,7 +555,7 @@ CLOUDFLARE_R2_BACKUP_SECRET_ACCESS_KEY=
 CLOUDFLARE_R2_BACKUP_BUCKET=
 ```
 
-> **R2 does not implement ACLs** (`x-amz-acl` is listed as unsupported on `PutObject`, Cloudflare's S3 API page, Oct 2026). Flysystem always sends an ACL on writes (`private` by default), and Cloudflare's page does not say whether R2 ignores or rejects it. Unverified until the first real write: the `storage` health check writes a file on every probe, so it will surface a rejection on the first staging deploy. Privacy comes from keeping the bucket non-public and using signed URLs, not from object ACLs.
+> **R2 does not implement ACLs** (`x-amz-acl` is listed as unsupported on `PutObject`, Cloudflare's S3 API page, Oct 2026). Flysystem always sends an ACL on writes (`private` by default). **Verified on a real dev bucket (28 Oct 2026): R2 accepts and ignores it**, so a normal `Storage::disk('r2')->put()` works. Also verified: read-back is identical; a signed link returns the file (HTTP 200); the same URL without a signature, or with a tampered signature, returns HTTP 400 `InvalidArgument: Authorization` and no content; an expired link returns 403; delete works; virtual-hosted addressing works (no path-style needed). Privacy comes from keeping the bucket non-public and using signed URLs, not from object ACLs.
 
 ### File Path Convention
 
