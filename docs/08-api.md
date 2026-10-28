@@ -861,23 +861,32 @@ GET /api/v1/services/{id}/offering-report
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
+What one service received, by fund and by payment method. The church admin, the finance secretary and the pastor may read it (QA-10): it holds totals only, with no giver's name or id. `404` for a service of another church.
 
 **Response `200`:**
 ```json
 {
-  "service": { "id": "ulid", "name": "Sunday Morning Service", "service_date": "2026-10-26" },
-  "totals": {
-    "grand_total": 3150.00,
-    "by_fund": [
-      { "fund_type": "Tithe", "cash": 1200.00, "momo": 850.00, "card": 0.00, "total": 2050.00 },
-      { "fund_type": "Offering", "cash": 430.00, "momo": 220.00, "card": 0.00, "total": 650.00 }
-    ],
-    "by_method": { "cash": 1930.00, "momo": 1220.00, "card": 0.00 },
-    "transaction_count": 42,
-    "anonymous_count": 7
+  "data": {
+    "service": { "id": "ulid", "name": "Sunday Morning Service", "service_date": "2026-10-26" },
+    "totals": {
+      "grand_total": "3150.00",
+      "grand_total_formatted": "GHS 3,150.00",
+      "by_fund": [
+        { "fund_type": "Tithe", "by_method": { "cash": "1200.00", "momo": "850.00", "card": "0.00", "ussd": "0.00" }, "total": "2050.00", "total_formatted": "GHS 2,050.00" },
+        { "fund_type": "Offering", "by_method": { "cash": "430.00", "momo": "220.00", "card": "0.00", "ussd": "0.00" }, "total": "650.00", "total_formatted": "GHS 650.00" }
+      ],
+      "by_method": { "cash": "1930.00", "momo": "1220.00", "card": "0.00", "ussd": "0.00" },
+      "transaction_count": 42,
+      "anonymous_count": 7
+    }
   }
 }
 ```
+- Every amount is an exact decimal string (GHS), never a float. `grand_total`, each fund `total` and every `by_method` are sums of the same gifts, so they always agree, and they equal the sum of `GET /contributions?service_id=` for the same service.
+- **Voided gifts are in no number**, including `transaction_count` (QA-06 TC-06-17).
+- Only gifts recorded **at this service** (`service_id`) are counted. A gift with no service is not in any service's report.
+- Every payment method is listed for every fund, even at `"0.00"` (`ussd` stays `"0.00"` until USSD giving exists, D-019), so no gift can fall outside the columns. Funds are listed in their display order and only if they received something; a fund's name is its current name.
+- `anonymous_count` is the gifts with no member. The printable page and the PDF come with the screens (story 4.16).
 
 ---
 

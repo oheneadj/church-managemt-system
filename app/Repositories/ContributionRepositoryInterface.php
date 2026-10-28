@@ -28,6 +28,19 @@ interface ContributionRepositoryInterface
     public function totalForPledge(string $pledgeId): string;
 
     /**
+     * What a service received, added up per fund and payment method, voided gifts left out. Each line is the fund id,
+     * the payment method, the total as an exact decimal string and how many gifts it adds up.
+     *
+     * @return array<int, array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}>
+     */
+    public function offeringTotalsForService(string $serviceId): array;
+
+    /**
+     * How many gifts at a service have no member, voided gifts left out.
+     */
+    public function anonymousCountForService(string $serviceId): int;
+
+    /**
      * One page of gifts, newest first, with what the list shows already loaded. Voided gifts are left out unless asked for.
      *
      * @return LengthAwarePaginator<int, Contribution>

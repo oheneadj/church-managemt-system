@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\DTOs\FundTypes\ListFundTypesDTO;
 use App\Models\FundType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Every query on fund types lives behind this contract.
@@ -38,6 +39,15 @@ interface FundTypeRepositoryInterface
      * Whether the church already has a fund type with this name, ignoring capitals. The fund being changed can be left out.
      */
     public function nameTaken(string $name, ?string $exceptFundTypeId = null): bool;
+
+    /**
+     * The church's fund types with these ids, as a list ordered for display (sort order, then name). An id of another
+     * church, or one that does not exist, is not returned.
+     *
+     * @param  list<string>  $ids
+     * @return Collection<int, FundType>
+     */
+    public function findMany(array $ids): Collection;
 
     /**
      * Adds several fund types in one go, each with the church id already in its attributes.

@@ -47,6 +47,15 @@ class ServicePolicy
     }
 
     /**
+     * Whether the user may see what this service received. It is a report of totals with no names in it, so the
+     * pastor may see it as well as the finance roles (giving.summary, QA-10).
+     */
+    public function viewOfferingReport(User $user, Service $service): bool
+    {
+        return $user->church_id === $service->church_id && $user->hasPermissionTo(StaffPermission::GivingSummary);
+    }
+
+    /**
      * Whether the user may check people in to this service, or add a visitor to it. This is the same permission as
      * changing the service, kept as its own ability so the two can be split later without touching the callers.
      */

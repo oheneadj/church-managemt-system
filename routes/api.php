@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
 use App\Http\Controllers\Api\V1\Pledges\UpdatePledgeController;
 use App\Http\Controllers\Api\V1\Services\ListServicesController;
 use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
+use App\Http\Controllers\Api\V1\Services\ShowOfferingReportController;
 use App\Http\Controllers\Api\V1\Services\ShowServiceController;
 use App\Http\Controllers\Api\V1\Services\StoreServiceController;
 use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
@@ -110,6 +111,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('services/{service}/attendance', RecordAttendanceController::class)->name('attendance.record');
         Route::post('services/{service}/visitors', CaptureVisitorController::class)->name('visitors.store');
         Route::get('services/{service}/qr', IssueQrCodeController::class)->name('services.qr');
+        Route::get('services/{service}/offering-report', ShowOfferingReportController::class)->name('services.offering-report');
         Route::get('attendance/absent', ListAbsentMembersController::class)->name('attendance.absent');
         Route::get('members/{member}/attendance', ShowMemberAttendanceController::class)->name('members.attendance');
 

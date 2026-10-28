@@ -54,7 +54,7 @@ Test each cell: ✅ = should succeed (200/201) | ❌ = should be denied (403)
 | POST /api/contributions/momo | ✅ | ❌ | ✅ | ❌ | ❌ |
 | PATCH /api/contributions/{id}/void | ✅ | ❌ | ✅ | ❌ | ❌ |
 | GET /api/reports/giving-trends | ✅ | ✅ | ✅ | ❌ | ❌ |
-| GET /api/contributions/sunday-report | ✅ | ✅ | ✅ | ❌ | ❌ |
+| GET /api/services/{id}/offering-report | ✅ | ✅ | ✅ | ❌ | ❌ |
 
 ### Communications
 

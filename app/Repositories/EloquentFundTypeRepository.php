@@ -8,6 +8,7 @@ use App\DTOs\FundTypes\ListFundTypesDTO;
 use App\Models\FundType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Eloquent implementation of the fund type queries.
@@ -61,6 +62,17 @@ class EloquentFundTypeRepository implements FundTypeRepositoryInterface
             ->whereRaw('lower(name) = lower(?)', [$name])
             ->when($exceptFundTypeId !== null, fn (Builder $q) => $q->whereKeyNot($exceptFundTypeId))
             ->exists();
+    }
+
+    /**
+     * The church's fund types with these ids, ordered for display.
+     *
+     * @param  list<string>  $ids
+     * @return Collection<int, FundType>
+     */
+    public function findMany(array $ids): Collection
+    {
+        return FundType::query()->whereKey($ids)->orderBy('sort_order')->orderBy('name')->orderBy('id')->get();
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\DTOs\Contributions\ListContributionsDTO;
 use App\Models\Contribution;
 use App\Models\User;
+use App\ValueObjects\Money;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +42,52 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     public function totalForPledge(string $pledgeId): string
     {
         return bcadd((string) Contribution::query()->where('pledge_id', $pledgeId)->where('is_voided', false)->sum('amount'), '0', 2);
+    }
+
+    /**
+     * What a service received, added up per fund and payment method, voided gifts left out.
+     *
+     * @return array<int, array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}>
+     */
+    public function offeringTotalsForService(string $serviceId): array
+    {
+        $rows = Contribution::query()
+            ->where('service_id', $serviceId)
+            ->where('is_voided', false)
+            ->groupBy('fund_type_id', 'payment_method')
+            ->selectRaw('fund_type_id, payment_method, SUM(amount) AS total, COUNT(*) AS gifts')
+            ->get();
+
+        $lines = [];
+
+        foreach ($rows as $row) {
+            $lines[] = $this->totalsLine($row);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * One line of the offering totals, with the total as an exact decimal string.
+     *
+     * @return array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}
+     */
+    private function totalsLine(Contribution $line): array
+    {
+        return [
+            'fund_type_id' => (string) $line->getAttribute('fund_type_id'),
+            'payment_method' => $line->payment_method->value,
+            'total' => Money::ghs((string) $line->getAttribute('total'))->amount,
+            'gifts' => (int) $line->getAttribute('gifts'),
+        ];
+    }
+
+    /**
+     * How many gifts at a service have no member, voided gifts left out.
+     */
+    public function anonymousCountForService(string $serviceId): int
+    {
+        return Contribution::query()->where('service_id', $serviceId)->where('is_voided', false)->whereNull('member_id')->count();
     }
 
     /**

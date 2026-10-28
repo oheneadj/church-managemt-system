@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Jobs\SendSmsJob;
 use App\Models\Church;
+use App\Models\Contribution;
 use App\Models\Department;
 use App\Models\Family;
 use App\Models\FundType;
@@ -125,6 +126,16 @@ describe('contributions', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/contributions'), 'GET', '/v1/contributions', 200);
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/contributions/'.$id), 'GET', '/v1/contributions/{contribution}', 200);
         assertMatchesSpec($this->patchJson(CHURCH_HOST.'/contributions/'.$id.'/void', ['reason' => 'Entered in error']), 'PATCH', '/v1/contributions/{contribution}/void', 200);
+    });
+});
+
+describe('offering report', function (): void {
+    it('shows what a service received', function (): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id]);
+        $fund = FundType::factory()->create(['church_id' => $this->church->id]);
+        Contribution::factory()->create(['church_id' => $this->church->id, 'service_id' => $service->id, 'fund_type_id' => $fund->id, 'amount' => '120.50']);
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/services/'.$service->id.'/offering-report'), 'GET', '/v1/services/{service}/offering-report', 200);
     });
 });
 
