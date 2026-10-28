@@ -71,6 +71,9 @@ export const EDUCATIONAL_LEVELS = [
     { value: 'graduate', label: 'Graduate' },
 ] as const satisfies readonly Option<string>[];
 
+/** Statuses that take a member out of active church life. Moving to one needs the deactivate permission and a confirmation. */
+export const LEAVING_STATUSES: readonly MemberStatus[] = ['inactive', 'transferred', 'deceased', 'archived'];
+
 /** The statuses a new member can start with; the others are reached by changing status later. */
 export const NEW_MEMBER_STATUSES = MEMBER_STATUSES.filter((status) => status.value === 'prospect' || status.value === 'active');
 

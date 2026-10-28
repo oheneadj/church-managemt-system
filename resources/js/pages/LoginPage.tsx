@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm, type FieldValues, type Path, type UseFormSetError } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/constants/routes';
 import { useSignIn } from '@/hooks/useSignIn';
-import { ApiError } from '@/services/ApiError';
+import { showFieldErrors } from '@/lib/showFieldErrors';
+import type { ApiError } from '@/services/ApiError';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const phoneSchema = z.object({
@@ -151,21 +152,4 @@ function ServerError({ error }: { error: ApiError | null }) {
             {error.message}
         </p>
     );
-}
-
-/**
- * Puts the server's validation messages next to the form fields they belong to.
- */
-function showFieldErrors<T extends FieldValues>(error: Error, setError: UseFormSetError<T>, fields: readonly Path<T>[]): void {
-    if (!(error instanceof ApiError)) {
-        return;
-    }
-
-    for (const field of fields) {
-        const message = error.fieldErrors[field]?.[0];
-
-        if (message !== undefined) {
-            setError(field, { message });
-        }
-    }
 }

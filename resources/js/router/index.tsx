@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { PageSpinner } from '@/components/layout/PageSpinner';
-import { ROUTES } from '@/constants/routes';
+import { ROUTE_PATTERNS, ROUTES } from '@/constants/routes';
 
 /**
  * All routes live here. Pages load on demand so the first screen stays small on a slow connection.
@@ -29,6 +29,10 @@ export const router = createBrowserRouter([
                             {
                                 path: ROUTES.MEMBERS,
                                 lazy: async () => ({ Component: (await import('@/pages/MembersPage')).MembersPage }),
+                            },
+                            {
+                                path: ROUTE_PATTERNS.MEMBER,
+                                lazy: async () => ({ Component: (await import('@/pages/MemberDetailPage')).MemberDetailPage }),
                             },
                         ],
                     },

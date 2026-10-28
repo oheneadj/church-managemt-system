@@ -50,3 +50,13 @@ it('only names permissions that exist', function (): void {
         expect(StaffPermission::tryFrom($permission))->not->toBeNull();
     }
 });
+
+it('lists exactly the statuses that take a member out of active life', function (): void {
+    $source = (string) file_get_contents(base_path('resources/js/constants/enums.ts'));
+    preg_match('/LEAVING_STATUSES: readonly MemberStatus\\[\\] = \\[(.*?)\\]/s', $source, $block);
+    preg_match_all("/'([a-z_]+)'/", $block[1] ?? '', $values);
+
+    $expected = collect(MemberStatus::cases())->filter(fn (MemberStatus $status) => $status->leavesActiveLife())->map(fn (MemberStatus $status) => $status->value)->all();
+
+    expect($values[1])->toEqualCanonicalizing($expected);
+});

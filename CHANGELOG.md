@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(members-ui): add the member profile page
+- **What:** Built story 2.11. A member's page has a header (photo, name, number, status) and three tabs: Profile (contact, personal, church life, family link, departments, milestones), Giving (this month, this year and all time as the API formatted them) and Attendance (last 4, 8 and 12 weeks). The selected tab is kept in the URL. Staff who may edit can change the photo (JPG or PNG under 5 MB, checked before upload), change the status with an optional reason, and add milestones. Moving someone out of active life asks "Are you sure?" first and is offered only to staff with the deactivate permission. A deceased member's record is read-only. Server validation messages appear next to their fields. Also added a timezone-safe date formatter, a full-name helper, a shared field-error helper (moved out of the login page), and a test that checks the "leaving" status list against the PHP enum.
+- **Why:** Sprint 2 story 2.11 and QA-04 (lifecycle changes, photo, milestones, no timezone shift on dates). The agreement requires confirmation for destructive actions, errors shown on the field, accessible labels, and no money arithmetic in the browser.
+- **Files:** `resources/js/pages/MemberDetailPage.tsx`, `resources/js/components/Members/` (MemberHeader, MemberProfileTab, MemberGivingTab, MemberAttendanceTab, ChangeStatusDialog, AddMilestoneDialog, MilestoneList, PhotoUploadButton), `resources/js/components/ui/DetailList.tsx`, `resources/js/hooks/useUrlTab.ts`, `resources/js/lib/showFieldErrors.ts`, `resources/js/utils/` (formatDate, fullNameOf), `resources/js/constants/` (photo, enums), `resources/js/pages/LoginPage.tsx`, `resources/js/router/index.tsx`, `tests/Feature/Operations/FrontendEnumsTest.php`, and 5 new Vitest test files
+- **Commit:** `PENDING`
+
 #### feat(members-ui): add the member directory page
 - **What:** Built story 2.10, the member directory. It lists members phone-first with search, status, gender and department filters, loading, empty and error states, and paging. Filters and the page live in the URL. "Add member" shows only for staff who may edit members. Added the shared pieces it needs (page header, status badge, empty state, pagination, confirm dialog, money display, error notice, labelled form fields), typed API services for members, families and departments with their query and mutation hooks, mirrors of the backend enums and permissions, the shadcn parts it uses, toasts, a `Members` nav item and the route. Added a production bundle budget that fails the build above 180 kB gzipped, and a backend test that fails if the frontend enum lists drift from the PHP enums.
 - **Why:** Sprint 2 needs the church to manage its people on a phone. The React addendum asks for URL state for filters, TanStack Query for server data, React Hook Form with Zod for forms, no API calls in components, and a bundle budget.
@@ -226,6 +232,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `269d265` (2026-10-28)
 
 ### Added
+- Member profile page (story 2.11): Profile, Giving and Attendance tabs, photo upload, status change with confirmation, and milestones
 - Member directory page (story 2.10): search and filter members by status, gender and department, one tap to a profile, with filters in the URL (D-036)
 - Frontend bundle budget: the production build fails if any script passes 180 kB gzipped
 - Security headers on every response (nosniff, frame deny, referrer policy, HSTS over HTTPS), set by the `SecurityHeaders` middleware from `config/security.php`
