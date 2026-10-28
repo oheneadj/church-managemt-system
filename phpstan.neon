@@ -7,4 +7,4 @@ parameters:
         - app
         - database
         - routes
-        - tests
+    # Pest closures bind $this at runtime, which PHPStan cannot see, so tests are not analysed.

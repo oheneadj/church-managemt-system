@@ -457,6 +457,17 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-024 — API versioned under `/api/v1` from day one
+**Date:** October 2026
+**Decided by:** Lead Engineer (following the Universal agreement, section 9)
+**Status:** Active — amends the unversioned paths in the first draft of `08-api.md`
+
+**Decision:** Every API route is prefixed `/api/v1` (set once via `apiPrefix` in `bootstrap/app.php`). Breaking changes get `/api/v2`; the old version gets `Deprecation` and `Sunset` headers and stays live for its support window.
+
+**Rationale:** Retrofitting a version later breaks every client, including the SPA, the WhatsApp/webhook configuration at providers, and any future mobile PWA. It costs nothing now.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

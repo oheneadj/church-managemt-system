@@ -15,6 +15,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Laravel 13 application scaffold in the repo root, alongside `docs/` (D-022)
 - PostgreSQL migrations for all 16 v1 tables plus Sanctum, Spatie Permission and Telescope, all with ULID keys and working `down()` methods
 - Pest, Pint (strict types enforced) and Larastan level 8; tests run against PostgreSQL (`chms_test`)
+- 22 backed enums for every fixed-value column, Eloquent models (ULID keys, soft deletes, encrypted casts, `BelongsToChurch` tenancy trait) and factories
+- `ResolveTenant` middleware (subdomain or custom domain, 404 when unknown or suspended), run before auth so tokens only resolve within their own church
+- API is versioned from day one under `/api/v1` (D-024)
+- Tenancy and database-constraint tests (cross-tenant, partial unique indexes, double check-in)
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
 
 ### Changed
