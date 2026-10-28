@@ -1,6 +1,7 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
+import { HomeRedirect } from '@/components/layout/HomeRedirect';
 import { PageSpinner } from '@/components/layout/PageSpinner';
 import { ROUTE_PATTERNS, ROUTES } from '@/constants/routes';
 
@@ -15,6 +16,10 @@ export const router = createBrowserRouter([
             {
                 path: ROUTES.LOGIN,
                 lazy: async () => ({ Component: (await import('@/pages/LoginPage')).LoginPage }),
+            },
+            {
+                path: ROUTES.START,
+                lazy: async () => ({ Component: (await import('@/pages/StartChurchPage')).StartChurchPage }),
             },
             {
                 Component: AuthGuard,
@@ -54,7 +59,7 @@ export const router = createBrowserRouter([
                     },
                 ],
             },
-            { path: ROUTES.HOME, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
+            { path: ROUTES.HOME, element: <HomeRedirect /> },
             {
                 path: '*',
                 lazy: async () => ({ Component: (await import('@/pages/NotFoundPage')).NotFoundPage }),

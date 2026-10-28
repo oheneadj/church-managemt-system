@@ -247,6 +247,7 @@ Blocked: [anything blocking me / none]
 |---|---|
 | Backend | 2.2 to 2.9 (members, policy, photo upload, resources, requests, families, departments, milestones) |
 | Frontend | 2.10 directory, 2.11 profile, 2.12 add/edit form, 2.13 family pages |
-| Still open | 2.1 church onboarding |
+| Also done | 2.1 church onboarding (sign-up page and API, D-037) |
+| Still open | Nothing in the sprint; the exit criteria still need a run in a browser |
 
 Update this section at the start of each sprint.
