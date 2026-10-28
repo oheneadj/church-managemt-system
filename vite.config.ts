@@ -49,6 +49,9 @@ export default defineConfig({
         include: ['resources/js/**/*.test.{ts,tsx}'],
         setupFiles: ['resources/js/test/setup.ts'],
         restoreMocks: true,
+        // The multi-step form tests type into many boxes. With all test files running in parallel they can pass
+        // the default 5 seconds on a busy machine, which showed up as random failures, so each test gets 15.
+        testTimeout: 15_000,
     },
     server: {
         watch: {

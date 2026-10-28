@@ -184,6 +184,8 @@ describe('MemberFormPage', () => {
             const user = userEvent.setup();
             const { router } = openEdit();
             await user.click(await screen.findByRole('button', { name: 'Next' }));
+            // Wait for the second step to show, or the second click lands on the first step's Next button.
+            await screen.findByText('Step 2 of 3');
             await user.click(await screen.findByRole('button', { name: 'Next' }));
             await user.clear(await screen.findByLabelText('Occupation'));
             await user.type(screen.getByLabelText('Occupation'), 'Nurse');
@@ -200,6 +202,7 @@ describe('MemberFormPage', () => {
         it('does not show the starting status, which is changed from the profile', async () => {
             openEdit();
             await userEvent.click(await screen.findByRole('button', { name: 'Next' }));
+            await screen.findByText('Step 2 of 3');
             await userEvent.click(await screen.findByRole('button', { name: 'Next' }));
 
             expect(await screen.findByLabelText('Occupation')).toBeInTheDocument();

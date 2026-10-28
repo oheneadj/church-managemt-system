@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### test(members-ui): stop the form tests failing at random on a busy machine
+- **What:** Three changes to the test setup. Each test may take up to 15 seconds (was 5), `findBy` and `waitFor` wait up to 5 seconds (was 1), and the two form tests that clicked Next twice now wait for 'Step 2 of 3' before the second click, so they no longer click the first step's button again. No assertion was changed or removed.
+- **Why:** The member form tests failed at random in full runs (a timeout, a label not found, a second click on the wrong step), most often when the machine was busy. They passed alone and failed in about 1 run in 3, so a real failure could not be told from noise. Eight full runs in a row on a machine with load 18 now pass.
+- **Files:** `vite.config.ts`, `resources/js/test/setup.ts`, `resources/js/pages/MemberFormPage.test.tsx`
+- **Commit:** pending
+
 #### feat(privacy): export and erase a member's personal data
 - **What:** Added two admin endpoints. `GET /members/{id}/data-export` returns everything held about a member as JSON and is recorded in their change log. `POST /members/{id}/erasure` (new permission `members.erase`, church admin only, with a required reason) removes the member's personal details everywhere: name, phone, email, address, ID, birth date and the rest are emptied, the photo file is deleted, the phone and text are stripped from messages sent to them, milestone notes are cleared, a family they head loses its head, and the values in their change history become `[deleted]` while every line and field name stays. The record itself is archived and soft-deleted so giving and attendance records keep working, and its phone number is free to reuse. Recorded as D-039.
 - **Why:** The agreement (section 36) and docs/05 require the right to access and the right to erasure, done by anonymising instead of hard-deleting, with the audit trail masked rather than removed. Each erasure step has a test that fails if the step is removed.
