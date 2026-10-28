@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### docs(claude): tell people to give PHPStan 1 GB
+- **What:** The project CLAUDE.md command list now shows `phpstan analyse --memory-limit=1G`. CI and `composer lint:check` already passed the flag; `composer audit` was re-run and is clean (no advisories, live network).
+- **Why:** Running PHPStan with no flag crashed its parallel workers at the default 128 MB limit, which looked like a CI problem but was only a local command.
+- **Files:** `CLAUDE.md`
+- **Commit:** pending
+
 #### feat(onboarding-ui): add the start-a-church page
 - **What:** Built the page of story 2.1 at `/start`. One form takes the church name, an optional web address, denomination and town, the member number letters, the admin's name and phone; "Text me a code" sends the code and reveals the code box; "Start my church" creates it. Messages from the server appear next to the box they belong to (a taken address on the address box, a wrong code on the code box). When it works the page shows the church's address, a button to sign in there and a suggestion to add a second admin. On the platform's own address the home page now goes to this page instead of the sign-in. Added a check that the limits repeated in the browser match the server config. Marked story 2.1 done in the roadmap.
 - **Why:** Sprint 2 story 2.1 (the screen half). The React addendum requires React Hook Form with Zod, a label on every input, server errors on their fields and tests for every service function and reusable part; the agreement requires placeholders to be extra to visible labels, not instead of them.

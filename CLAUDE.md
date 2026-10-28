@@ -240,7 +240,7 @@ php artisan db:backup               # Manual backup
 # Code quality
 ./vendor/bin/pint                   # Fix code style
 ./vendor/bin/pint --test            # Check without fixing
-./vendor/bin/phpstan analyse        # Static analysis
+./vendor/bin/phpstan analyse --memory-limit=1G   # Static analysis (the default 128M limit crashes the parallel workers; CI and `composer analyse` already pass the flag)
 
 # Queues
 php artisan queue:work redis --queue=payments,notifications
