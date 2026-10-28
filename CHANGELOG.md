@@ -11,6 +11,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > Changes staged but not yet in a versioned release.
 
+### Added
+- Laravel 13 application scaffold in the repo root, alongside `docs/` (D-022)
+- PostgreSQL migrations for all 16 v1 tables plus Sanctum, Spatie Permission and Telescope, all with ULID keys and working `down()` methods
+- Pest, Pint (strict types enforced) and Larastan level 8; tests run against PostgreSQL (`chms_test`)
+- `scripts/setup-dev-db.sh` for local Postgres role and databases
+
 ### Changed
 - Database is now PostgreSQL instead of MySQL; data model, CI, backup and restore docs updated (D-021)
 - React SPA now lives in the Laravel repo (`resources/js`) behind one Blade shell view, no Inertia; replaces the separate `chms-frontend` repo (D-022, amends D-008)
