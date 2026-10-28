@@ -12,6 +12,7 @@ enum AuditEvent: string
     case Created = 'created';
     case Updated = 'updated';
     case StatusChanged = 'status_changed';
+    case Viewed = 'viewed';
 
     /**
      * Human-readable text for screens and messages.
@@ -22,6 +23,7 @@ enum AuditEvent: string
             self::Created => 'Created',
             self::Updated => 'Updated',
             self::StatusChanged => 'Status changed',
+            self::Viewed => 'Viewed',
         };
     }
 }

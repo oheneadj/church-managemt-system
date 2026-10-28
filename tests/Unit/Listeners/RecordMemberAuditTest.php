@@ -7,6 +7,7 @@ use App\Enums\MemberStatus;
 use App\Events\MemberCreated;
 use App\Events\MemberStatusChanged;
 use App\Events\MemberUpdated;
+use App\Events\MemberViewed;
 use App\Listeners\RecordMemberAudit;
 use App\Models\AuditLog;
 use App\Services\AuditLogger;
@@ -52,4 +53,13 @@ it('records a status change with the previous status and the reason', function (
     )->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
     $this->listener->handle(new MemberStatusChanged($member, $this->actor, MemberStatus::Active, 'Moved to Kumasi'));
+});
+
+it('records that the encrypted address was viewed, without its value', function (): void {
+    $member = unitMember(['address' => 'Secret Street 1']);
+    $this->audit->shouldReceive('record')->once()->withArgs(function ($subject, $event, $actor, $old, $new) use ($member): bool {
+        return $subject === $member && $event === AuditEvent::Viewed && $actor === $this->actor && $old === [] && $new === ['address' => '[viewed]'];
+    })->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
+
+    $this->listener->handle(new MemberViewed($member, $this->actor));
 });

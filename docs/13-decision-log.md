@@ -613,6 +613,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-034 — Response labels, formatted money and a log of who views personal data
+**Date:** October 2026
+**Decided by:** Product Owner (instructed to match the Universal agreement and Laravel addendum exactly)
+**Status:** Active
+
+**Decision:**
+1. Every enum field in an API response is sent as its value plus a `{field}_label` sibling (addendum section 6).
+2. Money is shaped by the `Money` value object, the only place an amount becomes display text. Storage stays `DECIMAL(12,2)` and the raw API value stays a decimal string (D-017), which is the project's explicit override of the agreement's integer minor units; a `_formatted` sibling such as `"GHS 2,400.00"` is added beside it.
+3. Opening a member's full record fires `MemberViewed`, and a listener writes a `viewed` line to `audit_logs` naming the viewer and that the encrypted address was shown (agreement section 36: access to PII fields must be logged). The value is never copied into the log. List views do not return the address, so they are not logged.
+4. Resources nest other Resources for related records, and every list uses a `ResourceCollection` class (`MemberCollection`, `FamilyCollection`, `DepartmentCollection`).
+
+**Rationale:** The agreement and addendum require each of these. The view log costs one insert per profile open, which is small next to the compliance value.
+
+**Revisit when:** the member profile returns more personal fields, or view volume makes the log too large (then add a retention job, per the agreement's retention table).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

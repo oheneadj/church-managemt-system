@@ -25,6 +25,7 @@ class ChurchResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'plan' => $this->plan->value,
+            'plan_label' => $this->plan->label(),
             'sms_credits' => $this->sms_credits,
         ];
     }

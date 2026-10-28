@@ -278,6 +278,40 @@ describe('showing', function (): void {
             ->assertJsonPath('data.giving_summary.this_month', '300.30');
     });
 
+    it('sends a label beside every enum value and a formatted amount beside every total', function (): void {
+        $member = newMember($this->church, ['gender' => 'female', 'educational_level' => EducationalLevel::Jhs2]);
+        Contribution::factory()->create(['church_id' => $this->church->id, 'member_id' => $member->id, 'amount' => '2400.5', 'contributed_at' => now()]);
+
+        as_($this->admin)->getJson(MEMBERS.'/'.$member->id)
+            ->assertJsonPath('data.gender', 'female')
+            ->assertJsonPath('data.gender_label', 'Female')
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.status_label', 'Active')
+            ->assertJsonPath('data.educational_level_label', 'JHS 2')
+            ->assertJsonPath('data.giving_summary.all_time', '2400.50')
+            ->assertJsonPath('data.giving_summary.all_time_formatted', 'GHS 2,400.50');
+    });
+
+    it('puts a line in the change log each time the record is opened', function (): void {
+        $member = newMember($this->church);
+
+        as_($this->admin)->getJson(MEMBERS.'/'.$member->id)->assertOk();
+
+        $log = AuditLog::query()->where('auditable_id', $member->id)->sole();
+        expect($log->event)->toBe(AuditEvent::Viewed)
+            ->and($log->actor_id)->toBe($this->admin->id)
+            ->and($log->new_values)->toBe(['address' => '[viewed]']);
+    });
+
+    it('does not log a view that was refused', function (): void {
+        $head = staffWithRole($this->church, 'department-head');
+        $member = newMember($this->church);
+
+        as_($head)->getJson(MEMBERS.'/'.$member->id)->assertForbidden();
+
+        expect(AuditLog::query()->count())->toBe(0);
+    });
+
     it('leaves the giving summary out for roles without giving.summary', function (): void {
         $member = newMember($this->church, ['educational_level' => EducationalLevel::Jhs1]);
 

@@ -8,8 +8,7 @@ use App\Actions\Families\ListFamiliesAction;
 use App\DTOs\Families\ListFamiliesDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Families\ListFamiliesRequest;
-use App\Http\Resources\FamilyResource;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\Http\Resources\FamilyCollection;
 
 /**
  * One page of families (docs/08, List Families).
@@ -18,8 +17,8 @@ class ListFamiliesController extends Controller
 {
     public function __construct(private readonly ListFamiliesAction $action) {}
 
-    public function __invoke(ListFamiliesRequest $request): AnonymousResourceCollection
+    public function __invoke(ListFamiliesRequest $request): FamilyCollection
     {
-        return FamilyResource::collection($this->action->execute(ListFamiliesDTO::fromRequest($request)));
+        return new FamilyCollection($this->action->execute(ListFamiliesDTO::fromRequest($request)));
     }
 }

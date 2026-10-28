@@ -26,14 +26,7 @@ class FamilyResource extends JsonResource
             'notes' => $this->notes,
             'head_member_id' => $this->head_member_id,
             'members_count' => $this->whenCounted('members'),
-            'members' => $this->whenLoaded('members', fn () => $this->members->map(fn ($member) => [
-                'id' => $member->id,
-                'member_number' => $member->member_number,
-                'full_name' => trim("{$member->first_name} {$member->middle_name} {$member->last_name}"),
-                'gender' => $member->gender,
-                'status' => $member->status,
-                'family_role' => $member->family_role,
-            ])->values()),
+            'members' => $this->whenLoaded('members', fn () => FamilyMemberResource::collection($this->members)),
         ];
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\AuditEvent;
 use App\Events\MemberCreated;
 use App\Events\MemberStatusChanged;
 use App\Events\MemberUpdated;
+use App\Events\MemberViewed;
 use App\Services\AuditLogger;
 
 /**
@@ -21,7 +22,7 @@ class RecordMemberAudit
 
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function handle(MemberCreated|MemberUpdated|MemberStatusChanged $event): void
+    public function handle(MemberCreated|MemberUpdated|MemberStatusChanged|MemberViewed $event): void
     {
         match (true) {
             $event instanceof MemberCreated => $this->audit->record(
@@ -36,6 +37,12 @@ class RecordMemberAudit
                 $event->actor,
                 $this->redact($event->old),
                 $this->redact($event->new),
+            ),
+            $event instanceof MemberViewed => $this->audit->record(
+                $event->member,
+                AuditEvent::Viewed,
+                $event->viewer,
+                new: ['address' => '[viewed]'],
             ),
             default => $this->audit->record(
                 $event->member,

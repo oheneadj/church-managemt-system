@@ -498,7 +498,7 @@ Append-only change history (`patterns/Pattern — Audit Trails.md`, D-030). Writ
 | `church_id` | CHAR(26) | No | FK → churches |
 | `auditable_type` | VARCHAR | No | Model class, for example `App\Models\Member` |
 | `auditable_id` | CHAR(26) | No | ULID of the changed record |
-| `event` | VARCHAR(30) | No | `AuditEvent`: created, updated, status_changed. |
+| `event` | VARCHAR(30) | No | `AuditEvent`: created, updated, status_changed, viewed. |
 | `old_values` | JSONB | Yes | Previous values of the changed fields. Null for a create. Encrypted fields are never copied here. |
 | `new_values` | JSONB | Yes | New values of the changed fields |
 | `changed_fields` | JSONB | Yes | Names of the fields that changed |

@@ -317,7 +317,7 @@ Permission: members.view
 }
 ```
 
-**Note:** `giving_summary` is omitted (the key is absent) for roles without `giving.summary` permission. Its amounts are decimal strings in GHS, for example `"2400.00"`, and voided contributions never count. `address` is decrypted server-side before returning (never the encrypted blob). `national_id_number` is never returned. `photo_url` arrives with the photo endpoint. The record also carries `status_changed_at` and `status_note`.
+**Note:** every enum field is sent as its value plus a `_label` sibling for display, for example `"status": "active"`, `"status_label": "Active"`. `giving_summary` is omitted (the key is absent) for roles without `giving.summary` permission. Its amounts are decimal strings in GHS, for example `"2400.00"`, each with a `_formatted` sibling, for example `"this_year_formatted": "GHS 2,400.00"`, and voided contributions never count. Opening a member's full record writes a `viewed` line to the change log, because it returns the encrypted address (D-034). `address` is decrypted server-side before returning (never the encrypted blob). `national_id_number` is never returned. `photo_url` arrives with the photo endpoint. The record also carries `status_changed_at` and `status_note`.
 
 **Errors:** `403` for a member outside the caller's view; `404` for a member that does not exist, is deleted, or belongs to another church.
 

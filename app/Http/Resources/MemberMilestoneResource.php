@@ -22,7 +22,8 @@ class MemberMilestoneResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'type' => $this->type,
+            'type' => $this->type->value,
+            'type_label' => $this->type->label(),
             'occurred_at' => $this->occurred_at->toDateString(),
             'officiant' => $this->officiant,
             'cohort' => $this->cohort,
