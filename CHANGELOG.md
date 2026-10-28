@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The titles of the sign-in and start-a-church cards are now `h1` headings. They were plain `div`s, so a screen reader found no heading on either page. The sign-up page has a test for it.
 - **Why:** The agreement (section 32) requires semantic HTML and a logical heading order on every page. Found by the browser test, which looks for the heading the way a screen reader does.
 - **Files:** `resources/js/pages/StartChurchPage.tsx`, `resources/js/pages/LoginPage.tsx`, `resources/js/pages/StartChurchPage.test.tsx`
-- **Commit:** pending
+- **Commit:** `029698c` (2026-10-28)
 
 #### fix(errors): stop logging and reporting mistakes the user made
 - **What:** A wrong sign-in code, a locked-out phone, a taken web address, a broken family rule and a missing member number prefix still get their 4xx answer, but are no longer written to the log as errors or sent to Sentry. Real faults, such as the SMS provider refusing us, are still reported.
