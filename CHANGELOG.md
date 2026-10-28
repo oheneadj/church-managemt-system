@@ -35,6 +35,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `scripts/setup-dev-db.sh` for local Postgres role and databases
 
 ### Fixed
+- Telescope is now registered only locally and excluded from auto-discovery, as the Laravel docs prescribe for a `--dev` package. Before, `bootstrap/providers.php` always loaded it, so a `composer install --no-dev` production build would have crashed on boot
+- Behind Coolify's HTTPS proxy Laravel believed every request was plain HTTP. `config/trustedproxy.php` (default: the private Docker ranges, `TRUSTED_PROXIES`) makes it trust only the proxy
+- `env:check` and the start-up guard also require an `https://` APP_URL, secure session cookies and no blanket proxy trust
 - A session cookie from one church could be replayed on another church's host, because Sanctum loaded the user before the church was resolved. The tenant middleware now runs first, `AuthenticateSession` is off, and a test fails if the fix is removed (D-027)
 
 ### Changed

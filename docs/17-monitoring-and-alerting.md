@@ -9,7 +9,7 @@
 | Layer | Tool | What It Watches |
 |---|---|---|
 | Application logs | Laravel Log (JSON → file) | Exceptions, errors, warnings, slow queries |
-| Application performance | Laravel Telescope (dev/staging only) | Queries, jobs, HTTP requests, exceptions |
+| Application performance | Laravel Telescope (local development only, installed with `--dev`; not in staging or production images) | Queries, jobs, HTTP requests, exceptions |
 | Uptime | Coolify built-in + UptimeRobot (free tier) | HTTP health check every 60 seconds |
 | Infrastructure | Oracle Cloud metrics | CPU, RAM, disk, network egress |
 | Queue health | Custom `queue:monitor` command | Queue depth, failed jobs |
@@ -391,7 +391,7 @@ This means digital giving is silently failing. **High priority.**
 ### Alert: API response time p99 > 2 seconds
 
 1. Check for a recent deploy that may have introduced a slow query
-2. Check Laravel Telescope on staging for query analysis
+2. Reproduce locally with Laravel Telescope (it is not installed in staging or production), and check the JSON logs for the slow request's `request_id`
 3. On production, enable the query log temporarily:
    ```php
    DB::enableQueryLog();

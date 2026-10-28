@@ -12,7 +12,8 @@ function goodConfig(array $overrides = []): Repository
         'app' => ['key' => 'base64:abc', 'url' => 'https://app.example.com', 'debug' => false],
         'database' => ['connections' => ['pgsql' => ['host' => 'postgres', 'database' => 'chms', 'username' => 'chms', 'password' => 'x']], 'redis' => ['default' => ['host' => 'redis']]],
         'tenancy' => ['base_domain' => 'example.com'],
-        'session' => ['domain' => null],
+        'session' => ['domain' => null, 'secure' => true],
+        'trustedproxy' => ['proxies' => ['10.0.0.0/8']],
         'services' => ['sms' => ['primary' => 'payperlez']],
         'filesystems' => ['default' => 'r2'],
     ];
@@ -42,9 +43,17 @@ it('rejects unsafe values', function (): void {
         'session' => ['domain' => '.example.com'],
         'services' => ['sms' => ['primary' => 'log']],
         'filesystems' => ['default' => 'local'],
+        'trustedproxy' => ['proxies' => ['*']],
     ]));
 
-    expect($problems)->toHaveCount(5);
+    expect($problems)->toHaveCount(6);
+});
+
+it('requires HTTPS and secure cookies, because TLS ends at the proxy', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['app' => ['url' => 'http://app.example.com'], 'session' => ['secure' => false]]));
+
+    expect($problems)->toContain('APP_URL must start with https://.')
+        ->and($problems)->toContain('SESSION_SECURE_COOKIE must be true, so session cookies are only sent over HTTPS.');
 });
 
 it('never prints a secret value in a message', function (): void {

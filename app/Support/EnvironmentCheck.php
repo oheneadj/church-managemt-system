@@ -44,6 +44,20 @@ final class EnvironmentCheck
             $problems[] = 'TENANT_BASE_DOMAIN must be set to the real platform domain.';
         }
 
+        if (! str_starts_with((string) $config->get('app.url'), 'https://')) {
+            $problems[] = 'APP_URL must start with https://.';
+        }
+
+        if ($config->get('session.secure') !== true) {
+            $problems[] = 'SESSION_SECURE_COOKIE must be true, so session cookies are only sent over HTTPS.';
+        }
+
+        $proxies = $config->get('trustedproxy.proxies');
+
+        if ($proxies === '*' || $proxies === '**' || (is_array($proxies) && in_array('*', $proxies, true))) {
+            $problems[] = 'TRUSTED_PROXIES must list the proxy address ranges, not "*".';
+        }
+
         if ($config->get('session.domain') !== null) {
             $problems[] = 'SESSION_DOMAIN must be empty, so session cookies stay on one church subdomain.';
         }

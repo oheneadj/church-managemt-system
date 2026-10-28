@@ -29,6 +29,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(HealthCheck::class, fn () => HealthCheck::standard());
+
+        // Telescope is a dev-only package (docs/15: none in production), so it is registered here only when it is
+        // installed and we are running locally. Registering it in bootstrap/providers.php would crash a
+        // `composer install --no-dev` build, because the class would not exist.
+        if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 
     /**

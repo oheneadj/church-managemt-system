@@ -93,7 +93,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "laravel/telescope"
+            ]
         },
         "aws/aws-sdk-php": [
             "S3"
