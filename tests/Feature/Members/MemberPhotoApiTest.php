@@ -9,6 +9,7 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 
 function photoStaff(Church $church, string $role): User
 {
@@ -18,11 +19,12 @@ function photoStaff(Church $church, string $role): User
     return $user;
 }
 
+/** Signs the staff member in for the next request, the way Laravel's tests do. */
 function photoAs(User $user): mixed
 {
-    app('auth')->forgetGuards();
+    Sanctum::actingAs($user, ['*']);
 
-    return test()->withToken($user->createToken('test')->plainTextToken);
+    return test();
 }
 
 function photoUrl(Member $member): string

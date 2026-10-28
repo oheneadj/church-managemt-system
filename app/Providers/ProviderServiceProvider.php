@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\SmsProvider;
+use App\Exceptions\SmsProviderUnavailableException;
 use App\Services\Sms\LogSmsProvider;
 use Illuminate\Support\ServiceProvider;
-use RuntimeException;
 
 /**
  * Binds third-party provider interfaces to the implementation chosen in config.
@@ -24,12 +24,12 @@ class ProviderServiceProvider extends ServiceProvider
             $driver = (string) config('services.sms.primary');
 
             if ($driver === 'log' && $this->app->isProduction()) {
-                throw new RuntimeException('The log SMS driver cannot be used in production.');
+                throw new SmsProviderUnavailableException('The log SMS driver cannot be used in production.');
             }
 
             return match ($driver) {
                 'log' => new LogSmsProvider,
-                default => throw new RuntimeException("SMS provider [{$driver}] is not implemented yet."),
+                default => throw new SmsProviderUnavailableException("SMS provider [{$driver}] is not implemented yet."),
             };
         });
     }

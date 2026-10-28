@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\FamilyRole;
+use App\Exceptions\FamilyHeadAlreadyTakenException;
+use App\Exceptions\FamilyRoleNeedsFamilyException;
 use App\Models\Member;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\ValidationException;
 
 /**
  * The family rules shared by every Action that puts a member in a family (docs/03): a role needs a family,
@@ -33,7 +34,7 @@ class MemberFamilyService
     public function guard(Member $member): void
     {
         if ($member->family_id === null && $member->family_role !== null) {
-            throw ValidationException::withMessages(['family_id' => 'Choose a family before giving a role in it.']);
+            throw new FamilyRoleNeedsFamilyException;
         }
 
         if ($member->family_id === null || $member->family_role !== FamilyRole::Head) {
@@ -43,7 +44,7 @@ class MemberFamilyService
         $this->families->lock($member->family_id);
 
         if ($this->members->familyHasOtherHead($member->family_id, $member->exists ? $member->getKey() : null)) {
-            throw ValidationException::withMessages(['family_role' => 'This family already has a head of household.']);
+            throw new FamilyHeadAlreadyTakenException;
         }
     }
 

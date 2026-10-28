@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\FamilyRole;
+use App\Exceptions\FamilyHeadAlreadyTakenException;
 use App\Models\Church;
 use App\Models\Family;
 use App\Models\Member;
@@ -11,7 +12,6 @@ use App\Services\MemberFamilyService;
 use App\Services\MemberNumberGenerator;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,7 +72,7 @@ it('lets only one of two simultaneous requests take the head of a family', funct
 
     // B now runs the check again, sees A's head, and is refused. One winner, one rejection.
     $second->family_role = FamilyRole::Head;
-    expect(fn () => $service->guard($second))->toThrow(ValidationException::class);
+    expect(fn () => $service->guard($second))->toThrow(FamilyHeadAlreadyTakenException::class);
     expect(Member::query()->where('family_id', $family->id)->where('family_role', 'head')->count())->toBe(1);
 });
 

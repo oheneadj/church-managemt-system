@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\MemberMilestone;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Laravel\Sanctum\Sanctum;
 
 function milestoneStaff(Church $church, string $role): User
 {
@@ -18,11 +19,12 @@ function milestoneStaff(Church $church, string $role): User
     return $user;
 }
 
+/** Signs the staff member in for the next request, the way Laravel's tests do. */
 function milestoneAs(User $user): mixed
 {
-    app('auth')->forgetGuards();
+    Sanctum::actingAs($user, ['*']);
 
-    return test()->withToken($user->createToken('test')->plainTextToken);
+    return test();
 }
 
 function milestoneUrl(Member $member): string

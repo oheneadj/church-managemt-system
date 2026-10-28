@@ -15,6 +15,7 @@ use App\Models\Member;
 use App\Models\MemberDepartment;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Laravel\Sanctum\Sanctum;
 
 const MEMBERS = 'http://grace.localhost/api/v1/members';
 
@@ -27,12 +28,12 @@ function staffWithRole(Church $church, string $role): User
     return $user;
 }
 
+/** Signs the staff member in for the next request, the way Laravel's tests do. */
 function as_(User $user): mixed
 {
-    // The auth guard remembers the first user it resolved, so reset it when a test switches users.
-    app('auth')->forgetGuards();
+    Sanctum::actingAs($user, ['*']);
 
-    return test()->withToken($user->createToken('test')->plainTextToken);
+    return test();
 }
 
 function newMember(Church $church, array $attributes = []): Member
@@ -149,11 +150,10 @@ describe('listing', function (): void {
 
     it('answers in a constant number of queries however many members there are', function (): void {
         Member::factory()->count(30)->create(['church_id' => $this->church->id]);
-        $token = $this->admin->createToken('t')->plainTextToken;
-        $this->withToken($token)->getJson(MEMBERS); // warm the permission cache
+        as_($this->admin)->getJson(MEMBERS); // the first call warms the permission cache
 
         DB::enableQueryLog();
-        $this->withToken($token)->getJson(MEMBERS)->assertOk();
+        as_($this->admin)->getJson(MEMBERS)->assertOk();
 
         expect(count(DB::getQueryLog()))->toBeLessThan(15);
     });

@@ -12,6 +12,7 @@ use App\Models\Member;
 use App\Models\MemberDepartment;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Laravel\Sanctum\Sanctum;
 
 const FAMILIES = 'http://grace.localhost/api/v1/families';
 
@@ -23,11 +24,12 @@ function familyStaff(Church $church, string $role): User
     return $user;
 }
 
+/** Signs the staff member in for the next request, the way Laravel's tests do. */
 function familyAs(User $user): mixed
 {
-    app('auth')->forgetGuards();
+    Sanctum::actingAs($user, ['*']);
 
-    return test()->withToken($user->createToken('test')->plainTextToken);
+    return test();
 }
 
 beforeEach(function (): void {

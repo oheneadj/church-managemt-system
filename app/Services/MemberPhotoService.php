@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\PhotoNotStoredException;
 use App\Models\Member;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 
 /**
  * Member profile photos (docs/14, Cloudflare R2). The bucket is private, so photos are only ever
@@ -34,7 +34,7 @@ class MemberPhotoService
             ->storeAs("churches/{$member->church_id}/members/{$member->getKey()}", config('members.photo_file_name'));
 
         if ($path === false) {
-            throw new RuntimeException('The photo could not be stored.');
+            throw new PhotoNotStoredException;
         }
 
         return $path;

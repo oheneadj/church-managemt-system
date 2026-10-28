@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\FamilyRole;
+use App\Exceptions\FamilyHeadAlreadyTakenException;
+use App\Exceptions\FamilyRoleNeedsFamilyException;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Services\MemberFamilyService;
-use Illuminate\Validation\ValidationException;
 
 beforeEach(function (): void {
     $this->families = Mockery::mock(FamilyRepositoryInterface::class);
@@ -18,7 +19,7 @@ describe('guard', function (): void {
     it('refuses a family role with no family', function (): void {
         $member = unitMember(['family_id' => null, 'family_role' => FamilyRole::Spouse]);
 
-        expect(fn () => $this->service->guard($member))->toThrow(ValidationException::class);
+        expect(fn () => $this->service->guard($member))->toThrow(FamilyRoleNeedsFamilyException::class);
     });
 
     it('lets a member with no family and no role through without touching the database', function (): void {
@@ -38,7 +39,7 @@ describe('guard', function (): void {
         $this->members->shouldReceive('familyHasOtherHead')->once()->with('01family', '01memberunit')->andReturnTrue()->ordered();
         $member = unitMember(['family_id' => '01family', 'family_role' => FamilyRole::Head], persisted: true);
 
-        expect(fn () => $this->service->guard($member))->toThrow(ValidationException::class);
+        expect(fn () => $this->service->guard($member))->toThrow(FamilyHeadAlreadyTakenException::class);
     });
 
     it('lets the only head through, and does not exclude a member that is not saved yet', function (): void {

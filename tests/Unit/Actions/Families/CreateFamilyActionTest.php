@@ -6,11 +6,11 @@ use App\Actions\Families\CreateFamilyAction;
 use App\DTOs\Families\CreateFamilyDTO;
 use App\Enums\FamilyRole;
 use App\Events\MemberUpdated;
+use App\Exceptions\MemberAlreadyInFamilyException;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Services\MemberFamilyService;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Validation\ValidationException;
 
 beforeEach(function (): void {
     Event::fake([MemberUpdated::class]);
@@ -53,6 +53,6 @@ it('never moves a member who already belongs to a family', function (): void {
     $this->memberFamilies->shouldReceive('assign')->never();
 
     expect(fn () => $this->action->execute(new CreateFamilyDTO($this->actor, 'Boateng Family', headMemberId: '01memberunit')))
-        ->toThrow(ValidationException::class);
+        ->toThrow(MemberAlreadyInFamilyException::class);
     Event::assertNotDispatched(MemberUpdated::class);
 });

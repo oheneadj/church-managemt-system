@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### refactor(errors): use named exceptions and match the addendum's test layout
+- **What:** Domain rules now throw named exceptions instead of the generic validation or runtime ones: `FamilyHeadAlreadyTakenException`, `FamilyRoleNeedsFamilyException` and `MemberAlreadyInFamilyException` (all 422 with the field named, through the shared `FieldRuleException`), `PhotoNotStoredException`, `SmsProviderUnavailableException` and `MisconfiguredEnvironmentException`. Member feature tests now sign in with Sanctum's `actingAs`. `PhoneNumberTest` moved to `tests/Unit/ValueObjects`, and unit tests were added for the `MemberStatus` and `EducationalLevel` enums and the `Member` and `Church` models.
+- **Why:** Section 17 of the agreement asks for named custom exceptions for domain errors; the Laravel addendum says authenticated tests use `actingAs` and sets the unit-test folders (`Actions`, `Services`, `Models`, `Enums`, `ValueObjects`).
+- **Files:** `app/Exceptions/` (7 new files), `app/Services/MemberFamilyService.php`, `app/Services/MemberPhotoService.php`, `app/Actions/Families/CreateFamilyAction.php`, `app/Providers/ProviderServiceProvider.php`, `app/Providers/AppServiceProvider.php`, `tests/Feature/Members/` (5 files), `tests/Concurrency/ContestedSlotsTest.php`, `tests/Unit/Actions/Families/CreateFamilyActionTest.php`, `tests/Unit/Services/MemberFamilyServiceTest.php`, `tests/Unit/Enums/` (2 new), `tests/Unit/Models/` (2 new), `tests/Unit/ValueObjects/PhoneNumberTest.php`
+- **Commit:** `PENDING`
+
 #### feat(security): add the security headers middleware
 - **What:** Added the `SecurityHeaders` middleware, registered globally, which sets `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection` and `Referrer-Policy` on every response and `Strict-Transport-Security` on HTTPS requests. The header list lives in `config/security.php`. Updated `docs/15-security.md` to point at the real code.
 - **Why:** `docs/15` specified these headers and the Laravel addendum checklist asks "Security headers set in middleware?", but the middleware had never been written.

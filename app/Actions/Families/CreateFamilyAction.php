@@ -7,12 +7,12 @@ namespace App\Actions\Families;
 use App\DTOs\Families\CreateFamilyDTO;
 use App\Enums\FamilyRole;
 use App\Events\MemberUpdated;
+use App\Exceptions\MemberAlreadyInFamilyException;
 use App\Models\Family;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Services\MemberFamilyService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Creates a family, and when a first head is given, makes that member the head and fires MemberUpdated for
@@ -45,7 +45,7 @@ final class CreateFamilyAction
                 $head = $this->members->findOrFail($dto->headMemberId);
 
                 if ($head->family_id !== null) {
-                    throw ValidationException::withMessages(['head_member_id' => 'This member already belongs to a family.']);
+                    throw new MemberAlreadyInFamilyException;
                 }
 
                 [$old, $new] = $this->memberFamilies->assign($head, $family->getKey(), FamilyRole::Head);

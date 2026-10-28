@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Enums\StaffPermission;
+use App\Exceptions\MisconfiguredEnvironmentException;
 use App\Http\Middleware\ResolveTenant;
 use App\Models\Department;
 use App\Models\Family;
@@ -26,7 +27,6 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
-use RuntimeException;
 
 /**
  * Application-wide setup: the tenant middleware order, route model bindings, date and lazy-loading rules,
@@ -92,7 +92,7 @@ class AppServiceProvider extends ServiceProvider
         $problems = EnvironmentCheck::problems($this->app->make('config'));
 
         if ($problems !== []) {
-            throw new RuntimeException('The environment is misconfigured: '.implode(' ', $problems));
+            throw new MisconfiguredEnvironmentException($problems);
         }
     }
 
