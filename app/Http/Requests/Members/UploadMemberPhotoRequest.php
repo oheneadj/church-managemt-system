@@ -37,9 +37,9 @@ class UploadMemberPhotoRequest extends FormRequest
             'photo' => [
                 'required',
                 File::image()
-                    ->max(5 * 1024)
-                    ->dimensions(Rule::dimensions()->maxWidth(4096)->maxHeight(4096)),
-                'mimes:jpg,jpeg,png',
+                    ->max(config('members.photo_max_kilobytes'))
+                    ->dimensions(Rule::dimensions()->maxWidth(config('members.photo_max_pixels'))->maxHeight(config('members.photo_max_pixels'))),
+                'mimes:'.implode(',', config('members.photo_types')),
             ],
         ];
     }

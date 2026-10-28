@@ -53,6 +53,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Member extends Model
 {
+    /** The roles that see every member of the church. */
+    private const SEE_EVERYONE = [StaffRole::ChurchAdmin, StaffRole::Pastor, StaffRole::FinanceSecretary];
+
     use BelongsToChurch, HasUlids, SoftDeletes;
 
     /** @use HasFactory<MemberFactory> */
@@ -188,22 +191,20 @@ class Member extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->hasAnyRole([StaffRole::ChurchAdmin, StaffRole::Pastor, StaffRole::FinanceSecretary])) {
+        if ($user->hasAnyRole(self::SEE_EVERYONE)) {
             return;
         }
 
         $query->where(function (Builder $visible) use ($user): void {
+            // Start from nobody, then open up what each of the user's roles may see.
+            $visible->whereIn('id', []);
+
             if ($user->hasRole(StaffRole::DepartmentHead)) {
-                $visible->orWhereHas('departments', fn (Builder $d) => $d->where('departments.head_user_id', $user->getKey()));
+                $visible->orWhereHas('departments', fn (Builder $department) => $department->where('departments.head_user_id', $user->getKey()));
             }
 
             if ($user->hasRole(StaffRole::YouthPastor)) {
                 $this->addYouthBranch($visible, app('current.church'));
-            }
-
-            // A user with neither role matches nothing.
-            if (! $user->hasAnyRole([StaffRole::DepartmentHead, StaffRole::YouthPastor])) {
-                $visible->whereIn('id', []);
             }
         });
     }

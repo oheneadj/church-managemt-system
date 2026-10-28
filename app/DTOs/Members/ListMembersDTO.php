@@ -23,6 +23,7 @@ final readonly class ListMembersDTO
      */
     public function __construct(
         public User $viewer,
+        public int $perPage,
         public ?MemberStatus $status = null,
         public ?Gender $gender = null,
         public ?EducationalLevel $educationalLevel = null,
@@ -31,7 +32,6 @@ final readonly class ListMembersDTO
         public ?string $search = null,
         public string $sort = 'last_name',
         public string $direction = 'asc',
-        public int $perPage = 25,
     ) {}
 
     /**
@@ -51,7 +51,7 @@ final readonly class ListMembersDTO
             search: $data['search'] ?? null,
             sort: $data['sort'] ?? 'last_name',
             direction: $data['direction'] ?? 'asc',
-            perPage: (int) ($data['per_page'] ?? 25),
+            perPage: (int) ($data['per_page'] ?? config('limits.per_page_default')),
         );
     }
 }

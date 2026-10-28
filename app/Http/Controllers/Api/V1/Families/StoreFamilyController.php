@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Families\StoreFamilyRequest;
 use App\Http\Resources\FamilyResource;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Creates a family, optionally with its first head (docs/08, Create Family).
@@ -28,6 +29,6 @@ class StoreFamilyController extends Controller
     {
         $family = $this->action->execute(CreateFamilyDTO::fromRequest($request));
 
-        return (new FamilyResource($family))->response()->setStatusCode(201);
+        return (new FamilyResource($family))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

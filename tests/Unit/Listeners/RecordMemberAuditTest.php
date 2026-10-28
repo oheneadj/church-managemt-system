@@ -25,7 +25,7 @@ it('records a create, hiding the encrypted fields', function (): void {
             && $new['address'] === '[changed]' && $new['national_id_number'] === '[changed]' && $new['occupation'] === 'Nurse';
     })->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
-    $this->listener->handle(new MemberCreated($member, $this->actor));
+    $this->listener->handleCreated(new MemberCreated($member, $this->actor));
 });
 
 it('records an update with old and new values, hiding encrypted fields on both sides', function (): void {
@@ -38,7 +38,7 @@ it('records an update with old and new values, hiding encrypted fields on both s
         ['phone' => '+233200000002', 'address' => '[changed]'],
     )->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
-    $this->listener->handle(new MemberUpdated($member, $this->actor, ['phone' => '+233200000001', 'address' => 'Old Street'], ['phone' => '+233200000002', 'address' => 'New Street']));
+    $this->listener->handleUpdated(new MemberUpdated($member, $this->actor, ['phone' => '+233200000001', 'address' => 'Old Street'], ['phone' => '+233200000002', 'address' => 'New Street']));
 });
 
 it('records a status change with the previous status and the reason', function (): void {
@@ -52,7 +52,7 @@ it('records a status change with the previous status and the reason', function (
         'Moved to Kumasi',
     )->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
-    $this->listener->handle(new MemberStatusChanged($member, $this->actor, MemberStatus::Active, 'Moved to Kumasi'));
+    $this->listener->handleStatusChanged(new MemberStatusChanged($member, $this->actor, MemberStatus::Active, 'Moved to Kumasi'));
 });
 
 it('records that the encrypted address was viewed, without its value', function (): void {
@@ -61,5 +61,5 @@ it('records that the encrypted address was viewed, without its value', function 
         return $subject === $member && $event === AuditEvent::Viewed && $actor === $this->actor && $old === [] && $new === ['address' => '[viewed]'];
     })->andReturn(AuditLog::factory()->make(['church_id' => '01churchunit', 'auditable_id' => '01memberunit']));
 
-    $this->listener->handle(new MemberViewed($member, $this->actor));
+    $this->listener->handleViewed(new MemberViewed($member, $this->actor));
 });

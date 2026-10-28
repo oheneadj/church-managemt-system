@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Departments\StoreDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Creates a department (docs/08, Create Department).
@@ -28,6 +29,6 @@ class StoreDepartmentController extends Controller
     {
         $department = $this->action->execute(CreateDepartmentDTO::fromRequest($request));
 
-        return (new DepartmentResource($department))->response()->setStatusCode(201);
+        return (new DepartmentResource($department))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

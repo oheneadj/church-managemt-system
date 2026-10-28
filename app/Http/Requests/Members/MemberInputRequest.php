@@ -58,11 +58,11 @@ abstract class MemberInputRequest extends FormRequest
             'gender' => [...$required, Rule::enum(Gender::class)],
             'date_of_birth' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'phone' => [
-                ...$required, 'string', 'regex:/^\+[1-9]\d{7,14}$/',
+                ...$required, 'string', 'regex:'.PhoneNumber::E164_PATTERN,
                 // Unique among this church's members who are not deleted (docs/03, data integrity rule 1).
                 Rule::unique('members', 'phone')->where('church_id', $churchId)->withoutTrashed()->ignore($this->subject()?->getKey()),
             ],
-            'phone_secondary' => ['nullable', 'string', 'regex:/^\+[1-9]\d{7,14}$/'],
+            'phone_secondary' => ['nullable', 'string', 'regex:'.PhoneNumber::E164_PATTERN],
             'email' => ['nullable', 'email:rfc', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'nearest_landmark' => ['nullable', 'string', 'max:255'],

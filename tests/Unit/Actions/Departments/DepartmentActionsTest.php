@@ -12,7 +12,7 @@ use App\Repositories\DepartmentRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 it('lists a page of departments through the repository', function (): void {
-    $dto = new ListDepartmentsDTO(unitUser(), isActive: true);
+    $dto = new ListDepartmentsDTO(unitUser(), 25, isActive: true);
     $page = new LengthAwarePaginator([], 0, 25);
     $departments = Mockery::mock(DepartmentRepositoryInterface::class);
     $departments->shouldReceive('paginate')->once()->with($dto)->andReturn($page);

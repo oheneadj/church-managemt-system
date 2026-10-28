@@ -6,6 +6,7 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Thrown for a wrong, expired or unknown code. One message for all three cases (QA-01 TC-01-03),
@@ -18,6 +19,6 @@ class InvalidOtpException extends Exception
      */
     public function render(): JsonResponse
     {
-        return response()->json(['message' => 'Invalid code'], 422);
+        return response()->json(['message' => 'Invalid code'], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

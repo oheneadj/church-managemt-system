@@ -18,13 +18,16 @@ class AssignRequestId
 {
     public const HEADER = 'X-Request-ID';
 
+    /** A caller's own id is kept only if it is 8 to 64 safe characters; anything else is replaced. */
+    private const SAFE_ID_PATTERN = '/^[A-Za-z0-9_-]{8,64}$/';
+
     /**
      * Gives the request an id, adds it to the log context and returns it in the response header.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $sent = (string) $request->header(self::HEADER);
-        $id = preg_match('/^[A-Za-z0-9_-]{8,64}$/', $sent) === 1 ? $sent : (string) Str::ulid();
+        $id = preg_match(self::SAFE_ID_PATTERN, $sent) === 1 ? $sent : (string) Str::ulid();
 
         // Context is added to every log line and carried into jobs dispatched during this request.
         Context::add('request_id', $id);

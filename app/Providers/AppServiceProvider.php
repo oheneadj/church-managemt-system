@@ -112,25 +112,25 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('limits.api_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
         // Sending a code costs money, so it gets its own tight limits on top of the security ones:
-        // 1 a minute and 5 an hour per phone, plus a ceiling per IP.
+        // The limits per phone number and per IP address are set in config/limits.php.
         RateLimiter::for('otp-request', function (Request $request): array {
             $phone = PhoneNumber::tryFrom((string) $request->input('phone'))->e164 ?? 'invalid';
             $key = $this->tenantKey($request).':'.hash('sha256', $phone);
 
             return [
-                Limit::perMinute(1)->by($key),
-                Limit::perHour(5)->by($key),
-                Limit::perHour(20)->by($request->ip()),
+                Limit::perMinute(config('limits.otp_request_per_minute'))->by($key),
+                Limit::perHour(config('limits.otp_request_per_hour'))->by($key),
+                Limit::perHour(config('limits.otp_request_per_hour_per_ip'))->by($request->ip()),
             ];
         });
 
         // Uploads are CPU heavy (every photo is re-encoded), so they get a tighter limit than other calls.
-        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(config('limits.uploads_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
-        RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(10)->by($this->tenantKey($request).':'.$request->ip()));
+        RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(config('limits.otp_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
     }
 
     /**

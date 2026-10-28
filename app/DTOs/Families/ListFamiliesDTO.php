@@ -18,7 +18,7 @@ final readonly class ListFamiliesDTO
     /**
      * Holds the viewer, search and per page.
      */
-    public function __construct(public User $viewer, public ?string $search = null, public int $perPage = 25) {}
+    public function __construct(public User $viewer, public int $perPage, public ?string $search = null) {}
 
     /**
      * Builds the DTO from the validated request.
@@ -27,6 +27,6 @@ final readonly class ListFamiliesDTO
     {
         $v = $request->validated();
 
-        return new self(self::actorFrom($request), $v['search'] ?? null, (int) ($v['per_page'] ?? 25));
+        return new self(self::actorFrom($request), (int) ($v['per_page'] ?? config('limits.per_page_default')), $v['search'] ?? null);
     }
 }

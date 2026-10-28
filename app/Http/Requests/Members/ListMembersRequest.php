@@ -47,7 +47,7 @@ class ListMembersRequest extends FormRequest
             'sort' => ['sometimes', Rule::in(['last_name', 'first_name', 'created_at', 'membership_date'])],
             /** @var 'asc'|'desc' */
             'direction' => ['sometimes', Rule::in(['asc', 'desc'])],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:'.config('limits.per_page_max')],
         ];
     }
 }

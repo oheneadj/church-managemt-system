@@ -26,39 +26,42 @@ class RecordMemberAudit
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * Writes the audit line that matches the member event.
+     * Records that a member was added.
      */
-    public function handle(MemberCreated|MemberUpdated|MemberStatusChanged|MemberViewed $event): void
+    public function handleCreated(MemberCreated $event): void
     {
-        match (true) {
-            $event instanceof MemberCreated => $this->audit->record(
-                $event->member,
-                AuditEvent::Created,
-                $event->actor,
-                new: $this->redact($event->member->getAttributes()),
-            ),
-            $event instanceof MemberUpdated => $this->audit->record(
-                $event->member,
-                AuditEvent::Updated,
-                $event->actor,
-                $this->redact($event->old),
-                $this->redact($event->new),
-            ),
-            $event instanceof MemberViewed => $this->audit->record(
-                $event->member,
-                AuditEvent::Viewed,
-                $event->viewer,
-                new: ['address' => '[viewed]'],
-            ),
-            default => $this->audit->record(
-                $event->member,
-                AuditEvent::StatusChanged,
-                $event->actor,
-                ['status' => $event->previous->value],
-                ['status' => $event->member->status->value],
-                $event->note,
-            ),
-        };
+        $this->audit->record($event->member, AuditEvent::Created, $event->actor, new: $this->redact($event->member->getAttributes()));
+    }
+
+    /**
+     * Records which fields of a member changed, with their old and new values.
+     */
+    public function handleUpdated(MemberUpdated $event): void
+    {
+        $this->audit->record($event->member, AuditEvent::Updated, $event->actor, $this->redact($event->old), $this->redact($event->new));
+    }
+
+    /**
+     * Records a status change with the previous status and the reason given.
+     */
+    public function handleStatusChanged(MemberStatusChanged $event): void
+    {
+        $this->audit->record(
+            $event->member,
+            AuditEvent::StatusChanged,
+            $event->actor,
+            ['status' => $event->previous->value],
+            ['status' => $event->member->status->value],
+            $event->note,
+        );
+    }
+
+    /**
+     * Records that someone opened the member's record, which shows the encrypted address. The value is not logged.
+     */
+    public function handleViewed(MemberViewed $event): void
+    {
+        $this->audit->record($event->member, AuditEvent::Viewed, $event->viewer, new: ['address' => '[viewed]']);
     }
 
     /**

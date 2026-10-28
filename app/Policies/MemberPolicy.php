@@ -21,14 +21,6 @@ class MemberPolicy
      */
     public function __construct(private readonly MemberRepositoryInterface $members) {}
 
-    /** Statuses that take a member out of active life; moving to one needs members.deactivate (docs/03). */
-    private const LEAVING = [
-        MemberStatus::Inactive,
-        MemberStatus::Transferred,
-        MemberStatus::Deceased,
-        MemberStatus::Archived,
-    ];
-
     /**
      * Whether the user may list members.
      */
@@ -73,6 +65,6 @@ class MemberPolicy
             return false;
         }
 
-        return in_array($target, self::LEAVING, true) ? $user->hasPermissionTo(StaffPermission::MembersDeactivate) : true;
+        return $target->leavesActiveLife() ? $user->hasPermissionTo(StaffPermission::MembersDeactivate) : true;
     }
 }

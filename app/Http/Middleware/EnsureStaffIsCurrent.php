@@ -39,7 +39,7 @@ class EnsureStaffIsCurrent
                 $this->sessions->endBrowserSession($session);
             }
 
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json(['message' => 'Unauthenticated.'], Response::HTTP_UNAUTHORIZED);
         }
 
         Context::add('user_id', $user->getKey());

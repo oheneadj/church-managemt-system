@@ -20,14 +20,6 @@ use RuntimeException;
  */
 class MemberPhotoService
 {
-    /** Square side of the stored photo, in pixels. Enough for a profile page on a high-density phone. */
-    private const SIZE = 512;
-
-    private const QUALITY = 82;
-
-    /** How long a signed link works. The API hands out a fresh one on every response. */
-    private const LINK_LIFETIME_MINUTES = 60;
-
     /**
      * Stores the processed photo and returns its path; the Action saves the path on the member. The key is
      * fixed per member, so a new photo replaces the old one and nothing is left behind in the bucket.
@@ -36,10 +28,10 @@ class MemberPhotoService
     {
         $path = Image::fromUpload($file)
             ->orient()
-            ->cover(self::SIZE, self::SIZE)
+            ->cover(config('members.photo_size'), config('members.photo_size'))
             ->toJpg()
-            ->quality(self::QUALITY)
-            ->storeAs("churches/{$member->church_id}/members/{$member->getKey()}", 'photo.jpg');
+            ->quality(config('members.photo_quality'))
+            ->storeAs("churches/{$member->church_id}/members/{$member->getKey()}", config('members.photo_file_name'));
 
         if ($path === false) {
             throw new RuntimeException('The photo could not be stored.');
@@ -57,6 +49,6 @@ class MemberPhotoService
             return null;
         }
 
-        return Storage::temporaryUrl($path, now()->addMinutes(self::LINK_LIFETIME_MINUTES));
+        return Storage::temporaryUrl($path, now()->addMinutes(config('members.photo_link_minutes')));
     }
 }

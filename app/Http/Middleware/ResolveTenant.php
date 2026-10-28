@@ -30,7 +30,7 @@ class ResolveTenant
         $church = $this->findChurch($request->getHost());
 
         if ($church === null || ! $church->is_active) {
-            abort(404);
+            abort(Response::HTTP_NOT_FOUND);
         }
 
         app()->instance('current.church', $church);

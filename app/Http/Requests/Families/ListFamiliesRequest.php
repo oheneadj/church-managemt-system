@@ -32,7 +32,7 @@ class ListFamiliesRequest extends FormRequest
     {
         return [
             'search' => ['sometimes', 'string', 'max:100'],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:'.config('limits.per_page_max')],
         ];
     }
 }

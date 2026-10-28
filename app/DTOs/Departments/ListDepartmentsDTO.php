@@ -18,7 +18,7 @@ final readonly class ListDepartmentsDTO
     /**
      * Holds the viewer, is active and per page.
      */
-    public function __construct(public User $viewer, public ?bool $isActive = null, public int $perPage = 25) {}
+    public function __construct(public User $viewer, public int $perPage, public ?bool $isActive = null) {}
 
     /**
      * Builds the DTO from the validated request.
@@ -27,6 +27,6 @@ final readonly class ListDepartmentsDTO
     {
         $v = $request->validated();
 
-        return new self(self::actorFrom($request), isset($v['is_active']) ? (bool) $v['is_active'] : null, (int) ($v['per_page'] ?? 25));
+        return new self(self::actorFrom($request), (int) ($v['per_page'] ?? config('limits.per_page_default')), isset($v['is_active']) ? (bool) $v['is_active'] : null);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Members\StoreMemberRequest;
 use App\Http\Resources\MemberResource;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Adds a member (docs/08, Create Member).
@@ -28,6 +29,6 @@ class StoreMemberController extends Controller
     {
         $member = $this->action->execute(CreateMemberDTO::fromRequest($request));
 
-        return (new MemberResource($member))->response()->setStatusCode(201);
+        return (new MemberResource($member))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

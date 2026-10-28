@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Members\StoreMilestoneRequest;
 use App\Http\Resources\MemberMilestoneResource;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Records a milestone such as a baptism on a member (docs/08, Add Member Milestone).
@@ -28,6 +29,6 @@ class StoreMemberMilestoneController extends Controller
     {
         $milestone = $this->action->execute(AddMemberMilestoneDTO::fromRequest($request));
 
-        return (new MemberMilestoneResource($milestone))->response()->setStatusCode(201);
+        return (new MemberMilestoneResource($milestone))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

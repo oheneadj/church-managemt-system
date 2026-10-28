@@ -27,7 +27,7 @@ class EloquentMemberRepository implements MemberRepositoryInterface
             ->visibleTo($filters->viewer)
             ->with('departments:id,name')
             ->when($filters->status !== null, fn (Builder $q) => $q->where('status', $filters->status?->value))
-            ->when($filters->status === null && $filters->search === null, fn (Builder $q) => $q->whereIn('status', [MemberStatus::Prospect->value, MemberStatus::Active->value]))
+            ->when($filters->status === null && $filters->search === null, fn (Builder $q) => $q->whereIn('status', array_column(MemberStatus::inDefaultDirectory(), 'value')))
             ->when($filters->gender !== null, fn (Builder $q) => $q->where('gender', $filters->gender?->value))
             ->when($filters->educationalLevel !== null, fn (Builder $q) => $q->where('educational_level', $filters->educationalLevel?->value))
             ->when($filters->familyId !== null, fn (Builder $q) => $q->where('family_id', $filters->familyId))

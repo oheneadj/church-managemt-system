@@ -12,7 +12,7 @@ use App\Repositories\FamilyRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 it('lists a page of families through the repository', function (): void {
-    $dto = new ListFamiliesDTO(unitUser(), 'Mensah');
+    $dto = new ListFamiliesDTO(unitUser(), 25, 'Mensah');
     $page = new LengthAwarePaginator([], 0, 25);
     $families = Mockery::mock(FamilyRepositoryInterface::class);
     $families->shouldReceive('paginate')->once()->with($dto)->andReturn($page);

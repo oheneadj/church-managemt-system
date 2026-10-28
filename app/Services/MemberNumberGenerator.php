@@ -33,6 +33,6 @@ class MemberNumberGenerator
 
         $church = $this->churches->incrementMemberNumberSequence($church);
 
-        return sprintf('%s-%04d', $church->member_number_prefix, $church->member_number_seq);
+        return sprintf('%s-%0'.config('members.number_digits').'d', $church->member_number_prefix, $church->member_number_seq);
     }
 }
