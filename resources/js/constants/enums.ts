@@ -102,6 +102,13 @@ export const WEEKDAYS = [
     { value: 'saturday', label: 'Saturday' },
 ] as const satisfies readonly Option<string>[];
 
+export const PAYMENT_METHODS = [
+    { value: 'momo', label: 'Mobile Money' },
+    { value: 'card', label: 'Card' },
+    { value: 'cash', label: 'Cash' },
+    { value: 'ussd', label: 'USSD' },
+] as const satisfies readonly Option<string>[];
+
 export const CHECKIN_METHODS = [
     { value: 'manual', label: 'Manual' },
     { value: 'whatsapp', label: 'WhatsApp' },
@@ -111,4 +118,5 @@ export const CHECKIN_METHODS = [
 
 export type ServiceType = (typeof SERVICE_TYPES)[number]['value'];
 export type Weekday = (typeof WEEKDAYS)[number]['value'];
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]['value'];
 export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];

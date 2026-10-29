@@ -10,6 +10,7 @@ use App\Enums\MaritalStatus;
 use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
 use App\Enums\MilestoneType;
+use App\Enums\PaymentMethod;
 use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
 use App\Enums\Weekday;
@@ -44,6 +45,7 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['EDUCATIONAL_LEVELS', EducationalLevel::class],
     ['SERVICE_TYPES', ServiceType::class],
     ['WEEKDAYS', Weekday::class],
+    ['PAYMENT_METHODS', PaymentMethod::class],
     ['CHECKIN_METHODS', CheckInMethod::class],
 ]);
 

@@ -16,6 +16,18 @@ export const QUERY_KEYS = {
         picker: ['families', 'picker'] as const,
         detail: (id: string) => ['families', 'detail', id] as const,
     },
+    contributions: {
+        all: ['contributions'] as const,
+        list: (filters: { from: string; to: string; fund: string; method: string; voided: boolean; page: number }) =>
+            ['contributions', 'list', filters] as const,
+    },
+    pledges: {
+        all: ['pledges'] as const,
+    },
+    fundTypes: {
+        all: ['fund-types'] as const,
+        active: ['fund-types', 'active'] as const,
+    },
     serviceSchedules: {
         all: ['service-schedules'] as const,
         list: (page: number) => ['service-schedules', 'list', page] as const,

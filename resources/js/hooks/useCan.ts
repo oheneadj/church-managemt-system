@@ -8,3 +8,11 @@ import { useAuthStore } from '@/stores/useAuthStore';
 export function useCan(permission: Permission): boolean {
     return useAuthStore((state) => state.user?.permissions.includes(permission) ?? false);
 }
+
+/**
+ * Like `useCan`, but for a permission that may be absent: with none given, everyone is allowed. A menu uses it for items
+ * that need no permission.
+ */
+export function useHasPermission(permission: Permission | undefined): boolean {
+    return useAuthStore((state) => permission === undefined || (state.user?.permissions.includes(permission) ?? false));
+}

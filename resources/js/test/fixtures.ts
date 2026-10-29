@@ -1,3 +1,4 @@
+import type { Contribution, FundType } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type {
     AttendanceRecord,
@@ -186,6 +187,34 @@ export function serviceSchedule(overrides: Partial<ServiceSchedule> = {}): Servi
         ends_at: '11:30',
         is_active: true,
         created_at: '2026-10-20T08:00:00+00:00',
+        ...overrides,
+    };
+}
+
+export function fundType(overrides: Partial<FundType> = {}): FundType {
+    return { id: 'fund-1', name: 'Tithe', description: null, is_active: true, sort_order: 1, ...overrides };
+}
+
+export function contribution(overrides: Partial<Contribution> = {}): Contribution {
+    return {
+        id: 'gift-1',
+        member: { id: 'member-1', full_name: 'Emmanuel Mensah' },
+        is_anonymous: false,
+        service: null,
+        pledge: null,
+        fund_type: { id: 'fund-1', name: 'Tithe' },
+        amount: '200.00',
+        amount_formatted: 'GHS 200.00',
+        payment_method: 'cash',
+        payment_method_label: 'Cash',
+        is_voided: false,
+        voided_at: null,
+        void_reason: null,
+        voided_by: null,
+        recorded_by: 'Ama Boateng',
+        notes: null,
+        contributed_at: '2026-10-25T09:30:00+00:00',
+        created_at: '2026-10-25T09:31:00+00:00',
         ...overrides,
     };
 }

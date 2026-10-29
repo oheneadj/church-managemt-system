@@ -37,6 +37,8 @@ it('keeps live files and backups in separate buckets with separate credentials',
 });
 
 it('signs a time-limited URL locally, without calling R2', function (): void {
+    $this->freezeTime(); // The expiry is counted from the clock when signing; a second ticking over would read 3599.
+
     $url = Storage::disk('r2')->temporaryUrl('churches/01abc/members/01def/photo.jpg', now()->addHour());
     $parts = parse_url($url);
     parse_str($parts['query'], $query);

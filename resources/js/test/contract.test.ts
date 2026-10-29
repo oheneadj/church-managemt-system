@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest';
 import {
     attendanceRecord,
     checkinService,
+    contribution,
     family,
+    fundType,
     qrCheckedIn,
     qrCode,
     member,
@@ -142,6 +144,43 @@ describe('the sample data the app is tested with matches the API spec', () => {
         expect(problemsWith({ data: serviceSchedule() }, 'post', '/v1/service-schedules', 201)).toEqual([]);
         expect(
             problemsWith({ data: serviceSchedule({ name: 'Worship' }) }, 'put', '/v1/service-schedules/{service_schedule}', 200),
+        ).toEqual([]);
+    });
+
+    it('GET /contributions: a page of gifts, with a named giver, an anonymous one and a voided one', () => {
+        expect(
+            problemsWith(
+                pageOf([
+                    contribution(),
+                    contribution({ id: 'gift-2', member: null, is_anonymous: true }),
+                    contribution({ id: 'gift-3', is_voided: true, void_reason: 'Entered twice', voided_by: 'Ama Boateng' }),
+                ]),
+                'get',
+                '/v1/contributions',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('PATCH /contributions/{id}/void: the voided gift', () => {
+        expect(
+            problemsWith(
+                { data: contribution({ is_voided: true, void_reason: 'Entered twice' }) },
+                'patch',
+                '/v1/contributions/{contribution}/void',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('GET /fund-types: a page of funds', () => {
+        expect(
+            problemsWith(
+                pageOf([fundType(), fundType({ id: 'fund-2', name: 'Offering', description: 'Sunday offering' })]),
+                'get',
+                '/v1/fund-types',
+                200,
+            ),
         ).toEqual([]);
     });
 

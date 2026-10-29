@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### Giving screen: gift list with filters and void (story 4.13)
+- **What:** Added the Giving page: a list of gifts with date (typed day first), fund and payment-method filters and a voided-only view, all kept in the address; a Void dialog that requires a reason; a Giving menu item shown only to staff with giving.view (menu items can now carry a permission); PAYMENT_METHODS enum mirrored from PHP with a drift test; fixtures and contract tests for the gift and fund-type responses.
+- **Why:** Staff need to see and correct recorded gifts (story 4.13); permission-gated menu keeps the pastor and others from links they cannot use, while the server still enforces access.
+- **Files:** resources/js/pages/GivingPage.tsx, components/Giving/*, components/form/DateFilter.tsx, hooks/useContributions.ts, useContributionFilters.ts, useFundTypes.ts, useCan.ts, services/api/contributions.ts, fundTypes.ts, types/giving.ts, constants/*, router/index.tsx, components/layout/AppLayout.tsx, test fixtures and contract tests, tests/Feature/Operations/FrontendEnumsTest.php, tests/Feature/Storage/R2DiskTest.php (clock frozen so the signed-URL expiry test no longer fails when a second ticks over), docs/11, CHANGELOG.md
+- **Commit:** pending
+
 #### feat(attendance): open check-in only on the service's own day (2026-10-29)
 - **What:** PATCH /services/{id}/checkin now refuses to open a service that is not dated today in the church's own calendar: 409 "Check-in can only be opened on the day of the service." and the service stays closed. Closing is always allowed, asking to open a service that is already open changes nothing (so nothing moves in the WhatsApp queue), and two services on the same day can both be open. The service page disables Open check-in on another day and says check-in can be opened on the day of the service. The tests that opened check-in on random-dated services now use today's date, and the browser tests create today's service. Recorded as D-052 with QA-05 TC-05-18.
 - **Why:** The owner found check-in could be opened for as many services as wanted, on any date. With weekly schedules making eight services ahead, an open service weeks away would have taken a WhatsApp CHECKIN sent without a code. The owner chose 'only on the service's own day'.
@@ -520,6 +526,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- Giving screen (story 4.13): the gift list with date, fund and method filters kept in the address, voided gifts, and a Void button with a required reason for staff who may correct giving; a Giving menu item shown only to staff with `giving.view`
 - Check-in can only be opened on the service's own day (D-052); the screen says why when it cannot
 - Gift receipts by SMS (story 4.7, D-051): recording a cash gift fires an event and a queued listener texts the member the amount, fund, date and the month's giving, paid for from the church's credits
 - SMS credits are charged for church-paid texts before they are sent, once, and given back if the text fails for good; texts are counted in parts (D-051)

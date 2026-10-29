@@ -10,6 +10,10 @@ export const PERMISSIONS = {
     MEMBERS_ERASE: 'members.erase',
     MILESTONES_VIEW: 'milestones.view',
     GIVING_SUMMARY: 'giving.summary',
+    GIVING_VIEW: 'giving.view',
+    GIVING_RECORD: 'giving.record',
+    GIVING_EDIT: 'giving.edit',
+    SMS_SEND: 'sms.send',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
