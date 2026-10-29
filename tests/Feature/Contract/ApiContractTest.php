@@ -129,6 +129,14 @@ describe('contributions', function (): void {
     });
 });
 
+describe('cancelling a service', function (): void {
+    it('answers 204 with no body', function (): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id]);
+
+        assertMatchesSpec($this->deleteJson(CHURCH_HOST.'/services/'.$service->id), 'DELETE', '/v1/services/{service}', 204);
+    });
+});
+
 describe('offering report', function (): void {
     it('shows what a service received', function (): void {
         $service = Service::factory()->create(['church_id' => $this->church->id]);

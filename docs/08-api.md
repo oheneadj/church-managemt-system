@@ -623,6 +623,14 @@ Permission: members.edit
 
 ---
 
+### Cancel Service
+```
+DELETE /api/v1/services/{id}
+Authorization: Bearer {token}
+Permission: members.edit
+```
+Takes a service off the calendar, for example a Sunday the church does not meet. **Response `204`**, no body. The service is soft-deleted, never erased: it disappears from the list and `GET /services/{id}` is `404`, its check-in code is free again, and a weekly schedule will not make that date again (D-050). It is refused with `409` when check-in is still open ("Close it before cancelling") and when anything is recorded at it: a member or visitor checked in, or a gift, voided ones included ("Close it instead"), because that history must stay reachable. `404` for a service of another church; `403` without `members.edit` (church admin and pastor).
+
 ### Open / Close Service for Check-in
 ```
 PATCH /api/v1/services/{id}/checkin

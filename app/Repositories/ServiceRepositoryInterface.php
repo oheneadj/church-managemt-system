@@ -57,6 +57,21 @@ interface ServiceRepositoryInterface
     public function firstOnDate(CarbonInterface $date): ?Service;
 
     /**
+     * Reads the service again with its row locked until the transaction ends, so a cancel and a check-in cannot cross.
+     */
+    public function lockForUpdate(Service $service): Service;
+
+    /**
+     * Whether anything is recorded at the service: a check-in (member or visitor) or a gift, voided ones included.
+     */
+    public function hasRecords(Service $service): bool;
+
+    /**
+     * Removes the service from the calendar. The row is kept (soft-deleted), and its check-in code becomes free again.
+     */
+    public function delete(Service $service): void;
+
+    /**
      * The service that uses this check-in code, in any church. The code is unique across churches (D-044), so a
      * member's WhatsApp message with a code names one service. This deliberately looks past the church scope.
      */

@@ -90,6 +90,30 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     }
 
     /**
+     * Reads the service again with its row locked until the transaction ends.
+     */
+    public function lockForUpdate(Service $service): Service
+    {
+        return Service::query()->lockForUpdate()->whereKey($service->getKey())->firstOrFail();
+    }
+
+    /**
+     * Whether anything is recorded at the service: a check-in or a gift, voided ones included.
+     */
+    public function hasRecords(Service $service): bool
+    {
+        return $service->attendanceRecords()->exists() || $service->contributions()->exists();
+    }
+
+    /**
+     * Removes the service from the calendar. The row is kept (soft-deleted).
+     */
+    public function delete(Service $service): void
+    {
+        $service->delete();
+    }
+
+    /**
      * The service that uses this check-in code, in any church.
      */
     public function findByCheckinCode(string $code): ?Service

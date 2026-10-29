@@ -47,6 +47,14 @@ class ServicePolicy
     }
 
     /**
+     * Whether the user may cancel this service (it is removed from the calendar but kept, soft-deleted).
+     */
+    public function cancel(User $user, Service $service): bool
+    {
+        return $this->update($user, $service);
+    }
+
+    /**
      * Whether the user may see what this service received. It is a report of totals with no names in it, so the
      * pastor may see it as well as the finance roles (giving.summary, QA-10).
      */

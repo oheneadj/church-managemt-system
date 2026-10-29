@@ -7,6 +7,8 @@ use App\Exceptions\ContributionAlreadyVoidedException;
 use App\Exceptions\FieldRuleException;
 use App\Exceptions\InvalidOtpException;
 use App\Exceptions\MemberNumberPrefixMissingException;
+use App\Exceptions\ServiceHasRecordsException;
+use App\Exceptions\ServiceIsOpenException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Http\Middleware\AddErrorMonitoringContext;
 use App\Http\Middleware\AssignRequestId;
@@ -55,6 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ChurchSlugTakenException::class,
             FieldRuleException::class,
             ContributionAlreadyVoidedException::class,
+            ServiceHasRecordsException::class,
+            ServiceIsOpenException::class,
             MemberNumberPrefixMissingException::class,
         ]);
 

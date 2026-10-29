@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\V1\Pledges\ListPledgesController;
 use App\Http\Controllers\Api\V1\Pledges\ShowPledgeController;
 use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
 use App\Http\Controllers\Api\V1\Pledges\UpdatePledgeController;
+use App\Http\Controllers\Api\V1\Services\CancelServiceController;
 use App\Http\Controllers\Api\V1\Services\ListServicesController;
 use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
 use App\Http\Controllers\Api\V1\Services\ShowOfferingReportController;
@@ -105,6 +106,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('services', StoreServiceController::class)->name('services.store');
         Route::get('services/{service}', ShowServiceController::class)->name('services.show');
         Route::put('services/{service}', UpdateServiceController::class)->name('services.update');
+        Route::delete('services/{service}', CancelServiceController::class)->name('services.cancel');
         Route::patch('services/{service}/checkin', SetServiceCheckinController::class)->name('services.checkin');
 
         Route::get('services/{service}/attendance', ListServiceAttendanceController::class)->name('attendance.index');
