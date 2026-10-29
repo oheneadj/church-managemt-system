@@ -190,7 +190,7 @@ describe('families and departments', function (): void {
 describe('services and attendance', function (): void {
     it('services: list, create, show, update and check-in', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/services'), 'GET', '/v1/services', 200);
-        $created = $this->postJson(CHURCH_HOST.'/services', ['name' => 'Sunday Service', 'type' => 'sunday', 'service_date' => '2026-10-25', 'starts_at' => '09:00']);
+        $created = $this->postJson(CHURCH_HOST.'/services', ['name' => 'Sunday Service', 'type' => 'sunday', 'service_date' => now()->toDateString(), 'starts_at' => '09:00']);
         assertMatchesSpec($created, 'POST', '/v1/services', 201);
         $id = $created->json('data.id');
 

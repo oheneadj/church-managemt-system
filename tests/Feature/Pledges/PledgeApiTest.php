@@ -198,11 +198,13 @@ describe('changing a pledge (D-047)', function (): void {
     ]));
 
     it('changes the words, the amount and the date', function (): void {
-        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['description' => 'Roof', 'amount_pledged' => '1500.00', 'target_date' => '2027-03-31'])
+        $newDate = now()->addMonths(6)->toDateString();
+
+        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['description' => 'Roof', 'amount_pledged' => '1500.00', 'target_date' => $newDate])
             ->assertOk()
             ->assertJsonPath('data.description', 'Roof')
             ->assertJsonPath('data.amount_pledged', '1500.00')
-            ->assertJsonPath('data.target_date', '2027-03-31')
+            ->assertJsonPath('data.target_date', $newDate)
             ->assertJsonPath('data.amount_outstanding', '1500.00');
     });
 
@@ -213,8 +215,15 @@ describe('changing a pledge (D-047)', function (): void {
         $this->putJson(PLEDGES.'/'.$this->pledge->id, ['amount_pledged' => '400.00'])->assertOk()->assertJsonPath('data.status', 'fulfilled')->assertJsonPath('data.progress_percent', 100);
     });
 
-    it('moves a pledge to lapsed when its date is set in the past', function (): void {
-        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['target_date' => now()->subDay()->toDateString()])->assertOk()->assertJsonPath('data.status', 'lapsed');
+    it('refuses a new target date in the past, but takes today or later (the owner asked for this, Oct 2026)', function (): void {
+        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['target_date' => now()->subDay()->toDateString()])->assertUnprocessable()->assertJsonValidationErrors('target_date');
+        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['target_date' => now()->toDateString()])->assertOk();
+    });
+
+    it('lets a pledge whose date has already passed be saved again with the same date', function (): void {
+        $this->pledge->update(['target_date' => now()->subMonth()->toDateString(), 'status' => PledgeStatus::Lapsed]);
+
+        $this->putJson(PLEDGES.'/'.$this->pledge->id, ['description' => 'Renamed', 'target_date' => now()->subMonth()->toDateString()])->assertOk()->assertJsonPath('data.status', 'lapsed');
     });
 
     it('cannot change the member or the fund, or the paid amount or status', function (): void {

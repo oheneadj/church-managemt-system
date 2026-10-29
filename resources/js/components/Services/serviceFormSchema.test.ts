@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { serviceFormSchema, toServiceInput } from '@/components/Services/serviceFormSchema';
+import { isoToDateText } from '@/utils/dateText';
+import { daysFromToday } from '@/utils/today';
 
-const valid = { name: 'Sunday Service', type: 'sunday', service_date: '2026-10-25', starts_at: '', ends_at: '', notes: '' };
+const soon = daysFromToday(3);
+const valid = { name: 'Sunday Service', type: 'sunday', service_date: isoToDateText(soon), starts_at: '', ends_at: '', notes: '' };
 
 function problems(overrides: Record<string, string>): string[] {
     const result = serviceFormSchema.safeParse({ ...valid, ...overrides });
@@ -34,5 +37,22 @@ describe('serviceFormSchema', () => {
         expect(input.starts_at).toBeUndefined();
         expect(input.notes).toBeUndefined();
         expect(input.name).toBe('Sunday Service');
+    });
+
+    it('sends the date the way the API writes it', () => {
+        expect(toServiceInput(serviceFormSchema.parse(valid)).service_date).toBe(soon);
+    });
+
+    it('keeps the date within 30 days back and 366 days ahead, and both ends are allowed', () => {
+        expect(problems({ service_date: isoToDateText(daysFromToday(-30)) })).toEqual([]);
+        expect(problems({ service_date: isoToDateText(daysFromToday(-31)) })).toContain('service_date');
+        expect(problems({ service_date: isoToDateText(daysFromToday(366)) })).toEqual([]);
+        expect(problems({ service_date: isoToDateText(daysFromToday(367)) })).toContain('service_date');
+    });
+
+    it('wants a real date written day first', () => {
+        expect(problems({ service_date: '31/02/2027' })).toContain('service_date');
+        expect(problems({ service_date: soon })).toContain('service_date');
+        expect(problems({ service_date: '25/12' })).toContain('service_date');
     });
 });

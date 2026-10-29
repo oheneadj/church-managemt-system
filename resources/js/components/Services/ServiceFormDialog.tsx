@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { TextField } from '@/components/form/TextField';
@@ -69,10 +70,9 @@ export function ServiceFormDialog({ open, onOpenChange, onSaved }: ServiceFormDi
                         error={errors.type?.message}
                         {...form.register('type')}
                     />
-                    <TextField
+                    <DateField
                         id="service-date"
                         label="Date"
-                        type="date"
                         required
                         error={errors.service_date?.message}
                         {...form.register('service_date')}

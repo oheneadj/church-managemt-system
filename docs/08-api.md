@@ -101,6 +101,18 @@ GET /api/v1/members?sort=last_name&direction=asc
 ### Idempotency (writes that record money)
 Endpoints that record a gift or start a payment require an `Idempotency-Key` header (8 to 100 letters, digits, dashes or underscores): one new value for each thing the person means to do, for example a ULID made when the form opens. The first successful answer is kept for 24 hours and sent again, with the header `Idempotent-Replayed: true`, if the same key arrives again (a double click, a retry after a timeout), so nothing is recorded twice. The same key with a different request is `422`; two requests with one key at the same moment take turns, and one that waits too long is `409` (try again); a missing or badly shaped key is `400`. A failed request is not kept, so the corrected request can reuse its key. Keys are private to the person and the church.
 
+### Dates
+The API always writes and reads dates as `YYYY-MM-DD` (and times as `H:i`, or ISO 8601 UTC for moments). The React app shows and takes dates **day first, `dd/mm/yyyy`**, in its own date boxes, whatever language the browser uses (D-049), and turns them into the API's form when it sends. Where a date has a limit, the API enforces it with a `422` on that field:
+
+| Date | Limit |
+|---|---|
+| Date of birth | not in the future, not before 1900-01-01 (`config/members.php`) |
+| Member since (`membership_date`) | not in the future, not before the member's date of birth |
+| Milestone date (`occurred_at`) | not in the future, not before the member's date of birth |
+| Service date | from 30 days ago to 366 days ahead (`config/attendance.php`); an old service saved again with its own date is fine |
+| Gift date (`contributed_at`) | not in the future; no limit into the past |
+| Pledge target date | today or later when a pledge is made, and when it is changed to a new date |
+
 ### Authentication
 All authenticated endpoints accept **either**:
 
@@ -512,7 +524,7 @@ Permission: members.edit
 }
 ```
 
-`type` is one of `dedication`, `baptism`, `confirmation`, `first_communion`, `membership_class`. `occurred_at` cannot be in the future. `cohort` is optional (for example "Confirmation Class 2026"). The acting user is recorded as `created_by`.
+`type` is one of `dedication`, `baptism`, `confirmation`, `first_communion`, `membership_class`. `occurred_at` cannot be in the future, or before the member's date of birth. `cohort` is optional (for example "Confirmation Class 2026"). The acting user is recorded as `created_by`.
 
 **Response `201`:** `{ "data": { "id", "type", "occurred_at", "officiant", "cohort", "notes" } }`
 
@@ -588,6 +600,8 @@ Permission: members.edit
 Any subset of `name`, `type`, `service_date`, `starts_at`, `ends_at`, `headcount_override` (a paper count that stands in for the digital count), `notes`. The check-in code cannot be changed.
 
 ### Create Service
+The `service_date` must be from 30 days ago to 366 days ahead (so a missed Sunday can still be added and a wrong year is caught; D-049). Moving a service to another date follows the same rule.
+
 ```
 POST /api/v1/services
 Authorization: Bearer {token}

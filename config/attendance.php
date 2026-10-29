@@ -18,6 +18,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | How far from today a service may be dated (D-049)
+    |--------------------------------------------------------------------------
+    | A service may be created or moved to a date this many days in the past, so a missed Sunday can still be added, and
+    | this many days ahead. The limits catch a wrong year (2062 or 1926). The React app mirrors them in
+    | resources/js/constants/dates.ts.
+    */
+    'service_days_back' => 30,
+    'service_days_ahead' => 366,
+
+    /*
+    |--------------------------------------------------------------------------
     | Open services that were forgotten
     |--------------------------------------------------------------------------
     | A service still open this many hours after the end of its day is closed by a scheduled command, so a

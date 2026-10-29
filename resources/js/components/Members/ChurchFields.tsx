@@ -1,5 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { CheckboxField } from '@/components/form/CheckboxField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
 import type { MemberFormValues } from '@/components/Members/memberFormSchema';
@@ -35,10 +36,9 @@ export function ChurchFields({ editing }: ChurchFieldsProps) {
                     error={errors.membership_type?.message}
                     {...register('membership_type')}
                 />
-                <TextField
+                <DateField
                     id="membership_date"
                     label="Member since"
-                    type="date"
                     error={errors.membership_date?.message}
                     {...register('membership_date')}
                 />

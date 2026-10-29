@@ -6,6 +6,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Earliest date of birth
+    |--------------------------------------------------------------------------
+    | A date of birth before this date is refused as a typing mistake. The React app mirrors it in
+    | resources/js/constants/dates.ts.
+    */
+    'earliest_birth_date' => '1900-01-01',
+
+    /*
+    |--------------------------------------------------------------------------
     | Youth age limit
     |--------------------------------------------------------------------------
     | A member younger than this many years counts as youth, for example in the youth

@@ -882,6 +882,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-049 — Dates: shown and typed day first, and where they are limited
+**Date:** October 2026
+**Decided by:** Product Owner (day first; the three limits), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **Day first everywhere a person types a date.** The browser's own date box shows the month first on many phones and computers and cannot be changed by the page, so the app uses its own `DateField`: a text box that shows `dd/mm/yyyy` as a hint, puts the slashes in as the person types, and refuses a date that is not real (31/02). The API and the stored values stay `YYYY-MM-DD`; `utils/dateText.ts` turns one into the other at the edge of the form. Dates shown on screen were already day first ("25 Oct 2026").
+2. **Limits.** Date of birth: not in the future, not before 1900. Member since: not in the future, not before the date of birth. Milestone: not in the future, not before the date of birth. Gift date: not in the future; no limit into the past *(owner)*. Pledge target date: today or later when made or changed to a new date. **Service date: 30 days back and 366 days ahead** *(owner)*, so a missed Sunday can be added and a wrong year (2062) is caught; an old service can still be renamed because only a changed date is checked. The numbers are in `config/attendance.php` and `config/members.php`, mirrored in `resources/js/constants/dates.ts`.
+3. **The server stays the judge.** The form shows each message at once, but the API enforces every limit, so another client cannot get around them.
+4. **A time bomb removed:** tests that used a fixed date inside a limit were changed to dates relative to today.
+
+**Rationale:** One date format for the whole app, whatever device it is opened on, and no date that is plainly a typing mistake. Not adding a calendar picker keeps the dependency count down; typing eight digits is quick on a phone's number pad.
+
+**Revisit when:** a church asks for a calendar picker, or for a different date style (the format is in one place).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import type { EducationalLevel, FamilyRole, Gender, MaritalStatus, MembershipType, MemberStatus } from '@/constants/enums';
+import { EARLIEST_BIRTH_DATE } from '@/constants/dates';
 import { PHONE_INPUT_PATTERN } from '@/constants/validation';
 import type { Member, MemberInput } from '@/types/members';
+import { dateBox } from '@/lib/dateBox';
+import { dateTextToIso, isoToDateText } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 /** A box left empty is fine; if something is typed, it must pass the check. */
@@ -23,7 +26,10 @@ export const memberFormSchema = z
         last_name: z.string().trim().min(1, 'Enter the last name').max(100, 'Keep it under 100 characters'),
         preferred_name: z.string().trim().max(100, 'Keep it under 100 characters'),
         gender: z.string().min(1, 'Choose a gender'),
-        date_of_birth: emptyOr((text) => text <= today(), 'The date of birth cannot be in the future'),
+        date_of_birth: dateBox({
+            notBefore: { date: EARLIEST_BIRTH_DATE, message: 'The date of birth cannot be before 1900' },
+            notAfter: { date: today, message: 'The date of birth cannot be in the future' },
+        }),
         marital_status: z.string(),
         // Step 2: how to reach them
         phone: z.string().trim().min(1, 'Enter a phone number').regex(PHONE_INPUT_PATTERN, 'Enter a valid phone number'),
@@ -34,7 +40,7 @@ export const memberFormSchema = z
         digital_address: z.string().trim().max(20, 'Keep it under 20 characters'),
         // Step 3: church life
         membership_type: z.string().min(1, 'Choose a membership type'),
-        membership_date: z.string(),
+        membership_date: dateBox({ notAfter: { date: today, message: 'The date they joined cannot be in the future' } }),
         status: z.string(),
         educational_level: z.string(),
         occupation: z.string().trim().max(255, 'Keep it under 255 characters'),
@@ -51,7 +57,16 @@ export const memberFormSchema = z
     .refine((values) => values.family_id === '' || values.family_role !== '', {
         error: 'Choose their role in the family',
         path: ['family_role'],
-    });
+    })
+    .refine(
+        (values) => {
+            const born = dateTextToIso(values.date_of_birth);
+            const joined = dateTextToIso(values.membership_date);
+
+            return born === null || joined === null || joined >= born;
+        },
+        { error: 'The date they joined cannot be before their date of birth', path: ['membership_date'] },
+    );
 
 export type MemberFormValues = z.infer<typeof memberFormSchema>;
 type FieldName = keyof MemberFormValues;
@@ -136,7 +151,7 @@ export function valuesFromMember(member: Member): MemberFormValues {
         last_name: member.last_name,
         preferred_name: member.preferred_name ?? '',
         gender: member.gender,
-        date_of_birth: member.date_of_birth ?? '',
+        date_of_birth: isoToDateText(member.date_of_birth ?? ''),
         marital_status: member.marital_status ?? '',
         phone: member.phone,
         phone_secondary: member.phone_secondary ?? '',
@@ -145,7 +160,7 @@ export function valuesFromMember(member: Member): MemberFormValues {
         nearest_landmark: member.nearest_landmark ?? '',
         digital_address: member.digital_address ?? '',
         membership_type: member.membership_type,
-        membership_date: member.membership_date ?? '',
+        membership_date: isoToDateText(member.membership_date ?? ''),
         status: member.status,
         educational_level: member.educational_level ?? '',
         occupation: member.occupation ?? '',
@@ -175,7 +190,7 @@ export function toMemberInput(values: MemberFormValues, editing: boolean): Membe
         last_name: values.last_name,
         preferred_name: textOrNull(values.preferred_name),
         gender: values.gender as Gender,
-        date_of_birth: textOrNull(values.date_of_birth),
+        date_of_birth: dateTextToIso(values.date_of_birth),
         marital_status: textOrNull(values.marital_status) as MaritalStatus | null,
         phone: values.phone,
         phone_secondary: textOrNull(values.phone_secondary),
@@ -184,7 +199,7 @@ export function toMemberInput(values: MemberFormValues, editing: boolean): Membe
         nearest_landmark: textOrNull(values.nearest_landmark),
         digital_address: textOrNull(values.digital_address),
         membership_type: values.membership_type as MembershipType,
-        membership_date: textOrNull(values.membership_date),
+        membership_date: dateTextToIso(values.membership_date),
         educational_level: textOrNull(values.educational_level) as EducationalLevel | null,
         occupation: textOrNull(values.occupation),
         tribe: textOrNull(values.tribe),

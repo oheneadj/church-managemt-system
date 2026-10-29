@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Requests\Services;
 
 use App\Enums\ServiceType;
+use App\Http\Requests\Concerns\ChecksServiceDate;
 use App\Http\Requests\Concerns\DelegatesToPolicy;
+use App\Models\Service;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +17,7 @@ use Illuminate\Validation\Rule;
  */
 class UpdateServiceRequest extends FormRequest
 {
-    use DelegatesToPolicy;
+    use ChecksServiceDate, DelegatesToPolicy;
 
     /**
      * Asks the policy whether the caller may change this service.
@@ -35,7 +37,7 @@ class UpdateServiceRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'type' => ['sometimes', 'required', Rule::enum(ServiceType::class)],
-            'service_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
+            'service_date' => ['sometimes', 'required', ...$this->serviceDateRules($this->route('service') instanceof Service ? $this->route('service')->service_date->toDateString() : null)],
             'starts_at' => ['sometimes', 'nullable', 'date_format:H:i'],
             'ends_at' => ['sometimes', 'nullable', 'date_format:H:i', 'after:starts_at'],
             'headcount_override' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],

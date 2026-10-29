@@ -1,9 +1,9 @@
 import { useFormContext } from 'react-hook-form';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
 import type { MemberFormValues } from '@/components/Members/memberFormSchema';
 import { GENDERS, MARITAL_STATUSES } from '@/constants/enums';
-import { today } from '@/utils/today';
 
 /**
  * Step 1 of the member form: name, gender, date of birth and marital status.
@@ -55,12 +55,10 @@ export function IdentityFields() {
                 error={errors.gender?.message}
                 {...register('gender')}
             />
-            <TextField
+            <DateField
                 id="date_of_birth"
                 label="Date of birth"
-                type="date"
-                max={today()}
-                autoComplete="bday"
+                autoComplete="off"
                 error={errors.date_of_birth?.message}
                 {...register('date_of_birth')}
             />

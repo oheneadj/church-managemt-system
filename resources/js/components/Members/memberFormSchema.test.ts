@@ -35,8 +35,26 @@ describe('memberFormSchema', () => {
         expect(messageFor({ phone_secondary: '' }, 'phone_secondary')).toBeUndefined();
         expect(messageFor({ email: 'nope' }, 'email')).toBe('Enter a valid email address');
         expect(messageFor({ email: '' }, 'email')).toBeUndefined();
-        expect(messageFor({ date_of_birth: '2999-01-01' }, 'date_of_birth')).toBe('The date of birth cannot be in the future');
-        expect(messageFor({ date_of_birth: '1985-07-12' }, 'date_of_birth')).toBeUndefined();
+        expect(messageFor({ date_of_birth: '01/01/2999' }, 'date_of_birth')).toBe('The date of birth cannot be in the future');
+        expect(messageFor({ date_of_birth: '12/07/1985' }, 'date_of_birth')).toBeUndefined();
+    });
+
+    it('keeps dates real, day first, and inside their limits', () => {
+        expect(messageFor({ date_of_birth: '31/12/1899' }, 'date_of_birth')).toBe('The date of birth cannot be before 1900');
+        expect(messageFor({ date_of_birth: '01/01/1900' }, 'date_of_birth')).toBeUndefined();
+        expect(messageFor({ date_of_birth: '31/02/1990' }, 'date_of_birth')).toBe('Enter a real date as dd/mm/yyyy');
+        expect(messageFor({ date_of_birth: '1990-02-01' }, 'date_of_birth')).toBe('Enter a real date as dd/mm/yyyy');
+        expect(messageFor({ membership_date: '01/01/2999' }, 'membership_date')).toBe('The date they joined cannot be in the future');
+        expect(messageFor({ membership_date: '01/06/2001' }, 'membership_date')).toBeUndefined();
+        expect(messageFor({ membership_date: '' }, 'membership_date')).toBeUndefined();
+    });
+
+    it('does not let someone join before they were born, and takes the day they were born', () => {
+        expect(messageFor({ date_of_birth: '10/05/2000', membership_date: '09/05/2000' }, 'membership_date')).toBe(
+            'The date they joined cannot be before their date of birth',
+        );
+        expect(messageFor({ date_of_birth: '10/05/2000', membership_date: '10/05/2000' }, 'membership_date')).toBeUndefined();
+        expect(messageFor({ date_of_birth: '', membership_date: '01/01/1950' }, 'membership_date')).toBeUndefined();
     });
 
     it('wants a role whenever a family is chosen', () => {
@@ -76,6 +94,13 @@ describe('toMemberInput', () => {
         });
     });
 
+    it('sends the dates the way the API writes them, and an empty date as null', () => {
+        const input = toMemberInput({ ...valid, date_of_birth: '12/07/1985', membership_date: '' }, false);
+
+        expect(input.date_of_birth).toBe('1985-07-12');
+        expect(input.membership_date).toBeNull();
+    });
+
     it('leaves the status out when editing, because status has its own endpoint', () => {
         expect(toMemberInput(valid, true)).not.toHaveProperty('status');
     });
@@ -101,7 +126,7 @@ describe('valuesFromMember', () => {
         expect(values).toMatchObject({
             first_name: 'Emmanuel',
             middle_name: '',
-            date_of_birth: '1985-07-12',
+            date_of_birth: '12/07/1985',
             family_id: 'f1',
             family_role: 'head',
             department_ids: ['d1'],

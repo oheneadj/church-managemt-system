@@ -108,6 +108,7 @@ describe('MemberFormPage', () => {
             const user = userEvent.setup();
             openNew();
             await completeStepOne(user);
+            await screen.findByText('Step 2 of 3');
 
             await user.click(await screen.findByRole('button', { name: 'Back' }));
 

@@ -66,7 +66,7 @@ abstract class MemberInputRequest extends FormRequest
             'last_name' => [...$required, 'string', 'max:100'],
             'preferred_name' => ['nullable', 'string', 'max:100'],
             'gender' => [...$required, Rule::enum(Gender::class)],
-            'date_of_birth' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'date_of_birth' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:'.config('members.earliest_birth_date'), 'before_or_equal:today'],
             'phone' => [
                 ...$required, 'string', 'regex:'.PhoneNumber::E164_PATTERN,
                 // Unique among this church's members who are not deleted (docs/03, data integrity rule 1).
@@ -85,7 +85,7 @@ abstract class MemberInputRequest extends FormRequest
             'language_preference' => ['nullable', 'string', 'max:50'],
             'educational_level' => ['nullable', Rule::enum(EducationalLevel::class)],
             'membership_type' => ['sometimes', Rule::enum(MembershipType::class)],
-            'membership_date' => ['nullable', 'date_format:Y-m-d'],
+            'membership_date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today', ...$this->notBeforeBirth()],
             /** @var string|null */
             'family_id' => ['nullable', 'ulid', Rule::exists('families', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
             'family_role' => ['nullable', Rule::enum(FamilyRole::class), 'required_with:family_id'],
@@ -97,5 +97,18 @@ abstract class MemberInputRequest extends FormRequest
             /** @var string */
             'department_ids.*' => ['ulid', 'distinct', Rule::exists('departments', 'id')->where('church_id', $churchId)->whereNull('deleted_at')],
         ];
+    }
+
+    /**
+     * A member cannot have joined before they were born. The birth date is the one in this request, or, when the
+     * request does not mention it, the one already saved; with no birth date there is nothing to compare.
+     *
+     * @return list<string>
+     */
+    private function notBeforeBirth(): array
+    {
+        $birth = $this->has('date_of_birth') ? $this->input('date_of_birth') : $this->subject()?->date_of_birth?->toDateString();
+
+        return is_string($birth) && $birth !== '' ? ['after_or_equal:'.$birth] : [];
     }
 }

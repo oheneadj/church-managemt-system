@@ -253,7 +253,7 @@ describe('MemberDetailPage', () => {
 
             await user.click(await screen.findByRole('button', { name: 'Add milestone' }));
             await user.selectOptions(screen.getByLabelText(/^Milestone/), 'confirmation');
-            await user.type(screen.getByLabelText(/^Date/), '2024-05-05');
+            await user.type(screen.getByLabelText(/^Date/), '05/05/2024');
             await user.type(screen.getByLabelText('Officiant (optional)'), 'Rev. Mensah');
             await user.click(screen.getByRole('button', { name: 'Add milestone', description: '' }));
 
@@ -277,7 +277,7 @@ describe('MemberDetailPage', () => {
 
             await user.click(await screen.findByRole('button', { name: 'Add milestone' }));
             await user.selectOptions(screen.getByLabelText(/^Milestone/), 'baptism');
-            await user.type(screen.getByLabelText(/^Date/), '2024-05-05');
+            await user.type(screen.getByLabelText(/^Date/), '05/05/2024');
             await user.click(screen.getAllByRole('button', { name: 'Add milestone' }).at(-1) as HTMLElement);
 
             expect(await screen.findByText('The date cannot be in the future.')).toBeInTheDocument();

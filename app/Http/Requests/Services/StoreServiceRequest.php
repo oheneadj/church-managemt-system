@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Services;
 
 use App\Enums\ServiceType;
+use App\Http\Requests\Concerns\ChecksServiceDate;
 use App\Http\Requests\Concerns\DelegatesToPolicy;
 use App\Models\Service;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,7 +16,7 @@ use Illuminate\Validation\Rule;
  */
 class StoreServiceRequest extends FormRequest
 {
-    use DelegatesToPolicy;
+    use ChecksServiceDate, DelegatesToPolicy;
 
     /**
      * Asks the policy whether the caller may create (service).
@@ -35,7 +36,7 @@ class StoreServiceRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(ServiceType::class)],
-            'service_date' => ['required', 'date_format:Y-m-d'],
+            'service_date' => ['required', ...$this->serviceDateRules()],
             'starts_at' => ['nullable', 'date_format:H:i'],
             'ends_at' => ['nullable', 'date_format:H:i', 'after:starts_at'],
             'notes' => ['nullable', 'string', 'max:2000'],

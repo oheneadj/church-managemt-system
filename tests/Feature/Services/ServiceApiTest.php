@@ -28,7 +28,7 @@ function serviceStaff(Church $church, string $role): User
 /** A valid new service body. */
 function serviceBody(array $overrides = []): array
 {
-    return ['name' => 'Sunday Morning Service', 'type' => 'sunday', 'service_date' => '2026-10-25', 'starts_at' => '09:00', 'ends_at' => '11:30', ...$overrides];
+    return ['name' => 'Sunday Morning Service', 'type' => 'sunday', 'service_date' => now()->toDateString(), 'starts_at' => '09:00', 'ends_at' => '11:30', ...$overrides];
 }
 
 beforeEach(function (): void {
@@ -46,7 +46,7 @@ describe('creating', function (): void {
         $response->assertJsonPath('data.name', 'Sunday Morning Service')
             ->assertJsonPath('data.type', 'sunday')
             ->assertJsonPath('data.type_label', 'Sunday')
-            ->assertJsonPath('data.service_date', '2026-10-25')
+            ->assertJsonPath('data.service_date', now()->toDateString())
             ->assertJsonPath('data.starts_at', '09:00')
             ->assertJsonPath('data.is_open', false)
             ->assertJsonPath('data.attendance_count', 0);
@@ -232,5 +232,48 @@ describe('forgotten open services', function (): void {
         $event = collect(app(Schedule::class)->events())->first(fn ($event): bool => str_contains($event->command, 'services:close-stale'));
 
         expect($event)->not->toBeNull()->and($event->expression)->toBe('0 * * * *')->and($event->timezone)->toBe('UTC');
+    });
+});
+
+describe('the date window (D-049)', function (): void {
+    it('takes a service dated today, in the last 30 days, or up to a year ahead', function (string $date): void {
+        $this->postJson(SERVICES, serviceBody(['service_date' => $date]))->assertCreated();
+    })->with([
+        'today' => fn () => now()->toDateString(),
+        'the oldest allowed day' => fn () => now()->subDays(30)->toDateString(),
+        'the furthest allowed day' => fn () => now()->addDays(366)->toDateString(),
+    ]);
+
+    it('refuses a date too far back or too far ahead, with a plain message', function (string $date, string $message): void {
+        $this->postJson(SERVICES, serviceBody(['service_date' => $date]))->assertUnprocessable()->assertJsonValidationErrors('service_date')
+            ->assertJsonPath('errors.service_date.0', $message);
+
+        expect(Service::query()->count())->toBe(0);
+    })->with([
+        'one day too old' => [fn () => now()->subDays(31)->toDateString(), 'A service cannot be dated more than 30 days in the past.'],
+        'a year ago' => [fn () => now()->subYear()->toDateString(), 'A service cannot be dated more than 30 days in the past.'],
+        'the wrong year' => ['1926-10-25', 'A service cannot be dated more than 30 days in the past.'],
+        'one day too far' => [fn () => now()->addDays(367)->toDateString(), 'A service cannot be dated more than 366 days ahead.'],
+        'far in the future' => ['2062-10-25', 'A service cannot be dated more than 366 days ahead.'],
+    ]);
+
+    it('keeps the same rule when a service is moved to another date', function (): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString()]);
+
+        $this->putJson(SERVICES.'/'.$service->id, ['service_date' => now()->subDays(31)->toDateString()])->assertUnprocessable()->assertJsonValidationErrors('service_date');
+        $this->putJson(SERVICES.'/'.$service->id, ['service_date' => now()->addDay()->toDateString()])->assertOk();
+    });
+
+    it('lets an old service be renamed when its date is not changed', function (): void {
+        $old = now()->subMonths(8)->toDateString();
+        $service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => $old]);
+
+        $this->putJson(SERVICES.'/'.$service->id, ['name' => 'Harvest Thanksgiving', 'service_date' => $old])->assertOk()->assertJsonPath('data.name', 'Harvest Thanksgiving');
+    });
+
+    it('still checks the shape of an unchanged date', function (): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id]);
+
+        $this->putJson(SERVICES.'/'.$service->id, ['service_date' => '25/10/2026'])->assertUnprocessable()->assertJsonValidationErrors('service_date');
     });
 });

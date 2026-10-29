@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { TextField } from '@/components/form/TextField';
@@ -9,12 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MILESTONE_TYPES, type MilestoneType } from '@/constants/enums';
 import { useMemberMutations } from '@/hooks/useMemberMutations';
+import { dateBox } from '@/lib/dateBox';
 import { showFieldErrors } from '@/lib/showFieldErrors';
+import { dateTextToIso } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 const schema = z.object({
     type: z.string().min(1, 'Choose a milestone'),
-    occurred_at: z.string().min(1, 'Enter the date'),
+    occurred_at: dateBox({ required: 'Enter the date', notAfter: { date: today, message: 'The date cannot be in the future' } }),
     officiant: z.string().trim().max(255),
     cohort: z.string().trim().max(100),
     notes: z.string().trim().max(2000),
@@ -50,7 +53,7 @@ export function AddMilestoneDialog({ memberId, open, onOpenChange }: AddMileston
                 id: memberId,
                 input: {
                     type: values.type as MilestoneType,
-                    occurred_at: values.occurred_at,
+                    occurred_at: dateTextToIso(values.occurred_at) ?? values.occurred_at,
                     officiant: orNull(values.officiant),
                     cohort: orNull(values.cohort),
                     notes: orNull(values.notes),
@@ -88,12 +91,10 @@ export function AddMilestoneDialog({ memberId, open, onOpenChange }: AddMileston
                         error={errors.type?.message}
                         {...form.register('type')}
                     />
-                    <TextField
+                    <DateField
                         id="milestone-date"
                         label="Date"
-                        type="date"
                         required
-                        max={today()}
                         error={errors.occurred_at?.message}
                         {...form.register('occurred_at')}
                     />
