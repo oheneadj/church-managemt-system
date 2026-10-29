@@ -502,11 +502,11 @@ Audit trail for every SMS credit movement (allocation, consumption, top-up).
 | `type` | VARCHAR(30) | No | `CreditLedgerType`: allocation, topup, consumption, refund. |
 | `credits` | INT | No | Positive = credits added, negative = credits consumed |
 | `balance_after` | INT | No | Running balance after this transaction |
-| `reference_id` | CHAR(26) | Yes | Related model ID (message_log, contribution, etc.) |
+| `reference_id` | CHAR(26) | Yes | Related model ID. For a consumption or refund line it is the `message_logs` row the credits were taken for. |
 | `note` | VARCHAR(255) | Yes | |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, created_at)`
+**Index:** `(church_id, created_at)`. Unique `(reference_id)` where `type = 'consumption'`, and unique `(reference_id)` where `type = 'refund'`: a message is charged once and refunded at most once (D-051).
 
 ---
 

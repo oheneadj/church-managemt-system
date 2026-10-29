@@ -227,6 +227,8 @@ class SendSmsJob implements ShouldQueue
 
 ### Credit Management
 
+> **What is built (D-051).** The code sketches below are the original design; the real handling differs so that credits can never be overspent or charged twice. A church-paid text has a `message_logs` row made when it is queued. Just before sending, a job middleware locks the church's row and takes the credits (one per part, counted by `SmsSegmenter`), writing a `consumption` line in `sms_credit_ledger` that points at the log row, or fails the job without sending when the balance is too low. A unique index allows one `consumption` and one `refund` line per message, so a retry never charges twice; when the job gives up for good the credits are returned (a `refund` line). Texts the platform pays for (sign-in and check-in codes) take no credits.
+
 ```php
 private function deductCredits(string $churchId, string $cost): void
 {

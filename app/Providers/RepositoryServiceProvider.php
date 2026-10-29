@@ -28,6 +28,7 @@ use App\Repositories\EloquentMessageLogRepository;
 use App\Repositories\EloquentPledgeRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentServiceScheduleRepository;
+use App\Repositories\EloquentSmsCreditLedgerRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
 use App\Repositories\EloquentWebhookLogRepository;
@@ -41,6 +42,7 @@ use App\Repositories\MessageLogRepositoryInterface;
 use App\Repositories\PledgeRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\ServiceScheduleRepositoryInterface;
+use App\Repositories\SmsCreditLedgerRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Repositories\VisitorRecordRepositoryInterface;
 use App\Repositories\WebhookLogRepositoryInterface;
@@ -69,6 +71,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ConsentRepositoryInterface::class => EloquentConsentRepository::class,
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,
         ServiceRepositoryInterface::class => EloquentServiceRepository::class,
+        SmsCreditLedgerRepositoryInterface::class => EloquentSmsCreditLedgerRepository::class,
         ServiceScheduleRepositoryInterface::class => EloquentServiceScheduleRepository::class,
         VisitorRecordRepositoryInterface::class => EloquentVisitorRecordRepository::class,
         WebhookLogRepositoryInterface::class => EloquentWebhookLogRepository::class,

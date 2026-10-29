@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Actions\SmsCredits\RefundSmsCreditsAction;
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
+use App\DTOs\SmsCredits\SmsCreditChange;
 use App\DTOs\SmsReceipt;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
 use App\Exceptions\SmsRejectedException;
+use App\Jobs\Middleware\ReservesSmsCredits;
 use App\Repositories\MessageLogRepositoryInterface;
 use App\Services\CircuitBreaker;
 use DateTimeInterface;
@@ -48,6 +51,16 @@ class SendSmsJob implements ShouldQueue
     public function __construct(public readonly OutboundSms $sms)
     {
         $this->idempotencyKey = 'sms-'.Str::ulid();
+    }
+
+    /**
+     * Takes the church's credits before a church-paid text is sent (D-051). Codes the platform pays for pass straight through.
+     *
+     * @return list<object>
+     */
+    public function middleware(): array
+    {
+        return [app(ReservesSmsCredits::class)];
     }
 
     /**
@@ -96,13 +109,27 @@ class SendSmsJob implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         $this->record(app(MessageLogRepositoryInterface::class), MessageStatus::Failed);
+
+        // A text that was paid for and never sent gives its credits back (once, however often this runs).
+        if ($this->sms->creditCost > 0 && $this->sms->churchId !== null && $this->sms->messageLogId !== null) {
+            app(RefundSmsCreditsAction::class)->execute(new SmsCreditChange($this->sms->churchId, $this->sms->creditCost, $this->sms->messageLogId));
+        }
     }
 
     /**
-     * Writes one line to the message log with the given outcome.
+     * Writes the outcome to the message log: onto the row made when the text was queued, or, for a text with none (a
+     * code), as a new line.
      */
     private function record(MessageLogRepositoryInterface $logs, MessageStatus $status, ?SmsReceipt $receipt = null): void
     {
+        $existing = $this->sms->messageLogId === null ? null : $logs->find($this->sms->messageLogId);
+
+        if ($existing !== null) {
+            $status === MessageStatus::Sent && $receipt !== null ? $logs->markSent($existing, $receipt) : $logs->markFailed($existing);
+
+            return;
+        }
+
         $logs->create([
             'church_id' => $this->sms->churchId,
             'channel' => MessageChannel::Sms,

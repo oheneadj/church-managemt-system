@@ -2,16 +2,20 @@
 
 declare(strict_types=1);
 
+use App\Actions\SmsCredits\ReserveSmsCreditsAction;
+use App\DTOs\SmsCredits\SmsCreditChange;
 use App\Enums\CheckInMethod;
 use App\Models\AttendanceRecord;
 use App\Models\Church;
 use App\Models\Contribution;
 use App\Models\Member;
+use App\Models\MessageLog;
 use App\Models\Pledge;
 use App\Models\Service;
 use App\Models\ServiceSchedule;
 use App\Models\User;
 use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\HandledWhatsappMessageRepositoryInterface;
 use App\Repositories\PledgeRepositoryInterface;
@@ -213,4 +217,35 @@ it('makes a scheduled service once when two runs reach the same date at the same
     }
 
     expect($refused)->toBeTrue()->and(DB::table('services')->where('service_schedule_id', $schedule->id)->count())->toBe(1);
+});
+
+it('spends the last SMS credit once when two texts reach for it at the same moment', function (): void {
+    $church = Church::factory()->create(['sms_credits' => 1]);
+    app()->instance('current.church', $church);
+    $logs = MessageLog::factory()->count(2)->create(['church_id' => $church->id]);
+    $reserve = app(ReserveSmsCreditsAction::class);
+
+    // Text A: has the church row locked, has taken the last credit, and has not committed yet.
+    DB::beginTransaction();
+    app(ChurchRepositoryInterface::class)->lock($church->id);
+    $church->forceFill(['sms_credits' => 0])->save();
+
+    // Text B, on its own connection, has to wait for A at the church row, so it can never read the old balance of 1.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($church): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('churches')->where('id', $church->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. B now reads the committed balance of 0 and is refused.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->transaction(fn () => DB::connection('pgsql_b')->table('churches')->where('id', $church->id)->lockForUpdate()->value('sms_credits'));
+
+    expect($seenByB)->toBe(0)
+        ->and($reserve->execute(new SmsCreditChange($church->id, 1, $logs[1]->id)))->toBeFalse();
 });

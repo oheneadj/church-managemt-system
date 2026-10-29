@@ -10,6 +10,8 @@ use App\Enums\RecipientType;
  * Everything the SMS job needs. `logContent` is what gets stored in message_logs,
  * so a message containing a secret (an OTP) can be recorded without its secret.
  * `churchId` is null only for platform messages sent before a church exists (the sign-up code).
+ * A text charged to the church carries the message log row made for it (`messageLogId`) and its cost in credits
+ * (`creditCost`, D-051); a text the platform pays for has neither.
  */
 final readonly class OutboundSms
 {
@@ -24,5 +26,7 @@ final readonly class OutboundSms
         public RecipientType $recipientType,
         public ?string $recipientId = null,
         public ?string $logContent = null,
+        public ?string $messageLogId = null,
+        public int $creditCost = 0,
     ) {}
 }
