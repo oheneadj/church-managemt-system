@@ -126,6 +126,13 @@
 - Future services nobody has touched get the new name and times, and move to the new weekday
 - A service renamed by hand keeps its name; one that is open or has a check-in or gift is left alone; past services never change
 
+### TC-05-18 — Check-in opens only on the service's day
+**Action:** `PATCH /api/v1/services/{id}/checkin` with `{ "is_open": true }` for a service dated tomorrow, then for one dated yesterday, then for one dated today
+**Expected:**
+- Tomorrow and yesterday: `409` "Check-in can only be opened on the day of the service."; the service stays closed
+- Today: `200`, `is_open: true`; a second service on the same day can be opened too (TC-05-13)
+- Closing any service is always `200`
+
 ---
 
 ## Pass / Fail Criteria

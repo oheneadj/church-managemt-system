@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\CheckinOnlyOnServiceDayException;
 use App\Exceptions\ChurchSlugTakenException;
 use App\Exceptions\ContributionAlreadyVoidedException;
 use App\Exceptions\FieldRuleException;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ContributionAlreadyVoidedException::class,
             ServiceHasRecordsException::class,
             ServiceIsOpenException::class,
+            CheckinOnlyOnServiceDayException::class,
             MemberNumberPrefixMissingException::class,
         ]);
 

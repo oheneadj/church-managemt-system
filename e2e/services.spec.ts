@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { CHURCH_URL } from './helpers/config';
 
-/** A date two weeks from now, typed the way the app asks for it: day first (dd/mm/yyyy). */
-function inTwoWeeks(): string {
+/** A date some days from now (0 is today), typed the way the app asks for it: day first (dd/mm/yyyy). */
+function inDays(days: number): string {
     const date = new Date();
-    date.setDate(date.getDate() + 14);
+    date.setDate(date.getDate() + days);
 
     return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
@@ -17,7 +17,7 @@ test.describe('running a Sunday service', () => {
         await page.goto(`${CHURCH_URL}/services`);
         await page.getByRole('button', { name: 'New service' }).first().click();
         await page.getByLabel(/^Name/).fill(name);
-        await page.getByLabel(/^Date/).fill(inTwoWeeks());
+        await page.getByLabel(/^Date/).fill(inDays(0));
         await page.getByRole('button', { name: 'Create service' }).click();
 
         // The service page opens, closed, with a check-in code.
@@ -46,7 +46,7 @@ test.describe('running a Sunday service', () => {
         await page.goto(`${CHURCH_URL}/services`);
         await page.getByRole('button', { name: 'New service' }).first().click();
         await page.getByLabel(/^Name/).fill(name);
-        await page.getByLabel(/^Date/).fill(inTwoWeeks());
+        await page.getByLabel(/^Date/).fill(inDays(0));
         await page.getByRole('button', { name: 'Create service' }).click();
         await page.getByRole('button', { name: 'Open check-in' }).click();
         await expect(page.getByText('Check-in is open', { exact: true })).toBeVisible();

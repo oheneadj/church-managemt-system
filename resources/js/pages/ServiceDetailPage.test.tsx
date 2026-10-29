@@ -10,6 +10,7 @@ import { membersApi } from '@/services/api/members';
 import { servicesApi } from '@/services/api/services';
 import { attendanceRecord, memberSummary, pageOf, recorded, service, serviceAttendance, visitor } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
+import { daysFromToday, today } from '@/utils/today';
 import { toast } from 'sonner';
 
 vi.mock('@/services/api/services');
@@ -54,7 +55,7 @@ describe('ServiceDetailPage', () => {
     });
 
     it('opens a closed service', async () => {
-        vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false }));
+        vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, service_date: today() }));
         vi.mocked(servicesApi.setCheckin).mockResolvedValue(service({ is_open: true }));
         const user = userEvent.setup();
         open(EDITOR);
@@ -132,6 +133,47 @@ describe('ServiceDetailPage', () => {
 
         expect(await screen.findByRole('alert')).toHaveTextContent('This service was not found.');
         expect(screen.getByRole('link', { name: 'Back to services' })).toBeInTheDocument();
+    });
+
+    describe('opening check-in only on the day', () => {
+        it('cannot be opened for a service on another day, and says why', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, service_date: daysFromToday(7) }));
+            open(EDITOR);
+
+            expect(await screen.findByRole('button', { name: 'Open check-in' })).toBeDisabled();
+            expect(screen.getByText('Check-in can be opened on the day of the service.')).toBeInTheDocument();
+        });
+
+        it('cannot be opened for a service that was yesterday either', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, service_date: daysFromToday(-1) }));
+            open(EDITOR);
+
+            expect(await screen.findByRole('button', { name: 'Open check-in' })).toBeDisabled();
+        });
+
+        it('can always be closed, even on another day', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: true, service_date: daysFromToday(-1) }));
+            open(EDITOR);
+
+            expect(await screen.findByRole('button', { name: 'Close check-in' })).toBeEnabled();
+            expect(screen.queryByText('Check-in can be opened on the day of the service.')).not.toBeInTheDocument();
+        });
+
+        it('is open to use on the day of the service', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, service_date: today() }));
+            open(EDITOR);
+
+            expect(await screen.findByRole('button', { name: 'Open check-in' })).toBeEnabled();
+            expect(screen.queryByText('Check-in can be opened on the day of the service.')).not.toBeInTheDocument();
+        });
+
+        it('shows nothing about opening to someone who cannot change services', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, service_date: daysFromToday(7) }));
+            open([PERMISSIONS.MEMBERS_VIEW]);
+            await screen.findByRole('heading', { level: 1, name: 'Sunday Morning Service' });
+
+            expect(screen.queryByText('Check-in can be opened on the day of the service.')).not.toBeInTheDocument();
+        });
     });
 
     describe('cancelling the service', () => {

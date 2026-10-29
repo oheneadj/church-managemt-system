@@ -20,6 +20,7 @@ import { useService, useServiceMutations } from '@/hooks/useServices';
 import { useUrlTab } from '@/hooks/useUrlTab';
 import { ApiError } from '@/services/ApiError';
 import { formatDate } from '@/utils/formatDate';
+import { today } from '@/utils/today';
 import { toast } from 'sonner';
 
 const TABS = ['check-in', 'attendance'] as const;
@@ -75,6 +76,8 @@ export function ServiceDetailPage() {
 
     // The server decides in the end (a gift also stops a cancel); this only saves a click for the common cases.
     const cannotCancel = record.is_open || (record.attendance_count ?? 0) > 0;
+    // Check-in can only be opened on the day of the service (D-052); closing is always possible.
+    const cannotOpen = !record.is_open && record.service_date !== today();
 
     function cancelService() {
         cancel.mutate(record.id, {
@@ -96,7 +99,13 @@ export function ServiceDetailPage() {
                     <Link to={ROUTES.SERVICE_QR(record.id)}>Show QR code</Link>
                 </Button>
             )}
-            <Button size="lg" variant={record.is_open ? 'outline' : 'default'} onClick={toggleCheckin} disabled={setCheckin.isPending}>
+            <Button
+                size="lg"
+                variant={record.is_open ? 'outline' : 'default'}
+                onClick={toggleCheckin}
+                disabled={setCheckin.isPending || cannotOpen}
+                aria-describedby={cannotOpen ? 'open-hint' : undefined}
+            >
                 {record.is_open ? 'Close check-in' : 'Open check-in'}
             </Button>
             <Button size="lg" variant="outline" onClick={() => setCancelling(true)} disabled={cannotCancel} aria-describedby="cancel-hint">
@@ -115,6 +124,11 @@ export function ServiceDetailPage() {
                 description={`${formatDate(record.service_date)}${record.starts_at ? ` · ${record.starts_at}` : ''} · ${record.type_label}`}
                 actions={actions}
             />
+            {canEdit && cannotOpen && (
+                <p id="open-hint" className="text-sm text-muted-foreground">
+                    Check-in can be opened on the day of the service.
+                </p>
+            )}
             {canEdit && (
                 <p id="cancel-hint" className="text-sm text-muted-foreground">
                     {record.schedule_id ? 'Made by a weekly schedule. ' : ''}A service with check-ins, or with check-in still open, cannot

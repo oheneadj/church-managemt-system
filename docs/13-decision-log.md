@@ -937,6 +937,19 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-052 — Check-in opens only on the service's own day
+**Date:** October 2026
+**Decided by:** Product Owner
+**Status:** Active — refines D-044 point 3 and QA-05 TC-05-02
+
+**Decision:** Check-in can be opened only for a service dated today in the church's own calendar (its timezone). A service weeks ahead, which weekly schedules now make, or long past cannot be opened; a missed service can still be given late attendance by hand (QA-05 TC-05-14). Closing is always allowed, asking to open a service that is already open changes nothing, and two services on the same day may both be open (TC-05-13). The hourly job still closes a service left open after its day. The screen disables "Open check-in" on another day and says why.
+
+**Alternatives considered:** one open service at a time (rejected: two overlapping services on a Sunday must both work, TC-05-13), and no limit (rejected: with eight scheduled services ahead, an open future service would take WhatsApp CHECKIN without a code).
+
+**Revisit when:** a church holds a service that spans midnight, or wants to open check-in the evening before.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

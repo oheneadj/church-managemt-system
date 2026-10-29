@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Models\AttendanceRecord;
 use App\Models\Church;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\QueryException;
@@ -135,7 +137,7 @@ describe('listing', function (): void {
 });
 
 describe('showing and changing', function (): void {
-    beforeEach(fn () => $this->service = Service::factory()->create(['church_id' => $this->church->id]));
+    beforeEach(fn () => $this->service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString()]));
 
     it('shows one service by its ulid', function (): void {
         $this->getJson(SERVICES.'/'.$this->service->id)->assertOk()->assertJsonPath('data.id', $this->service->id);
@@ -178,7 +180,7 @@ describe('showing and changing', function (): void {
 });
 
 describe('authentication and roles', function (): void {
-    beforeEach(fn () => $this->service = Service::factory()->create(['church_id' => $this->church->id]));
+    beforeEach(fn () => $this->service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString()]));
 
     it('rejects every endpoint without a token', function (string $method, string $path): void {
         $this->app['auth']->forgetGuards();
@@ -275,5 +277,64 @@ describe('the date window (D-049)', function (): void {
         $service = Service::factory()->create(['church_id' => $this->church->id]);
 
         $this->putJson(SERVICES.'/'.$service->id, ['service_date' => '25/10/2026'])->assertUnprocessable()->assertJsonValidationErrors('service_date');
+    });
+});
+
+describe('opening check-in only on the day (D-052)', function (): void {
+    it('opens a service dated today', function (): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString()]);
+
+        $this->patchJson(SERVICES.'/'.$service->id.'/checkin', ['is_open' => true])->assertOk()->assertJsonPath('data.is_open', true);
+    });
+
+    it('refuses a service dated another day, in the past or the future, and changes nothing', function (string $date): void {
+        $service = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => $date]);
+
+        $this->patchJson(SERVICES.'/'.$service->id.'/checkin', ['is_open' => true])
+            ->assertStatus(409)->assertJsonPath('message', 'Check-in can only be opened on the day of the service.');
+
+        expect($service->fresh()->is_open)->toBeFalse()->and($service->fresh()->checkin_opened_at)->toBeNull();
+    })->with(['tomorrow' => fn () => now()->addDay()->toDateString(), 'next week' => fn () => now()->addWeek()->toDateString(), 'yesterday' => fn () => now()->subDay()->toDateString(), 'a year ago' => fn () => now()->subYear()->toDateString()]);
+
+    it('always lets check-in be closed, whatever the date', function (): void {
+        $service = Service::factory()->open()->create(['church_id' => $this->church->id, 'service_date' => now()->subDays(3)->toDateString()]);
+
+        $this->patchJson(SERVICES.'/'.$service->id.'/checkin', ['is_open' => false])->assertOk()->assertJsonPath('data.is_open', false);
+    });
+
+    it('leaves a service that is already open alone when asked to open it again on another day', function (): void {
+        $service = Service::factory()->open()->create(['church_id' => $this->church->id, 'service_date' => now()->subDay()->toDateString(), 'checkin_opened_at' => now()->subDay()]);
+        $openedAt = $service->checkin_opened_at;
+
+        $this->patchJson(SERVICES.'/'.$service->id.'/checkin', ['is_open' => true])->assertOk()->assertJsonPath('data.is_open', true);
+
+        expect($service->fresh()->checkin_opened_at->equalTo($openedAt))->toBeTrue();
+    });
+
+    it('lets two services on the same day both be open (QA-05 TC-05-13)', function (): void {
+        $first = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString(), 'starts_at' => '07:00:00']);
+        $second = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => now()->toDateString(), 'starts_at' => '09:00:00']);
+
+        $this->patchJson(SERVICES.'/'.$first->id.'/checkin', ['is_open' => true])->assertOk();
+        $this->patchJson(SERVICES.'/'.$second->id.'/checkin', ['is_open' => true])->assertOk();
+
+        expect(Service::query()->where('is_open', true)->count())->toBe(2);
+    });
+
+    it('goes by the church\'s own calendar, not by UTC', function (): void {
+        $this->church->update(['timezone' => 'Pacific/Auckland']);
+        $this->travelTo(CarbonImmutable::parse('2026-11-04 20:00:00', 'UTC')); // already 5 November in Auckland
+        $today = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => '2026-11-05']);
+        $utcToday = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => '2026-11-04']);
+
+        $this->patchJson(SERVICES.'/'.$today->id.'/checkin', ['is_open' => true])->assertOk();
+        $this->patchJson(SERVICES.'/'.$utcToday->id.'/checkin', ['is_open' => true])->assertStatus(409);
+    });
+
+    it('is the rule for a service a weekly schedule made, too', function (): void {
+        $schedule = ServiceSchedule::factory()->create(['church_id' => $this->church->id]);
+        $future = Service::factory()->create(['church_id' => $this->church->id, 'service_schedule_id' => $schedule->id, 'service_date' => now()->addWeek()->toDateString()]);
+
+        $this->patchJson(SERVICES.'/'.$future->id.'/checkin', ['is_open' => true])->assertStatus(409);
     });
 });

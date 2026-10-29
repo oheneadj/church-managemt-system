@@ -652,7 +652,7 @@ PATCH /api/v1/services/{id}/checkin
 Authorization: Bearer {token}
 Permission: members.edit
 ```
-Asking for the state the service is already in changes nothing. A service left open is closed by the hourly `services:close-stale` command once its day has ended (24 hours, `config/attendance.php`).
+Asking for the state the service is already in changes nothing. **Check-in can only be opened on the day of the service** in the church's own calendar (`409` "Check-in can only be opened on the day of the service." for a service dated another day, D-052); closing is always allowed, and two services on the same day may both be open. A service left open is closed by the hourly `services:close-stale` command once its day has ended (24 hours, `config/attendance.php`).
 
 **Body:**
 ```json
