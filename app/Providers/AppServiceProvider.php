@@ -15,6 +15,7 @@ use App\Models\Member;
 use App\Models\PersonalAccessToken;
 use App\Models\Pledge;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use App\Models\User;
 use App\Services\HealthCheck;
 use App\Support\EnvironmentCheck;
@@ -67,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('fund_type', FundType::class);
         Route::model('contribution', Contribution::class);
         Route::model('pledge', Pledge::class);
+        Route::model('service_schedule', ServiceSchedule::class);
         Route::model('service', Service::class);
 
         // The interactive API docs are open locally and, everywhere else, only for staff who may change church settings.

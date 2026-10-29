@@ -129,6 +129,16 @@ describe('contributions', function (): void {
     });
 });
 
+describe('service schedules', function (): void {
+    it('set up, list and change a weekly schedule', function (): void {
+        $created = $this->postJson(CHURCH_HOST.'/service-schedules', ['name' => 'Sunday Morning Service', 'type' => 'sunday', 'weekday' => 'sunday', 'starts_at' => '09:00', 'ends_at' => '11:30'], ['Idempotency-Key' => 'contract-schedule-0001']);
+        assertMatchesSpec($created, 'POST', '/v1/service-schedules', 201);
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/service-schedules'), 'GET', '/v1/service-schedules', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/service-schedules/'.$created->json('data.id'), ['name' => 'Worship Service']), 'PUT', '/v1/service-schedules/{service_schedule}', 200);
+    });
+});
+
 describe('cancelling a service', function (): void {
     it('answers 204 with no body', function (): void {
         $service = Service::factory()->create(['church_id' => $this->church->id]);

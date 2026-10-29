@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Services\ListServicesDTO;
+use App\Enums\Weekday;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use App\Scopes\ChurchScope;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -87,6 +89,71 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     public function firstOnDate(CarbonInterface $date): ?Service
     {
         return Service::query()->whereDate('service_date', $date)->orderBy('starts_at')->orderBy('id')->first();
+    }
+
+    /**
+     * The dates on which this schedule already has a service, cancelled ones included.
+     *
+     * @return array<int, string>
+     */
+    public function scheduledDates(ServiceSchedule $schedule, CarbonInterface $from, CarbonInterface $to): array
+    {
+        return Service::query()
+            ->withTrashed()
+            ->where('service_schedule_id', $schedule->id)
+            ->whereBetween('service_date', [$from->toDateString(), $to->toDateString()])
+            ->pluck('service_date')
+            ->map(fn ($date): string => $date->toDateString())
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Changes one field on the schedule's future services that nobody has touched and that still have the old value.
+     */
+    public function changeUntouchedFuture(ServiceSchedule $schedule, string $field, mixed $old, mixed $new, CarbonInterface $from): int
+    {
+        return $this->untouchedFuture($schedule, $from)
+            ->when($old === null, fn (Builder $q) => $q->whereNull($field), fn (Builder $q) => $q->where($field, $old))
+            ->update([$field => $new]);
+    }
+
+    /**
+     * Moves the schedule's untouched future services to the new weekday.
+     */
+    public function moveUntouchedFutureToWeekday(ServiceSchedule $schedule, Weekday $weekday, CarbonInterface $from): int
+    {
+        $moved = 0;
+
+        foreach ($this->untouchedFuture($schedule, $from)->orderBy('service_date')->get() as $service) {
+            $date = $service->service_date;
+            $target = $date->dayOfWeek === $weekday->carbonDay() ? $date : $date->next($weekday->carbonDay());
+
+            if ($target->isSameDay($date) || in_array($target->toDateString(), $this->scheduledDates($schedule, $target, $target), true)) {
+                continue;
+            }
+
+            $service->update(['service_date' => $target->toDateString()]);
+            $moved++;
+        }
+
+        return $moved;
+    }
+
+    /**
+     * The schedule's services from this day on that are closed, never opened and have nothing recorded at them.
+     *
+     * @return Builder<Service>
+     */
+    private function untouchedFuture(ServiceSchedule $schedule, CarbonInterface $from): Builder
+    {
+        return Service::query()
+            ->where('service_schedule_id', $schedule->id)
+            ->whereDate('service_date', '>=', $from)
+            ->where('is_open', false)
+            ->whereNull('checkin_opened_at')
+            ->whereDoesntHave('attendanceRecords')
+            ->whereDoesntHave('contributions');
     }
 
     /**

@@ -29,6 +29,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Weekly schedules (D-050)
+    |--------------------------------------------------------------------------
+    | A schedule makes this many weeks of services ahead of time: when it is made or changed, and again every day.
+    */
+    'schedule_weeks_ahead' => 8,
+
+    // How many schedules the daily job loads at a time.
+    'schedule_chunk' => 200,
+
+    /*
+    |--------------------------------------------------------------------------
     | Open services that were forgotten
     |--------------------------------------------------------------------------
     | A service still open this many hours after the end of its day is closed by a scheduled command, so a

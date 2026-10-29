@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property string $id
  * @property string $church_id
+ * @property string|null $service_schedule_id the schedule that made this service, if one did
  * @property string $name
  * @property ServiceType $type
  * @property string|null $checkin_code
@@ -41,6 +42,7 @@ class Service extends Model
     /** @var list<string> */
     protected $fillable = [
         'church_id',
+        'service_schedule_id',
         'name',
         'type',
         'checkin_code',

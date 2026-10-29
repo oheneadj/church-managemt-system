@@ -9,6 +9,7 @@ use App\Models\Contribution;
 use App\Models\Member;
 use App\Models\Pledge;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use App\Models\User;
 use App\Repositories\AttendanceRecordRepositoryInterface;
 use App\Repositories\ContributionRepositoryInterface;
@@ -175,4 +176,41 @@ it('adds up two gifts to one pledge when they are recorded at the same moment', 
     });
 
     expect((string) $seenByB['paid'])->toBe('300.00')->and((string) $seenByB['saved'])->toBe('300.00');
+});
+
+it('makes a scheduled service once when two runs reach the same date at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $schedule = ServiceSchedule::factory()->create(['church_id' => $church->id]);
+    $row = fn (string $code): array => [
+        'id' => (string) Str::ulid(), 'church_id' => $church->id, 'service_schedule_id' => $schedule->id, 'name' => 'Sunday', 'type' => 'sunday',
+        'checkin_code' => $code, 'service_date' => '2026-11-08', 'is_open' => false, 'created_by' => $schedule->created_by, 'created_at' => now(), 'updated_at' => now(),
+    ];
+
+    // Run A: has made the service for 8 November and has not committed yet.
+    DB::beginTransaction();
+    DB::table('services')->insert($row('RUNAAA'));
+
+    // Run B, on its own connection, has to wait for A at the unique index instead of making a second one.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($row): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('services')->insert($row('RUNBBB'));
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B's insert is refused as a duplicate, so only A's service exists.
+    DB::commit();
+    $refused = false;
+    try {
+        DB::connection('pgsql_b')->table('services')->insert($row('RUNBBB'));
+    } catch (QueryException $exception) {
+        $refused = str_contains($exception->getMessage(), 'services_schedule_date_unique');
+    }
+
+    expect($refused)->toBeTrue()->and(DB::table('services')->where('service_schedule_id', $schedule->id)->count())->toBe(1);
 });

@@ -902,7 +902,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-050 — Cancelling services and weekly schedules (Sprint 3 follow-up)
 **Date:** October 2026
 **Decided by:** Product Owner (weekly schedule, cancel), Lead Engineer (the rest)
-**Status:** Active. Cancel is built; the weekly schedule follows in the next commits.
+**Status:** Active. Cancel and the weekly schedule backend are built; the screens follow.
 
 **Decision:**
 1. **A service can be cancelled** (`DELETE /services/{id}`, `members.edit`): a **closed** service with **nothing recorded** (no check-in, no visitor, no gift, voided gifts included) is soft-deleted. Open check-in must be closed first, because members can check in by QR code or WhatsApp; the row is locked while it is checked. A cancelled service keeps its row, so a schedule never remakes that date.

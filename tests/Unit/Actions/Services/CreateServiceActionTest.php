@@ -6,36 +6,15 @@ use App\Actions\Services\CreateServiceAction;
 use App\DTOs\Services\CreateServiceDTO;
 use App\Enums\ServiceType;
 use App\Models\Service;
-use App\Repositories\ServiceRepositoryInterface;
-use App\Services\CheckinCodeGenerator;
-use Illuminate\Database\UniqueConstraintViolationException;
+use App\Services\ServiceCreator;
 
-beforeEach(function (): void {
-    withoutDatabaseTransactions();
-    $this->services = Mockery::mock(ServiceRepositoryInterface::class);
-    $this->codes = Mockery::mock(CheckinCodeGenerator::class);
-    $this->action = new CreateServiceAction($this->services, $this->codes);
-    $this->dto = new CreateServiceDTO(unitUser(), 'Sunday Service', ServiceType::Sunday, '2026-10-25');
-});
+it('hands the typed details and the actor\'s church to the creator', function (): void {
+    $actor = unitUser();
+    $creator = Mockery::mock(ServiceCreator::class);
+    $creator->shouldReceive('create')->once()->with([
+        'church_id' => $actor->church_id, 'name' => 'Sunday Service', 'type' => ServiceType::Sunday, 'service_date' => '2026-10-25',
+        'starts_at' => '09:00', 'ends_at' => null, 'notes' => null, 'created_by' => $actor->id,
+    ])->andReturn(new Service);
 
-it('tries a new code when the database says two services got the same one', function (): void {
-    $this->codes->shouldReceive('next')->twice()->andReturn('AAAAAA', 'BBBBBB');
-    $this->services->shouldReceive('create')->twice()->andReturnUsing(function (array $row): Service {
-        if ($row['checkin_code'] === 'AAAAAA') {
-            throw new UniqueConstraintViolationException('pgsql', 'insert', [], new PDOException('duplicate'));
-        }
-
-        return new Service($row);
-    });
-    $this->services->shouldReceive('withAttendanceCount')->once()->andReturnArg(0);
-
-    expect($this->action->execute($this->dto)->checkin_code)->toBe('BBBBBB');
-});
-
-it('gives up after the allowed number of clashes', function (): void {
-    config(['attendance.checkin_code_attempts' => 3]);
-    $this->codes->shouldReceive('next')->times(3)->andReturn('AAAAAA');
-    $this->services->shouldReceive('create')->times(3)->andThrow(new UniqueConstraintViolationException('pgsql', 'insert', [], new PDOException('duplicate')));
-
-    expect(fn () => $this->action->execute($this->dto))->toThrow(UniqueConstraintViolationException::class);
+    (new CreateServiceAction($creator))->execute(new CreateServiceDTO($actor, 'Sunday Service', ServiceType::Sunday, '2026-10-25', '09:00'));
 });

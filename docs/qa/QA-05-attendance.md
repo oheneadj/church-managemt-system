@@ -107,6 +107,25 @@
 - Admin can add a late attendance record to a closed service (with a note)
 - Record is added; report updates
 
+### TC-05-15 — Weekly schedule makes the services
+**Action:** `POST /api/v1/service-schedules` with name "Sunday Morning Service", weekday `sunday`, 09:00 to 11:30
+**Expected:**
+- Eight services are made, one on each of the next eight Sundays (today counts if it is a Sunday), closed, each with its own check-in code
+- Running `services:generate-scheduled` again makes nothing; a week later it makes exactly one more
+
+### TC-05-16 — Cancel a service; a schedule never remakes it
+**Action:** Cancel a scheduled service with `DELETE /api/v1/services/{id}`, then run `services:generate-scheduled`
+**Expected:**
+- `204`; the service is off the list and its check-in code is free
+- The date is not made again
+- Cancelling a service that is open, or has a check-in or a gift, is `409` and nothing changes
+
+### TC-05-17 — Changing a schedule
+**Action:** Rename the schedule, change its times, then change its weekday
+**Expected:**
+- Future services nobody has touched get the new name and times, and move to the new weekday
+- A service renamed by hand keeps its name; one that is open or has a check-in or gift is left alone; past services never change
+
 ---
 
 ## Pass / Fail Criteria

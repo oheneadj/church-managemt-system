@@ -1502,6 +1502,108 @@
                 }
             }
         },
+        "/v1/service-schedules": {
+            "get": {
+                "operationId": "service-schedules.index",
+                "summary": "Runs ListServiceSchedulesAction for this request and returns the ServiceScheduleCollection",
+                "tags": [
+                    "ListServiceSchedules"
+                ],
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ServiceScheduleCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceScheduleCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "service-schedules.store",
+                "summary": "Runs CreateServiceScheduleAction for this request and returns the JsonResponse",
+                "tags": [
+                    "StoreServiceSchedule"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreServiceScheduleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ServiceScheduleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceScheduleResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services": {
             "get": {
                 "operationId": "services.index",
@@ -2821,6 +2923,67 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/components/schemas/MemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/service-schedules/{service_schedule}": {
+            "put": {
+                "operationId": "service-schedules.update",
+                "summary": "Runs UpdateServiceScheduleAction for this request and returns the ServiceScheduleResource",
+                "tags": [
+                    "UpdateServiceSchedule"
+                ],
+                "parameters": [
+                    {
+                        "name": "service_schedule",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service schedule ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateServiceScheduleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ServiceScheduleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceScheduleResource"
                                         }
                                     },
                                     "required": [
@@ -5677,6 +5840,12 @@
                             "null"
                         ]
                     },
+                    "schedule_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "service_date": {
                         "type": "string"
                     },
@@ -5723,6 +5892,7 @@
                     "type",
                     "type_label",
                     "checkin_code",
+                    "schedule_id",
                     "service_date",
                     "starts_at",
                     "ends_at",
@@ -5732,6 +5902,93 @@
                     "created_at"
                 ],
                 "title": "ServiceResource"
+            },
+            "ServiceScheduleCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/ServiceScheduleResource"
+                },
+                "title": "ServiceScheduleCollection"
+            },
+            "ServiceScheduleResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "sunday",
+                            "midweek",
+                            "special",
+                            "youth",
+                            "children"
+                        ]
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "enum": [
+                            "Sunday",
+                            "Midweek",
+                            "Special",
+                            "Youth",
+                            "Children"
+                        ]
+                    },
+                    "weekday": {
+                        "type": "string",
+                        "enum": [
+                            "sunday",
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday"
+                        ]
+                    },
+                    "weekday_label": {
+                        "type": "string"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "type_label",
+                    "weekday",
+                    "weekday_label",
+                    "starts_at",
+                    "ends_at",
+                    "is_active",
+                    "created_at"
+                ],
+                "title": "ServiceScheduleResource"
             },
             "ServiceType": {
                 "type": "string",
@@ -6202,6 +6459,43 @@
                 ],
                 "title": "StoreServiceRequest"
             },
+            "StoreServiceScheduleRequest": {
+                "type": "object",
+                "description": "Validates a new weekly schedule.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ServiceType"
+                    },
+                    "weekday": {
+                        "$ref": "#/components/schemas/Weekday"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "weekday"
+                ],
+                "title": "StoreServiceScheduleRequest"
+            },
             "UpdateFamilyRequest": {
                 "type": "object",
                 "description": "Validates a family update. The head is changed through the members' roles, not here, so two people\ncan never both hold the head role.",
@@ -6329,6 +6623,38 @@
                     }
                 },
                 "title": "UpdateServiceRequest"
+            },
+            "UpdateServiceScheduleRequest": {
+                "type": "object",
+                "description": "Validates a schedule update. Any subset of the fields may be sent. Turning a schedule off (is_active false) stops new\nservices; the ones already made stay.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ServiceType"
+                    },
+                    "weekday": {
+                        "$ref": "#/components/schemas/Weekday"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateServiceScheduleRequest"
             },
             "UploadMemberPhotoRequest": {
                 "type": "object",
@@ -6484,6 +6810,20 @@
                     "reason"
                 ],
                 "title": "VoidContributionRequest"
+            },
+            "Weekday": {
+                "type": "string",
+                "description": "The days of the week, stored as a plain string column (D-017), for a service schedule.\n",
+                "enum": [
+                    "sunday",
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday"
+                ],
+                "title": "Weekday"
             }
         },
         "responses": {

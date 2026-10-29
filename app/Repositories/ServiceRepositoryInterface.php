@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Services\ListServicesDTO;
+use App\Enums\Weekday;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -55,6 +57,27 @@ interface ServiceRepositoryInterface
      * the lowest id. Gifts with no service are reported with it (D-048).
      */
     public function firstOnDate(CarbonInterface $date): ?Service;
+
+    /**
+     * The dates (YYYY-MM-DD) on which this schedule already has a service from the first date to the last, cancelled
+     * services included, so a cancelled date is never made again.
+     *
+     * @return array<int, string>
+     */
+    public function scheduledDates(ServiceSchedule $schedule, CarbonInterface $from, CarbonInterface $to): array;
+
+    /**
+     * Changes one field on the schedule's future services that nobody has touched (not open, nothing recorded) and
+     * whose field still has the old value, so a service edited by hand keeps its edit. Returns how many changed.
+     */
+    public function changeUntouchedFuture(ServiceSchedule $schedule, string $field, mixed $old, mixed $new, CarbonInterface $from): int;
+
+    /**
+     * Moves the schedule's untouched future services to the new weekday: each goes to the first day on or after its
+     * date that is that weekday. A service whose new date the schedule already has (even a cancelled one) stays where
+     * it is. Returns how many were moved.
+     */
+    public function moveUntouchedFutureToWeekday(ServiceSchedule $schedule, Weekday $weekday, CarbonInterface $from): int;
 
     /**
      * Reads the service again with its row locked until the transaction ends, so a cancel and a check-in cannot cross.

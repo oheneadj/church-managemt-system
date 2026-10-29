@@ -584,7 +584,7 @@ Authorization: Bearer {token}
 
 **Query params:** `from` and `to` (dates, `Y-m-d`), `type` (`sunday`, `midweek`, `special`, `youth`, `children`), `is_open` (true or false), `per_page`. Newest first, paginated. Every signed-in role may read services (QA-10). Another church's services never appear.
 
-**Each service:** `id`, `name`, `type` and `type_label`, `checkin_code`, `service_date`, `starts_at`, `ends_at` (`H:i` or null), `is_open`, `headcount_override`, `notes`, `attendance_count`, `created_at`.
+**Each service:** `id`, `name`, `type` and `type_label`, `checkin_code`, `schedule_id` (the weekly schedule that made it, or `null` for one made by hand), `service_date`, `starts_at`, `ends_at` (`H:i` or null), `is_open`, `headcount_override`, `notes`, `attendance_count`, `created_at`.
 
 ### Get Service
 ```
@@ -622,6 +622,21 @@ Permission: members.edit
 **Response `201`:** Service resource including the auto-generated `checkin_code`. A code sent in the body is ignored. The service starts closed. Two services on the same day are allowed.
 
 ---
+
+### Service Schedules (weekly)
+A church sets a schedule up once ("every Sunday 9:00, Sunday Morning Service") and the services are made ahead of time (D-050). Permission `members.edit` (church admin and pastor) for all three.
+
+```
+GET  /api/v1/service-schedules          ?is_active=1&per_page=25   (by name, paginated)
+POST /api/v1/service-schedules          (Idempotency-Key required)
+PUT  /api/v1/service-schedules/{id}     (any subset of the fields)
+```
+**Body:** `name` (required), `type` (required: `sunday`, `midweek`, `special`, `youth`, `children`), `weekday` (required: `sunday` to `saturday`), `starts_at` and `ends_at` (`H:i`, optional; the end after the start), `is_active` (default true). **Each schedule:** `id`, `name`, `type` and `type_label`, `weekday` and `weekday_label`, `starts_at`, `ends_at`, `is_active`, `created_at`.
+
+- **Making services.** When a schedule is set up or changed, and again every day at 05:00 UTC (`services:generate-scheduled`), the next 8 weeks of its services are made (`config/attendance.php`), starting with the first of its weekday from today in the church's own calendar (today counts). A date gets one service per schedule, ever: a unique index on (schedule, date) counts cancelled services too, so a date that was cancelled is never made again. A service made by a schedule is an ordinary service: it starts closed, has its own check-in code, and can be opened, edited and cancelled like any other. A schedule off makes none.
+- **Changing a schedule.** The change is carried to its future services that nobody has touched (not open, never opened, nothing recorded at them) and, for each field, only to those that still have the old value, so a service renamed by hand keeps its name. A new `weekday` moves those services to the first such day on or after their date (a service stays put if the schedule already has, or had, a service on the new date). Past services never change.
+- **Turning a schedule off** (`is_active: false`) stops new services. The ones already made stay; cancel them one by one (`DELETE /services/{id}`). Turning it on again picks up from today.
+- There is no delete: a schedule that is no longer wanted is turned off. `404` for a schedule of another church.
 
 ### Cancel Service
 ```

@@ -53,6 +53,9 @@ use App\Http\Controllers\Api\V1\Services\ShowOfferingReportController;
 use App\Http\Controllers\Api\V1\Services\ShowServiceController;
 use App\Http\Controllers\Api\V1\Services\StoreServiceController;
 use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
+use App\Http\Controllers\Api\V1\ServiceSchedules\ListServiceSchedulesController;
+use App\Http\Controllers\Api\V1\ServiceSchedules\StoreServiceScheduleController;
+use App\Http\Controllers\Api\V1\ServiceSchedules\UpdateServiceScheduleController;
 use App\Http\Controllers\Api\V1\Webhooks\ReceiveWhatsAppWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\VerifyWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -101,6 +104,10 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('families', StoreFamilyController::class)->name('families.store');
         Route::get('families/{family}', ShowFamilyController::class)->name('families.show');
         Route::put('families/{family}', UpdateFamilyController::class)->name('families.update');
+
+        Route::get('service-schedules', ListServiceSchedulesController::class)->name('service-schedules.index');
+        Route::post('service-schedules', StoreServiceScheduleController::class)->middleware('idempotent')->name('service-schedules.store');
+        Route::put('service-schedules/{service_schedule}', UpdateServiceScheduleController::class)->name('service-schedules.update');
 
         Route::get('services', ListServicesController::class)->name('services.index');
         Route::post('services', StoreServiceController::class)->name('services.store');

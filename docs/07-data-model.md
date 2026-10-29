@@ -267,6 +267,26 @@ Every church service or event that attendance can be recorded for.
 
 ---
 
+### `service_schedules`
+
+A weekly pattern that makes services ahead of time (D-050).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `name` | VARCHAR(255) | No | The name the services get |
+| `type` | VARCHAR(30) | No | `ServiceType` |
+| `weekday` | VARCHAR(10) | No | `Weekday`: sunday ... saturday |
+| `starts_at`, `ends_at` | TIME | Yes | The times the services get |
+| `is_active` | BOOLEAN | No | Default true. Off = no new services |
+| `created_by` | CHAR(26) | No | FK → users; the services it makes are created by this user |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, is_active)`. `services.service_schedule_id` (nullable FK) points back to the schedule that made a service; a unique index on `(service_schedule_id, service_date)` where the schedule id is not null counts cancelled (soft-deleted) services too.
+
+---
+
 ### `attendance_records`
 
 One row per member per service.

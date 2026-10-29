@@ -11,6 +11,7 @@ use App\Models\FundType;
 use App\Models\Member;
 use App\Models\Pledge;
 use App\Models\Service;
+use App\Models\ServiceSchedule;
 use LogicException;
 
 /**
@@ -97,5 +98,15 @@ trait DelegatesToPolicy
         $pledge = $this->route('pledge');
 
         return $pledge instanceof Pledge ? $pledge : throw new LogicException('This route has no pledge.');
+    }
+
+    /**
+     * The service schedule that route binding found for this request.
+     */
+    public function schedule(): ServiceSchedule
+    {
+        $schedule = $this->route('service_schedule');
+
+        return $schedule instanceof ServiceSchedule ? $schedule : throw new LogicException('This route has no service schedule.');
     }
 }

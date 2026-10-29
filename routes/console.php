@@ -22,5 +22,8 @@ Schedule::command('db:backup')->dailyAt('02:00')->timezone('UTC')->onOneServer()
 // Moves pledges past their target date to partial or lapsed. 04:00 UTC, after the nightly clean-ups, once a day (D-047).
 Schedule::command('pledges:refresh')->dailyAt('04:00')->timezone('UTC')->onOneServer();
 
+// Makes the coming weeks of services for every weekly schedule. 05:00 UTC, once a day (D-050).
+Schedule::command('services:generate-scheduled')->dailyAt('05:00')->timezone('UTC')->onOneServer();
+
 // Closes services left open after their day ended. Every hour, on the hour, UTC (it only compares dates).
 Schedule::command('services:close-stale')->hourly()->timezone('UTC')->onOneServer();
