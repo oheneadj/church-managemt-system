@@ -92,6 +92,16 @@ export const SERVICE_TYPES = [
     { value: 'children', label: 'Children' },
 ] as const satisfies readonly Option<string>[];
 
+export const WEEKDAYS = [
+    { value: 'sunday', label: 'Sunday' },
+    { value: 'monday', label: 'Monday' },
+    { value: 'tuesday', label: 'Tuesday' },
+    { value: 'wednesday', label: 'Wednesday' },
+    { value: 'thursday', label: 'Thursday' },
+    { value: 'friday', label: 'Friday' },
+    { value: 'saturday', label: 'Saturday' },
+] as const satisfies readonly Option<string>[];
+
 export const CHECKIN_METHODS = [
     { value: 'manual', label: 'Manual' },
     { value: 'whatsapp', label: 'WhatsApp' },
@@ -100,4 +110,5 @@ export const CHECKIN_METHODS = [
 ] as const satisfies readonly Option<string>[];
 
 export type ServiceType = (typeof SERVICE_TYPES)[number]['value'];
+export type Weekday = (typeof WEEKDAYS)[number]['value'];
 export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];

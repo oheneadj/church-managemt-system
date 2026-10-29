@@ -15,6 +15,9 @@ export const servicesApi = {
     update: (id: string, input: Partial<ServiceInput>): Promise<Service> =>
         api.put<{ data: Service }>(`/services/${id}`, input).then((r) => r.data.data),
 
+    /** Takes a service off the calendar. The server refuses one that is open or has anything recorded at it. */
+    cancel: (id: string): Promise<void> => api.delete(`/services/${id}`).then(() => undefined),
+
     /** A fresh code to show as a QR code. */
     qr: (id: string): Promise<ServiceQrCode> => api.get<ServiceQrCode>(`/services/${id}/qr`).then((r) => r.data),
 

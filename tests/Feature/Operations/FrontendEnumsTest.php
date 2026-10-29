@@ -12,6 +12,7 @@ use App\Enums\MemberStatus;
 use App\Enums\MilestoneType;
 use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
+use App\Enums\Weekday;
 
 // The React app mirrors some enums in resources/js/constants/enums.ts and permissions.ts (agreement section 13:
 // no magic strings on either side). These tests fail if a list in TypeScript drifts from its PHP enum.
@@ -42,6 +43,7 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['MILESTONE_TYPES', MilestoneType::class],
     ['EDUCATIONAL_LEVELS', EducationalLevel::class],
     ['SERVICE_TYPES', ServiceType::class],
+    ['WEEKDAYS', Weekday::class],
     ['CHECKIN_METHODS', CheckInMethod::class],
 ]);
 

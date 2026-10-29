@@ -7,6 +7,7 @@ import type {
     Service,
     ServiceAttendance,
     ServiceQrCode,
+    ServiceSchedule,
     Visitor,
 } from '@/types/services';
 
@@ -90,6 +91,7 @@ export function service(overrides: Partial<Service> = {}): Service {
         type: 'sunday',
         type_label: 'Sunday',
         checkin_code: 'GRA7F2',
+        schedule_id: null,
         service_date: '2026-10-25',
         starts_at: '09:00',
         ends_at: '11:30',
@@ -170,4 +172,20 @@ export function checkinService(overrides: Partial<CheckinService> = {}): Checkin
 
 export function qrCheckedIn(overrides: Partial<QrCheckedIn> = {}): QrCheckedIn {
     return { checked_in: true, already_checked_in: false, service_name: 'Sunday Morning Service', first_name: 'Emmanuel', ...overrides };
+}
+
+export function serviceSchedule(overrides: Partial<ServiceSchedule> = {}): ServiceSchedule {
+    return {
+        id: 'schedule-1',
+        name: 'Sunday Morning Service',
+        type: 'sunday',
+        type_label: 'Sunday',
+        weekday: 'sunday',
+        weekday_label: 'Sunday',
+        starts_at: '09:00',
+        ends_at: '11:30',
+        is_active: true,
+        created_at: '2026-10-20T08:00:00+00:00',
+        ...overrides,
+    };
 }

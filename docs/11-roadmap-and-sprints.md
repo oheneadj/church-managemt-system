@@ -252,7 +252,7 @@ Blocked: [anything blocking me / none]
 | Next | 4.7 receipts, then the screens 4.13 to 4.18 |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
-> **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050; the screens are still to do).
+> **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).
 
 | Done | Stories |
 |---|---|

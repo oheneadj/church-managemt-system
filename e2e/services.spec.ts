@@ -67,3 +67,31 @@ test.describe('running a Sunday service', () => {
         await phone.close();
     });
 });
+
+test.describe('weekly schedules', () => {
+    test('sets a schedule up, finds its services, and cancels one', async ({ page }) => {
+        const stamp = Date.now().toString(36);
+        const name = `E2E Weekly ${stamp}`;
+
+        await page.goto(`${CHURCH_URL}/services`);
+        await page.getByRole('link', { name: 'Weekly schedules' }).click();
+        await expect(page.getByRole('heading', { level: 1, name: 'Weekly schedules' })).toBeVisible();
+
+        await page.getByRole('button', { name: 'New schedule' }).first().click();
+        await page.getByLabel(/^Name/).fill(name);
+        await page.getByLabel(/^Every/).selectOption('friday');
+        await page.getByRole('button', { name: 'Set up schedule' }).click();
+        await expect(page.getByText(name).first()).toBeVisible();
+        await expect(page.getByText('Every Friday').first()).toBeVisible();
+
+        // Eight services were made at once; open the first one and cancel it.
+        await page.goto(`${CHURCH_URL}/services`);
+        const first = page.getByRole('link', { name: new RegExp(name) }).first();
+        await expect(first).toContainText('Weekly');
+        await first.click();
+        await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+        await page.getByRole('button', { name: 'Cancel service' }).click();
+        await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel service' }).click();
+        await expect(page.getByRole('heading', { level: 1, name: 'Services' })).toBeVisible();
+    });
+});

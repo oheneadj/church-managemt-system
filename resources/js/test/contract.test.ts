@@ -15,6 +15,7 @@ import {
     recorded,
     service,
     serviceAttendance,
+    serviceSchedule,
     visitor,
 } from '@/test/fixtures';
 
@@ -124,6 +125,24 @@ describe('the sample data the app is tested with matches the API spec', () => {
 
     it('POST /checkin/qr: the check-in confirmation', () => {
         expect(problemsWith(qrCheckedIn(), 'post', '/v1/checkin/qr', 200)).toEqual([]);
+    });
+
+    it('GET /service-schedules: a page of weekly schedules', () => {
+        expect(
+            problemsWith(
+                pageOf([serviceSchedule(), serviceSchedule({ id: 'schedule-2', starts_at: null, ends_at: null, is_active: false })]),
+                'get',
+                '/v1/service-schedules',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('POST /service-schedules and PUT /service-schedules/{id}: one schedule', () => {
+        expect(problemsWith({ data: serviceSchedule() }, 'post', '/v1/service-schedules', 201)).toEqual([]);
+        expect(
+            problemsWith({ data: serviceSchedule({ name: 'Worship' }) }, 'put', '/v1/service-schedules/{service_schedule}', 200),
+        ).toEqual([]);
     });
 
     it('notices a field that is not what the spec says', () => {

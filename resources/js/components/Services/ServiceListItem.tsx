@@ -23,6 +23,7 @@ export function ServiceListItem({ service }: ServiceListItemProps) {
                     <span className="block text-sm text-muted-foreground">
                         {formatDate(service.service_date)}
                         {service.starts_at ? ` · ${service.starts_at}` : ''} · {service.type_label}
+                        {service.schedule_id ? ' · Weekly' : ''}
                     </span>
                 </span>
                 <span className="flex flex-col items-end gap-1">

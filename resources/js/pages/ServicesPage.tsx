@@ -1,6 +1,6 @@
 import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { SelectField } from '@/components/form/SelectField';
 import { ServiceFormDialog } from '@/components/Services/ServiceFormDialog';
 import { ServiceListItem } from '@/components/Services/ServiceListItem';
@@ -36,13 +36,21 @@ export function ServicesPage() {
             New service
         </Button>
     ) : undefined;
+    const headerActions = canEdit ? (
+        <>
+            <Button asChild size="lg" variant="outline">
+                <Link to={ROUTES.SERVICE_SCHEDULES}>Weekly schedules</Link>
+            </Button>
+            {newButton}
+        </>
+    ) : undefined;
 
     return (
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
             <PageHeader
                 title="Services"
                 description={services.data ? `${services.data.meta.total} found` : 'Services and events'}
-                actions={newButton}
+                actions={headerActions}
             />
             <SelectField
                 id="service-type-filter"

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
@@ -10,8 +10,10 @@ import { membersApi } from '@/services/api/members';
 import { servicesApi } from '@/services/api/services';
 import { attendanceRecord, memberSummary, pageOf, recorded, service, serviceAttendance, visitor } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
+import { toast } from 'sonner';
 
 vi.mock('@/services/api/services');
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/services/api/attendance');
 vi.mock('@/services/api/members');
 
@@ -130,5 +132,60 @@ describe('ServiceDetailPage', () => {
 
         expect(await screen.findByRole('alert')).toHaveTextContent('This service was not found.');
         expect(screen.getByRole('link', { name: 'Back to services' })).toBeInTheDocument();
+    });
+
+    describe('cancelling the service', () => {
+        beforeEach(() => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: false, attendance_count: 0 }));
+            vi.mocked(servicesApi.cancel).mockResolvedValue(undefined);
+        });
+
+        it('asks first, then cancels and goes back to the list', async () => {
+            const user = userEvent.setup();
+            const { router } = open(EDITOR);
+
+            await user.click(await screen.findByRole('button', { name: 'Cancel service' }));
+            expect(await screen.findByText('Cancel this service?')).toBeInTheDocument();
+            expect(servicesApi.cancel).not.toHaveBeenCalled();
+            const dialog = screen.getByRole('alertdialog');
+            await user.click(within(dialog).getByRole('button', { name: 'Cancel service' }));
+
+            await waitFor(() => expect(servicesApi.cancel).toHaveBeenCalledWith('service-1'));
+            await waitFor(() => expect(router.state.location.pathname).toBe('/services'));
+        });
+
+        it('stays on the page and shows the reason when the server refuses', async () => {
+            vi.mocked(servicesApi.cancel).mockRejectedValue(
+                new ApiError('This service already has attendance or gifts recorded, so it cannot be cancelled. Close it instead.', 409),
+            );
+            const user = userEvent.setup();
+            const { router } = open(EDITOR);
+
+            await user.click(await screen.findByRole('button', { name: 'Cancel service' }));
+            await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel service' }));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('cannot be cancelled. Close it instead')));
+            expect(router.state.location.pathname).toBe('/services/service-1');
+        });
+
+        it('cannot be tried while check-in is open or when people are checked in', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ is_open: true }));
+            open(EDITOR);
+            expect(await screen.findByRole('button', { name: 'Cancel service' })).toBeDisabled();
+        });
+
+        it('is not offered to someone who cannot change services', async () => {
+            open([PERMISSIONS.MEMBERS_VIEW]);
+            await screen.findByRole('heading', { level: 1, name: 'Sunday Morning Service' });
+
+            expect(screen.queryByRole('button', { name: 'Cancel service' })).not.toBeInTheDocument();
+        });
+
+        it('says when a weekly schedule made the service', async () => {
+            vi.mocked(servicesApi.get).mockResolvedValue(service({ schedule_id: 'schedule-1' }));
+            open(EDITOR);
+
+            expect(await screen.findByText(/Made by a weekly schedule/)).toBeInTheDocument();
+        });
     });
 });

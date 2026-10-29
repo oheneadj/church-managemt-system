@@ -1,4 +1,4 @@
-import type { CheckInMethod, ServiceType } from '@/constants/enums';
+import type { CheckInMethod, ServiceType, Weekday } from '@/constants/enums';
 import type { Page } from '@/types/members';
 
 /**
@@ -11,6 +11,8 @@ export interface Service {
     type: ServiceType;
     type_label: string;
     checkin_code: string | null;
+    /** The weekly schedule that made this service, or null for one made by hand. */
+    schedule_id: string | null;
     service_date: string;
     starts_at: string | null;
     ends_at: string | null;
@@ -105,4 +107,27 @@ export interface Visitor {
     visit_count: number;
     follow_up_status: string;
     follow_up_status_label: string;
+}
+
+/** A weekly pattern that makes services ahead of time (docs/08, Service Schedules). Times are `H:i`. */
+export interface ServiceSchedule {
+    id: string;
+    name: string;
+    type: ServiceType;
+    type_label: string;
+    weekday: Weekday;
+    weekday_label: string;
+    starts_at: string | null;
+    ends_at: string | null;
+    is_active: boolean;
+    created_at: string | null;
+}
+
+export interface ServiceScheduleInput {
+    name: string;
+    type: ServiceType;
+    weekday: Weekday;
+    starts_at: string | null;
+    ends_at: string | null;
+    is_active?: boolean;
 }

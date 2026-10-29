@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { AttendanceList } from '@/components/Services/AttendanceList';
 import { AttendanceSummaryCards } from '@/components/Services/AttendanceSummaryCards';
 import { MemberCheckInPicker } from '@/components/Services/MemberCheckInPicker';
 import { VisitorDialog } from '@/components/Services/VisitorDialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pagination } from '@/components/ui/Pagination';
@@ -31,7 +32,9 @@ export function ServiceDetailPage() {
     const { id = '' } = useParams();
     const service = useService(id);
     const canEdit = useCan(PERMISSIONS.MEMBERS_EDIT);
-    const { setCheckin } = useServiceMutations();
+    const { setCheckin, cancel } = useServiceMutations();
+    const navigate = useNavigate();
+    const [cancelling, setCancelling] = useState(false);
     const [tab, selectTab] = useUrlTab(TABS);
     const [params, setParams] = useSearchParams();
     const page = Math.max(1, Number(params.get('page')) || 1);
@@ -70,6 +73,22 @@ export function ServiceDetailPage() {
         );
     }
 
+    // The server decides in the end (a gift also stops a cancel); this only saves a click for the common cases.
+    const cannotCancel = record.is_open || (record.attendance_count ?? 0) > 0;
+
+    function cancelService() {
+        cancel.mutate(record.id, {
+            onSuccess: () => {
+                toast.success('Service cancelled.');
+                void navigate(ROUTES.SERVICES);
+            },
+            onError: (error) => {
+                setCancelling(false);
+                toast.error(error.message);
+            },
+        });
+    }
+
     const actions = canEdit ? (
         <>
             {record.is_open && (
@@ -79,6 +98,9 @@ export function ServiceDetailPage() {
             )}
             <Button size="lg" variant={record.is_open ? 'outline' : 'default'} onClick={toggleCheckin} disabled={setCheckin.isPending}>
                 {record.is_open ? 'Close check-in' : 'Open check-in'}
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => setCancelling(true)} disabled={cannotCancel} aria-describedby="cancel-hint">
+                Cancel service
             </Button>
         </>
     ) : undefined;
@@ -93,6 +115,12 @@ export function ServiceDetailPage() {
                 description={`${formatDate(record.service_date)}${record.starts_at ? ` · ${record.starts_at}` : ''} · ${record.type_label}`}
                 actions={actions}
             />
+            {canEdit && (
+                <p id="cancel-hint" className="text-sm text-muted-foreground">
+                    {record.schedule_id ? 'Made by a weekly schedule. ' : ''}A service with check-ins, or with check-in still open, cannot
+                    be cancelled.
+                </p>
+            )}
             <p className="flex flex-wrap items-center gap-2 text-sm">
                 <StatusBadge
                     label={record.is_open ? 'Check-in is open' : 'Check-in is closed'}
@@ -140,6 +168,15 @@ export function ServiceDetailPage() {
                     )}
                 </TabsContent>
             </Tabs>
+            <ConfirmDialog
+                open={cancelling}
+                onOpenChange={setCancelling}
+                title="Cancel this service?"
+                description="It is taken off the calendar and will not be made again by a weekly schedule. You can still create a service for this day by hand."
+                confirmLabel="Cancel service"
+                onConfirm={cancelService}
+                pending={cancel.isPending}
+            />
         </div>
     );
 }

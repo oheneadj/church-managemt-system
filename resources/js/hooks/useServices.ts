@@ -36,6 +36,8 @@ export function useServiceMutations() {
             onSuccess: refresh,
         }),
 
+        cancel: useMutation({ mutationFn: (id: string) => servicesApi.cancel(id), onSuccess: refresh }),
+
         setCheckin: useMutation({
             mutationFn: ({ id, isOpen }: { id: string; isOpen: boolean }) => servicesApi.setCheckin(id, isOpen),
             onSuccess: refresh,

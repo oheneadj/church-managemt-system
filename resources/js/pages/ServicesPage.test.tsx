@@ -159,4 +159,25 @@ describe('ServicesPage', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('The server is busy.');
         expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     });
+
+    it('offers the weekly schedules to staff who may create services, and no one else', async () => {
+        const first = open(ROUTES.SERVICES, [PERMISSIONS.MEMBERS_EDIT]);
+        await screen.findByRole('link', { name: /Sunday Morning Service/ });
+        expect(screen.getByRole('link', { name: 'Weekly schedules' })).toHaveAttribute('href', '/services/schedules');
+        first.unmount();
+
+        open();
+        await screen.findByRole('link', { name: /Sunday Morning Service/ });
+        expect(screen.queryByRole('link', { name: 'Weekly schedules' })).not.toBeInTheDocument();
+    });
+
+    it('marks a service that a weekly schedule made', async () => {
+        vi.mocked(servicesApi.list).mockResolvedValue(
+            pageOf([service({ schedule_id: 'schedule-1' }), service({ id: 'service-2', name: 'By Hand' })]),
+        );
+        open();
+
+        expect(await screen.findByRole('link', { name: /Sunday Morning Service/ })).toHaveTextContent('Weekly');
+        expect(screen.getByRole('link', { name: /By Hand/ })).not.toHaveTextContent('Weekly');
+    });
 });

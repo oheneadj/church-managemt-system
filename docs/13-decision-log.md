@@ -902,13 +902,14 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-050 — Cancelling services and weekly schedules (Sprint 3 follow-up)
 **Date:** October 2026
 **Decided by:** Product Owner (weekly schedule, cancel), Lead Engineer (the rest)
-**Status:** Active. Cancel and the weekly schedule backend are built; the screens follow.
+**Status:** Active. Built: cancel, the weekly schedule backend and its screens.
 
 **Decision:**
 1. **A service can be cancelled** (`DELETE /services/{id}`, `members.edit`): a **closed** service with **nothing recorded** (no check-in, no visitor, no gift, voided gifts included) is soft-deleted. Open check-in must be closed first, because members can check in by QR code or WhatsApp; the row is locked while it is checked. A cancelled service keeps its row, so a schedule never remakes that date.
 2. **Weekly schedules.** A church sets up a schedule once (name, type, weekday, start and end time, on or off). The system makes each week's service ahead of time, for the next 8 weeks (`config/attendance.php`), when the schedule is made or changed and again every day (`services:generate-scheduled`, 05:00 UTC). A date gets one service per schedule, ever: a unique index on (schedule, date) that counts cancelled services too. A service made by a schedule is an ordinary service in every other way.
 3. **Changing a schedule** changes its future services that have not been touched (not open, nothing recorded) and only the fields that still have the schedule's old value, so a service renamed by hand ("Easter Service") keeps its name. A new weekday moves those services to the new weekday. Turning a schedule off stops new services; ones already made stay and can be cancelled one by one (this keeps cancelled dates remembered and a schedule that is turned on again simple).
 4. **Who:** `members.edit` (church admin and pastor), the same as services.
+5. **Screens:** a "Weekly schedules" page (reached from the Services page) lists schedules with Change and Turn off / Turn on and sets new ones up; a "Cancel service" button on a service asks first and is disabled while check-in is open or people are checked in. A service made by a schedule is marked "Weekly". The key that protects setting a schedule up is built from `getRandomValues`, because `randomUUID` does not exist on plain-http pages such as local development.
 
 **Rationale:** The simplest design that gets a church off creating a service every week without losing control of a week that is different. Cancelled dates are remembered by the database, not by a flag.
 
