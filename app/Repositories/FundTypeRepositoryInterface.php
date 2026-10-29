@@ -36,6 +36,11 @@ interface FundTypeRepositoryInterface
     public function update(FundType $fundType, array $attributes): FundType;
 
     /**
+     * The church's fund type with this id, if there is one.
+     */
+    public function find(string $id): ?FundType;
+
+    /**
      * Whether the church already has a fund type with this name, ignoring capitals. The fund being changed can be left out.
      */
     public function nameTaken(string $name, ?string $exceptFundTypeId = null): bool;

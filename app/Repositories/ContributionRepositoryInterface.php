@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\DTOs\Contributions\ListContributionsDTO;
 use App\Models\Contribution;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -28,17 +29,31 @@ interface ContributionRepositoryInterface
     public function totalForPledge(string $pledgeId): string;
 
     /**
-     * What a service received, added up per fund and payment method, voided gifts left out. Each line is the fund id,
-     * the payment method, the total as an exact decimal string and how many gifts it adds up.
+     * What a service received, added up per fund (by the name it had when the gift was recorded) and payment method,
+     * voided gifts left out. Each line is the fund id, the fund name, the payment method, the total as an exact
+     * decimal string and how many gifts it adds up.
      *
-     * @return array<int, array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}>
+     * @return array<int, array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}>
      */
     public function offeringTotalsForService(string $serviceId): array;
+
+    /**
+     * The same figures for gifts that have no service and were given between these two moments (a church day),
+     * voided gifts left out.
+     *
+     * @return array<int, array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}>
+     */
+    public function offeringTotalsWithoutService(CarbonInterface $from, CarbonInterface $to): array;
 
     /**
      * How many gifts at a service have no member, voided gifts left out.
      */
     public function anonymousCountForService(string $serviceId): int;
+
+    /**
+     * How many gifts with no service, given between these two moments, have no member, voided gifts left out.
+     */
+    public function anonymousCountWithoutService(CarbonInterface $from, CarbonInterface $to): int;
 
     /**
      * One page of gifts, newest first, with what the list shows already loaded. Voided gifts are left out unless asked for.
@@ -53,6 +68,12 @@ interface ContributionRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): Contribution;
+
+    /**
+     * Fills the fund name on gifts that have none, from the fund's current name, a batch at a time, in every church
+     * (a data migration, D-048). Returns how many gifts were filled. This deliberately looks past the church scope.
+     */
+    public function backfillFundNames(int $chunk): int;
 
     /**
      * Loads what a single gift shows (member, fund, service, who recorded and who voided it).

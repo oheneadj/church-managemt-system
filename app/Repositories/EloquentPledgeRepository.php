@@ -77,7 +77,7 @@ class EloquentPledgeRepository implements PledgeRepositoryInterface
         if ($withContributions) {
             $pledge->load(['contributions' => function (HasMany $gifts): void {
                 /** @var HasMany<Contribution, Pledge> $gifts */
-                $gifts->with(['member', 'fundType', 'service', 'recordedBy', 'voidedBy'])->orderByDesc('contributed_at')->orderByDesc('id');
+                $gifts->with(['member', 'service', 'recordedBy', 'voidedBy'])->orderByDesc('contributed_at')->orderByDesc('id');
             }]);
         }
 

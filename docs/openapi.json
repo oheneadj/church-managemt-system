@@ -5088,11 +5088,118 @@
                             "transaction_count",
                             "anonymous_count"
                         ]
+                    },
+                    "no_service": {
+                        "type": "object",
+                        "properties": {
+                            "counted_here": {
+                                "type": "boolean"
+                            },
+                            "grand_total": {
+                                "type": "string"
+                            },
+                            "grand_total_formatted": {
+                                "type": "string"
+                            },
+                            "by_fund": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "fund_type": {
+                                            "type": "string"
+                                        },
+                                        "by_method": {
+                                            "type": "object",
+                                            "properties": {
+                                                "cash": {
+                                                    "type": "string"
+                                                },
+                                                "momo": {
+                                                    "type": "string"
+                                                },
+                                                "card": {
+                                                    "type": "string"
+                                                },
+                                                "ussd": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "cash",
+                                                "momo",
+                                                "card",
+                                                "ussd"
+                                            ]
+                                        },
+                                        "total": {
+                                            "type": "string"
+                                        },
+                                        "total_formatted": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "fund_type",
+                                        "by_method",
+                                        "total",
+                                        "total_formatted"
+                                    ]
+                                }
+                            },
+                            "by_method": {
+                                "type": "object",
+                                "properties": {
+                                    "cash": {
+                                        "type": "string"
+                                    },
+                                    "momo": {
+                                        "type": "string"
+                                    },
+                                    "card": {
+                                        "type": "string"
+                                    },
+                                    "ussd": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "cash",
+                                    "momo",
+                                    "card",
+                                    "ussd"
+                                ]
+                            },
+                            "transaction_count": {
+                                "type": "integer"
+                            },
+                            "anonymous_count": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "counted_here",
+                            "grand_total",
+                            "grand_total_formatted",
+                            "by_fund",
+                            "by_method",
+                            "transaction_count",
+                            "anonymous_count"
+                        ]
+                    },
+                    "day_grand_total": {
+                        "type": "string"
+                    },
+                    "day_grand_total_formatted": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "service",
-                    "totals"
+                    "totals",
+                    "no_service",
+                    "day_grand_total",
+                    "day_grand_total_formatted"
                 ],
                 "title": "OfferingReportResource"
             },

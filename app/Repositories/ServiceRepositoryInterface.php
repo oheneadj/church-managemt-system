@@ -51,6 +51,12 @@ interface ServiceRepositoryInterface
     public function checkinCodeExists(string $code): bool;
 
     /**
+     * The church's first service on this calendar date: the earliest start time, services with no start time last, then
+     * the lowest id. Gifts with no service are reported with it (D-048).
+     */
+    public function firstOnDate(CarbonInterface $date): ?Service;
+
+    /**
      * The service that uses this check-in code, in any church. The code is unique across churches (D-044), so a
      * member's WhatsApp message with a code names one service. This deliberately looks past the church scope.
      */

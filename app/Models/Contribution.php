@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $service_id
  * @property string|null $pledge_id
  * @property string $fund_type_id
+ * @property string $fund_name the fund's name when the gift was recorded; a later rename does not change it
  * @property string $amount
  * @property PaymentMethod $payment_method
  * @property bool $is_voided
@@ -50,6 +51,7 @@ class Contribution extends Model
         'member_id',
         'service_id',
         'fund_type_id',
+        'fund_name',
         'pledge_id',
         'amount',
         'processing_fee',

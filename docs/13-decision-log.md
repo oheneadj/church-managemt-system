@@ -866,6 +866,22 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-048 — Gifts with no service in the offering report, and fund names kept on the gift
+**Date:** October 2026
+**Decided by:** Product Owner (asked for both), Lead Engineer (the design)
+**Status:** Active
+
+**Decision:**
+1. **Gifts with no service are in the report.** Mobile money and card gifts arrive without a service, and cash can be recorded without one. The offering report now has a second block, `no_service`: the gifts given on the service's day with no service, by fund and payment method. "The day" is the church's own day in its timezone. They are reported with the **day's first service only** (earliest start time, services without a start time last, then lowest id), so a day with two services never counts one gift twice; `day_grand_total` is the service's own total plus these. The service's own `totals` still equal the gift list for that service.
+2. **A gift keeps the fund's name.** Agreement section 10 says a record of something that happened must snapshot what it refers to, and a fund can be renamed. `contributions.fund_name` is set when the gift is recorded; gift lists, single gifts and reports show it, never the fund's current name. Funds are still grouped by id for ordering, and a fund renamed in the middle of one service shows as two lines. Every future way of recording a gift (the digital payments) must set it too.
+3. **The column was added in three safe steps** (patterns: Zero-Downtime and Data Migrations): add it nullable; fill existing gifts in batches with `php artisan contributions:backfill-fund-names` (idempotent, uses the fund's current name, the best known for old gifts); then make it required. The last migration refuses to run while any gift has no name. On a live system run them in that order across two deploys; the backfill is a command, never a schema migration.
+
+**Rationale:** The simplest design that never counts a gift twice and never rewrites history. Pledges keep showing their fund's current name: a pledge is a standing commitment, not a record of an event.
+
+**Revisit when:** a church wants the no-service gifts of a day split across its services by hand, or a day with gifts but no service needs its own report.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

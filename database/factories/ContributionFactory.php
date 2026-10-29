@@ -24,6 +24,7 @@ class ContributionFactory extends Factory
         return [
             'church_id' => Church::factory(),
             'fund_type_id' => fn (array $attributes) => FundType::factory()->create(['church_id' => $attributes['church_id']])->getKey(),
+            'fund_name' => fn (array $attributes) => FundType::query()->withoutGlobalScopes()->whereKey($attributes['fund_type_id'])->value('name') ?? 'Tithe',
             'amount' => '200.00',
             'payment_method' => PaymentMethod::Cash,
             'is_voided' => false,

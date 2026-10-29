@@ -82,6 +82,14 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     }
 
     /**
+     * The church's first service on this calendar date: the earliest start time, services with no start time last, then the lowest id.
+     */
+    public function firstOnDate(CarbonInterface $date): ?Service
+    {
+        return Service::query()->whereDate('service_date', $date)->orderBy('starts_at')->orderBy('id')->first();
+    }
+
+    /**
      * The service that uses this check-in code, in any church.
      */
     public function findByCheckinCode(string $code): ?Service

@@ -750,7 +750,7 @@ GET /api/v1/contributions
 Authorization: Bearer {token}
 Permission: giving.view
 ```
-Church admin and finance secretary have `giving.view`; the pastor does not and gets `403` (QA-06 TC-06-18): the pastor sees totals through the reports, which need `giving.summary` (D-046). Newest first by the day the giving happened, in pages (`per_page`). Each gift: `id`, `member` (`id`, `full_name`) or `null`, `is_anonymous`, `service` (`id`, `name`, `service_date`) or `null`, `fund_type` (`id`, `name`), `amount` (a decimal string such as `"150.00"`) with `amount_formatted` (`"GHS 150.00"`), `payment_method` and its label, `is_voided`, `voided_at`, `void_reason`, `voided_by`, `recorded_by`, `notes`, `contributed_at`, `created_at`.
+Church admin and finance secretary have `giving.view`; the pastor does not and gets `403` (QA-06 TC-06-18): the pastor sees totals through the reports, which need `giving.summary` (D-046). Newest first by the day the giving happened, in pages (`per_page`). Each gift: `id`, `member` (`id`, `full_name`) or `null`, `is_anonymous`, `service` (`id`, `name`, `service_date`) or `null`, `fund_type` (`id`, `name`: the fund's name when the gift was recorded, D-048), `amount` (a decimal string such as `"150.00"`) with `amount_formatted` (`"GHS 150.00"`), `payment_method` and its label, `is_voided`, `voided_at`, `void_reason`, `voided_by`, `recorded_by`, `notes`, `contributed_at`, `created_at`.
 
 **Query params:**
 | Param | Type | Example |
@@ -878,14 +878,27 @@ What one service received, by fund and by payment method. The church admin, the 
       "by_method": { "cash": "1930.00", "momo": "1220.00", "card": "0.00", "ussd": "0.00" },
       "transaction_count": 42,
       "anonymous_count": 7
-    }
+    },
+    "no_service": {
+      "counted_here": true,
+      "grand_total": "75.50",
+      "grand_total_formatted": "GHS 75.50",
+      "by_fund": [],
+      "by_method": { "cash": "0.00", "momo": "50.00", "card": "25.50", "ussd": "0.00" },
+      "transaction_count": 2,
+      "anonymous_count": 1
+    },
+    "day_grand_total": "3225.50",
+    "day_grand_total_formatted": "GHS 3,225.50"
   }
 }
 ```
-- Every amount is an exact decimal string (GHS), never a float. `grand_total`, each fund `total` and every `by_method` are sums of the same gifts, so they always agree, and they equal the sum of `GET /contributions?service_id=` for the same service.
-- **Voided gifts are in no number**, including `transaction_count` (QA-06 TC-06-17).
-- Only gifts recorded **at this service** (`service_id`) are counted. A gift with no service is not in any service's report.
-- Every payment method is listed for every fund, even at `"0.00"` (`ussd` stays `"0.00"` until USSD giving exists, D-019), so no gift can fall outside the columns. Funds are listed in their display order and only if they received something; a fund's name is its current name.
+- Every amount is an exact decimal string (GHS), never a float. Within one block `grand_total`, each fund `total` and every `by_method` are sums of the same gifts, so they always agree.
+- **`totals`** are the gifts recorded **at this service**. They equal the sum of `GET /contributions?service_id=` for the same service.
+- **`no_service`** are the gifts given **that day with no service** (mobile money and card gifts, and cash nobody attached to a service). "That day" is the church's own day in its timezone. They are counted with the **day's first service only** (the earliest start time; a service with no start time comes after the ones that have one; then the lowest id), so a day with two services never counts a gift twice. For any other service of the day `counted_here` is `false` and the block is all zeros. `day_grand_total` is `totals` plus `no_service`, so adding up the `day_grand_total` of every report of a day gives the day's giving exactly once. A day with gifts but no service has no report.
+- **Voided gifts are in no number**, including the counts (QA-06 TC-06-17).
+- Every payment method is listed for every fund, even at `"0.00"` (`ussd` stays `"0.00"` until USSD giving exists, D-019), so no gift can fall outside the columns. Funds are listed in their display order and only if they received something.
+- **Fund names are the names the gifts were given to** (D-048). A fund renamed later does not change an old report; a fund renamed in the middle of one service's gifts shows as two lines, one per name.
 - `anonymous_count` is the gifts with no member. The printable page and the PDF come with the screens (story 4.16).
 
 ---

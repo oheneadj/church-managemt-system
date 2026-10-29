@@ -6,8 +6,11 @@ namespace App\Repositories;
 
 use App\DTOs\Contributions\ListContributionsDTO;
 use App\Models\Contribution;
+use App\Models\FundType;
 use App\Models\User;
+use App\Scopes\ChurchScope;
 use App\ValueObjects\Money;
+use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 class EloquentContributionRepository implements ContributionRepositoryInterface
 {
     /** What every gift shown on screen needs, loaded together so a list is never one query per row. */
-    private const DETAIL = ['member', 'fundType', 'service', 'pledge', 'recordedBy', 'voidedBy'];
+    private const DETAIL = ['member', 'service', 'pledge', 'recordedBy', 'voidedBy'];
 
     /**
      * Total given by a member since a moment (or ever), as an exact decimal string. Voided gifts never count.
@@ -47,15 +50,61 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     /**
      * What a service received, added up per fund and payment method, voided gifts left out.
      *
-     * @return array<int, array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}>
+     * @return array<int, array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}>
      */
     public function offeringTotalsForService(string $serviceId): array
     {
-        $rows = Contribution::query()
-            ->where('service_id', $serviceId)
+        return $this->offeringTotals(Contribution::query()->where('service_id', $serviceId));
+    }
+
+    /**
+     * The same figures for gifts that have no service and were given between these two moments.
+     *
+     * @return array<int, array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}>
+     */
+    public function offeringTotalsWithoutService(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return $this->offeringTotals($this->withoutServiceBetween($from, $to));
+    }
+
+    /**
+     * How many gifts at a service have no member, voided gifts left out.
+     */
+    public function anonymousCountForService(string $serviceId): int
+    {
+        return Contribution::query()->where('service_id', $serviceId)->where('is_voided', false)->whereNull('member_id')->count();
+    }
+
+    /**
+     * How many gifts with no service, given between these two moments, have no member, voided gifts left out.
+     */
+    public function anonymousCountWithoutService(CarbonInterface $from, CarbonInterface $to): int
+    {
+        return $this->withoutServiceBetween($from, $to)->where('is_voided', false)->whereNull('member_id')->count();
+    }
+
+    /**
+     * The gifts with no service that were given between these two moments.
+     *
+     * @return Builder<Contribution>
+     */
+    private function withoutServiceBetween(CarbonInterface $from, CarbonInterface $to): Builder
+    {
+        return Contribution::query()->whereNull('service_id')->whereBetween('contributed_at', [$from, $to]);
+    }
+
+    /**
+     * Adds up the gifts in this query that are not voided, per fund and payment method.
+     *
+     * @param  Builder<Contribution>  $gifts
+     * @return array<int, array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}>
+     */
+    private function offeringTotals(Builder $gifts): array
+    {
+        $rows = $gifts
             ->where('is_voided', false)
-            ->groupBy('fund_type_id', 'payment_method')
-            ->selectRaw('fund_type_id, payment_method, SUM(amount) AS total, COUNT(*) AS gifts')
+            ->groupBy('fund_type_id', 'fund_name', 'payment_method')
+            ->selectRaw('fund_type_id, fund_name, payment_method, SUM(amount) AS total, COUNT(*) AS gifts')
             ->get();
 
         $lines = [];
@@ -70,24 +119,17 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     /**
      * One line of the offering totals, with the total as an exact decimal string.
      *
-     * @return array{fund_type_id: string, payment_method: string, total: numeric-string, gifts: int}
+     * @return array{fund_type_id: string, fund_name: string, payment_method: string, total: numeric-string, gifts: int}
      */
     private function totalsLine(Contribution $line): array
     {
         return [
             'fund_type_id' => (string) $line->getAttribute('fund_type_id'),
+            'fund_name' => (string) $line->getAttribute('fund_name'),
             'payment_method' => $line->payment_method->value,
             'total' => Money::ghs((string) $line->getAttribute('total'))->amount,
             'gifts' => (int) $line->getAttribute('gifts'),
         ];
-    }
-
-    /**
-     * How many gifts at a service have no member, voided gifts left out.
-     */
-    public function anonymousCountForService(string $serviceId): int
-    {
-        return Contribution::query()->where('service_id', $serviceId)->where('is_voided', false)->whereNull('member_id')->count();
     }
 
     /**
@@ -119,6 +161,25 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     public function create(array $attributes): Contribution
     {
         return $this->withDetail(Contribution::query()->create($attributes));
+    }
+
+    /**
+     * Fills the fund name on gifts that have none, from the fund's current name, a batch at a time, in every church.
+     */
+    public function backfillFundNames(int $chunk): int
+    {
+        $filled = 0;
+
+        Contribution::query()->withoutGlobalScope(ChurchScope::class)->whereNull('fund_name')->chunkById($chunk, function ($gifts) use (&$filled): void {
+            $names = FundType::query()->withoutGlobalScope(ChurchScope::class)->withTrashed()->whereKey($gifts->pluck('fund_type_id')->unique()->all())->pluck('name', 'id');
+
+            foreach ($gifts as $gift) {
+                $gift->update(['fund_name' => $names[$gift->fund_type_id]]);
+                $filled++;
+            }
+        });
+
+        return $filled;
     }
 
     /**

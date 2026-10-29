@@ -31,7 +31,7 @@ class ContributionResource extends JsonResource
             'member' => $this->member === null ? null : ['id' => $this->member->id, 'full_name' => $this->member->full_name],
             'is_anonymous' => $this->member_id === null,
             'service' => $this->service === null ? null : ['id' => $this->service->id, 'name' => $this->service->name, 'service_date' => $this->service->service_date->toDateString()],
-            'fund_type' => ['id' => $this->fundType->id, 'name' => $this->fundType->name],
+            'fund_type' => ['id' => $this->fund_type_id, 'name' => $this->fund_name],
             'pledge' => $this->whenLoaded('pledge', fn () => $this->pledge === null ? null : ['id' => $this->pledge->id, 'description' => $this->pledge->description]),
             'amount' => $amount->amount,
             'amount_formatted' => $amount->formatted(),

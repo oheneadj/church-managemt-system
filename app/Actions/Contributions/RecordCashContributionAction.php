@@ -9,10 +9,12 @@ use App\Enums\AuditEvent;
 use App\Enums\PaymentMethod;
 use App\Models\Contribution;
 use App\Repositories\ContributionRepositoryInterface;
+use App\Repositories\FundTypeRepositoryInterface;
 use App\Repositories\PledgeRepositoryInterface;
 use App\Services\AuditLogger;
 use App\Services\PledgeProgressService;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 /**
  * Records a cash gift. The gift, its change-history line and the pledge it pays (when it names one) are saved together
@@ -27,6 +29,7 @@ final class RecordCashContributionAction
     public function __construct(
         private readonly ContributionRepositoryInterface $contributions,
         private readonly PledgeRepositoryInterface $pledges,
+        private readonly FundTypeRepositoryInterface $fundTypes,
         private readonly PledgeProgressService $pledgeProgress,
         private readonly AuditLogger $audit,
     ) {}
@@ -48,6 +51,7 @@ final class RecordCashContributionAction
                 'service_id' => $dto->serviceId,
                 'pledge_id' => $dto->pledgeId,
                 'fund_type_id' => $dto->fundTypeId,
+                'fund_name' => $this->fundName($dto->fundTypeId),
                 'amount' => $dto->amount->amount,
                 'payment_method' => PaymentMethod::Cash,
                 'is_voided' => false,
@@ -70,5 +74,13 @@ final class RecordCashContributionAction
 
             return $contribution;
         });
+    }
+
+    /**
+     * The fund's name as it is right now, kept on the gift so a later rename does not change what the gift was given to.
+     */
+    private function fundName(string $fundTypeId): string
+    {
+        return $this->fundTypes->find($fundTypeId)->name ?? throw new LogicException('A gift needs a fund that exists; the request checks this.');
     }
 }

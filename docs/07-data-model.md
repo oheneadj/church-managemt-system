@@ -317,6 +317,7 @@ Every giving transaction — MoMo, card, or cash.
 | `member_id` | CHAR(26) | Yes | Null = anonymous or visitor |
 | `service_id` | CHAR(26) | Yes | Service at which it was given |
 | `fund_type_id` | CHAR(26) | No | FK → fund_types |
+| `fund_name` | VARCHAR(100) | No | The fund's name when the gift was recorded (a snapshot, agreement section 10). A fund can be renamed; the gift, its receipt and the reports keep the name it was given to (D-048). |
 | `pledge_id` | CHAR(26) | Yes | FK → pledges. Set if fulfilling a pledge. |
 | `amount` | DECIMAL(12,2) | No | GHS. The **gift amount** the church is credited with (what the giver chose). Excludes the processing fee. |
 | `processing_fee` | DECIMAL(12,2) | Yes | GHS collection fee the giver paid on top (D-018). Null for cash and until the provider reports it. |

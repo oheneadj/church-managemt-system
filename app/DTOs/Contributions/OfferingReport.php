@@ -7,24 +7,19 @@ namespace App\DTOs\Contributions;
 use App\Models\Service;
 
 /**
- * What one service received: the total, each fund's line, the total by payment method, and how many gifts there were.
- * Voided gifts are not in any number.
+ * What one service received (`totals`, the gifts recorded at it) and the gifts given that day with no service
+ * (`noService`). The no-service gifts of a day are reported with that day's first service only (`noServiceCountedHere`),
+ * so adding up a day's reports never counts a gift twice. Voided gifts are not in any number.
  */
 final readonly class OfferingReport
 {
     /**
-     * Holds the service and the figures.
-     *
-     * @param  numeric-string  $grandTotal
-     * @param  array<int, OfferingFund>  $byFund
-     * @param  array<string, numeric-string>  $byMethod
+     * Holds the service and its figures.
      */
     public function __construct(
         public Service $service,
-        public string $grandTotal,
-        public array $byFund,
-        public array $byMethod,
-        public int $transactionCount,
-        public int $anonymousCount,
+        public OfferingSection $totals,
+        public OfferingSection $noService,
+        public bool $noServiceCountedHere,
     ) {}
 }

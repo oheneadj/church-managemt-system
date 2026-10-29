@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\DTOs\Contributions\OfferingFund;
 use App\DTOs\Contributions\OfferingReport;
+use App\DTOs\Contributions\OfferingSection;
 use App\Enums\PaymentMethod;
 use App\ValueObjects\Money;
 use Illuminate\Http\Request;
@@ -15,18 +16,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * The offering report of a service (docs/08, Sunday Offering Report). Every amount is an exact decimal string with a
  * formatted sibling, and the formatting happens only in Money. It holds totals and no names.
  *
+ * `totals` are the gifts recorded at the service. `no_service` are the gifts given that day with no service; they are
+ * counted with the day's first service only (`counted_here`), and `day_grand_total` is the two added together.
+ *
  * @property OfferingReport $resource
  */
 class OfferingReportResource extends JsonResource
 {
     /**
-     * Shapes the report for the API. The amounts by payment method are an object keyed by method name.
+     * Shapes the report for the API.
      *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
         $report = $this->resource;
+        $day = Money::ghs(bcadd($report->totals->grandTotal, $report->noService->grandTotal, 2));
 
         return [
             'service' => [
@@ -34,13 +39,32 @@ class OfferingReportResource extends JsonResource
                 'name' => $report->service->name,
                 'service_date' => $report->service->service_date->toDateString(),
             ],
-            'totals' => [
-                ...$this->money('grand_total', $report->grandTotal),
-                'by_fund' => $this->fundLines($report->byFund),
-                'by_method' => $this->moneyByMethod($report->byMethod),
-                'transaction_count' => $report->transactionCount,
-                'anonymous_count' => $report->anonymousCount,
+            'totals' => $this->section($report->totals),
+            'no_service' => [
+                'counted_here' => $report->noServiceCountedHere,
+                ...$this->section($report->noService),
             ],
+            'day_grand_total' => $day->amount,
+            'day_grand_total_formatted' => $day->formatted(),
+        ];
+    }
+
+    /**
+     * One set of figures: the total, each fund's line, the total by payment method and the counts.
+     *
+     * @return array<string, mixed>
+     */
+    private function section(OfferingSection $section): array
+    {
+        $grand = Money::ghs($section->grandTotal);
+
+        return [
+            'grand_total' => $grand->amount,
+            'grand_total_formatted' => $grand->formatted(),
+            'by_fund' => $this->fundLines($section->byFund),
+            'by_method' => $this->moneyByMethod($section->byMethod),
+            'transaction_count' => $section->transactionCount,
+            'anonymous_count' => $section->anonymousCount,
         ];
     }
 
@@ -76,19 +100,6 @@ class OfferingReportResource extends JsonResource
             'total' => $total->amount,
             'total_formatted' => $total->formatted(),
         ];
-    }
-
-    /**
-     * An amount and its display text, under the given name.
-     *
-     * @param  numeric-string  $amount
-     * @return array<string, string>
-     */
-    private function money(string $name, string $amount): array
-    {
-        $money = Money::ghs($amount);
-
-        return [$name => $money->amount, "{$name}_formatted" => $money->formatted()];
     }
 
     /**

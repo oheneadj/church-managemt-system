@@ -10,7 +10,9 @@ use App\Models\Member;
 use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 
 // The Sunday offering report (docs/11 story 4.12, docs/04 Sunday Offering Report, docs/08, QA-06 TC-06-17, QA-10):
@@ -189,5 +191,139 @@ describe('another church (isolation, QA-02)', function (): void {
         $foreign = Service::factory()->create(['church_id' => $this->other->id]);
 
         expect(Gate::forUser($this->finance)->allows('viewOfferingReport', $foreign))->toBeFalse();
+    });
+});
+
+describe('gifts with no service (D-048)', function (): void {
+    it('counts the gifts given that day with no service, apart from the service\'s own, and adds both for the day', function (): void {
+        serviceGift($this->tithe, '200.00');
+        serviceGift($this->tithe, '50.00', ['service_id' => null, 'payment_method' => PaymentMethod::Momo, 'contributed_at' => '2026-10-25 09:30:00']);
+        serviceGift($this->offering, '25.50', ['service_id' => null, 'payment_method' => PaymentMethod::Card, 'contributed_at' => '2026-10-25 20:00:00', 'member_id' => null]);
+
+        $data = $this->getJson(offeringReportUrl($this->service))->assertOk()->json('data');
+
+        expect($data['totals']['grand_total'])->toBe('200.00')
+            ->and($data['no_service']['counted_here'])->toBeTrue()
+            ->and($data['no_service']['grand_total'])->toBe('75.50')
+            ->and($data['no_service']['grand_total_formatted'])->toBe('GHS 75.50')
+            ->and($data['no_service']['by_method']['momo'])->toBe('50.00')
+            ->and($data['no_service']['by_method']['card'])->toBe('25.50')
+            ->and($data['no_service']['transaction_count'])->toBe(2)
+            ->and($data['no_service']['anonymous_count'])->toBe(2)
+            ->and(collect($data['no_service']['by_fund'])->pluck('fund_type')->all())->toBe(['Tithe', 'Offering'])
+            ->and($data['day_grand_total'])->toBe('275.50')
+            ->and($data['day_grand_total_formatted'])->toBe('GHS 275.50');
+    });
+
+    it('leaves out voided gifts, gifts of other days, gifts at another service and other churches\' gifts', function (): void {
+        serviceGift($this->tithe, '10.00', ['service_id' => null, 'contributed_at' => '2026-10-25 08:00:00']);
+        serviceGift($this->tithe, '20.00', ['service_id' => null, 'contributed_at' => '2026-10-25 08:00:00', 'is_voided' => true, 'voided_at' => now(), 'void_reason' => 'Mistake']);
+        serviceGift($this->tithe, '30.00', ['service_id' => null, 'contributed_at' => '2026-10-24 23:59:59']);
+        serviceGift($this->tithe, '40.00', ['service_id' => null, 'contributed_at' => '2026-10-26 00:00:00']);
+        $second = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => '2026-10-26']);
+        serviceGift($this->tithe, '50.00', ['service_id' => $second->id, 'contributed_at' => '2026-10-25 09:00:00']);
+        Contribution::factory()->create(['church_id' => $this->other->id, 'service_id' => null, 'amount' => '60.00', 'contributed_at' => '2026-10-25 08:00:00']);
+
+        $data = $this->getJson(offeringReportUrl($this->service))->assertOk()->json('data');
+
+        expect($data['no_service']['grand_total'])->toBe('10.00')->and($data['no_service']['transaction_count'])->toBe(1)->and($data['totals']['grand_total'])->toBe('0.00');
+    });
+
+    it('uses the church\'s own day, not the UTC day', function (): void {
+        $this->church->update(['timezone' => 'Asia/Tokyo']);
+        // 2026-10-24 16:00 UTC is 01:00 on 25 October in Tokyo, and 2026-10-25 15:30 UTC is 00:30 on the 26th.
+        serviceGift($this->tithe, '11.00', ['service_id' => null, 'contributed_at' => '2026-10-24 16:00:00']);
+        serviceGift($this->tithe, '22.00', ['service_id' => null, 'contributed_at' => '2026-10-25 15:30:00']);
+
+        $this->getJson(offeringReportUrl($this->service))->assertOk()->assertJsonPath('data.no_service.grand_total', '11.00');
+    });
+
+    it('goes with the day\'s first service only, so a day with two services never counts a gift twice', function (): void {
+        $this->service->update(['starts_at' => '09:00:00']);
+        $early = Service::factory()->create(['church_id' => $this->church->id, 'name' => 'Early', 'service_date' => '2026-10-25', 'starts_at' => '07:00:00']);
+        $evening = Service::factory()->create(['church_id' => $this->church->id, 'name' => 'Evening', 'service_date' => '2026-10-25', 'starts_at' => null]);
+        serviceGift($this->tithe, '80.00', ['service_id' => null, 'contributed_at' => '2026-10-25 10:00:00']);
+
+        $reports = collect([$early, $this->service, $evening])->map(fn (Service $s) => $this->getJson(offeringReportUrl($s))->assertOk()->json('data'));
+
+        expect($reports->pluck('no_service.counted_here')->all())->toBe([true, false, false])
+            ->and($reports->pluck('no_service.grand_total')->all())->toBe(['80.00', '0.00', '0.00'])
+            ->and($reports->pluck('day_grand_total')->all())->toBe(['80.00', '0.00', '0.00']);
+    });
+
+    it('puts a service with no start time after the ones that have one, and breaks a tie by id', function (): void {
+        $this->service->update(['starts_at' => null]);
+        $timed = Service::factory()->create(['church_id' => $this->church->id, 'service_date' => '2026-10-25', 'starts_at' => '18:00:00']);
+
+        expect($this->getJson(offeringReportUrl($timed))->json('data.no_service.counted_here'))->toBeTrue()
+            ->and($this->getJson(offeringReportUrl($this->service))->json('data.no_service.counted_here'))->toBeFalse();
+
+        $timed->update(['starts_at' => null]);
+        $firstById = collect([$timed, $this->service])->sortBy('id')->first();
+        expect($this->getJson(offeringReportUrl($firstById))->json('data.no_service.counted_here'))->toBeTrue();
+    });
+
+    it('is zeros when nothing was given without a service', function (): void {
+        $this->getJson(offeringReportUrl($this->service))->assertOk()
+            ->assertJsonPath('data.no_service.grand_total', '0.00')->assertJsonPath('data.no_service.by_fund', [])
+            ->assertJsonPath('data.day_grand_total', '0.00');
+    });
+});
+
+describe('fund names (D-048)', function (): void {
+    it('keeps the name a gift was given to when the fund is renamed later', function (): void {
+        $before = serviceGift($this->tithe, '100.00');
+        $this->tithe->update(['name' => 'Tithes and Firstfruits']);
+        serviceGift($this->tithe, '50.00', ['fund_name' => 'Tithes and Firstfruits']);
+
+        $funds = collect($this->getJson(offeringReportUrl($this->service))->assertOk()->json('data.totals.by_fund'));
+
+        expect($funds->pluck('fund_type')->all())->toBe(['Tithe', 'Tithes and Firstfruits'])
+            ->and($funds->pluck('total')->all())->toBe(['100.00', '50.00'])
+            ->and($this->getJson('http://grace.localhost/api/v1/contributions/'.$before->id)->json('data.fund_type'))->toBe(['id' => $this->tithe->id, 'name' => 'Tithe']);
+    });
+
+    it('keeps old reports the same after a rename', function (): void {
+        serviceGift($this->offering, '125.00');
+        $before = $this->getJson(offeringReportUrl($this->service))->json('data.totals');
+
+        $this->offering->update(['name' => 'General Offering']);
+
+        expect($this->getJson(offeringReportUrl($this->service))->json('data.totals'))->toBe($before);
+    });
+
+    it('records the name when a cash gift is recorded, and a rename afterwards does not change it', function (): void {
+        Sanctum::actingAs($this->finance, ['*']);
+        $id = $this->postJson('http://grace.localhost/api/v1/contributions', ['fund_type_id' => $this->tithe->id, 'amount' => '10.00', 'payment_method' => 'cash', 'service_id' => $this->service->id], ['Idempotency-Key' => 'name-snapshot-0001'])
+            ->assertCreated()->assertJsonPath('data.fund_type.name', 'Tithe')->json('data.id');
+
+        $this->tithe->update(['name' => 'Renamed']);
+
+        expect(Contribution::query()->find($id)->fund_name)->toBe('Tithe')
+            ->and($this->getJson('http://grace.localhost/api/v1/contributions/'.$id)->json('data.fund_type.name'))->toBe('Tithe');
+    });
+
+    it('fills the name on gifts that have none, in every church, and can be run again', function (): void {
+        Schema::table('contributions', fn ($table) => $table->string('fund_name', 100)->nullable()->change());
+        $a = serviceGift($this->tithe, '1.00');
+        $foreignFund = FundType::factory()->create(['church_id' => $this->other->id, 'name' => 'Their Fund']);
+        $b = Contribution::factory()->create(['church_id' => $this->other->id, 'fund_type_id' => $foreignFund->id, 'amount' => '2.00']);
+        DB::table('contributions')->whereIn('id', [$a->id, $b->id])->update(['fund_name' => null]);
+        $this->tithe->update(['name' => 'Tithe Now']);
+
+        $this->artisan('contributions:backfill-fund-names')->expectsOutputToContain('Filled the fund name on 2 gift(s).')->assertSuccessful();
+
+        expect(DB::table('contributions')->where('id', $a->id)->value('fund_name'))->toBe('Tithe Now')
+            ->and(DB::table('contributions')->where('id', $b->id)->value('fund_name'))->toBe('Their Fund');
+        $this->artisan('contributions:backfill-fund-names')->expectsOutputToContain('Filled the fund name on 0 gift(s).')->assertSuccessful();
+    });
+
+    it('refuses to make the column required while some gifts have no name', function (): void {
+        Schema::table('contributions', fn ($table) => $table->string('fund_name', 100)->nullable()->change());
+        $gift = serviceGift($this->tithe, '1.00');
+        DB::table('contributions')->where('id', $gift->id)->update(['fund_name' => null]);
+        $migration = require database_path('migrations/2026_10_28_235357_make_fund_name_required_on_contributions_table.php');
+
+        expect(fn () => $migration->up())->toThrow(RuntimeException::class, 'contributions:backfill-fund-names');
     });
 });

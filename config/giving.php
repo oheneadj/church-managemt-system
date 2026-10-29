@@ -14,6 +14,9 @@ return [
     // The most a single cash gift may be, in GHS (QA-06 TC-06-05). A digital gift has its own, lower, limit (D-018).
     'cash_max' => '999999.99',
 
+    // How many gifts the fund name backfill command handles in one batch.
+    'backfill_chunk' => 500,
+
     // The most a pledge may promise, in GHS, and how many overdue pledges the daily job loads at a time.
     'pledge_max' => '999999.99',
     'pledge_refresh_chunk' => 200,
