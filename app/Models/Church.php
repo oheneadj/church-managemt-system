@@ -104,6 +104,14 @@ class Church extends Model
     }
 
     /**
+     * Whether a recorded cash gift sends the member a receipt by SMS. On unless the church switched it off (QA-08 TC-08-06).
+     */
+    public function sendsCashReceipts(): bool
+    {
+        return (bool) data_get($this->settings, 'receipt_on_cash', config('giving.cash_receipts_default'));
+    }
+
+    /**
      * The user records of this church.
      *
      * @return HasMany<User, $this>

@@ -48,7 +48,8 @@
 - Message content:
   ```
   Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026.
-  Thank you for your faithfulness! – Your Church Family
+  Your total giving in October: GHS 150.00.
+  Thank you for your faithfulness.
   ```
 - `message_logs` record created with `type: contribution_receipt`, `status: sent`
 - 1 SMS credit deducted from church's balance

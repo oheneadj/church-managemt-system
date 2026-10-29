@@ -7,6 +7,7 @@ namespace App\Actions\Contributions;
 use App\DTOs\Contributions\RecordCashContributionDTO;
 use App\Enums\AuditEvent;
 use App\Enums\PaymentMethod;
+use App\Events\ContributionReceived;
 use App\Models\Contribution;
 use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\FundTypeRepositoryInterface;
@@ -18,7 +19,7 @@ use LogicException;
 
 /**
  * Records a cash gift. The gift, its change-history line and the pledge it pays (when it names one) are saved together
- * or not at all. Cash has no processing
+ * or not at all. Then the gift-recorded event fires; the receipt text is sent by a queued listener after the commit. Cash has no processing
  * fee and no payment reference, because no payment provider is involved.
  */
 final class RecordCashContributionAction
@@ -71,6 +72,8 @@ final class RecordCashContributionAction
             if ($dto->pledgeId !== null) {
                 $this->pledgeProgress->refresh($dto->pledgeId);
             }
+
+            ContributionReceived::dispatch($contribution);
 
             return $contribution;
         });

@@ -82,7 +82,7 @@ The root tenant record. Every other table references this.
 | `timezone` | VARCHAR(50) | No | Default: `Africa/Accra` |
 | `member_number_prefix` | VARCHAR(10) | Yes | Letters in front of every member number (the `GRC` in `GRC-0042`). Typed by the admin at onboarding. Null until set; adding a member fails until it is (D-030). |
 | `member_number_seq` | INT | No | Last member number handed out. Default: 0. Only incremented under a row lock, never reset, so a number is never reused (D-030). |
-| `settings` | JSON | Yes | Configurable per-church settings (absence threshold, receipt preferences, etc.) |
+| `settings` | JSON | Yes | Configurable per-church settings (absence threshold, `receipt_on_cash` for cash receipts by SMS, etc.) |
 | `is_active` | BOOLEAN | No | Default: true. False = suspended. |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
@@ -354,6 +354,7 @@ Every giving transaction — MoMo, card, or cash.
 | `recorded_by` | CHAR(26) | No | FK → users |
 | `notes` | TEXT | Yes | |
 | `contributed_at` | TIMESTAMP | No | When the giving occurred |
+| `receipt_queued_at` | TIMESTAMP | Yes | When the receipt text was queued. Set in one statement that finds it empty, so a gift gets one receipt even if the work runs twice (D-051). Null if no receipt was queued. |
 | `created_at` | TIMESTAMP | No | When the record was created |
 | `updated_at` | TIMESTAMP | No | |
 

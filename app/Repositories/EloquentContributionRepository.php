@@ -38,6 +38,24 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     }
 
     /**
+     * Total given by a member between two moments, as an exact decimal string. Voided gifts never count.
+     *
+     * @return numeric-string
+     */
+    public function totalForMemberBetween(string $memberId, CarbonInterface $from, CarbonInterface $to): string
+    {
+        return Money::ghs((string) Contribution::query()->where('member_id', $memberId)->where('is_voided', false)->whereBetween('contributed_at', [$from, $to])->sum('amount'))->amount;
+    }
+
+    /**
+     * Claims the right to queue this gift's receipt. Returns true for the first caller only.
+     */
+    public function claimReceipt(Contribution $contribution): bool
+    {
+        return Contribution::query()->whereKey($contribution->getKey())->whereNull('receipt_queued_at')->update(['receipt_queued_at' => now()]) === 1;
+    }
+
+    /**
      * Total of the gifts that pay a pledge, as an exact decimal string. Voided gifts never count.
      *
      * @return numeric-string

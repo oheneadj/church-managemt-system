@@ -248,20 +248,22 @@ Exportable as PDF. Shareable directly from the system.
 
 ## Giving Receipts
 
-Every recorded contribution triggers an automatic confirmation to the member:
+Every recorded contribution triggers an automatic confirmation to the member (built, D-051):
 
-**SMS format:**
+**SMS format** (the words are in `config/giving.php`):
 ```
 Grace Assembly: GHS 200.00 received (Tithe) on 12 Oct 2026.
-Your total giving this month: GHS 450.00.
-Thank you for your faithfulness. — Grace Assembly Intl
+Your total giving in October: GHS 450.00.
+Thank you for your faithfulness.
 ```
+The church name is the platform's record of the church's own name; the fund is the name the gift was given to; the date and month are the church's own calendar; the total is the member's giving in the month of the gift (this gift included, voided gifts left out). The text uses plain characters only (a hyphen, no long dash) so it stays in the cheaper kind of SMS.
 
 **Rules:**
-- Receipts go out for MoMo/card immediately on Paystack webhook confirmation
-- Receipts for cash are sent when the admin clicks "Send receipts" (batch, per service) or on individual record save (configurable)
-- Anonymous contributions do not generate a receipt
-- SMS credit is consumed per receipt — churches are aware of this through the credit dashboard
+- Receipts for digital gifts go out when the payment is confirmed (when digital giving is built); the same event, `ContributionReceived`, carries both
+- Receipts for cash go out when the gift is recorded, unless the church switched `receipt_on_cash` off in its settings (on by default, QA-08 TC-08-06). The idea of a "Send receipts" button for a whole service is not built
+- No receipt for an anonymous gift, a voided gift, or a member who has died, has no phone or has turned SMS off
+- SMS credit is consumed per part of the text (D-051); with too few credits no text is sent, a warning is logged and the person recording the gift sees no error
+- One receipt per gift, even if the work is repeated
 
 ---
 

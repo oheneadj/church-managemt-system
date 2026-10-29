@@ -11,6 +11,19 @@ return [
     | Every new church starts with these. The church admin can rename them, add more or switch them off.
     | "Pledge" is not a fund: a gift that pays a pledge is linked to the pledge itself.
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Gift receipts by SMS (D-051, docs/04 Giving Receipts, QA-08)
+    |--------------------------------------------------------------------------
+    | The words of the text. Plain characters only (a hyphen, no long dash), so the text stays in the cheaper GSM kind and
+    | costs one credit. :amount is "GHS 200.00"; :month and :total are the member's giving in the month of the gift.
+    | A church can switch cash receipts off in its settings (`receipt_on_cash`); digital gifts always get one.
+    */
+    'receipt_template' => ":church: :amount received (:fund) on :date.\nYour total giving in :month: :total.\nThank you for your faithfulness.",
+    'receipt_date_format' => 'j M Y',
+    'receipt_month_format' => 'F',
+    'cash_receipts_default' => true,
+
     // The most a single cash gift may be, in GHS (QA-06 TC-06-05). A digital gift has its own, lower, limit (D-018).
     'cash_max' => '999999.99',
 

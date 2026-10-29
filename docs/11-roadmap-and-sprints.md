@@ -249,7 +249,8 @@ Blocked: [anything blocking me / none]
 | | 4.3 cash contributions (record, list, show; `giving.view` added), 4.11 void, the `Idempotency-Key` for writes that record money |
 | | 4.9 pledges (make, list, read, change), 4.10 the paid amount and status that follow the gifts and voids (recalculated, D-047), the daily `pledges:refresh` job |
 | | 4.12 Sunday offering report (by fund and payment method, voided gifts left out; gifts with no service reported with the day's first service; fund names kept on the gift, D-048) |
-| Next | 4.7 receipts, then the screens 4.13 to 4.18 |
+| | 4.7 receipts (the `ContributionReceived` event and a queued listener that texts the member), and SMS credits charged for church-paid texts (D-051) |
+| Next | The screens 4.13 to 4.18 |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
 > **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).

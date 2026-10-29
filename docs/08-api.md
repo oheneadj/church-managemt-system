@@ -839,7 +839,7 @@ Permission: giving.record
 
 **Response `201`:** Full contribution resource. Cash has no processing fee, no payment reference and no status: a gift exists once it is recorded. `422` for bad values, `400` without an `Idempotency-Key`, `403` without `giving.record`.
 
-**Not built yet:** the `ContributionReceived` event and the SMS receipt (story 4.7).
+**Side effect:** the `ContributionReceived` event fires, and a queued listener texts the member a receipt after the commit (docs/04 Giving Receipts, D-051): not for an anonymous gift, not when the church switched `receipt_on_cash` off, not for a member who has died, has no phone or turned SMS off, and not when the church has too few SMS credits (a warning is logged; this request is never failed by it). Each receipt is one `message_logs` row of type `contribution_receipt` and costs one credit per part of the text.
 
 ---
 

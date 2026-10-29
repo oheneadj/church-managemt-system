@@ -40,10 +40,11 @@
 - SMS receipt queued for delivery to member's phone
 
 ### TC-06-02 — Cash receipt SMS format
-**Expected SMS content:**
+**Expected SMS content** (docs/04 wording, D-051):
 ```
-Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026. 
-Thank you for your faithfulness! – Your Church Family
+Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026.
+Your total giving in October: GHS 150.00.
+Thank you for your faithfulness.
 ```
 - Amount formatted correctly (2 decimal places, GHS prefix)
 - Church name in message (not platform name)

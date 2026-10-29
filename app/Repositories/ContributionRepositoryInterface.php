@@ -22,6 +22,19 @@ interface ContributionRepositoryInterface
     public function totalForMember(string $memberId, ?DateTimeInterface $since): string;
 
     /**
+     * Total given by a member between two moments, as an exact decimal string. Voided gifts never count.
+     *
+     * @return numeric-string
+     */
+    public function totalForMemberBetween(string $memberId, CarbonInterface $from, CarbonInterface $to): string;
+
+    /**
+     * Claims the right to queue this gift's receipt. Returns true for the first caller only: it sets the time in one
+     * statement that finds the gift with no time set, so two callers at once cannot both win (agreement section 11).
+     */
+    public function claimReceipt(Contribution $contribution): bool;
+
+    /**
      * Total of the gifts that pay a pledge, as an exact decimal string. Voided gifts never count.
      *
      * @return numeric-string

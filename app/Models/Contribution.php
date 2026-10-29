@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $recorded_by
  * @property string|null $notes
  * @property CarbonImmutable $contributed_at
+ * @property CarbonImmutable|null $receipt_queued_at
  * @property CarbonImmutable|null $created_at
  * @property-read FundType $fundType
  * @property-read User $recordedBy
@@ -68,6 +69,7 @@ class Contribution extends Model
         'recorded_by',
         'notes',
         'contributed_at',
+        'receipt_queued_at',
     ];
 
     /**
@@ -85,6 +87,7 @@ class Contribution extends Model
             'is_voided' => 'boolean',
             'voided_at' => 'immutable_datetime',
             'contributed_at' => 'immutable_datetime',
+            'receipt_queued_at' => 'immutable_datetime',
         ];
     }
 
