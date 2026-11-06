@@ -5,10 +5,11 @@ import { defineConfig } from '@playwright/test';
  * Point them at a copy with E2E_PLATFORM_URL (the bare domain, where churches sign up) and E2E_CHURCH_URL (a
  * church's address). The defaults are the local Valet sites. Staging should be used once it exists.
  *
- * The tests read sign-in codes from the application log, so they only work against a copy that uses the
- * "log" SMS and mail drivers and shares this folder's storage/logs. A queue worker for the `critical` queue must be
- * running. Staff sign in with the demo admin of config/demo.php and an emailed code (D-054); starting a church still
- * texts a code to the phone.
+ * The tests read sign-in codes from the application log and from Mailpit, so they only work against a copy that uses the
+ * "log" SMS driver and shares this folder's storage/logs (texted sign-up codes), and Mailpit running with
+ * MAIL_MAILER=smtp on port 1025 (emailed sign-in codes, read from Mailpit's API at E2E_MAILPIT_URL). A queue worker for
+ * the `critical` queue must be running. Staff sign in with the demo admin of config/demo.php and an emailed code (D-054);
+ * starting a church still texts a code to the phone.
  *
  * Starting a church texts a code, and the code is limited to 10 per IP address per hour, so a full run (3 codes)
  * can be repeated about 3 times an hour. The demo admin can be emailed one code a minute. Wait if a run reports that
