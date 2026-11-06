@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Every query on members lives behind this contract, so Actions and Services never touch Eloquent for them.
@@ -73,6 +74,13 @@ interface MemberRepositoryInterface
      * @return Collection<int, Member>
      */
     public function findLivingByPhoneInAnyChurch(string $e164): Collection;
+
+    /**
+     * Every member the filters find, read a few at a time, with their departments and family, for the CSV export.
+     *
+     * @return LazyCollection<int, Member>
+     */
+    public function forExport(ListMembersDTO $filters, int $chunkSize): LazyCollection;
 
     /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.

@@ -1157,6 +1157,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-064 — How the member list export works (story 5.8)
+**Date:** November 2026
+**Decided by:** Product Owner (the link goes by email), Lead Engineer (the rest), from docs/05, docs/08, docs/14, QA-11 and D-039
+**Status:** Active
+
+**Decision:**
+1. **The download link goes by email.** *(Product Owner.)* docs/08 and QA-11 said SMS; docs/06 and docs/14 planned the export link for the email sender (D-062), which now exists. The email is queued on `notifications`, goes to the staff member who asked, and the message log keeps a summary, never the link. docs/08 and QA-11 are corrected.
+2. **`POST /exports/members` answers 202 and a worker builds the file.** A new `exports` table records every export (who, filters, rows, status), which is also the trail that personal data left the system. The job runs on the `exports` queue with tries, timeout, backoff and a `failed()` handler, and is safe to run twice.
+3. **The file is private and short-lived.** It is stored at `churches/{church_id}/exports/{export_id}/members-{date}.csv`; the link is signed and works for 1 hour; the file is deleted after 7 days by `exports:prune-files` (03:15 UTC) and the record stays (`config/exports.php`). A cancelled church's purge deletes the folder and forgets the filters.
+4. **What is in it:** the columns in QA-11 TC-11-10 plus `member_number` (a church knows people by `GRC-0042`, not by a ULID). Never the national ID, address, landmark or pastoral notes. It follows the member list's filters and its default (prospects and active members), and the viewer's own visibility.
+5. **A spreadsheet cannot be made to run a name.** A text starting with `=`, `+`, `-` or `@` gets a leading quote; the phone column, our own validated `+233` number, is left alone.
+6. **Limits:** 5 exports an hour for each staff member, with the message "You can export at most 5 times per hour."
+7. **Known limit:** the link is part of the queued email, so it sits in the queue for the few seconds before the email is sent, like a sign-in code. It lasts an hour and opens one private file.
+
+**Rationale:** Email costs nothing, opens on the computer where a CSV is used, and reuses the sender with its log, retries and circuit breaker. A short link and a short-lived file keep a list of people's contact details from lying about.
+
+**Revisit when:** the contribution export (5.9) is built (it follows the same rules), the React export button is built, or a church needs very large exports (then stream to the file or split it).
+
+---
+
 ---
 
 ## Deferred Decisions

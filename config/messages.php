@@ -24,6 +24,7 @@ return [
         'password_reset_code',
         'staff_invitation_code',
         'password_breached',
+        'export_ready',
     ],
 
 ];

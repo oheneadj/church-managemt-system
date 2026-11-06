@@ -35,6 +35,26 @@ final readonly class ListMembersDTO
     ) {}
 
     /**
+     * Builds the DTO from filters kept as plain text (an export remembers the filters it was asked for), for the staff member
+     * who asked. The order is the list's default: last name, then first name.
+     *
+     * @param  array<string, string>  $filters
+     */
+    public static function fromFilters(User $viewer, array $filters, int $perPage): self
+    {
+        return new self(
+            viewer: $viewer,
+            perPage: $perPage,
+            status: isset($filters['status']) ? MemberStatus::from($filters['status']) : null,
+            gender: isset($filters['gender']) ? Gender::from($filters['gender']) : null,
+            educationalLevel: isset($filters['educational_level']) ? EducationalLevel::from($filters['educational_level']) : null,
+            departmentId: $filters['department_id'] ?? null,
+            familyId: $filters['family_id'] ?? null,
+            search: $filters['search'] ?? null,
+        );
+    }
+
+    /**
      * Builds the DTO from the validated request.
      */
     public static function fromRequest(ListMembersRequest $request): self

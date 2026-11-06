@@ -191,6 +191,15 @@ describe('reports', function (): void {
     });
 });
 
+describe('exports', function (): void {
+    it('asking for a member export', function (): void {
+        Queue::fake();
+
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/members', ['status' => 'active']), 'POST', '/v1/exports/members', 202);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/members', ['status' => 'retired']), 'POST', '/v1/exports/members', 422);
+    });
+});
+
 describe('member growth', function (): void {
     it('the member growth report', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/members'), 'GET', '/v1/reports/members', 200);

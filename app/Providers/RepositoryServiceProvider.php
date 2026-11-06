@@ -18,6 +18,7 @@ use App\Repositories\EloquentChurchRepository;
 use App\Repositories\EloquentConsentRepository;
 use App\Repositories\EloquentContributionRepository;
 use App\Repositories\EloquentDepartmentRepository;
+use App\Repositories\EloquentExportRepository;
 use App\Repositories\EloquentFamilyRepository;
 use App\Repositories\EloquentFundTypeRepository;
 use App\Repositories\EloquentHandledWhatsappMessageRepository;
@@ -32,6 +33,7 @@ use App\Repositories\EloquentSmsCreditLedgerRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
 use App\Repositories\EloquentWebhookLogRepository;
+use App\Repositories\ExportRepositoryInterface;
 use App\Repositories\FamilyRepositoryInterface;
 use App\Repositories\FundTypeRepositoryInterface;
 use App\Repositories\HandledWhatsappMessageRepositoryInterface;
@@ -56,6 +58,7 @@ class RepositoryServiceProvider extends ServiceProvider
     /** @var array<class-string, class-string> */
     public array $bindings = [
         MemberRepositoryInterface::class => EloquentMemberRepository::class,
+        ExportRepositoryInterface::class => EloquentExportRepository::class,
         FamilyRepositoryInterface::class => EloquentFamilyRepository::class,
         DepartmentRepositoryInterface::class => EloquentDepartmentRepository::class,
         FundTypeRepositoryInterface::class => EloquentFundTypeRepository::class,

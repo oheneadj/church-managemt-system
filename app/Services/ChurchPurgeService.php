@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Repositories\AuditLogRepositoryInterface;
 use App\Repositories\ChurchPurgeRepositoryInterface;
 use App\Repositories\ChurchRepositoryInterface;
+use App\Repositories\ExportRepositoryInterface;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -26,6 +27,7 @@ class ChurchPurgeService
         private readonly ChurchRepositoryInterface $churches,
         private readonly ChurchPurgeRepositoryInterface $purge,
         private readonly AuditLogRepositoryInterface $audit,
+        private readonly ExportRepositoryInterface $exports,
         private readonly MemberErasureService $memberErasure,
     ) {}
 
@@ -45,6 +47,7 @@ class ChurchPurgeService
             $this->purge->anonymiseAttendanceVisitorNames();
             $this->purge->clearContributionNotes();
             $this->purge->deleteMessageLogs();
+            $this->exports->clearDetails();
             $this->audit->anonymiseAll();
             $this->retireChurch($church);
         } finally {

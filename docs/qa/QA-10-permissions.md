@@ -90,7 +90,7 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 |---|---|---|---|---|---|
 | GET /reports/attendance (`reports.view`, *built*) | ✅ | ✅ | ✅ | ❌ | ❌ |
 | GET /reports/members (`reports.view`, D-055, *built*) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| POST /exports/members (`members.export`, D-055) | ✅ | ❌ | ✅ | ❌ | ❌ |
+| POST /exports/members (`members.export`, D-055, *built*) | ✅ | ❌ | ✅ | ❌ | ❌ |
 | POST /exports/contributions (`giving.export`) | ✅ | ❌ | ✅ | ❌ | ❌ |
 
 ### Settings & Staff

@@ -1045,7 +1045,7 @@ Church admin and pastor only (D-055): the log holds phone numbers and message te
   "sent_at": "2026-11-05T14:30:00+00:00", "created_at": "2026-11-05T14:30:00+00:00"
 }
 ```
-Only the church's own messages are listed (another church's, and the sign-up code that has no church, never are). The provider's reference and raw answer are not shown. **The codes are left out** (`config/messages.php`, `hidden_types`): sign-in, password reset, invitation, check-in and sign-up codes and the breached-password warning carry no text worth reading and would only list other people's phone numbers and emails; they stay in the table for support until the 12-month clean-up.
+Only the church's own messages are listed (another church's, and the sign-up code that has no church, never are). The provider's reference and raw answer are not shown. **The codes are left out** (`config/messages.php`, `hidden_types`): sign-in, password reset, invitation, check-in and sign-up codes, the breached-password warning and the export-ready email (it holds a link) carry no text worth reading and would only list other people's phone numbers and emails; they stay in the table for support until the 12-month clean-up.
 
 ---
 
@@ -1153,17 +1153,22 @@ POST /api/v1/exports/members
 Authorization: Bearer {token}
 Permission: members.export
 ```
-Church admin and finance secretary by default (D-055). The national ID is never in the file.
+Church admin and finance secretary by default (D-055). The national ID, the address, the landmark and the pastoral notes are never in the file (D-064).
 
-**Body:** Any filter set (same as `GET /api/members` query params).
+**Body:** The filters of `GET /members`: `status`, `gender`, `educational_level`, `department_id`, `family_id`, `search`. Nothing else is read: the file is always in name order and holds everyone the filters find, with the same default as the list (prospects and active members unless a `status` or a `search` is given). A value that is not valid is `422`.
 
 **Response `202`:**
 ```json
 {
   "export_id": "ulid",
-  "message": "Export queued. You will receive a download link via SMS when ready."
+  "message": "Export queued. You will receive a download link by email when it is ready."
 }
 ```
+The file is built by a worker on the `exports` queue, stored privately at `churches/{church_id}/exports/{export_id}/members-{date}.csv`, and the staff member who asked is **emailed a link that works for 1 hour** (`config/exports.php`). The link is never kept in the message log. The file is deleted after 7 days; the record of the export (who, when, filters, rows) stays. If the link expires, ask again.
+
+**Columns:** `id, member_number, first_name, last_name, phone, email, status, gender, date_of_birth, department, family, joined_date, educational_level`. Phones are in international form (`+233...`), dates are `YYYY-MM-DD`, a member in several departments has them joined with `; `. The file is UTF-8. A text that a spreadsheet would run as a formula (it starts with `=`, `+`, `-` or `@`) has a leading `'`, so a member named `=HYPERLINK(...)` cannot run anything; the phone column is left as it is.
+
+**Errors:** `403` without `members.export`; `422` for a bad filter; `429` after 5 exports in an hour by the same staff member: `{"message": "You can export at most 5 times per hour."}` with `Retry-After`. A church with no members gets a file with only the header.
 
 ---
 

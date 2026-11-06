@@ -166,7 +166,7 @@ A church must be able to leave the platform and take their data with them. We su
 
 **Format:** CSV, UTF-8 encoded (handles Ghanaian names with special characters correctly)
 
-**Processing:** Export jobs are queued (not synchronous — large churches may have thousands of records). Admin receives a download link via email/SMS when ready.
+**Processing:** Export jobs are queued (not synchronous — large churches may have thousands of records). Admin receives a download link by email when ready (D-064). The link works for 1 hour, the file is deleted after 7 days (`exports:prune-files`, `config/exports.php`), and each export is recorded in the `exports` table with who asked and when.
 
 **After cancellation (built, D-042):** `php artisan church:cancel {slug}` starts a 90-day grace period (`config/retention.php`). The church keeps working during it, so its admin can export their data, and `church:reinstate {slug}` takes the cancellation back. A daily job (`churches:purge-cancelled`, 03:30 UTC) then queues a purge of every church whose grace period is over. The purge erases every member as a single erasure does, removes staff, family, visitor and attendance-visitor details, deletes the church's messages and stored files, masks its change history, removes its contact and payout details, soft-deletes it and frees its web address. Contributions, pledges and disbursements stay for the 7-year rule, with their free-text notes removed and no name left to link them to a person. The purge cannot be undone.
 

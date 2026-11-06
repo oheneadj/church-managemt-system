@@ -32,6 +32,9 @@ return [
     // Inviting staff emails a code to a stranger's address, so it is limited per church. The church admin does it rarely.
     'staff_invites_per_hour' => 20,
 
+    // Exports read a lot of personal data and use a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
+    'exports_per_hour' => 5,
+
     // A write that carries an Idempotency-Key is remembered for this long, so a retry gets the first answer back. Two requests with one key wait for each other for up to the lock time.
     'idempotency_ttl_minutes' => 1440,
     'idempotency_lock_seconds' => 10,

@@ -10,6 +10,7 @@ use App\Models\AttendanceRecord;
 use App\Models\AuditLog;
 use App\Models\Church;
 use App\Models\Contribution;
+use App\Models\Export;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\MessageLog;
@@ -146,6 +147,16 @@ describe('purging', function (): void {
             ->and($member->phone)->toBe('[deleted]')
             ->and($member->address)->toBeNull()
             ->and($member->status)->toBe(MemberStatus::Archived);
+    });
+
+    it('forgets what the church searched for in its exports, and where the files were, but keeps the record', function (): void {
+        $export = Export::factory()->create(['church_id' => $this->church->id, 'filters' => ['search' => 'Abena Asante'], 'file_path' => 'churches/x/exports/y/members.csv', 'status' => 'completed']);
+        $other = Export::factory()->create(['filters' => ['search' => 'Other church']]);
+
+        ($this->purge)();
+
+        expect($export->refresh()->filters)->toBeNull()->and($export->file_path)->toBeNull()->and($export->status->value)->toBe('completed')
+            ->and($other->refresh()->filters)->toBe(['search' => 'Other church']);
     });
 
     it('removes staff details and ends their sessions', function (): void {

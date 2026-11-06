@@ -16,6 +16,9 @@ Schedule::command('model:prune')->dailyAt('03:00')->timezone('UTC')->onOneServer
 // Queues the purge of churches whose 90-day grace period after cancelling is over (docs/05). 03:30 UTC, after the prune above.
 Schedule::command('churches:purge-cancelled')->dailyAt('03:30')->timezone('UTC')->onOneServer();
 
+// Deletes the stored files of old CSV exports (D-064), after the nightly model:prune. 03:15 UTC, once a day.
+Schedule::command('exports:prune-files')->dailyAt('03:15')->timezone('UTC')->onOneServer();
+
 // The daily database backup (docs/16). 02:00 UTC, before the nightly clean-ups, and never two at once.
 Schedule::command('db:backup')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping();
 

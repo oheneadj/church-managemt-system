@@ -481,7 +481,7 @@ Meta requires that members opt in to receive WhatsApp messages. The opt-in is re
 
 ### What It Does
 - Sign-in, password reset and staff invitation codes (D-054)
-- Export download links (Sprint 5)
+- Export download links (D-064): the member list export emails the staff member a signed link that works for 1 hour; the log keeps a summary, never the link
 - System alerts to the platform admin, not churches
 
 ### How it is built

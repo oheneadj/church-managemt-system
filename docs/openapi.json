@@ -2185,6 +2185,45 @@
                 "security": []
             }
         },
+        "/v1/exports/members": {
+            "post": {
+                "operationId": "exports.members",
+                "summary": "Runs QueueMemberExportAction for this request and returns the JsonResponse",
+                "tags": [
+                    "QueueMemberExport"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExportMembersRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`ExportQueuedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExportQueuedResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/webhooks/whatsapp": {
             "post": {
                 "operationId": "webhooks.whatsapp.receive",
@@ -4424,6 +4463,49 @@
                     "reason"
                 ],
                 "title": "EraseMemberRequest"
+            },
+            "ExportMembersRequest": {
+                "type": "object",
+                "description": "Validates a request for the member list as a CSV. It takes the filters of the member list (`GET /members`) and nothing\nelse: the file is always in name order and holds everyone the filters find, so the sort and the page size do not apply.",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/MemberStatus"
+                    },
+                    "gender": {
+                        "$ref": "#/components/schemas/Gender"
+                    },
+                    "educational_level": {
+                        "$ref": "#/components/schemas/EducationalLevel"
+                    },
+                    "department_id": {
+                        "type": "string"
+                    },
+                    "family_id": {
+                        "type": "string"
+                    },
+                    "search": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "title": "ExportMembersRequest"
+            },
+            "ExportQueuedResource": {
+                "type": "object",
+                "properties": {
+                    "export_id": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string",
+                        "const": "Export queued. You will receive a download link by email when it is ready."
+                    }
+                },
+                "required": [
+                    "export_id",
+                    "message"
+                ],
+                "title": "ExportQueuedResource"
             },
             "FamilyCollection": {
                 "type": "array",

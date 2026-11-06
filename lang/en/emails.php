@@ -23,6 +23,17 @@ return [
         'summary' => 'Email with a :purpose (the code is not stored)',
     ],
 
+    // Sent when a CSV export of personal data is ready (D-064). It holds a link that works for a short time, so the log keeps
+    // only this summary, never the link.
+    'export_ready' => [
+        'subject' => 'Your :what export for :church is ready',
+        'intro' => 'The :what export you asked for is ready.',
+        'download' => 'Download the file',
+        'valid_for' => 'The link works for :duration and the file is deleted after :days days. Keep it safe: it lists people\'s contact details.',
+        'ignore' => 'If you did not ask for this export, tell your church admin.',
+        'summary' => 'Email with the download link for a :what export (the link is not stored)',
+    ],
+
     // Sent after a person chooses a password that is on a public breach list (D-054). It never repeats the password.
     'breached' => [
         'subject' => 'Please choose a new password for :church',

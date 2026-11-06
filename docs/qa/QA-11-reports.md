@@ -82,22 +82,23 @@
 ### CSV Exports
 
 ### TC-11-09 — Member CSV export — async flow
-**Action:** `POST /api/v1/exports/members`
+**Action:** `POST /api/v1/exports/members` (optionally with the filters of `GET /members`)
 **Expected:**
-- Response: `202 { "export_id": "ulid", "message": "Export queued. You will receive a download link via SMS when ready." }` (an `exports` table to track it is added with stories 5.8 and 5.9, D-039 point 6)
-- Background job dispatched to `exports` queue
-- Once complete: CSV uploaded to R2
-- Admin receives SMS: "Your member export is ready. Download it here: [signed URL]"
-- Signed URL is time-limited (1 hour)
+- Response `202 { "export_id": "ulid", "message": "Export queued. You will receive a download link by email when it is ready." }` (D-064: email, not SMS)
+- An `exports` row (status `queued`) records who asked, the filters and when; a job is queued on the `exports` queue, nothing is built in the request
+- Once complete the row is `completed` with `row_count`, the CSV is in private storage at `churches/{church_id}/exports/{export_id}/members-{date}.csv`
+- The staff member who asked is emailed a signed link that works for 1 hour; the message log keeps a summary and never the link
+- Running the job again does nothing; a job that fails for good marks the export `failed` and sends nothing
 
 ### TC-11-10 — Member CSV content
 **Action:** Download and inspect the members CSV
 **Expected:**
-- Headers: `id, first_name, last_name, phone, email, status, gender, date_of_birth, department, family, joined_date, educational_level`
-- All 50 active members present (inactive excluded unless requested)
-- Phone numbers in E.164 format
-- Dates in `YYYY-MM-DD` format
-- National ID NOT exported (PII — excluded by design)
+- Headers: `id, member_number, first_name, last_name, phone, email, status, gender, date_of_birth, department, family, joined_date, educational_level`
+- Members in name order; the same default as the list (prospects and active members; other statuses only when `status` is asked for)
+- Phone numbers in E.164 format; dates in `YYYY-MM-DD` format; several departments joined with `; `
+- National ID, address, landmark and pastoral notes NOT exported (PII — excluded by design)
+- A text starting with `=`, `+`, `-` or `@` has a leading `'` (the phone column excepted)
+- Another church's members and removed members are never in the file
 
 ### TC-11-11 — Contribution CSV export
 **Action:** `POST /api/v1/exports/contributions` with the same `from` and `to` filters as the list (`2026-10-01`, `2026-10-31`)
@@ -108,12 +109,12 @@
 - Amounts are GHS values (not pesewas)
 
 ### TC-11-12 — Export rate limit
-**Action:** Submit 6 export requests within one hour
-**Expected:** The 6th request returns `429 { "message": "You can export at most 5 times per hour." }`
+**Action:** Submit 6 member export requests within one hour as the same staff member
+**Expected:** The 6th request returns `429 { "message": "You can export at most 5 times per hour." }` with `Retry-After`; another staff member is not limited; after the hour it works again
 
 ### TC-11-13 — Export download link expires
 **Action:** Wait for the signed URL to expire (1 hour) and click the link
-**Expected:** `403` or redirect to an expired link page — file is not publicly accessible indefinitely
+**Expected:** `403` or redirect to an expired link page — file is not publicly accessible indefinitely. The file itself is deleted after 7 days (`exports:prune-files`), the `exports` record stays.
 
 ### TC-11-14 — Export for church with no data
 **Action:** Request a member export for a brand-new church with no members

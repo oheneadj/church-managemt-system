@@ -13,6 +13,7 @@ use App\Scopes\ChurchScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Eloquent implementation of the member queries.
@@ -25,9 +26,28 @@ class EloquentMemberRepository implements MemberRepositoryInterface
      */
     public function paginate(ListMembersDTO $filters): LengthAwarePaginator
     {
+        return $this->directory($filters)->with('departments:id,name')->paginate($filters->perPage);
+    }
+
+    /**
+     * Every member the same filters find, a few at a time, with their departments and family, for the CSV export. Nothing is
+     * held in memory except the pieces being read.
+     */
+    public function forExport(ListMembersDTO $filters, int $chunkSize): LazyCollection
+    {
+        return $this->directory($filters)->with(['departments:id,name', 'family:id,name'])->lazy($chunkSize);
+    }
+
+    /**
+     * The members this viewer may see, narrowed and ordered by the filters. The list and the export share it, so the file
+     * holds what the screen showed.
+     *
+     * @return Builder<Member>
+     */
+    private function directory(ListMembersDTO $filters): Builder
+    {
         return Member::query()
             ->visibleTo($filters->viewer)
-            ->with('departments:id,name')
             ->when($filters->status !== null, fn (Builder $q) => $q->where('status', $filters->status?->value))
             ->when($filters->status === null && $filters->search === null, fn (Builder $q) => $q->whereIn('status', array_column(MemberStatus::inDefaultDirectory(), 'value')))
             ->when($filters->gender !== null, fn (Builder $q) => $q->where('gender', $filters->gender?->value))
@@ -37,8 +57,7 @@ class EloquentMemberRepository implements MemberRepositoryInterface
             ->when($filters->search !== null, fn (Builder $q) => $q->search((string) $filters->search))
             ->orderBy($filters->sort, $filters->direction === 'desc' ? 'desc' : 'asc')
             ->orderBy('first_name')
-            ->orderBy('id')
-            ->paginate($filters->perPage);
+            ->orderBy('id');
     }
 
     /**

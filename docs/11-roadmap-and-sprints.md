@@ -146,7 +146,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 5.5 | Attendance trends report endpoint | Backend | 1 | Done: `GET /reports/attendance`, by week (default) or by service; weeks 1 to 52 |
 | 5.6 | Giving trends report endpoint | Backend | 1 | Done: `GET /reports/giving`, monthly with a split by fund and a summary against the months before; totals only |
 | 5.7 | Member growth report endpoint | Backend | 1 | Done: `GET /reports/members`, monthly new, lost, net and active total, read from the change history (D-063) |
-| 5.8 | Export members (CSV, async, SMS download link) | Backend | 2 | |
+| 5.8 | Export members (CSV, async, emailed download link) | Backend | 2 | Done: `POST /exports/members`, built on the `exports` queue, 1-hour signed link by email (D-064) |
 | 5.9 | Export contributions (CSV, async) | Backend | 1 | |
 | 5.10 | Dashboard home page (React) — role-specific summary cards | Frontend | 4 | |
 | 5.11 | Broadcast compose page (React) — SMS + WhatsApp | Frontend | 3 | Recipient preview + credit estimate |

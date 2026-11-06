@@ -42,6 +42,7 @@ churches
         └── small_group_members (pivot, v2)
   └── message_logs
   └── webhook_logs
+  └── exports
   └── sms_credit_ledger
   └── visitor_records
   └── audit_logs
@@ -495,6 +496,28 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 | `updated_at` | TIMESTAMP | No | |
 
 **Index:** `(church_id, message_type, created_at)`, `(church_id, status)`
+
+---
+
+### `exports`
+
+One row for each CSV export a staff member asked for (D-064). It is the trail that personal data was exported, by whom and when.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `requested_by` | CHAR(26) | No | FK → users: who asked |
+| `type` | VARCHAR(30) | No | `ExportType`: members. (Contributions arrive with story 5.9.) |
+| `status` | VARCHAR(30) | No | `ExportStatus`: queued, processing, completed, failed. Default: `queued` |
+| `filters` | JSON | Yes | The filters sent, as sent. Forgotten when a cancelled church is purged (a search can hold a name). |
+| `row_count` | INT | Yes | Rows in the file, set when it is ready |
+| `file_path` | VARCHAR(500) | Yes | The private storage path, never a link. Null once the file is deleted. |
+| `completed_at` | TIMESTAMP | Yes | |
+| `file_deleted_at` | TIMESTAMP | Yes | When the nightly clean-up deleted the file; the row stays |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, requested_by, created_at)`, `(status, completed_at)`
 
 ---
 
