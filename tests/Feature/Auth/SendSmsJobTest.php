@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Enums\MessageStatus;
 use App\Enums\RecipientType;
 use App\Exceptions\SmsRejectedException;
@@ -23,7 +23,7 @@ function sampleSms(Church $church): OutboundSms
 it('sends through the provider and logs the redacted message as sent', function (): void {
     $church = Church::factory()->create();
     $provider = Mockery::mock(SmsProvider::class);
-    $provider->shouldReceive('send')->once()->withArgs(fn (OutboundSms $sms, string $key): bool => $sms->phone === '+233244123456' && $sms->message === 'Your code is 123456' && $key !== '')->andReturn(new SmsReceipt);
+    $provider->shouldReceive('send')->once()->withArgs(fn (OutboundSms $sms, string $key): bool => $sms->phone === '+233244123456' && $sms->message === 'Your code is 123456' && $key !== '')->andReturn(new ProviderReceipt);
 
     (new SendSmsJob(sampleSms($church)))->handle($provider, app(MessageLogRepositoryInterface::class), app(CircuitBreaker::class));
 
@@ -49,7 +49,7 @@ it('declares retry settings and a timeout', function (): void {
 
 it('logs a sign-up code that belongs to no church, and no church can see it', function (): void {
     $provider = Mockery::mock(SmsProvider::class);
-    $provider->shouldReceive('send')->once()->andReturn(new SmsReceipt);
+    $provider->shouldReceive('send')->once()->andReturn(new ProviderReceipt);
     $sms = new OutboundSms(null, '+233244300001', 'Your code is 123456', 'onboarding_otp', RecipientType::Applicant, null, '[otp redacted]');
 
     (new SendSmsJob($sms))->handle($provider, app(MessageLogRepositoryInterface::class), app(CircuitBreaker::class));
@@ -64,7 +64,7 @@ it('logs a sign-up code that belongs to no church, and no church can see it', fu
 it('keeps the provider reference and the safe parts of its reply in the log', function (): void {
     $church = Church::factory()->create();
     $provider = Mockery::mock(SmsProvider::class);
-    $provider->shouldReceive('send')->once()->andReturn(new SmsReceipt('ref-123', ['status' => 'queued', 'credits' => 1]));
+    $provider->shouldReceive('send')->once()->andReturn(new ProviderReceipt('ref-123', ['status' => 'queued', 'credits' => 1]));
 
     (new SendSmsJob(sampleSms($church)))->handle($provider, app(MessageLogRepositoryInterface::class), app(CircuitBreaker::class));
 
@@ -76,10 +76,10 @@ it('sends every retry of one message with the same key, and a different key for 
     $church = Church::factory()->create();
     $keys = [];
     $provider = Mockery::mock(SmsProvider::class);
-    $provider->shouldReceive('send')->andReturnUsing(function (OutboundSms $sms, string $key) use (&$keys): SmsReceipt {
+    $provider->shouldReceive('send')->andReturnUsing(function (OutboundSms $sms, string $key) use (&$keys): ProviderReceipt {
         $keys[] = $key;
 
-        return new SmsReceipt;
+        return new ProviderReceipt;
     });
 
     $job = new SendSmsJob(sampleSms($church));

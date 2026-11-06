@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Models\MessageLog;
 
 /**
@@ -27,7 +27,7 @@ interface MessageLogRepositoryInterface
     /**
      * Records that the provider accepted the message.
      */
-    public function markSent(MessageLog $log, SmsReceipt $receipt): MessageLog;
+    public function markSent(MessageLog $log, ProviderReceipt $receipt): MessageLog;
 
     /**
      * Records that the message failed for good.

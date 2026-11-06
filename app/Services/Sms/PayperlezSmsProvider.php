@@ -6,7 +6,7 @@ namespace App\Services\Sms;
 
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Exceptions\SmsRejectedException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
@@ -31,7 +31,7 @@ final class PayperlezSmsProvider implements SmsProvider
      * @throws SmsRejectedException when PayPerlez refuses the message for good
      * @throws RequestException when the failure is temporary (network, rate limit, PayPerlez down), so the job retries
      */
-    public function send(OutboundSms $sms, string $idempotencyKey): SmsReceipt
+    public function send(OutboundSms $sms, string $idempotencyKey): ProviderReceipt
     {
         $response = $this->client($idempotencyKey)->post('/sms/messages', [
             'sender_id' => config('services.payperlez.sender_id'),
@@ -47,7 +47,7 @@ final class PayperlezSmsProvider implements SmsProvider
             $this->reject($response);
         }
 
-        return new SmsReceipt(
+        return new ProviderReceipt(
             reference: $response->json('data.reference'),
             response: $this->safeParts($response),
         );

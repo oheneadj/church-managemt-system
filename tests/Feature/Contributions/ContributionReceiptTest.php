@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Actions\Contributions\SendContributionReceiptAction;
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Enums\CreditLedgerType;
 use App\Enums\MemberStatus;
 use App\Enums\MessageStatus;
@@ -63,10 +63,10 @@ beforeEach(function (): void {
     $this->texts = new ArrayObject;
     $texts = $this->texts;
     $provider = Mockery::mock(SmsProvider::class);
-    $provider->shouldReceive('send')->andReturnUsing(function (OutboundSms $sms) use ($texts): SmsReceipt {
+    $provider->shouldReceive('send')->andReturnUsing(function (OutboundSms $sms) use ($texts): ProviderReceipt {
         $texts->append($sms);
 
-        return new SmsReceipt('ref-'.count($texts));
+        return new ProviderReceipt('ref-'.count($texts));
     });
     app()->instance(SmsProvider::class, $provider);
 });

@@ -6,8 +6,8 @@ use App\Actions\SmsCredits\RefundSmsCreditsAction;
 use App\Actions\SmsCredits\ReserveSmsCreditsAction;
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
+use App\DTOs\ProviderReceipt;
 use App\DTOs\SmsCredits\SmsCreditChange;
-use App\DTOs\SmsReceipt;
 use App\Enums\CreditLedgerType;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
@@ -135,7 +135,7 @@ describe('the text job', function (): void {
     }
 
     it('pays for a church text, sends it and marks the log row sent', function (): void {
-        providerThat(fn () => new SmsReceipt('ref-9', ['status' => 'queued']));
+        providerThat(fn () => new ProviderReceipt('ref-9', ['status' => 'queued']));
 
         SendSmsJob::dispatchSync(paidSms($this->church, $this->log));
 
@@ -147,10 +147,10 @@ describe('the text job', function (): void {
     it('does not send, and fails the log row, when the church cannot pay', function (): void {
         $this->church->update(['sms_credits' => 0]);
         $sent = false;
-        providerThat(function () use (&$sent): SmsReceipt {
+        providerThat(function () use (&$sent): ProviderReceipt {
             $sent = true;
 
-            return new SmsReceipt;
+            return new ProviderReceipt;
         });
 
         try {
@@ -177,7 +177,7 @@ describe('the text job', function (): void {
     });
 
     it('does not charge again when the job is run a second time', function (): void {
-        providerThat(fn () => new SmsReceipt);
+        providerThat(fn () => new ProviderReceipt);
         $sms = paidSms($this->church, $this->log);
 
         SendSmsJob::dispatchSync($sms);
@@ -187,7 +187,7 @@ describe('the text job', function (): void {
     });
 
     it('takes no credits for a text the platform pays for, such as a sign-in code', function (): void {
-        providerThat(fn () => new SmsReceipt);
+        providerThat(fn () => new ProviderReceipt);
         $code = new OutboundSms($this->church->id, '+233244123456', 'Your code is 123456', 'otp', RecipientType::User, null, '[otp redacted]');
 
         SendSmsJob::dispatchSync($code);

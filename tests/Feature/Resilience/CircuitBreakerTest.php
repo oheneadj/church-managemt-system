@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Enums\MessageStatus;
 use App\Enums\RecipientType;
 use App\Exceptions\SmsRejectedException;
@@ -157,7 +157,7 @@ describe('the SMS job', function (): void {
         $this->circuit->pause('sms');
         $this->circuit->resume('sms');
         [$job] = smsJobWithQueue($this->sms);
-        $this->provider->shouldReceive('send')->once()->andReturn(new SmsReceipt);
+        $this->provider->shouldReceive('send')->once()->andReturn(new ProviderReceipt);
 
         $job->handle($this->provider, $this->logs, $this->circuit);
 

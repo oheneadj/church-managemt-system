@@ -7,8 +7,8 @@ namespace App\Jobs;
 use App\Actions\SmsCredits\RefundSmsCreditsAction;
 use App\Contracts\SmsProvider;
 use App\DTOs\OutboundSms;
+use App\DTOs\ProviderReceipt;
 use App\DTOs\SmsCredits\SmsCreditChange;
-use App\DTOs\SmsReceipt;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
 use App\Exceptions\SmsRejectedException;
@@ -120,7 +120,7 @@ class SendSmsJob implements ShouldQueue
      * Writes the outcome to the message log: onto the row made when the text was queued, or, for a text with none (a
      * code), as a new line.
      */
-    private function record(MessageLogRepositoryInterface $logs, MessageStatus $status, ?SmsReceipt $receipt = null): void
+    private function record(MessageLogRepositoryInterface $logs, MessageStatus $status, ?ProviderReceipt $receipt = null): void
     {
         $existing = $this->sms->messageLogId === null ? null : $logs->find($this->sms->messageLogId);
 

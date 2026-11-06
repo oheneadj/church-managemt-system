@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\DTOs\SmsReceipt;
+use App\DTOs\ProviderReceipt;
 use App\Enums\MessageStatus;
 use App\Models\MessageLog;
 use App\Scopes\ChurchScope;
@@ -33,7 +33,7 @@ class EloquentMessageLogRepository implements MessageLogRepositoryInterface
     /**
      * Records that the provider accepted the message.
      */
-    public function markSent(MessageLog $log, SmsReceipt $receipt): MessageLog
+    public function markSent(MessageLog $log, ProviderReceipt $receipt): MessageLog
     {
         $log->update(['status' => MessageStatus::Sent, 'provider_reference' => $receipt->reference, 'provider_response' => $receipt->response, 'sent_at' => now()]);
 
