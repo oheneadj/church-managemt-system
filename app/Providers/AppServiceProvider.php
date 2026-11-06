@@ -171,6 +171,12 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(config('limits.uploads_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
+        // Staff sign-in by email (D-054): guessing passwords and checking emailed codes are limited per address and church.
+        // The limit on how many codes are emailed is counted only when one is sent, inside EmailCodeRequestLimiter.
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(config('limits.login_attempts_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
+
+        RateLimiter::for('login-verify', fn (Request $request) => Limit::perMinute(config('limits.login_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
+
         RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(config('limits.otp_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
     }
 

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\AccountDeactivatedException;
 use App\Exceptions\CheckinOnlyOnServiceDayException;
 use App\Exceptions\ChurchSlugTakenException;
 use App\Exceptions\ContributionAlreadyVoidedException;
 use App\Exceptions\FieldRuleException;
+use App\Exceptions\InvalidCredentialsException;
 use App\Exceptions\InvalidOtpException;
 use App\Exceptions\MemberNumberPrefixMissingException;
 use App\Exceptions\ServiceHasRecordsException;
@@ -56,6 +58,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // but are not written to the log as errors and not sent to the error monitor.
         $exceptions->dontReport([
             InvalidOtpException::class,
+            InvalidCredentialsException::class,
+            AccountDeactivatedException::class,
             TooManyOtpAttemptsException::class,
             ChurchSlugTakenException::class,
             FieldRuleException::class,

@@ -177,7 +177,7 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-> **Decided (D-054), not built yet.** Staff sign in with email, password and a code emailed to them. The built endpoints `auth/otp/request` and `auth/otp/verify` are replaced by the four below; until then the old phone and SMS code sign-in still runs. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
+> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login` and `auth/login/verify` below. **Still to come:** `auth/password/forgot` and `auth/password/reset`, the React sign-in screen, and the sign-up form's email and password. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
 ### Sign in, step 1: password
 ```
@@ -187,7 +187,7 @@ POST /api/v1/auth/login
 
 **Response `200`:** `{ "message": "Code sent", "expires_in": 600 }`: the password was right and a 6-digit code was emailed. **Errors:** `422` `{"message": "Invalid email or password"}` for an unknown email, a wrong password or a user with no password (one message for all, nothing is sent); `429` after 5 wrong passwords for an email (15-minute lockout).
 
-**Rate limit:** 1 code per email per minute and 5 per hour, 20 per IP per hour (D-054; emailing a code is a cost-triggering action).
+**Rate limits (D-054):** emailing a code is a cost-triggering action, so it has its own limit, counted only when a code is really sent (a mistyped password never uses it up): 1 code per email per minute and 5 per hour, 20 per IP per hour, each `429` with a `Retry-After`. Guessing passwords is limited to 20 attempts a minute per IP, and 5 wrong passwords lock that email for 15 minutes (`429`, `Retry-After: 900`). The limits are per church.
 
 ### Sign in, step 2: emailed code
 ```
@@ -1247,7 +1247,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 
 | Endpoint group | Limit |
 |---|---|
-| `POST /api/v1/auth/login` (D-054) | 1 code per email per minute, 5 per hour, 20 per IP per hour; 5 wrong passwords per email, then a 15-minute lockout |
+| `POST /api/v1/auth/login` (D-054) | 20 attempts per minute per IP; 1 code per email per minute, 5 per hour, 20 per IP per hour (counted when a code is sent); 5 wrong passwords per email, then a 15-minute lockout |
 | `POST /api/v1/auth/login/verify` (D-054) | 5 wrong codes per email, then a 15-minute lockout; 10 calls per minute per IP |
 | `POST /api/v1/auth/password/forgot` and `/reset` (D-054) | same as `auth/login` |
 | `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |

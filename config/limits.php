@@ -18,6 +18,15 @@ return [
     'otp_request_per_hour_per_ip' => 20,
     'otp_verify_per_minute_per_ip' => 10,
 
+    // Staff sign-in by email (D-054). Emailing a code costs a little and can be abused, so it is limited apart from the
+    // password check: one code a minute and five an hour for one email, 20 an hour from one address. Guessing passwords
+    // is limited per address, and checking an emailed code is limited like the text codes.
+    'login_code_per_minute' => 1,
+    'login_code_per_hour' => 5,
+    'login_code_per_hour_per_ip' => 20,
+    'login_attempts_per_minute_per_ip' => 20,
+    'login_verify_per_minute_per_ip' => 10,
+
     // A member checking in by QR code is texted a code, which costs money, so it is limited per phone and service, and per IP address.
     'checkin_otp_per_minute' => 1,
     'checkin_otp_per_hour' => 5,

@@ -88,12 +88,28 @@ it('cuts off a session when the staff member is deactivated', function (): void 
     asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')->assertUnauthorized();
 });
 
-it('cuts off a session when the phone number changes', function (): void {
+it('cuts off a session when the email changes (D-054: the phone number is only a contact number)', function (): void {
+    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+
+    $this->user->update(['email' => 'changed@example.com']);
+
+    asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')->assertUnauthorized();
+});
+
+it('cuts off a session when the password changes', function (): void {
+    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+
+    $this->user->forceFill(['password' => 'a brand new passphrase'])->save();
+
+    asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')->assertUnauthorized();
+});
+
+it('keeps a session when only the phone number changes', function (): void {
     [, $cookie] = signInFromBrowser($this->church, '+233244123456');
 
     $this->user->update(['phone' => '+233200111222']);
 
-    asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')->assertUnauthorized();
+    asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')->assertOk();
 });
 
 it('does not honour a church B session on church A', function (): void {

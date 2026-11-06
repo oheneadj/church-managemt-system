@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Cuts off a signed-in staff member the moment their access changes. Tokens are deleted by
  * UserObserver; browser sessions cannot be deleted from a user id, so this checks on every request
- * that the user is still active and still has the phone number the session was opened with.
+ * that the user is still active and still has the email and password the session was opened with.
  */
 class EnsureStaffIsCurrent
 {
@@ -23,7 +23,7 @@ class EnsureStaffIsCurrent
     public function __construct(private readonly AuthSessionService $sessions) {}
 
     /**
-     * Ends the session with a 401 when the staff member was deactivated or changed phone number.
+     * Ends the session with a 401 when the staff member was deactivated or changed email or password.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -32,7 +32,7 @@ class EnsureStaffIsCurrent
 
         $revoked = $user === null
             || ! $user->is_active
-            || ($session !== null && $this->sessions->phoneChangedSinceSignIn($user, $session));
+            || ($session !== null && $this->sessions->credentialsChangedSinceSignIn($user, $session));
 
         if ($revoked) {
             if ($session !== null) {

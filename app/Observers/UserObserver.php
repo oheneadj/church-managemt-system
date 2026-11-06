@@ -9,18 +9,19 @@ use App\Models\User;
 /**
  * Ends a staff member's sessions the moment their access changes.
  * docs/05-data-safety.md and docs/15-security.md require this: deactivating a user, or changing
- * their phone number, must kill existing tokens immediately rather than waiting for them to expire.
+ * their email or password (D-054), must kill existing tokens immediately rather than waiting for them to expire.
  */
 class UserObserver
 {
     /**
-     * Ends the staff member's tokens when they are deactivated or change phone number.
+     * Ends the staff member's tokens when they are deactivated or change email or password. The phone number is only a
+     * contact number now and does not matter.
      */
     public function updated(User $user): void
     {
         $lostAccess = $user->wasChanged('is_active') && ! $user->is_active;
 
-        if ($lostAccess || $user->wasChanged('phone')) {
+        if ($lostAccess || $user->wasChanged(['email', 'password'])) {
             $user->tokens()->delete();
         }
     }

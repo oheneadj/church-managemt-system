@@ -11,9 +11,11 @@ use App\Http\Controllers\Api\V1\Attendance\RecordAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\RequestQrCheckinOtpController;
 use App\Http\Controllers\Api\V1\Attendance\ShowMemberAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\ShowQrServiceController;
+use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
+use App\Http\Controllers\Api\V1\Auth\VerifyLoginController;
 use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
 use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
 use App\Http\Controllers\Api\V1\Contributions\ShowContributionController;
@@ -78,6 +80,9 @@ Route::domain(config('tenancy.base_domain'))->prefix('webhooks')->name('webhooks
 
 Route::middleware('tenant')->group(function (): void {
     // Public: sign-in. Both are rate limited; the request limiter also protects SMS cost.
+    // Staff sign-in by email, password and an emailed code (D-054). The cost limit on emailed codes is inside the action.
+    Route::post('auth/login', LoginController::class)->middleware('throttle:login')->name('auth.login');
+    Route::post('auth/login/verify', VerifyLoginController::class)->middleware('throttle:login-verify')->name('auth.login.verify');
     Route::post('auth/otp/request', RequestOtpController::class)->middleware('throttle:otp-request')->name('auth.otp.request');
     Route::post('auth/otp/verify', VerifyOtpController::class)->middleware('throttle:otp-verify')->name('auth.otp.verify');
 
