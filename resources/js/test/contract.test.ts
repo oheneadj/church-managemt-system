@@ -20,6 +20,7 @@ import {
     service,
     serviceAttendance,
     serviceSchedule,
+    staffMember,
     visitor,
 } from '@/test/fixtures';
 
@@ -68,6 +69,26 @@ describe('the sample data the app is tested with matches the API spec', () => {
 
     it('GET /services/{service}/offering-report: what one service received, with formatted amounts', () => {
         expect(problemsWith({ data: offeringReport() }, 'get', '/v1/services/{service}/offering-report', 200)).toEqual([]);
+    });
+
+    it('GET /staff: a page of staff', () => {
+        expect(
+            problemsWith(
+                pageOf([
+                    staffMember(),
+                    staffMember({ id: 'staff-2', is_active: false, last_login_at: null, extra_permissions: ['members.export'] }),
+                ]),
+                'get',
+                '/v1/staff',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('POST /staff, PUT /staff/{staff} and PATCH /staff/{staff}/status: the staff member afterwards', () => {
+        expect(problemsWith({ data: staffMember() }, 'post', '/v1/staff', 201)).toEqual([]);
+        expect(problemsWith({ data: staffMember({ name: 'Akosua Owusu' }) }, 'put', '/v1/staff/{staff}', 200)).toEqual([]);
+        expect(problemsWith({ data: staffMember({ is_active: false }) }, 'patch', '/v1/staff/{staff}/status', 200)).toEqual([]);
     });
 
     it('GET /pledges: a page of pledges with their progress', () => {

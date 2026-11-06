@@ -43,6 +43,10 @@ export const router = createBrowserRouter([
                         Component: AppLayout,
                         children: [
                             {
+                                path: ROUTES.STAFF,
+                                lazy: async () => ({ Component: (await import('@/pages/StaffPage')).StaffPage }),
+                            },
+                            {
                                 path: ROUTES.DASHBOARD,
                                 lazy: async () => ({ Component: (await import('@/pages/DashboardPage')).DashboardPage }),
                             },

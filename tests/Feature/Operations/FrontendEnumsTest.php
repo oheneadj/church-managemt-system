@@ -14,6 +14,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PledgeStatus;
 use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
+use App\Enums\StaffRole;
 use App\Enums\Weekday;
 
 // The React app mirrors some enums in resources/js/constants/enums.ts and permissions.ts (agreement section 13:
@@ -24,9 +25,10 @@ function frontendOptions(string $constant): array
 {
     $source = (string) file_get_contents(base_path('resources/js/constants/enums.ts'));
     preg_match('/export const '.$constant.' = \[(.*?)\] as const/s', $source, $block);
-    preg_match_all("/value: '([^']+)', label: '([^']+)'/", $block[1] ?? '', $pairs, PREG_SET_ORDER);
+    // A label with an apostrophe is written with double quotes, which is how Prettier keeps it readable.
+    preg_match_all("/value: '([^']+)', label: (?:'([^']+)'|\"([^\"]+)\")/", $block[1] ?? '', $pairs, PREG_SET_ORDER);
 
-    return array_column($pairs, 2, 1);
+    return array_column(array_map(fn (array $pair): array => [$pair[1], $pair[3] ?? $pair[2]], $pairs), 1, 0);
 }
 
 it('mirrors each enum exactly, values and labels', function (string $constant, string $enum): void {
@@ -49,6 +51,8 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['PAYMENT_METHODS', PaymentMethod::class],
     ['CHECKIN_METHODS', CheckInMethod::class],
     ['PLEDGE_STATUSES', PledgeStatus::class],
+    ['STAFF_ROLES', StaffRole::class],
+    ['STAFF_PERMISSIONS', StaffPermission::class],
 ]);
 
 it('only names permissions that exist', function (): void {

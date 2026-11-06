@@ -1,5 +1,6 @@
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
+import type { StaffMember } from '@/types/staff';
 import type {
     AttendanceRecord,
     AttendanceRecorded,
@@ -286,6 +287,20 @@ export function pledge(overrides: Partial<Pledge> = {}): Pledge {
         status: 'active',
         status_label: 'Active',
         created_at: '2026-10-25T09:31:00+00:00',
+        ...overrides,
+    };
+}
+
+export function staffMember(overrides: Partial<StaffMember> = {}): StaffMember {
+    return {
+        id: 'staff-1',
+        name: 'Akosua Mensah',
+        email: 'akosua@example.com',
+        phone: '+233244123456',
+        roles: ['pastor'],
+        extra_permissions: [],
+        is_active: true,
+        last_login_at: '2026-11-05T14:30:00+00:00',
         ...overrides,
     };
 }

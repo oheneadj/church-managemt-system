@@ -123,8 +123,38 @@ export const PLEDGE_STATUSES = [
     { value: 'lapsed', label: 'Lapsed' },
 ] as const satisfies readonly Option<string>[];
 
+export const STAFF_ROLES = [
+    { value: 'church-admin', label: 'Church admin' },
+    { value: 'pastor', label: 'Pastor' },
+    { value: 'finance-secretary', label: 'Finance secretary' },
+    { value: 'department-head', label: 'Department head' },
+    { value: 'youth-pastor', label: 'Youth pastor' },
+] as const satisfies readonly Option<string>[];
+
+export const STAFF_PERMISSIONS = [
+    { value: 'members.view', label: 'View members' },
+    { value: 'members.edit', label: 'Add and edit members' },
+    { value: 'members.deactivate', label: 'Deactivate members' },
+    { value: 'members.export', label: 'Export the member list' },
+    { value: 'members.data-export', label: "Export one member's full personal record" },
+    { value: 'members.erase', label: "Erase a member's personal data" },
+    { value: 'milestones.view', label: 'View member milestones' },
+    { value: 'giving.summary', label: 'View giving summaries' },
+    { value: 'giving.view', label: 'View individual gifts' },
+    { value: 'giving.record', label: 'Record giving' },
+    { value: 'giving.edit', label: 'Void and correct giving' },
+    { value: 'giving.export', label: 'Export giving' },
+    { value: 'sms.send', label: 'Send messages' },
+    { value: 'reports.view', label: 'View reports' },
+    { value: 'reports.export', label: 'Export reports' },
+    { value: 'church.settings', label: 'Change church settings' },
+    { value: 'staff.manage', label: 'Manage staff' },
+    { value: 'fund-types.manage', label: 'Manage fund types' },
+] as const satisfies readonly Option<string>[];
+
 export type ServiceType = (typeof SERVICE_TYPES)[number]['value'];
 export type Weekday = (typeof WEEKDAYS)[number]['value'];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]['value'];
+export type StaffRole = (typeof STAFF_ROLES)[number]['value'];
 export type PledgeStatus = (typeof PLEDGE_STATUSES)[number]['value'];
 export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];

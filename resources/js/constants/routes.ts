@@ -20,6 +20,7 @@ export const ROUTES = {
     CHECKIN: (token: string) => `/checkin/${token}`,
     GIVING: '/giving',
     PLEDGES: '/pledges',
+    STAFF: '/staff',
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;

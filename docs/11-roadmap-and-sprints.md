@@ -153,7 +153,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 5.12 | Message log page (React) | Frontend | 2 | |
 | 5.13 | Reports page (React) — attendance + giving charts | Frontend | 3 | |
 | 5.14 | Settings page (React) — church profile, service defaults, comms prefs | Frontend | 2 | |
-| 5.15 | Role management page (React) — invite staff, assign roles | Frontend | 2 | |
+| 5.15 | Role management page (React) — invite staff, assign roles | Frontend | 2 | Done: `/staff` for the church admin (menu link shown only with `staff.manage`): invite, change name, phone and role, deactivate (asks first) and reactivate; extra permissions are shown but not edited here |
 | 5.16 | Member portal (React) — OTP login, own profile + giving history | Frontend | 3 | Separate layout |
 | 5.17 | Error pages (401, 403, 404, 500) | Frontend | 1 | |
 | 5.18 | Performance audit — fix any endpoint > 500ms | Full-stack | 3 | Query optimisation |
