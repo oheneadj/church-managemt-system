@@ -152,7 +152,7 @@ public function update(User $user, Member $member): bool
 
 ## Authentication & Permissions
 
-**Auth:** Laravel Sanctum personal access tokens. OTP-only (no passwords). Phone number is the identity.
+**Auth:** Laravel Sanctum. Staff: email + password, then a 6-digit code emailed to them (D-054, decided but not built; the built sign-in is still phone and SMS code until it ships). Members and the check-ins: phone number + SMS code, no passwords.
 
 **Roles:** `church-admin`, `pastor`, `finance-secretary`, `department-head`, `youth-pastor`
 

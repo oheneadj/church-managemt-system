@@ -23,7 +23,7 @@
 ### Authentication & Token Security
 
 ### TC-12-01 — Expired token rejected
-**Action:** Use a Sanctum token that is older than the configured expiry (e.g. 30 days)
+**Action:** Use a bearer token older than its expiry (8 hours, `otp.staff_token_hours`; set `expires_at` in the past in the test)
 **Expected:** `401 { "message": "Unauthenticated." }`
 
 ### TC-12-02 — Revoked token rejected
@@ -52,8 +52,8 @@
 **Expected:** Second verification fails — OTP was deleted from Redis on first use
 
 ### TC-12-06 — OTP rate limit
-**Action:** Request OTP for the same phone 4 times in under 1 minute
-**Expected:** After 3 requests, the 4th returns `429 { "message": "Please wait before requesting another OTP." }`
+**Action:** Request OTP for the same phone twice in under 1 minute, and then 6 times in an hour (waiting a minute between)
+**Expected:** The second request in a minute returns `429` with a `Retry-After` header; the 6th in an hour returns `429` (1 a minute and 5 an hour per phone, D-025)
 
 ---
 

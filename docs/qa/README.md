@@ -18,7 +18,7 @@
 
 | # | Plan | Scope | Key Risks Covered |
 |---|---|---|---|
-| QA-01 | [Authentication](QA-01-authentication.md) | OTP flow, lockout, token expiry | R9 (data breach), D-012 (OTP-only auth) |
+| QA-01 | [Authentication](QA-01-authentication.md) | Staff email + password + emailed code (D-054, rewrite pending), SMS codes for members, lockout, token expiry | R9 (data breach), D-012, D-054 |
 | QA-02 | [Multi-Tenancy Isolation](QA-02-multi-tenancy.md) | Cross-church data leakage | R9, D-007 (single DB) |
 | QA-03 | [Church Onboarding](QA-03-onboarding.md) | Signup, slug, Paystack subaccount | R5 (admin turnover) |
 | QA-04 | [Member Management](QA-04-members.md) | CRUD, lifecycle, search, photo | Sprint 2 exit criteria |

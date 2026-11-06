@@ -173,33 +173,32 @@ This middleware runs before all authenticated routes. If the subdomain doesn't m
 
 ---
 
-### Authentication — Sanctum + OTP
+### Authentication — Sanctum, password and emailed code
 
-**Staff authentication flow:**
+**Staff authentication flow (D-054, decided, not built; the built flow is still phone and SMS code):**
 
 ```
-1. POST /api/auth/otp/request  { phone: "0244123456" }
-   → Generates 6-digit OTP, stores hashed in cache (10 min TTL)
-   → Sends OTP via the active SmsProvider (PayPerlez by default, D-020)
+1. POST /api/v1/auth/login        { email, password }
+   → Checks the password; if right, generates a 6-digit code, stores it hashed in Redis (10 min TTL)
+   → Emails the code (Laravel Mail, `critical` queue)
 
-2. POST /api/auth/otp/verify   { phone: "0244123456", otp: "382910" }
-   → Verifies OTP hash
-   → Creates Sanctum personal access token
-   → Returns: { token, user, church, permissions[] }
+2. POST /api/v1/auth/login/verify { email, code }
+   → Verifies the code hash
+   → Browser: signs in by cookie session. Other clients: 8-hour Sanctum bearer token (D-027)
+   → Returns: { user, church } (and token for non-browser clients)
 
-3. All subsequent requests:
-   Authorization: Bearer <token>
-   → Middleware validates token + resolves church
+3. All subsequent requests: session cookie, or Authorization: Bearer <token>
+   → Middleware resolves the church first, then the user
 ```
 
-**Member authentication flow:** Identical, but returns a limited token scoped to member-only routes.
+**Member authentication flow:** phone number and SMS code only, no password. No member portal is built yet; the QR and WhatsApp check-ins use the same kind of code.
 
 **OTP security rules:**
 - 6 digits, numeric only
 - 10-minute expiry
 - Hashed with `bcrypt` before storage in Redis
 - Max 5 attempts per phone per window; 15-minute lockout after failure
-- Rate limited at the route level: 5 requests per phone per minute
+- Rate limited at the route level: 1 request per phone per minute and 5 per hour (D-025)
 
 ---
 

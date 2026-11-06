@@ -100,14 +100,16 @@ Staff accounts. One user belongs to one church. Members are a separate table.
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
 | `name` | VARCHAR(255) | No | |
-| `phone` | VARCHAR(20) | No | Used for OTP login |
-| `email` | VARCHAR(255) | Yes | For system notifications |
+| `phone` | VARCHAR(20) | No | Contact number and SMS notices. No longer the sign-in key (D-054) |
+| `email` | VARCHAR(255) | No | The sign-in identity and where the sign-in and reset codes are sent (D-054) |
+| `password` | VARCHAR(255) | Yes | Hashed with Laravel's hasher; never returned or logged. Null until the user sets it through the reset flow (D-054) |
+| `email_verified_at` | TIMESTAMP | Yes | Set by the first successful emailed code |
 | `is_active` | BOOLEAN | No | Default: true |
 | `last_login_at` | TIMESTAMP | Yes | |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Indexes:** `(church_id, phone)` unique — no duplicate phone per church
+**Indexes:** `(church_id, phone)` unique — no duplicate phone per church; `(church_id, lower(email))` unique where `deleted_at` is null — the sign-in identity
 
 **Spatie tables (auto-created):** `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
 

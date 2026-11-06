@@ -64,7 +64,7 @@ Data handling practices are disclosed in plain language in the Terms of Service 
 - Session tokens (Sanctum personal access tokens)
 
 **Classification: Authentication credentials**
-**Retention: Session tokens invalidated on logout or after 30 days of inactivity**
+**Retention: A browser session ends on logout or after 8 hours of inactivity; a bearer token expires 8 hours after sign-in (D-027)**
 
 ### Communication Logs
 - SMS/WhatsApp message content, recipients, timestamps, delivery status
@@ -116,7 +116,7 @@ All traffic is HTTPS. Let's Encrypt wildcard certificate managed by Coolify. HTT
 ## Access Controls
 
 ### Authentication
-- Staff use phone number + OTP (no passwords — no password resets, no "forgot password" flows to attack)
+- Staff use email + password and a code emailed to them (D-054); passwords are hashed, at least 12 characters, and a reset ends every session
 - Members use phone number + OTP
 - OTPs are 6 digits, expire in 10 minutes, single-use
 - Failed OTP attempts: 5 allowed, then 15-minute lockout

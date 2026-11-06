@@ -233,7 +233,7 @@ A "significant decision" is one that:
 ### D-012 — OTP-only authentication (no passwords)
 **Date:** October 2026
 **Decided by:** Lead Engineer + Product Owner
-**Status:** Active
+**Status:** Staff sign-in superseded by D-054 (email + password + emailed code). Members, QR check-in and the WhatsApp check-in still use phone and SMS codes, no passwords.
 
 **Decision:** All users (staff and members) authenticate via phone number + OTP sent by SMS. There are no passwords in the system.
 
@@ -962,6 +962,29 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 **Alternatives considered:** A separate `payment_attempts` table. Rejected: it adds a table and a second place where a payment lives, for no gain at this scale.
 
 **Consequences:** One migration adds the column with a default of `completed` (safe on a live system) and an index on `(status, created_at)`. Every existing query that sums or lists gifts, the offering report, the pledge recalculation and the receipt listener must filter on `completed` when the digital slice is built.
+
+---
+
+### D-054 — Staff sign in with email, password and a code sent by email
+**Date:** October 2026
+**Decided by:** Product Owner (chose the agreement's rule over D-012 for staff, and chose an emailed second code)
+**Status:** Decided, not built. The built sign-in still uses phone + SMS code until this ships. Supersedes D-012 for staff; amends D-025, D-027 and D-037.
+
+**Decision:**
+1. **Staff identity is email + password.** The Universal agreement (section 16) says admin and staff authentication is always email and password. `users` gets `password` (hashed with Laravel's default hasher, never logged or returned), `email` becomes required and unique per church (while not deleted), and `email_verified_at` is set by the first successful code. `users.phone` stays as a contact number and for SMS notices; it is no longer the identity or the sign-in key.
+2. **Every staff sign-in has a second step: a 6-digit code emailed to the user.** `POST /auth/login` checks the password and, if right, emails the code; `POST /auth/login/verify` checks the code and then signs in (cookie for the web app, 8-hour bearer token for other clients, exactly as D-027). A wrong email or password is one generic `422` ("Invalid email or password") and sends nothing. The code follows the existing OTP rules: bcrypt hash in Redis keyed by church and a hash of the email, 10 minutes, single use, 5 wrong tries then a 15-minute lockout.
+3. **Password rules:** at least 12 characters and not in a known breach list (`Password::min(12)->uncompromised()`), no composition rules. Five wrong passwords for an email lock it for 15 minutes.
+4. **Forgotten password:** `POST /auth/password/forgot` (always `200`) emails a reset code; `POST /auth/password/reset` takes the code and the new password, ends every session and token of that user, and answers `204`. The same flow sets the first password for a staff member who has none.
+5. **Cost and abuse limits** (agreement section 16): emailing a code is limited to 1 per minute and 5 per hour per email and 20 per hour per IP, separate from the verify and password limits. Codes are queued on the `critical` queue like SMS codes.
+6. **Starting a church (D-037):** the form also takes `admin_email` and a password. The phone is still proven by an SMS code before anything is created; the email is proven by the first sign-in code.
+7. **What does not change:** members, the QR check-in and the WhatsApp check-in keep phone and SMS codes with no passwords (agreement: customer-facing auth may use phone + OTP). Deactivating a user or changing their email or password still signs them out on the next request (`EnsureStaffIsCurrent`).
+8. **Prerequisite:** the platform has no email sender yet (D-037 point 7). The Resend driver behind Laravel Mail, and the `critical` queue for it, must be built before this ships.
+
+**Rationale:** The agreement ranks above project overrides and states the rule without exception for staff. A password plus an emailed code also removes the dependence of staff sign-in on the SMS provider being up (the circuit breaker in D-043 can pause SMS).
+
+**Alternatives considered:** Keep OTP-only as a recorded override (rejected by the Product Owner). Password only (rejected: the owner wants the second step). Emailed code only on a new device (rejected: needs device tracking).
+
+**Consequences:** New migration for `password` and `email_verified_at` and the unique email index; new login, reset and limiter code; QA-01 and QA-12 rewritten; the React login screen changes from phone to email, password, code. Nothing is in production, so no existing users need migrating; staff created before the change set their first password through the reset flow.
 
 ---
 

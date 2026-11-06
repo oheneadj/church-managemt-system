@@ -8,7 +8,7 @@
 
 - Your church's official name
 - Your bank account details (for receiving digital offerings)
-- Your phone number (this is your login — no password required)
+- Your email address and a password (you sign in with these, then a code we email you; D-054), plus your phone number (we text you a code to prove it is yours when you start the church)
 - 10 minutes
 
 ---
@@ -67,7 +67,7 @@ Enter their name, phone number, and role:
 | **Department Head** | View members and attendance |
 | **Youth Pastor** | View members and attendance |
 
-They'll receive an SMS with a link to your church's URL. When they visit, they enter their phone number to log in — no password needed.
+They'll receive an SMS with a link to your church's URL. When they visit, they sign in with their email and password, then a code we email them.
 
 > **Recommendation:** Add at least two church admins (yourself + one other trusted person) so you're not locked out if you change your phone number.
 

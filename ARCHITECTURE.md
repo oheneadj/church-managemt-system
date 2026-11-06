@@ -72,7 +72,7 @@ Value objects (`app/ValueObjects`, for example `PhoneNumber`) replace primitive 
 
 ## Authentication
 
-- Phone number plus a one-time code; there are no passwords (D-012). `RequestOtpAction` and `VerifyOtpAction` use `OtpService`, which stores only a bcrypt hash, per church, in Redis, with lockout.
+- Staff: email, password and a code emailed to them (D-054, decided, not built; today's code still signs staff in with phone and an SMS code, D-012). Members and the check-ins: phone and SMS code, no passwords. `RequestOtpAction` and `VerifyOtpAction` use `OtpService`, which stores only a bcrypt hash, per church, in Redis, with lockout.
 - The **web app** is signed in by an httpOnly, host-only session cookie (Sanctum stateful, D-027). Other clients get an 8-hour bearer token from the same endpoint. `AuthSessionService` starts and ends both, through `VerifyOtpAction` and `LogoutAction`.
 - `EnsureStaffIsCurrent` ends a session the moment a user is deactivated or changes phone number; `UserObserver` deletes their tokens.
 - Cost-triggering endpoints (sending an SMS) have their own rate limits (D-025).

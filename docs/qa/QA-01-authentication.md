@@ -2,7 +2,9 @@
 
 **Scope:** OTP request and verification, lockout, token expiry, logout, phone number enumeration prevention.
 **Sprint:** 1 (foundation auth scaffold)
-**Risk:** R9 (data breach), D-012 (OTP-only auth decision)
+**Risk:** R9 (data breach), D-012 (OTP-only auth decision, superseded for staff by D-054)
+
+> **Rewrite pending (D-054).** Staff sign-in becomes email + password + emailed code. The cases below describe phone + SMS code; they stay valid for members, the QR check-in and the code rules (hash, 10 minutes, 5 tries, lockout), and are rewritten for staff when the change is built.
 
 ---
 

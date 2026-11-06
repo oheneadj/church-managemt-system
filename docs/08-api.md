@@ -151,6 +151,8 @@ POST /api/v1/onboarding/churches
   "member_number_prefix": "VCI",
   "admin_name": "Kofi Mensah",
   "admin_phone": "+233244300001",
+  "admin_email": "kofi@example.com",
+  "password": "a long passphrase",
   "otp": "123456"
 }
 ```
@@ -175,44 +177,25 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-### Request OTP
-```
-POST /api/v1/auth/otp/request
-```
+> **Decided (D-054), not built yet.** Staff sign in with email, password and a code emailed to them. The built endpoints `auth/otp/request` and `auth/otp/verify` are replaced by the four below; until then the old phone and SMS code sign-in still runs. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
-**Body:**
-```json
-{
-  "phone": "+233244123456"
-}
+### Sign in, step 1: password
 ```
-
-**Response `200`:**
-```json
-{
-  "message": "OTP sent",
-  "expires_in": 600
-}
+POST /api/v1/auth/login
 ```
+**Body:** `{ "email": "akosua@example.com", "password": "..." }`
 
-**Rate limit:** 1 request per phone per minute and 5 per hour (D-025). Always returns `200`, whether or not the phone belongs to a staff member, so numbers cannot be enumerated.
+**Response `200`:** `{ "message": "Code sent", "expires_in": 600 }`: the password was right and a 6-digit code was emailed. **Errors:** `422` `{"message": "Invalid email or password"}` for an unknown email, a wrong password or a user with no password (one message for all, nothing is sent); `429` after 5 wrong passwords for an email (15-minute lockout).
 
----
+**Rate limit:** 1 code per email per minute and 5 per hour, 20 per IP per hour (D-054; emailing a code is a cost-triggering action).
 
-### Verify OTP
+### Sign in, step 2: emailed code
 ```
-POST /api/v1/auth/otp/verify
+POST /api/v1/auth/login/verify
 ```
+**Body:** `{ "email": "akosua@example.com", "code": "382910" }`
 
-**Body:**
-```json
-{
-  "phone": "+233244123456",
-  "otp": "382910"
-}
-```
-
-**Response `200`:** A browser request from the church's own page is signed in by cookie and the response has **no `token` or `token_type`**. Any other client gets:
+**Response `200`:** the same as before. A browser request from the church's own page is signed in by cookie and the response has **no `token` or `token_type`**. Any other client gets:
 ```json
 {
   "token": "01j...|abc123...",
@@ -220,6 +203,7 @@ POST /api/v1/auth/otp/verify
   "user": {
     "id": "ulid",
     "name": "Akosua Mensah",
+    "email": "akosua@example.com",
     "phone": "+233244123456",
     "roles": ["finance-secretary"],
     "permissions": ["giving.record", "giving.summary", "members.view", "reports.view", "reports.export"]
@@ -233,10 +217,14 @@ POST /api/v1/auth/otp/verify
   }
 }
 ```
+**Errors:** `422` `{"message": "Invalid code"}` (wrong, used or expired, one message); `429` after 5 wrong codes (15-minute lockout); `10` calls a minute per IP.
 
-**Errors:**
-- `422` — OTP invalid or expired
-- `429` — Too many failed attempts (15-minute lockout)
+### Forgot password
+```
+POST /api/v1/auth/password/forgot      { "email": "akosua@example.com" }
+POST /api/v1/auth/password/reset       { "email": "...", "code": "382910", "password": "...", "password_confirmation": "..." }
+```
+`forgot` always answers `200` (so emails cannot be listed) and emails a reset code only to a real staff member; same limits as step 1. `reset` answers `204`, ends every session and token of that user, and `422` for a wrong code or a password that is shorter than 12 characters or in a known breach list. The same flow sets the first password for a staff member who has none.
 
 ---
 
@@ -1240,8 +1228,9 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 
 | Endpoint group | Limit |
 |---|---|
-| `POST /api/v1/auth/otp/request` | 1 per phone per minute, 5 per phone per hour, 20 per IP per hour |
-| `POST /api/v1/auth/otp/verify` | 5 wrong codes per phone, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/auth/login` (D-054) | 1 code per email per minute, 5 per hour, 20 per IP per hour; 5 wrong passwords per email, then a 15-minute lockout |
+| `POST /api/v1/auth/login/verify` (D-054) | 5 wrong codes per email, then a 15-minute lockout; 10 calls per minute per IP |
+| `POST /api/v1/auth/password/forgot` and `/reset` (D-054) | same as `auth/login` |
 | `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |
 | `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
