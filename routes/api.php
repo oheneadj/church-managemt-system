@@ -58,6 +58,9 @@ use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\ListServiceSchedulesController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\StoreServiceScheduleController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\UpdateServiceScheduleController;
+use App\Http\Controllers\Api\V1\Staff\InviteStaffController;
+use App\Http\Controllers\Api\V1\Staff\ListStaffController;
+use App\Http\Controllers\Api\V1\Staff\UpdateStaffController;
 use App\Http\Controllers\Api\V1\Webhooks\ReceiveWhatsAppWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\VerifyWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -138,6 +141,10 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('pledges', StorePledgeController::class)->middleware('idempotent')->name('pledges.store');
         Route::get('pledges/{pledge}', ShowPledgeController::class)->name('pledges.show');
         Route::put('pledges/{pledge}', UpdatePledgeController::class)->name('pledges.update');
+
+        Route::get('staff', ListStaffController::class)->name('staff.index');
+        Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');
+        Route::put('staff/{staff}', UpdateStaffController::class)->name('staff.update');
 
         Route::get('fund-types', ListFundTypesController::class)->name('fund-types.index');
         Route::post('fund-types', StoreFundTypeController::class)->name('fund-types.store');

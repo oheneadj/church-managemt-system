@@ -991,7 +991,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-055 — The staff permission matrix, and who may export what
 **Date:** October 2026
 **Decided by:** Product Owner (the two export rules marked), Lead Engineer (the rest, to remove conflicts between QA-10, docs/02, docs/03, docs/08 and the code)
-**Status:** Active. The export permissions are built; the staff-management endpoints are designed, not built.
+**Status:** Active. The export permissions are built. Staff management is built for list, invite and change of name, phone and role, including the last-admin rule for a role change; deactivation and per-person permissions are designed, not built.
 
 **Decision:**
 1. **Member list export (`members.export`)** is held by the church admin and, by default, the finance secretary, and the church admin can grant or take it away per person once per-person permissions exist. *(Product Owner.)* This follows docs/02 and docs/03; QA-10 and D-030 said church admin only.

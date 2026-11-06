@@ -563,6 +563,101 @@
                 "security": []
             }
         },
+        "/v1/staff": {
+            "post": {
+                "operationId": "staff.store",
+                "summary": "Runs InviteStaffAction for this request and returns the JsonResponse",
+                "tags": [
+                    "InviteStaff"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteStaffRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StaffResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "get": {
+                "operationId": "staff.index",
+                "summary": "Runs ListStaffAction for this request and returns the StaffCollection",
+                "tags": [
+                    "ListStaff"
+                ],
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StaffCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StaffCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}/qr": {
             "get": {
                 "operationId": "services.qr",
@@ -3071,6 +3166,58 @@
                 }
             }
         },
+        "/v1/staff/{staff}": {
+            "put": {
+                "operationId": "staff.update",
+                "summary": "Runs UpdateStaffAction for this request and returns the StaffResource",
+                "tags": [
+                    "UpdateStaff"
+                ],
+                "parameters": [
+                    {
+                        "name": "staff",
+                        "in": "path",
+                        "required": true,
+                        "description": "The staff ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StaffResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}/photo": {
             "post": {
                 "operationId": "members.photo",
@@ -4124,6 +4271,35 @@
                     "timestamp"
                 ],
                 "title": "HealthReportResource"
+            },
+            "InviteStaffRequest": {
+                "type": "object",
+                "description": "Validates an invitation: name, email, phone and role, with a new email and phone.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/StaffRole"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "name",
+                    "phone",
+                    "role",
+                    "email"
+                ],
+                "title": "InviteStaffRequest"
             },
             "LoginCodeSentResource": {
                 "type": "object",
@@ -6286,6 +6462,78 @@
                 ],
                 "additionalProperties": {},
                 "title": "SignInResource"
+            },
+            "StaffCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/StaffResource"
+                },
+                "title": "StaffCollection"
+            },
+            "StaffResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "extra_permissions": {
+                        "type": "array",
+                        "description": "permissions granted on top of the role",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "last_login_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "phone",
+                    "roles",
+                    "extra_permissions",
+                    "is_active",
+                    "last_login_at"
+                ],
+                "title": "StaffResource"
+            },
+            "StaffRole": {
+                "type": "string",
+                "description": "The five staff roles (docs/06). The value is the role name stored by Spatie Permission.\n",
+                "enum": [
+                    "church-admin",
+                    "pastor",
+                    "finance-secretary",
+                    "department-head",
+                    "youth-pastor"
+                ],
+                "title": "StaffRole"
             },
             "StaffSummaryResource": {
                 "type": "object",

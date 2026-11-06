@@ -182,6 +182,22 @@ describe('fund types', function (): void {
     });
 });
 
+describe('staff', function (): void {
+    it('list, invite and update', function (): void {
+        Queue::fake();
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/staff'), 'GET', '/v1/staff', 200);
+
+        $invited = $this->postJson(CHURCH_HOST.'/staff', ['name' => 'Akosua Mensah', 'email' => 'akosua@example.com', 'phone' => '0244123456', 'role' => 'pastor'], ['Idempotency-Key' => 'contract-staff-1']);
+        assertMatchesSpec($invited, 'POST', '/v1/staff', 201);
+
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/staff/'.$invited->json('data.id'), ['name' => 'Akosua Owusu']), 'PUT', '/v1/staff/{staff}', 200);
+    });
+
+    it('a validation error follows the documented 422 shape', function (): void {
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/staff', [], ['Idempotency-Key' => 'contract-staff-2']), 'POST', '/v1/staff', 422);
+    });
+});
+
 describe('families and departments', function (): void {
     it('families list', fn () => assertMatchesSpec($this->getJson(CHURCH_HOST.'/families'), 'GET', '/v1/families', 200));
 

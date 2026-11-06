@@ -70,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('pledge', Pledge::class);
         Route::model('service_schedule', ServiceSchedule::class);
         Route::model('service', Service::class);
+        Route::model('staff', User::class);
 
         // The interactive API docs are open locally and, everywhere else, only for staff who may change church settings.
         Gate::define('viewApiDocs', fn (?User $user = null): bool => $user?->can(StaffPermission::ChurchSettings->value) === true);
@@ -123,6 +124,9 @@ class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('limits.api_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+
+        // Inviting staff emails a code to a stranger's address, so it is limited for the whole church (numbers in config/limits.php).
+        RateLimiter::for('staff-invite', fn (Request $request) => Limit::perHour(config('limits.staff_invites_per_hour'))->by($this->tenantKey($request)));
 
         // Starting a church texts a code to a stranger's phone, so it is limited per number and per IP address.
         RateLimiter::for('onboarding-otp', function (Request $request): array {

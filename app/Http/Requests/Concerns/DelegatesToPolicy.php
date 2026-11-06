@@ -12,6 +12,7 @@ use App\Models\Member;
 use App\Models\Pledge;
 use App\Models\Service;
 use App\Models\ServiceSchedule;
+use App\Models\User;
 use LogicException;
 
 /**
@@ -68,6 +69,16 @@ trait DelegatesToPolicy
         $department = $this->route('department');
 
         return $department instanceof Department ? $department : throw new LogicException('This route has no department.');
+    }
+
+    /**
+     * The staff member that route binding found for this request.
+     */
+    public function staffMember(): User
+    {
+        $staff = $this->route('staff');
+
+        return $staff instanceof User ? $staff : throw new LogicException('This route has no staff member.');
     }
 
     /**

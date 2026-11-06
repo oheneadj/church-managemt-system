@@ -29,6 +29,9 @@ return [
     'checkin_otp_per_hour_per_ip' => 20,
     'checkin_verify_per_minute_per_ip' => 10,
 
+    // Inviting staff emails a code to a stranger's address, so it is limited per church. The church admin does it rarely.
+    'staff_invites_per_hour' => 20,
+
     // A write that carries an Idempotency-Key is remembered for this long, so a retry gets the first answer back. Two requests with one key wait for each other for up to the lock time.
     'idempotency_ttl_minutes' => 1440,
     'idempotency_lock_seconds' => 10,

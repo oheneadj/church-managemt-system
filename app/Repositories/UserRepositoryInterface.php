@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\StaffRole;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
  * Every query on staff users lives behind this contract.
@@ -33,6 +35,43 @@ interface UserRepositoryInterface
      * Marks the staff member's email as proven, if it is not already.
      */
     public function markEmailVerified(User $user): User;
+
+    /**
+     * One page of the current church's staff, by name, with their roles and extra permissions. Deactivated staff are included.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function paginate(int $perPage): LengthAwarePaginator;
+
+    /**
+     * Whether a staff member of the current church already has this email (capitals do not matter), apart from the one given.
+     */
+    public function emailTaken(string $email, ?string $exceptUserId = null): bool;
+
+    /**
+     * Whether a staff member of the current church already has this phone number, apart from the one given.
+     */
+    public function phoneTaken(string $phone, ?string $exceptUserId = null): bool;
+
+    /**
+     * Changes a staff member's own fields (name and phone) and returns them.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function update(User $user, array $attributes): User;
+
+    /**
+     * Gives the staff member this one role, in place of any other, and returns them with their roles loaded.
+     */
+    public function changeRole(User $user, StaffRole $role): User;
+
+    /**
+     * The ids of the current church's active staff who hold this role, locked until the transaction ends, so two changes
+     * made at the same moment cannot both remove the last one.
+     *
+     * @return list<string>
+     */
+    public function lockActiveWithRole(StaffRole $role): array;
 
     /**
      * Adds a staff user.

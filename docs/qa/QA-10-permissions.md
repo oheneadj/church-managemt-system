@@ -99,7 +99,8 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 |---|---|---|---|---|---|
 | GET /church/settings | ✅ | ✅ | ✅ | ✅ | ✅ |
 | PUT /church/settings (`church.settings`) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| GET, POST /staff, PUT /staff/{id}, PATCH /staff/{id}/status, PUT /staff/{id}/permissions (`staff.manage`, *not built*) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| GET /staff, POST /staff, PUT /staff/{id} (`staff.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| PATCH /staff/{id}/status, PUT /staff/{id}/permissions (`staff.manage`, *not built*) | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -130,8 +131,8 @@ Each cell in the matrix above is one test case. For each cell:
 **Action:** Log in as a Pastor. Open a member and change their status.
 **Expected:** only Prospect and Active are offered; Inactive, Transferred, Deceased and Archived are not.
 
-### TC-10-N+2 — Role and permission changes by the church admin (*not built*)
-**Action:** Church admin changes a user's role from `finance-secretary` to `pastor`
+### TC-10-N+2 — Role and permission changes by the church admin (the role change is built; permissions and deactivation are *not built*)
+**Action:** Church admin changes a user's role from `finance-secretary` to `pastor` (`PUT /staff/{id}`)
 **Expected:**
 - The user's next request already uses the new permissions (permissions are read on every request; no token re-issue)
 - The giving permissions are gone and `GET /contributions` is `403`

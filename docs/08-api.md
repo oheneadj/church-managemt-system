@@ -1201,7 +1201,7 @@ Permission: church.settings (church admin)
 
 ## Staff
 
-> **Designed (D-055), not built.** All need `staff.manage` (church admin). A staff member of another church is `404`.
+> **D-055.** All need `staff.manage` (church admin). A staff member of another church is `404`. **Built:** list, invite and change name, phone and role. **Designed, not built:** deactivate or reactivate, and per-person permissions.
 
 ```
 GET   /api/v1/staff                         paginated; each: id, name, email, phone, roles, extra permissions, is_active, last_login_at
@@ -1210,7 +1210,7 @@ PUT   /api/v1/staff/{id}                    any of name, phone, role
 PATCH /api/v1/staff/{id}/status             { "is_active": false }
 PUT   /api/v1/staff/{id}/permissions        { "grant": ["members.export"], "revoke": ["sms.send"] }
 ```
-`POST` creates the user without a password and emails an invitation code; the person sets their password through `auth/password/reset` (D-054). A role or permission change applies on the user's next request. Deactivating a user ends their sessions and tokens at once (`EnsureStaffIsCurrent`). Deactivating, or removing the church admin role from, the last active church admin is `409`. `422` for a role that does not exist or an email already used by a staff member of this church. Every change is written to the change history.
+`POST` creates the user without a password, with the given role, and emails an invitation code (`201`; the response is the staff member). The email is made lowercase, the phone is put into international form, and both must not already belong to staff of this church (`422`; a deleted staff member's are free again). The code is a password reset code, so the person enters it in `auth/password/reset` to choose their first password (same attempt limit and lockout, D-054); it expires after 10 minutes, and "Forgot password" sends a new one. Invitations are limited to 20 an hour per church (`429`, `Retry-After`). `PUT` changes any of name, phone and role; the email cannot be changed here. A role or permission change applies on the user's next request. Deactivating a user ends their sessions and tokens at once (`EnsureStaffIsCurrent`). Deactivating, or removing the church admin role from, the last active church admin is `409`. `422` for a role that does not exist or an email already used by a staff member of this church. Every change is written to the change history.
 
 ---
 
@@ -1255,6 +1255,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 | `POST /api/v1/auth/login` (D-054) | 20 attempts per minute per IP; 1 code per email per minute, 5 per hour, 20 per IP per hour (counted when a code is sent); 5 wrong passwords per email, then a 15-minute lockout |
 | `POST /api/v1/auth/login/verify` (D-054) | 5 wrong codes per email, then a 15-minute lockout; 10 calls per minute per IP |
 | `POST /api/v1/auth/password/forgot` and `/reset` (D-054) | same as `auth/login` |
+| `POST /api/v1/staff` | 20 invitations per hour per church |
 | `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |
 | `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |

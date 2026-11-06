@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\StaffRole;
 use App\Models\User;
 use App\Scopes\ChurchScope;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Eloquent implementation of the staff user queries.
@@ -48,6 +51,66 @@ class EloquentUserRepository implements UserRepositoryInterface
         }
 
         return $user;
+    }
+
+    /**
+     * One page of the current church's staff, by name, with their roles and extra permissions.
+     */
+    public function paginate(int $perPage): LengthAwarePaginator
+    {
+        return User::query()->with(['roles', 'permissions'])->orderBy('name')->orderBy('id')->paginate($perPage);
+    }
+
+    /**
+     * Whether a staff member of the current church already has this email, apart from the one given.
+     */
+    public function emailTaken(string $email, ?string $exceptUserId = null): bool
+    {
+        return User::query()
+            ->whereRaw('lower(email) = ?', [mb_strtolower(trim($email))])
+            ->when($exceptUserId !== null, fn (Builder $query) => $query->whereKeyNot($exceptUserId))
+            ->exists();
+    }
+
+    /**
+     * Whether a staff member of the current church already has this phone number, apart from the one given.
+     */
+    public function phoneTaken(string $phone, ?string $exceptUserId = null): bool
+    {
+        return User::query()
+            ->where('phone', $phone)
+            ->when($exceptUserId !== null, fn (Builder $query) => $query->whereKeyNot($exceptUserId))
+            ->exists();
+    }
+
+    /**
+     * Changes a staff member's own fields and returns them.
+     */
+    public function update(User $user, array $attributes): User
+    {
+        $user->update($attributes);
+
+        return $user;
+    }
+
+    /**
+     * Gives the staff member this one role, in place of any other.
+     */
+    public function changeRole(User $user, StaffRole $role): User
+    {
+        $user->syncRoles([$role->value]);
+
+        return $user->load(['roles', 'permissions']);
+    }
+
+    /**
+     * The ids of the current church's active staff who hold this role, locked until the transaction ends.
+     */
+    public function lockActiveWithRole(StaffRole $role): array
+    {
+        $ids = User::query()->role($role->value)->where('is_active', true)->lockForUpdate()->pluck('id')->map(fn ($id): string => (string) $id);
+
+        return array_values($ids->all());
     }
 
     /**
