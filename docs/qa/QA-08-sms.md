@@ -157,6 +157,15 @@
 
 ---
 
+### TC-08-16 — Credit balance in the header (browser)
+**Action:** Sign in as a church admin, then as a finance secretary, and look at the header on any page. Set the church's credits to 1,250, then 50, then 51, then 0 and reload
+**Expected:**
+- "SMS credits" and the balance, written with thousands separators ("1,250"), are in the header for both roles
+- At 1,250 and at 51 there is no warning; at 50 and under it says **Running low** in words; at 0 it says **None left** and that gift receipts and other texts are not sent
+- Record a gift for a member with a phone and SMS on: the balance goes down by the receipt's credits within a minute, without a reload
+- The church admin sees a **Top up** button that opens a notice saying buying credits is coming soon, with one **Got it** button; the finance secretary sees no Top up button
+- At 375 px wide the header wraps and the page does not scroll sideways
+
 ## Pass / Fail Criteria
 
 TC-08-09 (credit block), TC-08-12 (zero credits block), TC-08-15 (graceful failure) are **P1**. TC-08-03 (receipt content) is critical for the product's value proposition.

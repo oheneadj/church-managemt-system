@@ -43,6 +43,9 @@ export const QUERY_KEYS = {
         qr: (id: string) => ['services', 'qr', id] as const,
         attendance: (id: string, page: number) => ['services', 'attendance', id, page] as const,
     },
+    church: {
+        credits: ['church', 'credits'] as const,
+    },
     departments: {
         all: ['departments'] as const,
     },

@@ -1103,6 +1103,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-061 — The SMS credit balance in the header (Sprint 4, story 4.18)
+**Date:** November 2026
+**Decided by:** Product Owner (what Top up does now, and the warning limit), Lead Engineer (the rest), from docs/02, D-004 and D-051
+**Status:** Active
+
+**Decision:**
+1. **The balance is in the header on every page for every signed-in role**, because everyone's work sends texts (gift receipts, check-ins) and a balance is not sensitive. It is a whole number written with thousands separators; it is a count, not money.
+2. **It warns in words, not colour alone.** At or under **50 credits** *(Product Owner)* it shows "Running low" (announced to screen readers); at none it shows "None left" and says gift receipts and other texts are not sent (D-051). The limit is one named value (`LOW_SMS_CREDITS`) and is a hint on screen only; the server charges and refuses by the real balance.
+3. **The balance stays fresh.** The session holds the balance from sign-in, which goes stale as receipts use credits, so the header shows that value at once and asks the server again (the "who am I" call) every minute while the page is open, when the window comes back into focus, and after a gift is recorded. If the server cannot be reached the last known balance stays on screen.
+4. **Top up is a button for staff who manage the church** (`church.settings`, the church admin), and until buying credits exists (story 5.4, Sprint 5) it opens a notice saying so and that the platform team can add credits meanwhile *(Product Owner)*. No dead link. When 5.4 ships, the notice is replaced by the bundle choice and payment (TC-08-13).
+5. **Left out on purpose:** the email to the church admin when credits run low (D-051, with billing), a credit history screen, and any change to how credits are charged.
+
+**Rationale:** The simplest display that tells a finance secretary or an admin before receipts stop going out, without building the purchase early.
+
+**Revisit when:** story 5.4 is built (replace the notice), the plan allocations are set (docs/12 Q4), or churches want the limit per plan.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

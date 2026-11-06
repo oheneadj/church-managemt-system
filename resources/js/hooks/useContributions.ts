@@ -25,6 +25,8 @@ function useRefreshAfterGiftChange() {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pledges.all }),
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.members.all }),
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.services.all }),
+            // A gift sends a receipt text, which uses credits.
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.church.credits }),
         ]);
 }
 

@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router';
+import { SmsCreditBalance } from '@/components/layout/SmsCreditBalance';
 import { Button } from '@/components/ui/button';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
@@ -56,8 +57,9 @@ export function AppLayout() {
                 </nav>
             </aside>
             <div className="flex flex-1 flex-col">
-                <header className="flex items-center justify-between border-b px-4 py-3 print:hidden">
+                <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 print:hidden">
                     <span className="text-sm text-muted-foreground">{userName}</span>
+                    <SmsCreditBalance />
                     <Button variant="outline" size="sm" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
                         Sign out
                     </Button>

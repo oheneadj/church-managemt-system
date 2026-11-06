@@ -15,6 +15,7 @@ export const PERMISSIONS = {
     GIVING_RECORD: 'giving.record',
     GIVING_EDIT: 'giving.edit',
     SMS_SEND: 'sms.send',
+    CHURCH_SETTINGS: 'church.settings',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
