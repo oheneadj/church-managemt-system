@@ -1,32 +1,15 @@
 import { z } from 'zod';
+import { amountField } from '@/components/Giving/amountField';
 import { GIFT_CASH_MAX, GIFT_PAST_DAY_TIME } from '@/constants/giving';
 import { dateBox } from '@/lib/dateBox';
 import type { ContributionInput } from '@/types/giving';
 import { dateTextToIso } from '@/utils/dateText';
-import { moneyToPesewas } from '@/utils/money';
 import { today } from '@/utils/today';
-
-const MOST_PESEWAS = moneyToPesewas(GIFT_CASH_MAX) ?? 0n;
 
 /** The checks on the record-a-gift form. The member is chosen apart from the form (a search box cannot sit inside it). */
 export const giftFormSchema = z.object({
     fund_type_id: z.string().min(1, 'Choose the fund'),
-    amount: z
-        .string()
-        .trim()
-        .superRefine((text, context) => {
-            const pesewas = moneyToPesewas(text);
-
-            if (text === '') {
-                context.addIssue({ code: 'custom', message: 'Enter the amount' });
-            } else if (pesewas === null) {
-                context.addIssue({ code: 'custom', message: 'Enter an amount in cedis, with at most two decimals' });
-            } else if (pesewas === 0n) {
-                context.addIssue({ code: 'custom', message: 'The amount must be more than 0' });
-            } else if (pesewas > MOST_PESEWAS) {
-                context.addIssue({ code: 'custom', message: `One gift can be at most ${GIFT_CASH_MAX}` });
-            }
-        }),
+    amount: amountField(GIFT_CASH_MAX, 'gift'),
     contributed_on: dateBox({
         required: 'Enter the date the gift was given',
         notAfter: { date: today, message: 'A gift cannot be dated in the future' },

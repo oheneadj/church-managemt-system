@@ -1068,6 +1068,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-059 — How the pledges page is built (Sprint 4, story 4.17)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04 Pledge Tracking, docs/08 Pledges, D-046, D-047, D-057 and QA-06 TC-06-14 to TC-06-16
+**Status:** Active
+
+**Decision:**
+1. **A page at `/pledges`** with a "Pledges" menu item for staff with `giving.view` (church admin and finance secretary; the pastor does not see individual pledges, D-047). Pledges are listed with those due soonest first, and the status and the fund filters and the page live in the address bar (D-036).
+2. **Each pledge shows its progress.** A labelled progress bar (a real `progressbar` with its percent in words), the status as a word with a colour behind it, and the paid, pledged and outstanding amounts exactly as the API formatted them. The browser adds up nothing.
+3. **Making and changing use one dialog.** "New pledge" (`giving.record`) needs the member (searched with the shared `MemberPicker`), the fund, what it is for, the amount and a target date of today or later. "Change" (`giving.edit`) shows the member and fund as words, because gifts are linked to them (D-047), and edits the description, amount and target date. A pledge saved again with its own old date is allowed even when that date has passed; moving it to another past date is not (docs/08). Everything missing is shown at once, including a missing member.
+4. **One amount check.** The gift form and the pledge form share `amountField`: exact whole-pesewa comparison against the largest amount, never a float (D-017). The status list is mirrored from the PHP enum and guarded by `FrontendEnumsTest`.
+5. **Left out on purpose:** a page for one pledge's gifts (the list already shows what is paid; the API has the gifts when a screen needs them), a delete (there is none: lower the amount to what was paid, D-047), and the pastor's campaign totals (Sprint 5 reports). Choosing the pledge a gift pays in the record-a-gift form is the next change (D-057).
+
+**Rationale:** The simplest screen that lets the finance secretary see who has promised what and how far each has got, built from the parts that already exist.
+
+**Revisit when:** the gift form gets its pledge choice, or churches ask for pledge reminders or campaign reports (D-047).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

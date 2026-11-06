@@ -18,6 +18,7 @@ export const ROUTES = {
     /** The public page a member lands on after scanning the QR code. The server builds the same path (config/attendance.php). */
     CHECKIN: (token: string) => `/checkin/${token}`,
     GIVING: '/giving',
+    PLEDGES: '/pledges',
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;

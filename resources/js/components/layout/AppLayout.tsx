@@ -14,6 +14,7 @@ const NAV_ITEMS: readonly { label: string; to: string; permission?: Permission }
     { label: 'Families', to: ROUTES.FAMILIES },
     { label: 'Services', to: ROUTES.SERVICES },
     { label: 'Giving', to: ROUTES.GIVING, permission: PERMISSIONS.GIVING_VIEW },
+    { label: 'Pledges', to: ROUTES.PLEDGES, permission: PERMISSIONS.GIVING_VIEW },
 ];
 
 /**

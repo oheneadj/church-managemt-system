@@ -4,7 +4,7 @@ import { CHURCH_URL } from './helpers/config';
 /** The narrowest screen the app supports: an iPhone SE (docs/10, Definition of Done). */
 const PHONE = { width: 375, height: 667 };
 
-const PAGES = ['/dashboard', '/members', '/families', '/services', '/giving'];
+const PAGES = ['/dashboard', '/members', '/families', '/services', '/giving', '/pledges'];
 
 test.describe('on a 375px phone', () => {
     test.use({ viewport: PHONE });

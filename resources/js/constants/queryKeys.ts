@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
     },
     pledges: {
         all: ['pledges'] as const,
+        list: (filters: { status: string; fund: string; page: number }) => ['pledges', 'list', filters] as const,
     },
     fundTypes: {
         all: ['fund-types'] as const,

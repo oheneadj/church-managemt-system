@@ -1,4 +1,4 @@
-import type { Contribution, FundType, OfferingReport, OfferingSection } from '@/types/giving';
+import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type {
     AttendanceRecord,
@@ -265,6 +265,27 @@ export function offeringReport(overrides: Partial<OfferingReport> = {}): Offerin
         },
         day_grand_total: '3150.00',
         day_grand_total_formatted: 'GHS 3,150.00',
+        ...overrides,
+    };
+}
+
+export function pledge(overrides: Partial<Pledge> = {}): Pledge {
+    return {
+        id: 'pledge-1',
+        member: { id: 'member-1', full_name: 'Emmanuel Mensah' },
+        fund_type: { id: 'fund-1', name: 'Building Fund' },
+        description: 'Building Fund 2026 pledge',
+        amount_pledged: '1000.00',
+        amount_pledged_formatted: 'GHS 1,000.00',
+        amount_paid: '300.00',
+        amount_paid_formatted: 'GHS 300.00',
+        amount_outstanding: '700.00',
+        amount_outstanding_formatted: 'GHS 700.00',
+        progress_percent: 30,
+        target_date: '2026-12-31',
+        status: 'active',
+        status_label: 'Active',
+        created_at: '2026-10-25T09:31:00+00:00',
         ...overrides,
     };
 }

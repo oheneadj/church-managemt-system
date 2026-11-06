@@ -206,6 +206,16 @@ Voided contribution does NOT appear in totals.
 - At 375 px wide the table fits without the page scrolling sideways
 - A pastor (giving.summary only) sees the same page; a department head gets "This report was not found." and no link
 
+### TC-06-20 — Pledges page (browser)
+**Action:** As a finance secretary, open **Pledges** from the menu, choose **New pledge**, search for a member, pick a fund, enter a description, an amount and a target date, and make the pledge
+**Expected:**
+- The pledge is in the list with its member, fund, due date, the status **Active**, a progress bar at 0% and "Paid GHS 0.00 of ..." as the server wrote it
+- With nothing filled in, the form shows every missing thing at once (member, fund, description, amount, date) and sends nothing
+- A target date in the past is refused before the server is asked; **Change** shows the member and fund as words and lets the amount, description and date be edited
+- Choosing a status or fund filter changes the address and returns to page 1; a status that does not exist in the address is ignored
+- A pastor does not see the Pledges menu item; a user with `giving.view` only sees no New pledge or Change buttons
+- At 375 px wide the page does not scroll sideways
+
 ## Pass / Fail Criteria
 
 TC-06-09 (webhook signature), TC-06-10 (idempotency), TC-06-11 (void), TC-06-13 (no deletion), and TC-06-17 (report accuracy) are **P0**. Any financial miscalculation or data integrity failure blocks the sprint.

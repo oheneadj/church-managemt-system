@@ -10,6 +10,7 @@ import {
     family,
     fundType,
     offeringReport,
+    pledge,
     qrCheckedIn,
     qrCode,
     member,
@@ -67,6 +68,25 @@ describe('the sample data the app is tested with matches the API spec', () => {
 
     it('GET /services/{service}/offering-report: what one service received, with formatted amounts', () => {
         expect(problemsWith({ data: offeringReport() }, 'get', '/v1/services/{service}/offering-report', 200)).toEqual([]);
+    });
+
+    it('GET /pledges: a page of pledges with their progress', () => {
+        expect(
+            problemsWith(
+                pageOf([pledge(), pledge({ id: 'pledge-2', status: 'fulfilled', status_label: 'Fulfilled', progress_percent: 100 })]),
+                'get',
+                '/v1/pledges',
+                200,
+            ),
+        ).toEqual([]);
+    });
+
+    it('POST /pledges: the pledge that was made', () => {
+        expect(problemsWith({ data: pledge() }, 'post', '/v1/pledges', 201)).toEqual([]);
+    });
+
+    it('PUT /pledges/{pledge}: the pledge after a change', () => {
+        expect(problemsWith({ data: pledge({ amount_pledged: '500.00' }) }, 'put', '/v1/pledges/{pledge}', 200)).toEqual([]);
     });
 
     it('GET /families/{family}: a family', () => {

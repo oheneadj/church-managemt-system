@@ -116,7 +116,15 @@ export const CHECKIN_METHODS = [
     { value: 'biometric', label: 'Biometric' },
 ] as const satisfies readonly Option<string>[];
 
+export const PLEDGE_STATUSES = [
+    { value: 'active', label: 'Active' },
+    { value: 'fulfilled', label: 'Fulfilled' },
+    { value: 'partial', label: 'Partial' },
+    { value: 'lapsed', label: 'Lapsed' },
+] as const satisfies readonly Option<string>[];
+
 export type ServiceType = (typeof SERVICE_TYPES)[number]['value'];
 export type Weekday = (typeof WEEKDAYS)[number]['value'];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]['value'];
+export type PledgeStatus = (typeof PLEDGE_STATUSES)[number]['value'];
 export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];

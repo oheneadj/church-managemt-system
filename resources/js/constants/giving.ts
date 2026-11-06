@@ -15,6 +15,12 @@ export const GIFT_CASH_MAX = '999999.99';
  */
 export const GIFT_PAST_DAY_TIME = 'T12:00:00Z';
 
+/** The most a single pledge may promise, in GHS, as exact text. Mirrors `giving.pledge_max`. */
+export const PLEDGE_MAX = '999999.99';
+
+/** The longest description a pledge may have. */
+export const PLEDGE_DESCRIPTION_MAX = 255;
+
 /** The order payment methods are listed in on the offering report: cash first, as in docs/04. */
 export const OFFERING_METHOD_ORDER = ['cash', 'momo', 'card', 'ussd'] as const satisfies readonly PaymentMethod[];
 

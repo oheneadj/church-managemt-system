@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/constants/enums';
+import type { PaymentMethod, PledgeStatus } from '@/constants/enums';
 
 /**
  * Shapes of the giving endpoints (docs/08-api.md, docs/openapi.json). Every amount is an exact decimal string with a
@@ -91,3 +91,44 @@ export interface ContributionFilters {
     voided: boolean;
     page: number;
 }
+
+/** A member's promise to give an amount to a fund by a date (docs/08, Pledges). Amounts are exact text with a `_formatted` sibling. */
+export interface Pledge {
+    id: string;
+    member: { id: string; full_name: string };
+    fund_type: { id: string; name: string };
+    description: string;
+    amount_pledged: string;
+    amount_pledged_formatted: string;
+    amount_paid: string;
+    amount_paid_formatted: string;
+    amount_outstanding: string;
+    amount_outstanding_formatted: string;
+    /** A whole number from 0 to 100; a pledge paid over stops at 100. */
+    progress_percent: number;
+    target_date: string;
+    status: PledgeStatus;
+    status_label: string;
+    created_at: string | null;
+}
+
+/** The pledge list's filters as they live in the address bar. An empty text means "no filter". */
+export interface PledgeFilters {
+    status: PledgeStatus | '';
+    fund: string;
+    page: number;
+}
+
+/** What the new-pledge form sends. */
+export interface PledgeInput {
+    member_id: string;
+    fund_type_id: string;
+    description: string;
+    /** An exact decimal in GHS, as typed. */
+    amount_pledged: string;
+    /** YYYY-MM-DD. */
+    target_date: string;
+}
+
+/** What the change-pledge form sends: the member and fund cannot change, because gifts are linked to them. */
+export type PledgeChange = Pick<PledgeInput, 'description' | 'amount_pledged' | 'target_date'>;

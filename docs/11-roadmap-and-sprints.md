@@ -125,7 +125,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 4.14 | Record cash contribution form (React) | Frontend | 2 | Done: a dialog on the Giving page (member search or anonymous, fund, amount, day, optional service, notes); D-057 |
 | 4.15 | Initiate MoMo payment flow (React) | Frontend | 3 | Paystack inline / redirect |
 | 4.16 | Sunday offering report page (React) — printable | Frontend | 2 | Done: `/services/:id/offering`, opened from the service page; print or save as PDF from the browser; D-058 |
-| 4.17 | Pledge management page (React) | Frontend | 2 | |
+| 4.17 | Pledge management page (React) | Frontend | 2 | Done: `/pledges` with filters, progress, New pledge and Change dialogs; D-059 |
 | 4.18 | SMS credit balance display + top-up link | Frontend | 1 | In settings or header |
 
 **Sprint 4 exit criteria:** A finance secretary can record cash contributions, initiate MoMo payments, view the Sunday offering report, and track pledges. Members receive SMS receipts. Paystack subaccount is live and receiving split payouts.
@@ -250,8 +250,8 @@ Blocked: [anything blocking me / none]
 | | 4.9 pledges (make, list, read, change), 4.10 the paid amount and status that follow the gifts and voids (recalculated, D-047), the daily `pledges:refresh` job |
 | | 4.12 Sunday offering report (by fund and payment method, voided gifts left out; gifts with no service reported with the day's first service; fund names kept on the gift, D-048) |
 | | 4.7 receipts (the `ContributionReceived` event and a queued listener that texts the member), and SMS credits charged for church-paid texts (D-051) |
-| Frontend | 4.13 gift list with filters and void, 4.14 record a cash gift (D-057), 4.16 offering report page (D-058) |
-| Next | The screens 4.17 pledges page and 4.18 SMS credit balance (4.15 waits with the digital payments) |
+| Frontend | 4.13 gift list with filters and void, 4.14 record a cash gift (D-057), 4.16 offering report page (D-058), 4.17 pledges page (D-059) |
+| Next | 4.18 SMS credit balance, and choosing the pledge a gift pays in the record-a-gift form (left out of 4.14 on purpose, D-057). 4.15 waits with the digital payments |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
 > **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).

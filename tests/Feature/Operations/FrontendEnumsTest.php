@@ -11,6 +11,7 @@ use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
 use App\Enums\MilestoneType;
 use App\Enums\PaymentMethod;
+use App\Enums\PledgeStatus;
 use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
 use App\Enums\Weekday;
@@ -47,6 +48,7 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['WEEKDAYS', Weekday::class],
     ['PAYMENT_METHODS', PaymentMethod::class],
     ['CHECKIN_METHODS', CheckInMethod::class],
+    ['PLEDGE_STATUSES', PledgeStatus::class],
 ]);
 
 it('only names permissions that exist', function (): void {
