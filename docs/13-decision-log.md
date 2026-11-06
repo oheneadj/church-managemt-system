@@ -1179,6 +1179,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-065 — Who a broadcast reaches and what it costs (story 5.1, part 1)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/02, docs/08, D-041, D-051, QA-08 TC-08-07 to TC-08-10 and QA-10
+**Status:** Active. Built: the estimate. The send is the next part.
+
+**Decision:**
+1. **Who is reached.** Members of one status (active unless another is asked for) and, optionally, of one department (the two filters docs/08 names), who have a phone number and have not turned SMS off (`sms_opted_in`, D-041). A deceased member is never reached, whatever status is asked for. A church cannot have two members with one phone number (the database allows one), so each person is texted once.
+2. **What it costs.** One credit is one part of the text for each person (D-051), counted by the same segmenter the sender uses. A text may use at most 4 parts (`config/messages.php`, `broadcast_max_parts`): a guard so one message cannot cost a church a great deal by accident. The number is mine, not from the docs, and is one line to change.
+3. **Text messages only for now.** `channel` must be `sms`; a WhatsApp broadcast needs the Meta account and approved templates (B4, D-045), so it is refused with a plain message until then.
+4. **A question before the send.** `POST /messages/broadcast/estimate` takes the same body as the send and answers `{recipients, parts_per_message, credits_needed, credit_balance, enough_credits}`, so the compose page can show the cost as the text is typed (QA-08 TC-08-08). It queues, logs and charges nothing. docs/08 did not have it.
+5. **Who may.** `sms.send` (church admin, pastor), as for the message log (D-055).
+
+**Rationale:** One place (`BroadcastEstimator`) answers "how many and how much", for the preview now and for the real send next, so they can never disagree.
+
+**Revisit when:** the send is built (the audience rules above apply there too), WhatsApp broadcasts open, or plan limits on recipients are decided (Q4).
+
+---
+
 ---
 
 ## Deferred Decisions

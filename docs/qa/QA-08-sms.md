@@ -95,7 +95,7 @@
 - Total credits deducted = number of recipients × parts per message
 
 ### TC-08-08 — Broadcast preview shows credit estimate
-**Action:** On the broadcast compose page, enter a message and select recipients before sending
+**Action:** On the broadcast compose page, enter a message and select recipients before sending (the page calls `POST /messages/broadcast/estimate`, D-065; nothing is sent or charged)
 **Expected:**
 - UI shows: "This message will be sent to 48 members and use approximately 48 SMS credits. You have 50 credits remaining."
 - Count updates as message length changes (multi-part threshold at 160 chars)

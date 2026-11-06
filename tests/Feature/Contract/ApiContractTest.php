@@ -191,6 +191,13 @@ describe('reports', function (): void {
     });
 });
 
+describe('broadcast estimate', function (): void {
+    it('what a broadcast would reach and cost', function (): void {
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/messages/broadcast/estimate', ['channel' => 'sms', 'message' => 'Service is at 9am.']), 'POST', '/v1/messages/broadcast/estimate', 200);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/messages/broadcast/estimate', ['channel' => 'whatsapp', 'message' => 'Hello']), 'POST', '/v1/messages/broadcast/estimate', 422);
+    });
+});
+
 describe('church profile', function (): void {
     it('reading and changing the details', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/church'), 'GET', '/v1/church', 200);

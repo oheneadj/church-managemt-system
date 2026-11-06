@@ -16,6 +16,10 @@ declare(strict_types=1);
 
 return [
 
+    // The most parts (credits for each person) one broadcast text may use, so one message cannot cost a church a great deal by
+    // accident. Four parts is about 600 characters in the plain alphabet (153 each after the first 160).
+    'broadcast_max_parts' => 4,
+
     'hidden_types' => [
         'otp',
         'onboarding_otp',

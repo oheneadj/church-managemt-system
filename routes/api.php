@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\V1\Members\StoreMemberMilestoneController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
 use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
+use App\Http\Controllers\Api\V1\Messages\EstimateBroadcastController;
 use App\Http\Controllers\Api\V1\Messages\ListMessagesController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
@@ -160,6 +161,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::put('church/settings', UpdateChurchSettingsController::class)->name('church.settings.update');
 
         Route::get('messages', ListMessagesController::class)->name('messages.index');
+        Route::post('messages/broadcast/estimate', EstimateBroadcastController::class)->name('messages.broadcast.estimate');
 
         Route::post('exports/members', QueueMemberExportController::class)->middleware('throttle:exports')->name('exports.members');
         Route::post('exports/contributions', QueueContributionExportController::class)->middleware('throttle:exports')->name('exports.contributions');

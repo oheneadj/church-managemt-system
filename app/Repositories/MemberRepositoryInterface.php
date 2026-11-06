@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Members\ListMembersDTO;
+use App\DTOs\Messages\BroadcastAudience;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -81,6 +82,12 @@ interface MemberRepositoryInterface
      * @return LazyCollection<int, Member>
      */
     public function forExport(ListMembersDTO $filters, int $chunkSize): LazyCollection;
+
+    /**
+     * How many people a broadcast to this audience reaches: members of the status (and department) who have a phone number and
+     * have not turned SMS off, never the deceased.
+     */
+    public function countBroadcastRecipients(BroadcastAudience $audience): int;
 
     /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.

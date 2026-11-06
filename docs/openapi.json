@@ -527,6 +527,46 @@
                 }
             }
         },
+        "/v1/messages/broadcast/estimate": {
+            "post": {
+                "operationId": "messages.broadcast.estimate",
+                "summary": "Runs EstimateBroadcastAction for this request and returns the BroadcastEstimateResource",
+                "tags": [
+                    "EstimateBroadcast"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EstimateBroadcastRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`BroadcastEstimateResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastEstimateResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}/data-export": {
             "get": {
                 "operationId": "members.data-export",
@@ -4178,6 +4218,34 @@
                 ],
                 "title": "AttendanceTrendResource"
             },
+            "BroadcastEstimateResource": {
+                "type": "object",
+                "properties": {
+                    "recipients": {
+                        "type": "integer"
+                    },
+                    "parts_per_message": {
+                        "type": "integer"
+                    },
+                    "credits_needed": {
+                        "type": "integer"
+                    },
+                    "credit_balance": {
+                        "type": "integer"
+                    },
+                    "enough_credits": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "recipients",
+                    "parts_per_message",
+                    "credits_needed",
+                    "credit_balance",
+                    "enough_credits"
+                ],
+                "title": "BroadcastEstimateResource"
+            },
             "CaptureVisitorRequest": {
                 "type": "object",
                 "description": "Validates a visitor: a name, and optionally a phone number (normalised before it is checked) and how they heard of the church.",
@@ -4755,6 +4823,36 @@
                     "reason"
                 ],
                 "title": "EraseMemberRequest"
+            },
+            "EstimateBroadcastRequest": {
+                "type": "object",
+                "description": "Validates the question \"who would this broadcast reach and what would it cost?\". The same fields as sending, with nothing sent.",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "const": "sms"
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "recipient_filter": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "$ref": "#/components/schemas/MemberStatus"
+                            },
+                            "department_id": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "channel",
+                    "message"
+                ],
+                "title": "EstimateBroadcastRequest"
             },
             "ExportContributionsRequest": {
                 "type": "object",

@@ -992,6 +992,20 @@ Status: `fulfilled` as soon as `amount_paid` reaches `amount_pledged` (even afte
 
 ## Communications
 
+### Estimate a Broadcast
+```
+POST /api/v1/messages/broadcast/estimate
+Authorization: Bearer {token}
+Permission: sms.send
+```
+Says who a broadcast would reach and what it would cost, so the compose page can show "This message will be sent to 48 members and use about 48 SMS credits. You have 50 credits." as the text is typed (QA-08 TC-08-08, D-065). **Nothing is queued, logged or charged.** It takes the same body as Send Broadcast below.
+
+**Response `200`:**
+```json
+{ "recipients": 48, "parts_per_message": 1, "credits_needed": 48, "credit_balance": 50, "enough_credits": true }
+```
+**Who is reached:** members of the `recipient_filter.status` (default `active`) and, if given, of the `recipient_filter.department_id`, who have a phone number and have not turned SMS off. A deceased member is never reached, whatever the status asked for. **What it costs:** one credit is one part of the text for each person (D-051): 160 characters in the plain alphabet (153 each when longer), or 70 (67 each) if the text has any letter outside it, such as ɔ or ɛ. A text may use at most 4 parts (`config/messages.php`). **Errors:** `422` for a missing or empty `message`, a text over the part limit, a `channel` other than `sms` (WhatsApp broadcasts are not open yet), a `status` that does not exist or a `department_id` that is not an id; `403` without `sms.send`.
+
 ### Send Broadcast
 ```
 POST /api/v1/messages/broadcast

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Members\ListMembersDTO;
+use App\DTOs\Messages\BroadcastAudience;
 use App\Enums\FamilyRole;
 use App\Enums\MemberStatus;
 use App\Models\Member;
@@ -36,6 +37,31 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     public function forExport(ListMembersDTO $filters, int $chunkSize): LazyCollection
     {
         return $this->directory($filters)->with(['departments:id,name', 'family:id,name'])->lazy($chunkSize);
+    }
+
+    /**
+     * How many people a broadcast to this audience reaches, a shared phone number counted once.
+     */
+    public function countBroadcastRecipients(BroadcastAudience $audience): int
+    {
+        return $this->broadcastRecipients($audience)->count();
+    }
+
+    /**
+     * The members a broadcast to this audience is sent to. Members who must not be texted are never in it (SMS turned off, no
+     * phone number, deceased). A church cannot have two members with one phone number (the database allows one), so each person
+     * is texted once.
+     *
+     * @return Builder<Member>
+     */
+    private function broadcastRecipients(BroadcastAudience $audience): Builder
+    {
+        return Member::query()
+            ->where('sms_opted_in', true)
+            ->where('phone', '!=', '')
+            ->where('status', '!=', MemberStatus::Deceased->value)
+            ->where('status', $audience->status->value)
+            ->when($audience->departmentId !== null, fn (Builder $q) => $q->whereHas('departments', fn (Builder $d) => $d->where('departments.id', $audience->departmentId)));
     }
 
     /**
