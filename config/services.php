@@ -65,4 +65,10 @@ return [
         'timeout_seconds' => 10,
     ],
 
+    // The public list of passwords exposed in data breaches (docs/14). Only five characters of a hash are ever sent.
+    'pwned_passwords' => [
+        'url' => env('PWNED_PASSWORDS_URL', 'https://api.pwnedpasswords.com/range'),
+        'timeout' => (int) env('PWNED_PASSWORDS_TIMEOUT', 5),
+    ],
+
 ];

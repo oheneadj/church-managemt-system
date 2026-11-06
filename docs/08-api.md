@@ -177,7 +177,7 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login` and `auth/login/verify` below. **Still to come:** `auth/password/forgot` and `auth/password/reset`, the React sign-in screen, and the sign-up form's email and password. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
+> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. **Still to come:** the React sign-in screen and the sign-up form's email and password. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
 ### Sign in, step 1: password
 ```
@@ -224,7 +224,11 @@ POST /api/v1/auth/login/verify
 POST /api/v1/auth/password/forgot      { "email": "akosua@example.com" }
 POST /api/v1/auth/password/reset       { "email": "...", "code": "382910", "password": "...", "password_confirmation": "..." }
 ```
-`forgot` always answers `200` (so emails cannot be listed) and emails a reset code only to a real staff member; same limits as step 1. `reset` answers `204`, ends every session and token of that user, and `422` for a wrong code or a password that is shorter than 12 characters or in a known breach list. The same flow sets the first password for a staff member who has none.
+**`forgot`** always answers `200` `{ "message": "If that email belongs to a staff member, a code has been sent.", "expires_in": 600 }`, whether or not the email is known or the account is active, so emails cannot be listed. It emails a reset code (queued on `critical`) only to an active staff member. The limit on emailed codes (1 a minute and 5 an hour per email, 20 an hour per IP) is counted for every email, known or not, so a `429` reveals nothing either.
+
+**`reset`** answers `204` with no body. It does **not** sign anyone in: the person signs in with the new password. It ends every session and token of that user at once, and marks the email proven. Errors: `422 "Invalid code"` for a wrong, expired, reused, other-church or other-purpose code, an unknown email and a deactivated account alike; `429` after five wrong codes (15-minute lockout) or more than 10 checks a minute from one address; `422` on `password` when it is shorter than 12 characters, longer than 72 (bcrypt ignores everything after byte 72, so a longer one would silently be weaker), the same as the email, or does not match `password_confirmation`. A refused password does not use the code up, so the person can try again. The same flow sets the first password for a staff member who has none.
+
+**The breach check is never done while the person waits.** After the password is set, a queued, encrypted job checks it against the Have I Been Pwned list (only the first five characters of its SHA-1 hash leave the server, `docs/14` section 8) and, if it was exposed, emails the person to choose another with "Forgot password". The plaintext password is never put on a queue, and nothing in this check can lock anyone out: if the list is unreachable the failure is reported and the password stays.
 
 ---
 

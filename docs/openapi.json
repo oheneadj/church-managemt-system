@@ -448,6 +448,41 @@
                 }
             }
         },
+        "/v1/auth/password/forgot": {
+            "post": {
+                "operationId": "auth.password.forgot",
+                "summary": "Runs ForgotPasswordAction for this request and returns the ResetCodeRequestedResource",
+                "tags": [
+                    "ForgotPassword"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForgotPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ResetCodeRequestedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResetCodeRequestedResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health",
@@ -2100,6 +2135,34 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/password/reset": {
+            "post": {
+                "operationId": "auth.password.reset",
+                "summary": "Runs ResetPasswordAction for this request and returns an empty 204 response",
+                "tags": [
+                    "ResetPassword"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -4006,6 +4069,21 @@
                     "dependent"
                 ],
                 "title": "FamilyRole"
+            },
+            "ForgotPasswordRequest": {
+                "type": "object",
+                "description": "Validates a request for a password reset code: just an email, trimmed and lowercased.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "ForgotPasswordRequest"
             },
             "FundTypeCollection": {
                 "type": "array",
@@ -6000,6 +6078,50 @@
                     "phone"
                 ],
                 "title": "RequestQrCheckinOtpRequest"
+            },
+            "ResetCodeRequestedResource": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "const": "If that email belongs to a staff member, a code has been sent."
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "message",
+                    "expires_in"
+                ],
+                "title": "ResetCodeRequestedResource"
+            },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "description": "Validates choosing a new password: the email, the emailed code, and the password with its confirmation. The password is\nchecked here, before the code is looked at, so a refused password never uses the code up.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "password_confirmation": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "code",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "ResetPasswordRequest"
             },
             "ServiceCollection": {
                 "type": "array",

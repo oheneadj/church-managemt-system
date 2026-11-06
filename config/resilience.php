@@ -41,6 +41,11 @@ return [
     | The same idea as for texts. The retry window is shorter because an emailed code is useless after its 10
     | minutes; an invitation is not, but a person will ask for another long before 15 minutes are up.
     */
+    // The password breach list (Have I Been Pwned, D-054) is checked on a worker. If it is down, the check waits.
+    'pwned_passwords' => [
+        'release_seconds' => 60,
+    ],
+
     'email' => [
         'release_seconds' => 30,
         'retry_minutes' => 15,

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\PasswordBreachChecker;
 use App\Contracts\SmsProvider;
 use App\Contracts\WhatsAppGateway;
 use App\Exceptions\SmsProviderUnavailableException;
 use App\Exceptions\WhatsAppUnavailableException;
+use App\Services\PwnedPasswordsChecker;
 use App\Services\Sms\LogSmsProvider;
 use App\Services\Sms\PayperlezSmsProvider;
 use App\Services\WhatsApp\LogWhatsAppGateway;
@@ -38,6 +40,9 @@ class ProviderServiceProvider extends ServiceProvider
                 default => throw new SmsProviderUnavailableException("SMS provider [{$driver}] is not implemented yet."),
             };
         });
+
+        // The one breach list we use; a second would be chosen here, like the SMS and WhatsApp drivers.
+        $this->app->bind(PasswordBreachChecker::class, PwnedPasswordsChecker::class);
 
         $this->app->bind(WhatsAppGateway::class, function (): WhatsAppGateway {
             $driver = (string) config('services.whatsapp.driver');

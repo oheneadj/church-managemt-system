@@ -22,4 +22,13 @@ return [
         // What the message log keeps in place of the email: the code itself is never stored.
         'summary' => 'Email with a :purpose (the code is not stored)',
     ],
+
+    // Sent after a person chooses a password that is on a public breach list (D-054). It never repeats the password.
+    'breached' => [
+        'subject' => 'Please choose a new password for :church',
+        'intro' => 'The password you just chose appears in a public list of passwords that were exposed in data breaches on other websites. This does not mean our system was breached.',
+        'what_to_do' => 'Please choose a different password: go to the sign-in page and choose Forgot password.',
+        'reassure' => 'Until you do, your account works as normal. We have not seen anyone misuse it.',
+        'summary' => 'Email asking the person to choose a new password',
+    ],
 ];

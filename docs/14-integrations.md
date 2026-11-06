@@ -535,6 +535,32 @@ Email is faked in tests (`Mail::fake()`), never sent. Locally the log mailer wri
 
 ---
 
+## 8. Have I Been Pwned (password breach check)
+
+> **Built (D-054, part 3).** A third-party call, so it only ever runs on a worker.
+
+### What It Does
+After a staff member sets a password (reset, and later sign-up), a queued job checks whether it appears in a public list of passwords exposed in data breaches. If it does, the person is emailed to choose another.
+
+### How it is built
+- `PasswordBreachChecker` is the contract; `PwnedPasswordsChecker` is the driver, bound in `ProviderServiceProvider`.
+- It uses the **k-anonymity range API**: only the **first five characters of the password's SHA-1 hash** are sent (`GET https://api.pwnedpasswords.com/range/{prefix}`), and the answer is every hash ending that shares them, so the list never learns the password. The request asks for padding, which adds fake entries with a count of zero; they are ignored.
+- `PasswordBreachScheduler` queues `CheckPasswordBreachJob` after the password change is committed. The job is **encrypted on the queue** (`ShouldBeEncrypted`) because it carries the unsalted SHA-1 the list needs; the plaintext password is never on a queue. It also carries the stored password hash, so it does nothing if the person has chosen another password since.
+- It runs on `notifications`, with 3 tries and backoff of 60, 300 and 900 seconds, a 30 second timeout, a circuit breaker named `pwned-passwords`, and a `failed()` handler that reports to Sentry. An error is thrown, not hidden, so the queue retries.
+- **It can never lock anyone out.** The password is accepted when it is set. If the list is unreachable after the retries, the failure is reported and the password stays.
+
+### Config
+```env
+PWNED_PASSWORDS_URL=https://api.pwnedpasswords.com/range
+PWNED_PASSWORDS_TIMEOUT=5
+```
+Both have defaults and normally need no change.
+
+### Testing
+`Http::fake()`; no test calls the real service.
+
+---
+
 ## 5. Cloudflare R2
 
 ### What It Does

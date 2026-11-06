@@ -23,6 +23,12 @@ interface UserRepositoryInterface
     public function findByEmail(string $email): ?User;
 
     /**
+     * The staff member with this id, in any church, if there is one and they are not deleted. It is for work on a worker,
+     * which has no church in context; a request must use the lookups that stay inside the current church.
+     */
+    public function findById(string $id): ?User;
+
+    /**
      * Adds a staff user.
      *
      * @param  array<string, mixed>  $attributes

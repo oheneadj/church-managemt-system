@@ -36,7 +36,7 @@ We handle three categories of sensitive data that make us a target:
 
 **Staff** sign in with email and password, then a 6-digit code emailed to them (D-054, decided, not built; the built sign-in is still phone and SMS code). **Members, the QR check-in and the WhatsApp check-in** have no passwords and use phone and SMS codes. The code controls below apply to every code, SMS or email.
 
-Staff passwords: at least 12 characters and not in a breach list (`Password::min(12)->uncompromised()`), hashed with Laravel's hasher, never logged or returned; 5 wrong passwords for an email lock it for 15 minutes; a reset ends every session and token of that user.
+Staff passwords: at least 12 characters and at most 72 (bcrypt ignores everything after byte 72), not the person's email, hashed with Laravel's hasher, never logged or returned; 5 wrong passwords for an email lock it for 15 minutes; a reset ends every session and token of that user. Whether a password was exposed in a public breach is checked **after** it is set, on a worker, never while the person waits (D-054, `docs/14` section 8).
 
 ```
 OTP length:       6 digits (1,000,000 possible values)
