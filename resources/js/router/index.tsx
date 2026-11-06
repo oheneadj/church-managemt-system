@@ -55,6 +55,10 @@ export const router = createBrowserRouter([
                                 lazy: async () => ({ Component: (await import('@/pages/ServiceSchedulesPage')).ServiceSchedulesPage }),
                             },
                             {
+                                path: ROUTE_PATTERNS.SERVICE_OFFERING,
+                                lazy: async () => ({ Component: (await import('@/pages/OfferingReportPage')).OfferingReportPage }),
+                            },
+                            {
                                 path: ROUTE_PATTERNS.SERVICE,
                                 lazy: async () => ({ Component: (await import('@/pages/ServiceDetailPage')).ServiceDetailPage }),
                             },

@@ -9,6 +9,7 @@ import {
     contribution,
     family,
     fundType,
+    offeringReport,
     qrCheckedIn,
     qrCode,
     member,
@@ -62,6 +63,10 @@ describe('the sample data the app is tested with matches the API spec', () => {
         });
 
         expect(problemsWith({ data: record }, 'get', '/v1/members/{member}', 200)).toEqual([]);
+    });
+
+    it('GET /services/{service}/offering-report: what one service received, with formatted amounts', () => {
+        expect(problemsWith({ data: offeringReport() }, 'get', '/v1/services/{service}/offering-report', 200)).toEqual([]);
     });
 
     it('GET /families/{family}: a family', () => {

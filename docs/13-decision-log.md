@@ -1051,6 +1051,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-058 — The Sunday offering report page, and printing it (Sprint 4, story 4.16)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04 Sunday Offering Report, docs/08 and QA-06 TC-06-17
+**Status:** Active
+
+**Decision:**
+1. **A page at `/services/:id/offering`**, opened by an "Offering report" button on the service page for staff with `giving.summary` (church admin, finance secretary and pastor; the report holds totals and no giver's name). It shows a table for the gifts recorded at the service and, when the day's gifts with no service are counted with this service (D-048), a second table, then the total for the day.
+2. **Printing and PDF use the browser's own print window**, from a "Print or save as PDF" button. The app menu, header and the buttons are hidden when printing (`print:hidden`). No PDF library or server-side PDF is added, since "Save as PDF" is in every browser's print window and a library would be a dependency for the same result; a server PDF can be added if a church needs to email one.
+3. **The page formats no money.** The API had amounts by payment method as plain decimal strings only, so each `by_method` object gained a `by_method_formatted` sibling (adding a field keeps API v1 unchanged), and the page shows the API's own text. A payment method nobody used is left out of the table so it fits a phone; columns run cash, mobile money, card, USSD, as in docs/04.
+4. **The report refreshes with the gifts.** Its query sits under the services keys, which recording or voiding a gift already refresh.
+
+**Rationale:** The simplest page that gives the finance secretary the report in one click after a service, with the totals the server worked out and nothing added up in the browser (agreement sections 12 and 19).
+
+**Revisit when:** a church wants the report emailed or shared as a file (add a server PDF), or a report for a date range rather than one service (Sprint 5 reports).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

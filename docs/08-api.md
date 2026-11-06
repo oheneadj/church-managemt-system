@@ -898,10 +898,11 @@ What one service received, by fund and by payment method. The church admin, the 
       "grand_total": "3150.00",
       "grand_total_formatted": "GHS 3,150.00",
       "by_fund": [
-        { "fund_type": "Tithe", "by_method": { "cash": "1200.00", "momo": "850.00", "card": "0.00", "ussd": "0.00" }, "total": "2050.00", "total_formatted": "GHS 2,050.00" },
+        { "fund_type": "Tithe", "by_method": { "cash": "1200.00", "momo": "850.00", "card": "0.00", "ussd": "0.00" }, "by_method_formatted": { "cash": "GHS 1,200.00", "momo": "GHS 850.00", "card": "GHS 0.00", "ussd": "GHS 0.00" }, "total": "2050.00", "total_formatted": "GHS 2,050.00" },
         { "fund_type": "Offering", "by_method": { "cash": "430.00", "momo": "220.00", "card": "0.00", "ussd": "0.00" }, "total": "650.00", "total_formatted": "GHS 650.00" }
       ],
       "by_method": { "cash": "1930.00", "momo": "1220.00", "card": "0.00", "ussd": "0.00" },
+      "by_method_formatted": { "cash": "GHS 1,930.00", "momo": "GHS 1,220.00", "card": "GHS 0.00", "ussd": "GHS 0.00" },
       "transaction_count": 42,
       "anonymous_count": 7
     },
@@ -919,7 +920,7 @@ What one service received, by fund and by payment method. The church admin, the 
   }
 }
 ```
-- Every amount is an exact decimal string (GHS), never a float. Within one block `grand_total`, each fund `total` and every `by_method` are sums of the same gifts, so they always agree.
+- Every amount is an exact decimal string (GHS), never a float. Each `by_method` object has a `by_method_formatted` sibling with the same four keys as ready-to-show text, so the app never formats money itself (it sits beside `by_method` rather than replacing it, which keeps version 1 unchanged). Within one block `grand_total`, each fund `total` and every `by_method` are sums of the same gifts, so they always agree.
 - **`totals`** are the gifts recorded **at this service**. They equal the sum of `GET /contributions?service_id=` for the same service.
 - **`no_service`** are the gifts given **that day with no service** (mobile money and card gifts, and cash nobody attached to a service). "That day" is the church's own day in its timezone. They are counted with the **day's first service only** (the earliest start time; a service with no start time comes after the ones that have one; then the lowest id), so a day with two services never counts a gift twice. For any other service of the day `counted_here` is `false` and the block is all zeros. `day_grand_total` is `totals` plus `no_service`, so adding up the `day_grand_total` of every report of a day gives the day's giving exactly once. A day with gifts but no service has no report.
 - **Voided gifts are in no number**, including the counts (QA-06 TC-06-17).

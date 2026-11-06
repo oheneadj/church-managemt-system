@@ -196,6 +196,16 @@ Voided contribution does NOT appear in totals.
 
 ---
 
+### TC-06-19 — Offering report page (browser)
+**Action:** As a finance secretary, record a cash gift at today's service (Giving, Record a gift), open the service, then **Offering report**
+**Expected:**
+- The page shows the church, the service, the date, a table for the gifts at the service with a line for the fund, and the total for the day, all as the API wrote them
+- A payment method nobody used has no column; "1 gift, 1 anonymous" is correct
+- Voided gifts are not counted ("Voided gifts are not counted." is shown)
+- In the print window (or with print media emulated) the app menu, the header and the buttons are gone and only the report is left
+- At 375 px wide the table fits without the page scrolling sideways
+- A pastor (giving.summary only) sees the same page; a department head gets "This report was not found." and no link
+
 ## Pass / Fail Criteria
 
 TC-06-09 (webhook signature), TC-06-10 (idempotency), TC-06-11 (void), TC-06-13 (no deletion), and TC-06-17 (report accuracy) are **P0**. Any financial miscalculation or data integrity failure blocks the sprint.

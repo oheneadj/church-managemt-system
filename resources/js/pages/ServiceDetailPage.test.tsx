@@ -44,6 +44,23 @@ describe('ServiceDetailPage', () => {
         expect(screen.getByText('Manual')).toBeInTheDocument();
     });
 
+    describe('the offering report link', () => {
+        it('is offered to staff who may read giving summaries, even if they cannot change services', async () => {
+            open([PERMISSIONS.MEMBERS_VIEW, PERMISSIONS.GIVING_SUMMARY]);
+
+            const link = await screen.findByRole('link', { name: 'Offering report' });
+            expect(link).toHaveAttribute('href', '/services/service-1/offering');
+            expect(screen.queryByRole('button', { name: 'Close check-in' })).not.toBeInTheDocument();
+        });
+
+        it('is not offered to staff without that permission', async () => {
+            open(EDITOR);
+            await screen.findByRole('heading', { level: 1, name: 'Sunday Morning Service' });
+
+            expect(screen.queryByRole('link', { name: 'Offering report' })).not.toBeInTheDocument();
+        });
+    });
+
     it('closes check-in with one tap', async () => {
         vi.mocked(servicesApi.setCheckin).mockResolvedValue(service({ is_open: false }));
         const user = userEvent.setup();

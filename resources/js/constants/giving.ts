@@ -1,3 +1,5 @@
+import { PAYMENT_METHODS, type PaymentMethod } from '@/constants/enums';
+
 /**
  * Limits on a gift that the server also checks (config/giving.php, docs/08). The form shows the message at once; the
  * server stays the judge.
@@ -12,3 +14,14 @@ export const GIFT_CASH_MAX = '999999.99';
  * records the moment it was entered.
  */
 export const GIFT_PAST_DAY_TIME = 'T12:00:00Z';
+
+/** The order payment methods are listed in on the offering report: cash first, as in docs/04. */
+export const OFFERING_METHOD_ORDER = ['cash', 'momo', 'card', 'ussd'] as const satisfies readonly PaymentMethod[];
+
+/** The words for each payment method, from the mirrored enum, so no label is typed out twice. */
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = Object.fromEntries(
+    PAYMENT_METHODS.map((method) => [method.value, method.label]),
+) as Record<PaymentMethod, string>;
+
+/** What the API writes for an amount of nothing. Used only to leave out a payment method nobody used, never to add money. */
+export const ZERO_AMOUNT = '0.00';

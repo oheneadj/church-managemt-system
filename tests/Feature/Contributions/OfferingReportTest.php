@@ -98,6 +98,18 @@ describe('the figures (TC-06-17)', function (): void {
             ->and($totals['transaction_count'])->toBe(5);
     });
 
+    it('gives every payment method amount a formatted sibling, so the app never formats money itself', function (): void {
+        serviceGift($this->tithe, '1200.00');
+        serviceGift($this->tithe, '850.50', ['payment_method' => PaymentMethod::Momo]);
+
+        $data = $this->getJson(offeringReportUrl($this->service))->assertOk()->json('data');
+        $tithe = collect($data['totals']['by_fund'])->firstWhere('fund_type', 'Tithe');
+
+        expect($tithe['by_method_formatted'])->toEqual(['cash' => 'GHS 1,200.00', 'momo' => 'GHS 850.50', 'card' => 'GHS 0.00', 'ussd' => 'GHS 0.00'])
+            ->and($data['totals']['by_method_formatted'])->toEqual(['cash' => 'GHS 1,200.00', 'momo' => 'GHS 850.50', 'card' => 'GHS 0.00', 'ussd' => 'GHS 0.00'])
+            ->and($data['no_service']['by_method_formatted'])->toEqual(['cash' => 'GHS 0.00', 'momo' => 'GHS 0.00', 'card' => 'GHS 0.00', 'ussd' => 'GHS 0.00']);
+    });
+
     it('counts the gifts with no member', function (): void {
         $member = Member::factory()->create(['church_id' => $this->church->id]);
         serviceGift($this->tithe, '10.00', ['member_id' => $member->id]);

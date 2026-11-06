@@ -35,6 +35,40 @@ export interface Contribution {
     created_at: string | null;
 }
 
+/** Each payment method's amount as text. The keys are the payment methods the API lists for every fund, even at 0.00. */
+export type AmountsByMethod = Record<PaymentMethod, string>;
+
+/** One fund's line in the offering report. */
+export interface OfferingFundLine {
+    fund_type: string;
+    by_method: AmountsByMethod;
+    /** The same amounts as ready-to-show text ("GHS 1,200.00"). */
+    by_method_formatted: AmountsByMethod;
+    total: string;
+    total_formatted: string;
+}
+
+/** One set of figures in the offering report: the gifts at the service, or the gifts given that day with no service. */
+export interface OfferingSection {
+    grand_total: string;
+    grand_total_formatted: string;
+    by_fund: OfferingFundLine[];
+    by_method: AmountsByMethod;
+    by_method_formatted: AmountsByMethod;
+    transaction_count: number;
+    anonymous_count: number;
+}
+
+/** What one service received (docs/08, Sunday Offering Report). It holds totals only, with no giver's name. */
+export interface OfferingReport {
+    service: { id: string; name: string; service_date: string };
+    totals: OfferingSection;
+    /** Gifts given that day with no service. They are counted with the day's first service only (`counted_here`). */
+    no_service: OfferingSection & { counted_here: boolean };
+    day_grand_total: string;
+    day_grand_total_formatted: string;
+}
+
 /** What the record-a-gift form sends (docs/08, Record Cash Contribution). Empty optional fields are left out. */
 export interface ContributionInput {
     member_id?: string;

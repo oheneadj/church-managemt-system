@@ -33,6 +33,7 @@ export function ServiceDetailPage() {
     const { id = '' } = useParams();
     const service = useService(id);
     const canEdit = useCan(PERMISSIONS.MEMBERS_EDIT);
+    const canSeeReport = useCan(PERMISSIONS.GIVING_SUMMARY);
     const { setCheckin, cancel } = useServiceMutations();
     const navigate = useNavigate();
     const [cancelling, setCancelling] = useState(false);
@@ -92,27 +93,42 @@ export function ServiceDetailPage() {
         });
     }
 
-    const actions = canEdit ? (
+    const actions = (
         <>
-            {record.is_open && (
+            {canSeeReport && (
+                <Button asChild size="lg" variant="outline">
+                    <Link to={ROUTES.SERVICE_OFFERING(record.id)}>Offering report</Link>
+                </Button>
+            )}
+            {canEdit && record.is_open && (
                 <Button asChild size="lg" variant="outline">
                     <Link to={ROUTES.SERVICE_QR(record.id)}>Show QR code</Link>
                 </Button>
             )}
-            <Button
-                size="lg"
-                variant={record.is_open ? 'outline' : 'default'}
-                onClick={toggleCheckin}
-                disabled={setCheckin.isPending || cannotOpen}
-                aria-describedby={cannotOpen ? 'open-hint' : undefined}
-            >
-                {record.is_open ? 'Close check-in' : 'Open check-in'}
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setCancelling(true)} disabled={cannotCancel} aria-describedby="cancel-hint">
-                Cancel service
-            </Button>
+            {canEdit && (
+                <>
+                    <Button
+                        size="lg"
+                        variant={record.is_open ? 'outline' : 'default'}
+                        onClick={toggleCheckin}
+                        disabled={setCheckin.isPending || cannotOpen}
+                        aria-describedby={cannotOpen ? 'open-hint' : undefined}
+                    >
+                        {record.is_open ? 'Close check-in' : 'Open check-in'}
+                    </Button>
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setCancelling(true)}
+                        disabled={cannotCancel}
+                        aria-describedby="cancel-hint"
+                    >
+                        Cancel service
+                    </Button>
+                </>
+            )}
         </>
-    ) : undefined;
+    );
 
     return (
         <div className="mx-auto flex max-w-3xl flex-col gap-4">

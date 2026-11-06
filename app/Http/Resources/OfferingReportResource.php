@@ -63,6 +63,7 @@ class OfferingReportResource extends JsonResource
             'grand_total_formatted' => $grand->formatted(),
             'by_fund' => $this->fundLines($section->byFund),
             'by_method' => $this->moneyByMethod($section->byMethod),
+            'by_method_formatted' => $this->formattedByMethod($section->byMethod),
             'transaction_count' => $section->transactionCount,
             'anonymous_count' => $section->anonymousCount,
         ];
@@ -72,7 +73,7 @@ class OfferingReportResource extends JsonResource
      * One line for each fund that received something.
      *
      * @param  array<int, OfferingFund>  $funds
-     * @return array<int, array{fund_type: string, by_method: array{cash: string, momo: string, card: string, ussd: string}, total: string, total_formatted: string}>
+     * @return array<int, array{fund_type: string, by_method: array{cash: string, momo: string, card: string, ussd: string}, by_method_formatted: array{cash: string, momo: string, card: string, ussd: string}, total: string, total_formatted: string}>
      */
     private function fundLines(array $funds): array
     {
@@ -88,7 +89,7 @@ class OfferingReportResource extends JsonResource
     /**
      * One fund's line: its name, what came in by each payment method and its total.
      *
-     * @return array{fund_type: string, by_method: array{cash: string, momo: string, card: string, ussd: string}, total: string, total_formatted: string}
+     * @return array{fund_type: string, by_method: array{cash: string, momo: string, card: string, ussd: string}, by_method_formatted: array{cash: string, momo: string, card: string, ussd: string}, total: string, total_formatted: string}
      */
     private function fundLine(OfferingFund $fund): array
     {
@@ -97,6 +98,7 @@ class OfferingReportResource extends JsonResource
         return [
             'fund_type' => $fund->name,
             'by_method' => $this->moneyByMethod($fund->byMethod),
+            'by_method_formatted' => $this->formattedByMethod($fund->byMethod),
             'total' => $total->amount,
             'total_formatted' => $total->formatted(),
         ];
@@ -116,6 +118,23 @@ class OfferingReportResource extends JsonResource
             PaymentMethod::Momo->value => Money::ghs($amounts[PaymentMethod::Momo->value])->amount,
             PaymentMethod::Card->value => Money::ghs($amounts[PaymentMethod::Card->value])->amount,
             PaymentMethod::Ussd->value => Money::ghs($amounts[PaymentMethod::Ussd->value])->amount,
+        ];
+    }
+
+    /**
+     * The same amounts as ready-to-show text ("GHS 1,200.00"), so the app never formats money itself. They sit beside
+     * `by_method` rather than replacing it, which keeps version 1 of the API unchanged.
+     *
+     * @param  array<string, numeric-string>  $amounts
+     * @return array{cash: string, momo: string, card: string, ussd: string}
+     */
+    private function formattedByMethod(array $amounts): array
+    {
+        return [
+            PaymentMethod::Cash->value => Money::ghs($amounts[PaymentMethod::Cash->value])->formatted(),
+            PaymentMethod::Momo->value => Money::ghs($amounts[PaymentMethod::Momo->value])->formatted(),
+            PaymentMethod::Card->value => Money::ghs($amounts[PaymentMethod::Card->value])->formatted(),
+            PaymentMethod::Ussd->value => Money::ghs($amounts[PaymentMethod::Ussd->value])->formatted(),
         ];
     }
 }

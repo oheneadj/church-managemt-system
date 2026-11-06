@@ -5233,6 +5233,29 @@
                                                 "ussd"
                                             ]
                                         },
+                                        "by_method_formatted": {
+                                            "type": "object",
+                                            "properties": {
+                                                "cash": {
+                                                    "type": "string"
+                                                },
+                                                "momo": {
+                                                    "type": "string"
+                                                },
+                                                "card": {
+                                                    "type": "string"
+                                                },
+                                                "ussd": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "cash",
+                                                "momo",
+                                                "card",
+                                                "ussd"
+                                            ]
+                                        },
                                         "total": {
                                             "type": "string"
                                         },
@@ -5243,12 +5266,36 @@
                                     "required": [
                                         "fund_type",
                                         "by_method",
+                                        "by_method_formatted",
                                         "total",
                                         "total_formatted"
                                     ]
                                 }
                             },
                             "by_method": {
+                                "type": "object",
+                                "properties": {
+                                    "cash": {
+                                        "type": "string"
+                                    },
+                                    "momo": {
+                                        "type": "string"
+                                    },
+                                    "card": {
+                                        "type": "string"
+                                    },
+                                    "ussd": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "cash",
+                                    "momo",
+                                    "card",
+                                    "ussd"
+                                ]
+                            },
+                            "by_method_formatted": {
                                 "type": "object",
                                 "properties": {
                                     "cash": {
@@ -5283,6 +5330,7 @@
                             "grand_total_formatted",
                             "by_fund",
                             "by_method",
+                            "by_method_formatted",
                             "transaction_count",
                             "anonymous_count"
                         ]
@@ -5330,6 +5378,29 @@
                                                 "ussd"
                                             ]
                                         },
+                                        "by_method_formatted": {
+                                            "type": "object",
+                                            "properties": {
+                                                "cash": {
+                                                    "type": "string"
+                                                },
+                                                "momo": {
+                                                    "type": "string"
+                                                },
+                                                "card": {
+                                                    "type": "string"
+                                                },
+                                                "ussd": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "cash",
+                                                "momo",
+                                                "card",
+                                                "ussd"
+                                            ]
+                                        },
                                         "total": {
                                             "type": "string"
                                         },
@@ -5340,12 +5411,36 @@
                                     "required": [
                                         "fund_type",
                                         "by_method",
+                                        "by_method_formatted",
                                         "total",
                                         "total_formatted"
                                     ]
                                 }
                             },
                             "by_method": {
+                                "type": "object",
+                                "properties": {
+                                    "cash": {
+                                        "type": "string"
+                                    },
+                                    "momo": {
+                                        "type": "string"
+                                    },
+                                    "card": {
+                                        "type": "string"
+                                    },
+                                    "ussd": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "cash",
+                                    "momo",
+                                    "card",
+                                    "ussd"
+                                ]
+                            },
+                            "by_method_formatted": {
                                 "type": "object",
                                 "properties": {
                                     "cash": {
@@ -5381,6 +5476,7 @@
                             "grand_total_formatted",
                             "by_fund",
                             "by_method",
+                            "by_method_formatted",
                             "transaction_count",
                             "anonymous_count"
                         ]

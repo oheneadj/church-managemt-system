@@ -1,4 +1,4 @@
-import type { Contribution, FundType } from '@/types/giving';
+import type { Contribution, FundType, OfferingReport, OfferingSection } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type {
     AttendanceRecord,
@@ -215,6 +215,56 @@ export function contribution(overrides: Partial<Contribution> = {}): Contributio
         notes: null,
         contributed_at: '2026-10-25T09:30:00+00:00',
         created_at: '2026-10-25T09:31:00+00:00',
+        ...overrides,
+    };
+}
+
+export function offeringSection(overrides: Partial<OfferingSection> = {}): OfferingSection {
+    return {
+        grand_total: '3150.00',
+        grand_total_formatted: 'GHS 3,150.00',
+        by_fund: [
+            {
+                fund_type: 'Tithe',
+                by_method: { cash: '1200.00', momo: '850.00', card: '0.00', ussd: '0.00' },
+                by_method_formatted: { cash: 'GHS 1,200.00', momo: 'GHS 850.00', card: 'GHS 0.00', ussd: 'GHS 0.00' },
+                total: '2050.00',
+                total_formatted: 'GHS 2,050.00',
+            },
+            {
+                fund_type: 'Offering',
+                by_method: { cash: '730.00', momo: '370.00', card: '0.00', ussd: '0.00' },
+                by_method_formatted: { cash: 'GHS 730.00', momo: 'GHS 370.00', card: 'GHS 0.00', ussd: 'GHS 0.00' },
+                total: '1100.00',
+                total_formatted: 'GHS 1,100.00',
+            },
+        ],
+        by_method: { cash: '1930.00', momo: '1220.00', card: '0.00', ussd: '0.00' },
+        by_method_formatted: { cash: 'GHS 1,930.00', momo: 'GHS 1,220.00', card: 'GHS 0.00', ussd: 'GHS 0.00' },
+        transaction_count: 42,
+        anonymous_count: 7,
+        ...overrides,
+    };
+}
+
+export function offeringReport(overrides: Partial<OfferingReport> = {}): OfferingReport {
+    return {
+        service: { id: 'service-1', name: 'Sunday Morning Service', service_date: '2026-10-25' },
+        totals: offeringSection(),
+        no_service: {
+            counted_here: true,
+            ...offeringSection({
+                grand_total: '0.00',
+                grand_total_formatted: 'GHS 0.00',
+                by_fund: [],
+                by_method: { cash: '0.00', momo: '0.00', card: '0.00', ussd: '0.00' },
+                by_method_formatted: { cash: 'GHS 0.00', momo: 'GHS 0.00', card: 'GHS 0.00', ussd: 'GHS 0.00' },
+                transaction_count: 0,
+                anonymous_count: 0,
+            }),
+        },
+        day_grand_total: '3150.00',
+        day_grand_total_formatted: 'GHS 3,150.00',
         ...overrides,
     };
 }

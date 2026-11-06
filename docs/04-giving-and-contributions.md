@@ -243,7 +243,7 @@ Transactions:   42
 Anonymous:       7
 ```
 
-Exportable as PDF. Shareable directly from the system.
+Printable from the report page, and savable as a PDF from the browser's print window (D-058). The app menu is left off the paper.
 
 ---
 
