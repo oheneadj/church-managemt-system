@@ -4,6 +4,8 @@
 **Sprint:** 4
 **Risk:** R10 (Paystack API changes), D-009 (Paystack decision)
 
+> **Cards only (D-020).** MoMo runs on PayPerlez (QA-06). A card payment follows D-053: a `pending` contribution is created when it starts and `charge.success` or `charge.failed` moves it to `completed` or `failed`, so where a case below says a job "creates a contribution" it now means it completes the pending one. The subaccount, `onboarding_status` and 80/20 split wording are replaced by the payout and fee design in D-018 (the split percentage is set when cards are built). The plan is rewritten then.
+
 > Run this plan in the Paystack **test environment** only. Never use live keys during QA.
 
 ---

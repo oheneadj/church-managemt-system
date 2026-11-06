@@ -36,7 +36,7 @@
 ```
 **Expected:**
 - Contribution created with ULID, `201`
-- `payment_method: cash`; a cash gift has no status, no processing fee and no payment reference: it exists once it is recorded (docs/08)
+- `payment_method: cash`, `status: completed` from the start; no processing fee and no payment reference (docs/08, D-053)
 - `fund_name` holds the fund's name at that moment (D-048)
 - SMS receipt queued for delivery to member's phone
 
@@ -70,44 +70,45 @@ Thank you for your faithfulness.
 
 ### MoMo Payments
 
-> **Not built yet, and the cases below are the old Paystack design.** MoMo now goes through PayPerlez with automatic payout (D-018, D-020), the endpoint is `POST /api/v1/contributions/initiate` (docs/08), and the digital path waits for the legal opinion and PayPerlez's webhook event names (D-046). They also assume a gift row with `status` pending, completed or failed, which `docs/07-data-model.md` does not have yet. They are rewritten together with that design decision, not before.
+> **Not built yet.** The digital path waits for the legal opinion and PayPerlez's webhook event names (D-046). These cases describe the design in D-018, D-020 and D-053 and are run once it exists. Run them against PayPerlez's test environment; webhook and signature cases for cards are in QA-07.
 
-### TC-06-06 — Initiate MoMo payment — MTN
-**Action:** `POST /api/contributions/momo` with:
+### TC-06-06 — Initiate MoMo payment
+**Action:** `POST /api/v1/contributions/initiate` with an `Idempotency-Key` and:
 ```json
 {
   "member_id": "{member_ulid}",
   "fund_type_id": "{offering_id}",
   "amount": 50.00,
-  "phone": "+233244000001",
-  "network": "mtn"
+  "payment_method": "momo",
+  "phone": "+233244000001"
 }
 ```
 **Expected:**
-- Paystack charge initiated
-- `contribution` record created with `status: pending`, `paystack_reference: "ref_xyz"`
-- Member receives a USSD MoMo prompt on their phone (test mode: simulated)
-- Pre-charge SMS sent: "Grace Assembly: Tap OK on the upcoming MoMo prompt to give GHS 50.00 as Offering. Thank you!"
+- `200` with `reference` (our ULID), `authorization_url: null`, `status: pending`
+- A `contributions` row exists with that id, `status: pending`, `payment_method: momo`, `payperlez_reference` set
+- PayPerlez receives the same id as its client reference and idempotency key
+- The member gets the MoMo prompt (test mode: simulated)
+- The pending gift is in no total, report, pledge sum or default gift list; `GET /contributions?status=pending` shows it
+- Sending the same request with the same `Idempotency-Key` returns the same `reference` and creates no second row
 
-### TC-06-07 — MoMo payment completed (webhook: charge.success)
-**Action:** Simulate `charge.success` webhook from Paystack for the reference in TC-06-06
+### TC-06-07 — MoMo payment succeeds
+**Action:** Deliver PayPerlez's success event for the reference in TC-06-06 (or let the polling job find it)
 **Expected:**
-- Contribution `status` updated to `completed`
-- `paid_at` timestamp set
-- `ContributionReceived` event fired
-- SMS receipt sent to member
-- Webhook stored in `webhook_logs`
+- `status` becomes `completed`; `processing_fee` and `total_paid` are filled in
+- `ContributionReceived` fires and the receipt SMS is sent
+- A `disbursements` row is created for the gift (D-018)
+- The payload is stored in `webhook_logs`; the gift now counts in totals
 
-### TC-06-08 — MoMo payment failed (webhook: charge.failed)
-**Action:** Simulate `charge.failed` webhook
+### TC-06-08 — MoMo payment fails or is abandoned
+**Action:** Deliver PayPerlez's failure event, or let a payment stay unpaid past the grace period so the polling job marks it
 **Expected:**
-- Contribution `status` updated to `failed`
-- No SMS receipt sent
-- Admin dashboard shows the failed contribution (for manual cash fallback)
+- `status` becomes `failed`; no receipt, no disbursement, nothing in any total
+- The failed gift is visible with `status=failed` so the finance secretary can record it as cash instead
+- A success event that arrives after the failure moves the row to `completed` (the money arrived, D-053)
 
-### TC-06-09 — Paystack webhook signature verification
-**Action:** Send a webhook with an invalid HMAC-SHA512 signature
-**Expected:** `401` — webhook is rejected without processing
+### TC-06-09 — Webhook signature verification
+**Action:** Send a PayPerlez webhook with an invalid `X-Payperlez-Signature`, and a card webhook with an invalid HMAC-SHA512 signature
+**Expected:** rejected (`401`) — webhook is rejected without processing
 
 ### TC-06-10 — Webhook idempotency (duplicate delivery)
 **Action:** Send the same `charge.success` webhook twice with the same reference

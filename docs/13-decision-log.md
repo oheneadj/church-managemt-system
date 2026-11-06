@@ -950,6 +950,21 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-053 — A digital payment is a contribution row with a status
+**Date:** October 2026
+**Decided by:** Product Owner (chose this over a separate attempts table)
+**Status:** Active — amends D-018 and `07-data-model.md`
+
+**Decision:** `contributions` gets `status` (`ContributionStatus`: pending, completed, failed, default `completed`). Cash is `completed` when recorded. A MoMo or card payment creates its row `pending` when it starts, and the row's `id` is the reference sent to the provider (agreement section 11, layer 6). The provider's webhook or the polling fallback moves it to `completed` or `failed`. Only `completed`, non-voided gifts count in totals, reports, pledge sums, receipts and payouts; lists show them by default and show pending or failed ones only when `status` is asked for. The disbursement is created when a gift becomes `completed`, never before. A confirmation that arrives after a `failed` mark is honoured (the row moves to `completed`), because the money did arrive.
+
+**Rationale:** The agreement requires a polling fallback for anything still pending (section 10) and a database unique key against duplicates (section 11); both need a row to exist while the payment is in flight. QA-06, QA-07 and QA-14 already expected these states.
+
+**Alternatives considered:** A separate `payment_attempts` table. Rejected: it adds a table and a second place where a payment lives, for no gain at this scale.
+
+**Consequences:** One migration adds the column with a default of `completed` (safe on a live system) and an index on `(status, created_at)`. Every existing query that sums or lists gifts, the offering report, the pledge recalculation and the receipt listener must filter on `completed` when the digital slice is built.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

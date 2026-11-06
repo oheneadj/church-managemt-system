@@ -147,7 +147,7 @@
 }
 ```
 **Expected:**
-- `200` with `reference` (our ULID), `authorization_url: null` and `status: pending`
+- `200` with `reference` (our ULID), `authorization_url: null` and `status: pending`; a `pending` contribution row exists with that id (D-053)
 - PayPerlez test MoMo prompt sent to `+233244000010` (network chosen from the number)
 - Member approves on test phone (or simulate approval)
 - PayPerlez confirms (webhook, or our polling fallback) and the gift is recorded

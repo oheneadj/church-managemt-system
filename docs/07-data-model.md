@@ -343,6 +343,7 @@ Every giving transaction — MoMo, card, or cash.
 | `processing_fee` | DECIMAL(12,2) | Yes | GHS collection fee the giver paid on top (D-018). Null for cash and until the provider reports it. |
 | `total_paid` | DECIMAL(12,2) | Yes | GHS the giver actually paid: `amount + processing_fee`. Null for cash. |
 | `payment_method` | VARCHAR(30) | No | `PaymentMethod`: momo, card, cash, ussd. |
+| `status` | VARCHAR(30) | No | `ContributionStatus`: pending, completed, failed. Default: `completed`. Cash is `completed` when recorded. A digital gift is created `pending` when the payment starts (its `id` is the reference sent to the provider) and moves to `completed` or `failed` when the provider confirms, by webhook or by the polling fallback. Pending and failed gifts are left out of every total, list (unless asked for), pledge sum, receipt and payout (D-053). |
 | `paystack_reference` | VARCHAR(100) | Yes | Unique Paystack transaction ref. Null for non-Paystack payments. |
 | `paystack_status` | VARCHAR(50) | Yes | `success`, `failed`. Null for non-Paystack payments. |
 | `payperlez_reference` | VARCHAR(100) | Yes | Unique PayPerlez transaction ref. Null unless processed via PayPerlez. |
@@ -362,6 +363,7 @@ Every giving transaction — MoMo, card, or cash.
 - `paystack_reference` — unique (where not null) — idempotency
 - `payperlez_reference` — unique (where not null) — idempotency for PayPerlez webhooks
 - `ussd_reference` — unique (where not null) — idempotency for USSD webhooks
+- `(status, created_at)` — for the polling job that checks payments still pending
 - `(church_id, member_id)` — for member giving history
 - `(church_id, service_id)` — for service offering reports
 - `(church_id, contributed_at)` — for date-range financial reports

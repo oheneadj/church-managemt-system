@@ -799,6 +799,7 @@ Church admin and finance secretary have `giving.view`; the pastor does not and g
 | `from` | date | `2026-01-01` |
 | `to` | date | `2026-12-31` |
 | `is_voided` | boolean | `false` (default: voided gifts are left out; `true` lists only the voided ones) |
+| `status` | string | `completed` (default: pending and failed digital payments are left out), `pending` or `failed` to see them (D-053) |
 
 ---
 
@@ -837,7 +838,7 @@ Permission: giving.record
 
 **Rules:** `fund_type_id` and `amount` are required. `pledge_id` is optional and names the pledge this gift pays (see How a pledge is paid). The fund must be one of this church's and switched on; `member_id` and `service_id` must belong to this church, and a member who has died cannot be given a gift (an inactive member can). A gift with no `member_id` is anonymous. `amount` is GHS with at most two decimals, above 0 and at most 999,999.99 (`config/giving.php`). `payment_method` must be `cash`: mobile money and cards start a payment instead (below). `contributed_at` is when the giving happened, never in the future, and defaults to now; it is kept apart from the day the record was entered. The church comes from the sign-in, never from the body. The gift and its change-history line are saved together.
 
-**Response `201`:** Full contribution resource. Cash has no processing fee, no payment reference and no status: a gift exists once it is recorded. `422` for bad values, `400` without an `Idempotency-Key`, `403` without `giving.record`.
+**Response `201`:** Full contribution resource. Cash has no processing fee and no payment reference, and its `status` is `completed` from the start. `422` for bad values, `400` without an `Idempotency-Key`, `403` without `giving.record`.
 
 **Side effect:** the `ContributionReceived` event fires, and a queued listener texts the member a receipt after the commit (docs/04 Giving Receipts, D-051): not for an anonymous gift, not when the church switched `receipt_on_cash` off, not for a member who has died, has no phone or turned SMS off, and not when the church has too few SMS credits (a warning is logged; this request is never failed by it). Each receipt is one `message_logs` row of type `contribution_receipt` and costs one credit per part of the text.
 
@@ -870,7 +871,7 @@ Permission: giving.record
 }
 ```
 
-The contribution record is created when the provider's callback (or our reconciliation poll) confirms success. Do not create a duplicate record manually.
+The contribution row is created now with `status: pending`, and `reference` is its `id` (D-053). When the provider confirms, by webhook or by our polling fallback, it becomes `completed` (the receipt and payout follow) or `failed` (nothing follows, and the finance secretary can record the gift as cash instead). Only `completed` gifts count in totals, reports and pledges. Do not create a duplicate record manually; a retry with the same `Idempotency-Key` returns the same `reference`.
 
 ---
 
