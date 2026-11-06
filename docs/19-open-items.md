@@ -10,11 +10,10 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 
 | # | Item | Decision | What is needed | Blocked by |
 |---|---|---|---|---|
-| A1 | **Staff sign in with email, password and an emailed code** | D-054 | Migration (`users.password`, required unique `email`, `email_verified_at`); `auth/login`, `auth/login/verify`, `auth/password/forgot` and `reset` endpoints and limiters; React login screen (email, password, code); onboarding form takes email and password; rewrite QA-01 and QA-12 for staff | A2 (the email sender) |
-| A2 | **Email sender** | D-054, D-037 point 7 | Resend driver behind Laravel Mail, an email job on the `critical` queue with `tries`/`timeout`/`backoff`/`failed()`, logging in `message_logs`, `.env.example`, a runbook | Nothing |
+| A1 | **Staff sign in with email, password and an emailed code** | D-054 | Migration (`users.password`, required unique `email`, `email_verified_at`); `auth/login`, `auth/login/verify`, `auth/password/forgot` and `reset` endpoints and limiters; React login screen (email, password, code); onboarding form takes email and password; rewrite QA-01 and QA-12 for staff | Nothing: the email sender is built (D-062) |
 | A3 | **Digital giving: MoMo through PayPerlez with automatic payout** | D-018, D-020, D-053 | Migration for `contributions.status`; `POST /contributions/initiate`; `PaymentProvider` and `DisbursementProvider` drivers; webhook and polling fallback; `disbursements` flow, platform fee, GHS 1 minimum balance; every existing sum, list, pledge recalculation, report and receipt filters on `completed`; church payout setup and account-name check (story 4.1); rewrite QA-06 TC-06-06 to 10, QA-14 E2E-09; run QA-15 | B1, B2, B3 |
 | A4 | **Card giving through Paystack** | D-020 | Card driver, subaccount, webhook, `charge.success` completing the pending row; rewrite QA-07 | B5, and A3 first |
-| A5 | **Staff management** | D-055 | `staff.manage` endpoints (list, invite, change role, deactivate, per-person permissions), the last-admin rule, QA-10 rows | A1, A2 |
+| A5 | **Staff management** | D-055 | `staff.manage` endpoints (list, invite, change role, deactivate, per-person permissions), the last-admin rule, QA-10 rows | A1 |
 | A6 | **Reports, exports, broadcasts, settings endpoints (Sprint 5)**, including **buying SMS credits (story 5.4)**, which replaces the Top up notice in the header (D-061) | docs/08, QA-10, QA-11 | `reports/attendance`, `reports/giving`, `reports/members`, `exports/*` with an `exports` table (D-039 point 6), `messages/broadcast`, `GET /messages`, `church/settings`; the automatic text to absent members | Nothing |
 | A7 | **Africa's Talking as the SMS fallback** | D-020 | A second `SmsProvider` driver | Nothing (not urgent) |
 | A8 | **USSD giving and Moolre** | D-019 | Revisit when a church asks | A church asking |
@@ -60,6 +59,9 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 | D6 | `npm audit`: 12 moderate and low findings in dev tools (`@typescript-eslint`, the `shadcn` CLI); below the CI gate of high | CHANGELOG, 6 November |
 | D7 | Anonymising visitor records on erasure (a visitor with a name and phone is personal data) | D-039 point 6 |
 | D8 | Payout, fee and reconciliation tests are written (QA-15) but have no code behind them | QA-15 |
+| D11 | **Email deliverability set-up**, outside the code: a dedicated sending subdomain, SPF, DKIM and DMARC in DNS, the domain verified in the Resend account, and `MAIL_FROM_ADDRESS` on it. Required before the first real email | D-062, docs/14 section 4 |
+| D12 | **Bounce and complaint handling**: a Resend webhook, a suppression list checked before every send, and the bounce-rate alert in docs/14 | D-062, the email pattern sections 4 and 7 |
+| D13 | The string queue names in older code (`'critical'`, `'notifications'`) can move to the `QueueName` enum when those files are next touched | D-062 |
 | D10 | The local `public/hot` file points at port 5175 where nothing runs, so a developer who opens the site without `npm run dev` gets a blank page and no hint why | found 6 November |
 
 ---
@@ -84,4 +86,5 @@ Move finished items here with the commit hash.
 | Item | Closed by |
 |---|---|
 | D9: every screen scrolled sideways at 375px (the menu links did not wrap) | The menu wraps; `e2e/mobile-layout.spec.ts` checks five pages in real Chrome, 6 November 2026 |
+| A2: the email sender (`QueueEmailAction`, `SendEmailJob`, circuit breaker, `email:pause`, runbook, `env:check`) | D-062, 7 November 2026 |
 | Seven consistency issues (frontend framework, IDs and money, providers, data model vs API vs QA, authentication, permissions, smaller items) | Commits `4ec5191` to `d98e0fb` on 6 November 2026 |

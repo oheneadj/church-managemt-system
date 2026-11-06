@@ -471,6 +471,8 @@ Every time a member agreed to receive a kind of message (agreement section 36). 
 
 ### `message_logs`
 
+> Email (D-062): a line is written `queued` when the email is queued, then `sent` with the mail provider's message id in `provider_reference`, or `failed`. `recipient_email` holds the address and `content` holds a summary with any code left out, never the email itself. `recipient_type` is `user` for staff and `applicant` for someone starting a church.
+
 Every outbound SMS, WhatsApp, or email sent by the system.
 
 | Column | Type | Nullable | Notes |

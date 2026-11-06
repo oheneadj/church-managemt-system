@@ -238,7 +238,8 @@ All side effects that don't need to be synchronous are queued:
 | `SendSmsJob` (OTP) | `critical` | Highest (D-025) |
 | `SendSmsJob` (receipts, broadcasts) | `notifications` | Normal |
 | `SendWhatsAppJob` | `notifications` | Normal |
-| `SendEmailJob` | `notifications` | Low |
+| `SendEmailJob` (codes) | `critical` | Highest (D-025, D-062) |
+| `SendEmailJob` (invitations, exports) | `notifications` | Normal |
 | `ProcessPaystackWebhookJob` | `payments` | High |
 | `GenerateOfferingReportJob` | `reports` | Low |
 | `ExportMembersJob` | `exports` | Low |
@@ -345,7 +346,7 @@ Member sends:  CHECKIN [service-code]
 
 **Purpose:** Staff invitation emails, export download links, system notifications (breach alerts, failed job alerts).
 
-**Laravel Mail abstraction:** Email is sent via `Mail::to()->send()`. The mail driver is configured in `.env`. Switching from Resend to a self-hosted SMTP (e.g. Postal) requires only updating `MAIL_*` environment variables — no code changes.
+**Laravel Mail abstraction:** Email is sent via `Mail::to()->send()` inside `SendEmailJob`, queued by `QueueEmailAction` (D-062). The mail driver is configured in `.env`. Switching from Resend to a self-hosted SMTP (e.g. Postal) requires only updating `MAIL_*` environment variables — no code changes.
 
 ```env
 # Resend (current)

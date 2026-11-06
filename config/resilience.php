@@ -34,4 +34,16 @@ return [
         'max_exceptions' => 3,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Emails held back by an open circuit
+    |--------------------------------------------------------------------------
+    | The same idea as for texts. The retry window is shorter because an emailed code is useless after its 10
+    | minutes; an invitation is not, but a person will ask for another long before 15 minutes are up.
+    */
+    'email' => [
+        'release_seconds' => 30,
+        'retry_minutes' => 15,
+    ],
+
 ];

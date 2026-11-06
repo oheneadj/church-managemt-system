@@ -45,6 +45,7 @@ One per failure we expect, in `docs/runbooks/`. Each has the same parts: symptom
 | [Database connections exhausted](runbooks/database-connections-exhausted.md) | The health check says the database is failing, or requests fail with "too many connections" |
 | [Queue worker stopped](runbooks/queue-worker-stopped.md) | Sign-in codes or messages do not arrive, or a queue keeps growing |
 | [SMS provider down](runbooks/sms-provider-down.md) | PayPerlez is failing, the circuit opened, or text messages are going wrong |
+| [Email provider down](runbooks/email-provider-down.md) | Emailed codes do not arrive, the email circuit opened, or emails are going wrong |
 | [WhatsApp down](runbooks/whatsapp-provider-down.md) | Members get no answer to CHECKIN, Meta cannot reach the webhook, or the circuit opened |
 | [Payment provider errors](runbooks/payment-provider-errors.md) | Giving fails or confirmations stop (applies from Sprint 4) |
 | [Disk space critical](runbooks/disk-space-critical.md) | The disk alert fires, or the health check says free space is low |

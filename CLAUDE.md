@@ -168,7 +168,7 @@ Six named queues, in priority order:
 
 | Queue | Used for | Workers |
 |---|---|---|
-| `critical` | OTP SMS, nothing else (D-025) | 1 |
+| `critical` | Sign-in codes only: OTP SMS (D-025) and the emailed staff codes (D-054, D-062) | 1 |
 | `payments` | Payment webhooks, collection polling and church payouts (PayPerlez, Paystack) | 2 (high priority) |
 | `notifications` | SMS, WhatsApp, email sends | 2 |
 | `reports` | Report generation | 1 |

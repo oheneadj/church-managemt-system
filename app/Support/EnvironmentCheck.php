@@ -84,6 +84,18 @@ final class EnvironmentCheck
             $problems[] = 'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.';
         }
 
+        if (in_array($config->get('mail.default'), ['log', 'array'], true)) {
+            $problems[] = 'MAIL_MAILER must not be "log" or "array" outside development.';
+        }
+
+        if ($config->get('mail.default') === 'smtp' && (blank($config->get('mail.mailers.smtp.host')) || blank($config->get('mail.mailers.smtp.username')) || blank($config->get('mail.mailers.smtp.password')))) {
+            $problems[] = 'MAIL_HOST, MAIL_USERNAME and MAIL_PASSWORD must be set when MAIL_MAILER is "smtp".';
+        }
+
+        if (in_array($config->get('mail.from.address'), [null, '', 'hello@example.com'], true)) {
+            $problems[] = 'MAIL_FROM_ADDRESS must be set to the real sending address.';
+        }
+
         if (blank($config->get('backup.gpg_recipient'))) {
             $problems[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
         }

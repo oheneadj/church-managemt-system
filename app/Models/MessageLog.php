@@ -8,6 +8,7 @@ use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
 use App\Enums\RecipientType;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\MessageLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -17,6 +18,22 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Every outbound SMS, WhatsApp or email, with its delivery status.
+ *
+ * @property string $id
+ * @property string|null $church_id null only for a platform message sent before a church exists (the sign-up code)
+ * @property MessageChannel $channel
+ * @property RecipientType $recipient_type
+ * @property string|null $recipient_id
+ * @property string|null $recipient_phone
+ * @property string|null $recipient_email
+ * @property string $message_type
+ * @property string $content what was sent, with any secret (a code) left out
+ * @property MessageStatus $status
+ * @property string|null $provider_reference
+ * @property array<string, mixed>|null $provider_response
+ * @property string|null $cost_units
+ * @property CarbonImmutable|null $sent_at
+ * @property CarbonImmutable|null $created_at
  */
 class MessageLog extends Model
 {

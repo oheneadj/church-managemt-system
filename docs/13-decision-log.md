@@ -471,7 +471,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-025 — OTP sends use a `critical` queue and cost-based rate limits
 **Date:** October 2026
 **Decided by:** Lead Engineer (following the Universal agreement, sections 16 and 18)
-**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`
+**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`. **Amended by D-062:** the `critical` queue also carries the emailed staff sign-in, reset and invitation codes.
 
 **Decision:**
 - A sixth queue, `critical`, carries OTP SMS so a slow broadcast can never delay a sign-in. It is listed first in the worker command.
@@ -1118,6 +1118,27 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 **Rationale:** The simplest display that tells a finance secretary or an admin before receipts stop going out, without building the purchase early.
 
 **Revisit when:** story 5.4 is built (replace the notice), the plan allocations are set (docs/12 Q4), or churches want the limit per plan.
+
+---
+
+### D-062 — How email is sent (A2, the prerequisite of D-054)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from D-014, D-025, D-043, D-054, the agreement sections 3, 11, 15, 17, 18 and 37, and `patterns/Pattern — Email & Notifications.md`
+**Status:** Active. Built; the emails that use it come with D-054 and story 5.15.
+
+**Decision:**
+1. **Laravel's mailer is the provider abstraction.** It is already an interface, a driver chosen by `.env` and a manager (agreement section 15), and D-014 chose it so that switching host is a configuration change. No extra contract is added. The mailer stays **Resend by SMTP** (D-014); in this Laravel version the TLS choice is `MAIL_SCHEME` (`smtps` for port 465), and the older `MAIL_ENCRYPTION` in the first docs no longer exists. Laravel's documentation recommends an API driver (`resend/resend-php`) over SMTP when possible; that would add a package and is left as a possible later change.
+2. **Every email goes through one door:** `QueueEmailAction` writes a `queued` line in `message_logs` and queues `SendEmailJob` after the line is committed; the job sends with `Mail::to()->send()`. Never `Mail::queue()` (it would bypass the log and the circuit) and never a send inside a request. The job has the same safeguards as the SMS job: 3 tries with backoff 30, 120 and 300 seconds, a 30 second timeout, a 15 minute retry window, a `failed()` handler that marks the line `failed` and reports to Sentry, a circuit breaker named `email`, and `email:pause` and `email:resume` as the incident switch (D-043).
+3. **Sending twice is prevented by the log line:** the job does nothing for a line that is already `sent`. Email is at-least-once, not exactly-once: a worker that dies after the provider accepted a message but before the line says `sent` could send it twice. That is accepted for codes (each is single-use and expires) and is the only way a repeat can happen.
+4. **Codes are never stored.** The log keeps `redactedSummary()`, for example "Email with a sign-in code (the code is not stored)". The code is in the queued job's payload in Redis for the seconds it takes to send, as it is for SMS codes (D-025). No address or code is written to the application log.
+5. **Codes use the `critical` queue**; invitations and export links use `notifications`. Queue names are a `QueueName` enum in new code; the string literals in older code are left alone until they are touched.
+6. **One email template for the three code emails** (sign-in, password reset, invitation), a Markdown mailable so Laravel makes the HTML and plain-text versions, with its wording in `lang/en/emails.php` so it can be reviewed and later translated (DD-009). A code email has no button or link to click. The mail layout's header is overridden so an email can never load an image from another website: the framework's own header hotlinks a Laravel logo from laravel.com when the app is named "Laravel".
+7. **Deployed environments are checked.** `env:check` refuses `MAIL_MAILER` of `log` or `array`, an SMTP mailer with no host, username or password, and the placeholder sending address.
+8. **Left out on purpose:** bounce and complaint handling and a suppression list (they need a Resend webhook and are not needed until emails go to people who might bounce), notification preferences (every email built so far is transactional and cannot be switched off), and the deliverability set-up in DNS (SPF, DKIM, DMARC on a dedicated sending subdomain), which is outside the code and must be done before the first real email (`docs/19-open-items.md`, D11 and D12).
+
+**Rationale:** The simplest path that keeps the agreement's rules (queued, logged, safe to retry, with a circuit breaker and a switch), reuses the SMS job's proven shape, and adds no dependency. A real email sent through the real queue to a real SMTP server was received with both a plain-text and an HTML part and a stored `sent` line with the provider's message id.
+
+**Revisit when:** emails go to people other than staff (add bounce handling and preferences), volume justifies the Resend API driver, or a second language is needed.
 
 ---
 

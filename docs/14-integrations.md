@@ -13,7 +13,7 @@
 | Africa's Talking | SMS (OTP, receipts, broadcasts) — fallback | API key | Official PHP SDK |
 | Moolre | USSD giving (`*713#`), SMS | API key + webhook secret | Raw HTTP via Laravel HTTP client |
 | Meta Business API | WhatsApp (CHECKIN, broadcasts, receipts) | Bearer token | Raw HTTP via Laravel HTTP client |
-| Resend | Transactional email | API key (SMTP) | Laravel Mail (SMTP) |
+| Resend | Transactional email | API key (SMTP) | Laravel Mail (SMTP), through `QueueEmailAction` and `SendEmailJob` (D-062) |
 | Cloudflare R2 | File storage (photos, exports) | Access key + secret | `league/flysystem-aws-s3-v3` |
 
 **Provider toggles** — at least one SMS provider and at least one payment provider must be active at all times. See Decision 11 in `decisions/product-and-architecture-decisions.md` for the full provider interface pattern and `.env` toggle keys.
@@ -477,64 +477,61 @@ Meta requires that members opt in to receive WhatsApp messages. The opt-in is re
 
 ## 4. Resend (Email)
 
+> **Built (D-062).** The sender is in place; the emails that use it (staff sign-in, password reset, staff invitation) arrive with D-054 and story 5.15.
+
 ### What It Does
-- Staff invitation emails
-- Export download links
-- System alerts (to platform admin — not churches)
+- Sign-in, password reset and staff invitation codes (D-054)
+- Export download links (Sprint 5)
+- System alerts to the platform admin, not churches
+
+### How it is built
+
+Laravel's own mailer is the abstraction (an interface, a driver chosen by `.env`, and a manager), so there is no extra contract: switching from Resend to another SMTP host is an `.env` change and a worker restart (D-014). The rest follows the SMS pattern:
+
+1. A caller builds an `OutboundEmail` (the church, the address, a `Mailable`, what it is, the text to log) and gives it to `QueueEmailAction`.
+2. The action writes a **`queued` line in `message_logs`** (channel `email`, the address, and the text with any secret left out) and queues `SendEmailJob` on the queue the caller chose, **after the line is committed**. Codes go on `critical` (D-025); anything else on `notifications`. Nothing is sent inside a request.
+3. The job sends with `Mail::to(...)->send(...)`, behind a **circuit breaker** (`email`) that can also be paused by hand (`email:pause`, `email:resume`). It records `sent` with the mail provider's message id. It retries 3 times (30, 120 and 300 seconds), times out at 30 seconds, and gives up after 15 minutes (`config/resilience.php`). It checks the log line first, so a repeated run sends nothing twice.
+4. On permanent failure the line becomes `failed` and the exception is reported to Sentry, because a code that never arrives locks a person out. See the [email runbook](runbooks/email-provider-down.md).
+
+The wording of each email lives in `lang/en/emails.php`. Emails are Markdown mailables, so Laravel makes the HTML and the plain-text version from one template. The mail layout's header is overridden (`resources/views/vendor/mail/html/header.blade.php`) so an email never loads an image from another website. A code email has no button and no link to click.
 
 ### Setup
 
-Resend is configured as a standard SMTP driver in Laravel:
+Resend by SMTP. In this Laravel version the TLS choice is `MAIL_SCHEME` (the old `MAIL_ENCRYPTION` no longer exists): `smtps` means TLS from the first byte, which is what port 465 needs.
 
 ```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.resend.com
 MAIL_PORT=465
+MAIL_SCHEME=smtps
 MAIL_USERNAME=resend
 MAIL_PASSWORD=re_xxxxxxxxxxxx
-MAIL_ENCRYPTION=ssl
-MAIL_FROM_ADDRESS=noreply@yourapp.com
+MAIL_FROM_ADDRESS=noreply@mail.yourapp.com
 MAIL_FROM_NAME="YourApp"
 ```
 
+`php artisan env:check` fails a deployed environment that still has `MAIL_MAILER=log` or `array`, has no SMTP host, username or password, or has the placeholder sending address. Laravel's docs recommend an API driver (`resend/resend-php`) over SMTP when possible; SMTP was chosen in D-014 to avoid a dependency, and the API driver is a possible later change (D-062).
+
+### Before the first real email (deliverability)
+
+These are outside the code and block a real send (`docs/19-open-items.md`, D11):
+
+- A dedicated sending subdomain for transactional email (for example `mail.yourapp.com`), not the root domain.
+- **SPF**, **DKIM** (Resend gives the records) and **DMARC** (start with `p=none` and watch the reports) in DNS for that subdomain.
+- The domain verified in the Resend account, and a sending address on it in `MAIL_FROM_ADDRESS`.
+
+### Not built yet
+
+- **Bounce and complaint handling**: a Resend webhook, and a suppression list checked before every send (`patterns/Pattern — Email & Notifications.md`, sections 4 and 7). Until then a bad address is only seen as a failed line in `message_logs` (`docs/19-open-items.md`, D12).
+- Marketing email. There is none, and it would need its own sending domain.
+
 ### Switching to Own SMTP
 
-When email volume justifies a self-hosted SMTP (e.g. Postal):
+When email volume justifies a self-hosted SMTP (e.g. Postal), change `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME` and `MAIL_PASSWORD`. No code changes. No migration. Restart queue workers for the new config to take effect.
 
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=mail.yourapp.com
-MAIL_PORT=587
-MAIL_USERNAME=noreply@yourapp.com
-MAIL_PASSWORD=xxxx
-MAIL_ENCRYPTION=tls
-```
+### Testing
 
-No code changes. No migration. Restart queue workers for the new config to take effect.
-
-### Email Classes
-
-```php
-// app/Mail/StaffInvitationMail.php
-class StaffInvitationMail extends Mailable
-{
-    public function envelope(): Envelope
-    {
-        return new Envelope(subject: "You've been invited to {$this->church->name}");
-    }
-
-    public function content(): Content
-    {
-        return new Content(view: 'emails.staff-invitation', with: [
-            'church'  => $this->church,
-            'inviter' => $this->inviter,
-            'loginUrl' => config('app.url') . "/{$this->church->slug}",
-        ]);
-    }
-}
-```
-
-All emails are dispatched via `Mail::to(...)->queue(...)` — never `send()`.
+Email is faked in tests (`Mail::fake()`), never sent. Locally the log mailer writes the email, plain text and HTML, to `storage/logs/laravel.log`; to see one as a person would, point `MAIL_HOST` at a mail catcher such as Mailpit.
 
 ---
 
@@ -614,7 +611,7 @@ All integrations have a corresponding health check. See [`17-monitoring-and-aler
 | Paystack | Last webhook received within 60 min during business hours | No `charge.success` in 60 min on a Sunday |
 | Africa's Talking | Message log `failed` rate | > 10% failure rate in a 15-min window |
 | Meta WhatsApp | CHECKIN response time | No CHECKIN response within 30s of receipt |
-| Resend | Bounce rate | > 5% bounce rate on any send batch |
+| Resend | Bounce rate (needs the bounce webhook, not built) and `failed` email lines in `message_logs` | > 5% bounce rate on any send batch; any email `failed` after its retries (reported to Sentry) |
 | Cloudflare R2 | Upload success rate | Any R2 upload failure in production |
 
 ---

@@ -18,6 +18,7 @@ function goodConfig(array $overrides = []): Repository
         'filesystems' => ['default' => 'r2'],
         'sentry' => ['dsn' => 'https://key@o0.ingest.sentry.io/1'],
         'backup' => ['gpg_recipient' => 'backups@example.com'],
+        'mail' => ['default' => 'smtp', 'mailers' => ['smtp' => ['host' => 'smtp.resend.com', 'username' => 'resend', 'password' => 're_secret']], 'from' => ['address' => 'noreply@churchapp.example']],
     ];
 
     return new Repository(array_replace_recursive($base, $overrides));
@@ -103,3 +104,28 @@ it('requires the Meta token and phone number id when Meta sends the WhatsApp mes
 
     expect($problems)->toBe(['META_ACCESS_TOKEN and META_PHONE_NUMBER_ID must be set when WHATSAPP_DRIVER is "meta".']);
 })->with(['access_token', 'phone_number_id']);
+
+it('wants real email in production, not the log or the array mailer', function (string $mailer): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['mail' => ['default' => $mailer]]));
+
+    expect($problems)->toContain('MAIL_MAILER must not be "log" or "array" outside development.');
+})->with(['log', 'array']);
+
+it('wants the SMTP host, username and password when email goes by SMTP', function (string $missing): void {
+    $config = goodConfig();
+    $config->set("mail.mailers.smtp.{$missing}", '');
+
+    expect(EnvironmentCheck::problems($config))->toContain('MAIL_HOST, MAIL_USERNAME and MAIL_PASSWORD must be set when MAIL_MAILER is "smtp".');
+})->with(['host', 'username', 'password']);
+
+it('wants the real sending address, not the framework placeholder', function (string $address): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['mail' => ['from' => ['address' => $address]]]));
+
+    expect($problems)->toContain('MAIL_FROM_ADDRESS must be set to the real sending address.');
+})->with(['', 'hello@example.com']);
+
+it('never prints a mail secret in its messages', function (): void {
+    $problems = EnvironmentCheck::problems(goodConfig(['mail' => ['default' => 'log']]));
+
+    expect(implode(' ', $problems))->not->toContain('re_secret');
+});
