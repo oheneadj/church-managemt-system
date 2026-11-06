@@ -1009,6 +1009,28 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-056 — A Content-Security-Policy on every response
+**Date:** October 2026
+**Decided by:** Product Owner (chose a strict policy now), Lead Engineer (the details)
+**Status:** Active. Built and checked in real Chrome against a production build.
+
+**Decision:**
+1. **The React page** is sent with `script-src 'self'` plus a per-request nonce (Laravel's `Vite::useCspNonce()`), no `unsafe-inline` or `unsafe-eval` for scripts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, images from the page itself, `data:`, `blob:` and the storage host taken from the R2 endpoint (signed photo links), and fonts and connections from the page itself.
+2. **Everything that is not a page** (JSON, files) gets `default-src 'none'; frame-ancestors 'none'`.
+3. **Styles may be inline** (`style-src 'self' 'unsafe-inline'`). The toast library adds a `<style>` element at run time with no nonce, and a nonce on `style-src` would make browsers ignore `unsafe-inline`. Strict scripts are the protection that matters against XSS.
+4. **The API documentation page (`/docs/api`) gets no policy**, because it loads a third-party viewer; it is staff-only outside local development (D-035).
+5. **Zod runs in `jitless` mode** (`z.config({ jitless: true })`), because its code generation uses `new Function`, which the policy forbids. Validation is unchanged.
+6. **While Vite's dev server runs**, its address is added to `script-src`, `style-src` and `connect-src` (HTTP and WebSocket) so hot reload works; this never applies in production.
+7. The policy lives in `config/security.php` and is built by `ContentSecurityPolicy`, sent by `ContentSecurityPolicyHeaders`. Violation reporting (`report-to`) is not set up yet; Sentry's CSP reporting can be added with the browser error monitoring (D-040).
+
+**Rationale:** The Laravel addendum (section 8) requires a CSP header and the agreement lists XSS in its OWASP review. A real-browser run found two problems unit tests could not (inline style elements and Zod's eval probe), both fixed before the policy shipped.
+
+**Alternatives considered:** Report-only first (rejected by the owner), and deferring the header (rejected).
+
+**Revisit when:** a third-party script or font host is added (it must be listed in `config/security.php`), or the toast library gains nonce support (then drop `unsafe-inline` from `style-src`).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

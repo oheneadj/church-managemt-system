@@ -140,12 +140,17 @@
 ### TC-12-18 — Security headers present on all API responses
 **Action:** Make any API request and inspect the response headers
 **Expected:**
+These are the headers in `config/security.php`, sent by the `SecurityHeaders` middleware on every response, errors and the React page included (pinned by `SecurityHeadersTest`):
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: no-referrer`
-- `Content-Security-Policy: default-src 'none'` (API — no content served)
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains` (production only)
+- `X-XSS-Protection: 0` (modern browsers ignore the old filter; `0` switches off its known bugs, so `1; mode=block` would be wrong)
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains`, only over HTTPS (not over plain HTTP in local development)
+- `Content-Security-Policy` (D-056): JSON responses `default-src 'none'; frame-ancestors 'none'`; the React page `script-src 'self' 'nonce-...'` with no `unsafe-inline` or `unsafe-eval`, `object-src 'none'`, `frame-ancestors 'none'`; the nonce changes on every request and matches the page's script tags. `/docs/api` is exempt
+
+### TC-12-18b — The policy does not break the app
+**Action:** In Chrome, with the production build (Vite not running), sign in and open the dashboard, members, services and giving pages with the console open
+**Expected:** no `securitypolicyviolation` events and no CSP errors in the console; every page renders. Run it again whenever a script, font or image host is added
 
 ### TC-12-19 — Server version not disclosed
 **Action:** Inspect response headers
@@ -158,11 +163,11 @@
 ### Webhook Security
 
 ### TC-12-20 — Paystack webhook rejected without valid signature
-**Action:** POST to `/api/webhooks/paystack` without the `x-paystack-signature` header
+**Action:** POST to `/api/v1/webhooks/paystack` (cards, not built) or `/api/v1/webhooks/payperlez` (not built) without a valid signature header
 **Expected:** `401` — no processing, no job dispatched
 
 ### TC-12-21 — WhatsApp webhook rejected with wrong verify token
-**Action:** GET `/api/webhooks/whatsapp?hub.verify_token=wrong_token&hub.challenge=123`
+**Action:** GET `/api/v1/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=wrong_token&hub.challenge=123` on the platform address
 **Expected:** `403`
 
 ---

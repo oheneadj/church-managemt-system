@@ -8,8 +8,10 @@ import { Toaster } from '@/components/ui/sonner';
 import { startErrorMonitoring } from '@/lib/errorMonitoring';
 import { queryClient } from '@/lib/queryClient';
 import { restoreSession } from '@/lib/restoreSession';
+import { configureZod } from '@/lib/zodConfig';
 import { router } from '@/router';
 
+configureZod();
 startErrorMonitoring();
 
 const container = document.getElementById('root');

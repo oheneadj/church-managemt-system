@@ -40,7 +40,7 @@ Authorization: Bearer {PAYSTACK_SECRET_KEY}
   "business_name": "Grace Assembly International",
   "settlement_bank": "058",          // bank code (from Paystack bank list)
   "account_number": "0123456789",
-  "percentage_charge": 80            // church receives 80%, platform keeps 20% (example)
+  "percentage_charge": 99            // church receives 99%, platform keeps 1% (an example shape only)
 }
 ```
 
@@ -48,7 +48,7 @@ Response: `{ "data": { "subaccount_code": "ACCT_abc123xyz" } }`
 
 Store `subaccount_code` on the `churches` record. Every subsequent payment for this church uses this code.
 
-**Important:** The `percentage_charge` is what the *church* receives. So if the platform keeps 2%, set `percentage_charge: 98`.
+**Important:** The `percentage_charge` is what the *church* receives. So if the platform keeps 1%, set `percentage_charge: 99`. The real card split, and whether the GHS 10.00 cap and GHS 0.10 floor that apply to MoMo (D-018) can also apply to cards, are decided when cards are built; verify the subaccount parameters against Paystack's current docs then.
 
 ### MoMo Charge Flow
 

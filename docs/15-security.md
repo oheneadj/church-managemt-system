@@ -324,6 +324,7 @@ Collect only what the church needs. Fields that are optional in the data model m
 - **HSTS enabled.** `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 - **Wildcard SSL via Let's Encrypt.** Auto-renewed by Coolify.
 - **API responses include `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`.**
+- **A `Content-Security-Policy` on every response (D-056).** The React page may run only scripts that carry its per-request nonce (no inline script, no eval) and may not be framed; JSON responses allow nothing to load. Written in `config/security.php`, tested in `SecurityHeadersTest`, and checked in a real browser against a production build.
 
 The `SecurityHeaders` middleware (`app/Http/Middleware/SecurityHeaders.php`) sets these headers on every response, including errors and the React page. The header list and the HSTS value live in `config/security.php`; HSTS is sent only over HTTPS, because browsers ignore it over plain HTTP.
 

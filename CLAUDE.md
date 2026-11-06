@@ -6,7 +6,7 @@
 
 ## What This Project Is
 
-A **multi-tenant SaaS** for Ghanaian churches (100–800 members). Churches pay a monthly subscription. All churches share one database, isolated by `church_id`. The platform handles member management, attendance (including WhatsApp CHECKIN), digital giving via Paystack MoMo/card, and SMS/WhatsApp communications.
+A **multi-tenant SaaS** for Ghanaian churches (100–800 members). Churches pay a monthly subscription. All churches share one database, isolated by `church_id`. The platform handles member management, attendance (including WhatsApp CHECKIN), digital giving (MoMo through PayPerlez with automatic payout to the church, D-018; cards through Paystack), and SMS/WhatsApp communications.
 
 **Backend:** Laravel (latest stable) — REST API only. The only Blade view is the SPA shell (`resources/views/app.blade.php`); no Inertia.
 **Database:** PostgreSQL. **Dev:** native (no Docker). **Staging/production:** Docker via Coolify.
@@ -39,7 +39,7 @@ This test is a hard requirement in the Definition of Done. No exceptions.
 ### 3. All outbound network calls are queued — never inline
 ```php
 // Wrong:
-AfricasTalking::sms()->send([...]);
+app(SmsProvider::class)->send($message); // an SDK or provider call in the request
 
 // Right:
 SendSmsJob::dispatch($phone, $message)->onQueue('notifications');
@@ -53,7 +53,7 @@ Controllers are thin and single-action. They: build a DTO from the validated For
 All models use `SoftDeletes`. Contributions use `is_voided` flag, not deletion. Void requires a reason.
 
 ### 6. All amounts are GHS, stored as `DECIMAL(12,2)`
-No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithmetic with PHP floats — use `bcmath` or `brick/math` (see D-017). Paystack requires pesewas in its API (`amount * 100`), but we store and display GHS.
+No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithmetic with PHP floats — use `bcmath` or `brick/math` (see D-017). Money crossing a provider interface is a decimal string in GHS (D-020); the pesewas conversion (`amount * 100`) exists only inside the Paystack adapter.
 
 ### 7. `APP_DEBUG=false` in production. Always.
 
@@ -169,7 +169,7 @@ Six named queues, in priority order:
 | Queue | Used for | Workers |
 |---|---|---|
 | `critical` | OTP SMS, nothing else (D-025) | 1 |
-| `payments` | Paystack webhook processing | 2 (high priority) |
+| `payments` | Payment webhooks, collection polling and church payouts (PayPerlez, Paystack) | 2 (high priority) |
 | `notifications` | SMS, WhatsApp, email sends | 2 |
 | `reports` | Report generation | 1 |
 | `exports` | CSV export jobs | 1 |
@@ -178,7 +178,7 @@ Six named queues, in priority order:
 Always specify the queue when dispatching:
 ```php
 SendSmsJob::dispatch(...)->onQueue('notifications');
-ProcessPaystackWebhookJob::dispatch(...)->onQueue('payments');
+ProcessPaymentWebhookJob::dispatch(...)->onQueue('payments'); // planned with the digital giving slice
 ```
 
 ---
@@ -187,8 +187,9 @@ ProcessPaystackWebhookJob::dispatch(...)->onQueue('payments');
 
 | Service | Config key | SDK |
 |---|---|---|
-| Paystack | `services.paystack.*` | Official PHP SDK |
-| Africa's Talking | `services.africastalking.*` | Official PHP SDK |
+| PayPerlez (SMS, MoMo collections, payouts) | `services.payperlez.*` | Laravel HTTP client behind `SmsProvider`, `PaymentProvider`, `DisbursementProvider` (D-020) |
+| Paystack (cards only, planned) | `services.paystack.*` | Official PHP SDK, behind `PaymentProvider` |
+| Africa's Talking (SMS fallback, planned) | `services.africastalking.*` | Official PHP SDK, behind `SmsProvider` |
 | Meta WhatsApp | `services.meta.*` | Laravel HTTP client (raw) |
 | Resend | `MAIL_*` in `.env` | Laravel Mail (SMTP) |
 | Cloudflare R2 | `filesystems.disks.r2` | `league/flysystem-aws-s3-v3` |

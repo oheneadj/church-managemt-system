@@ -147,6 +147,8 @@ class MemberResource extends JsonResource
 
 ### React 19 (Frontend)
 
+The app lives in `resources/js` (D-022); the paths below are relative to it, and `ARCHITECTURE.md` has the current list.
+
 ```
 src/
 ├── assets/
@@ -170,6 +172,8 @@ src/
 **No direct `axios` calls in components.** All API calls go through a typed service in `src/services/`. Components call the service via a TanStack Query hook; the service calls axios.
 
 **TypeScript everywhere.** No `.jsx` files — all components are `.tsx`. All API response shapes have a type in `src/types/`. No `any`.
+
+**Backend enums are mirrored, never retyped.** Each PHP enum and the permission list has a mirror in `src/constants/enums.ts` and `src/constants/permissions.ts` (D-017, D-036). `FrontendEnumsTest` fails when a mirror drifts from its PHP enum, so a new enum value is added in PHP and the mirror in the same change.
 
 **Server state lives in TanStack Query, not Zustand.** Zustand holds UI and auth state only. Anything that comes from the API (members, contributions, services) is fetched and cached by TanStack Query hooks.
 

@@ -13,6 +13,7 @@ use App\Exceptions\ServiceIsOpenException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Http\Middleware\AddErrorMonitoringContext;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\ContentSecurityPolicyHeaders;
 use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\EnsureStaffIsCurrent;
 use App\Http\Middleware\ResolveTenant;
@@ -39,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(ContentSecurityPolicyHeaders::class);
 
         // Browser requests from a church's own host get session cookies; everything else keeps bearer tokens.
         $middleware->statefulApi();

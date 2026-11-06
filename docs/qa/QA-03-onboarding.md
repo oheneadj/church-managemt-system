@@ -56,7 +56,7 @@
 **Action:** Complete onboarding including bank account details
 **Expected:**
 - `churches.paystack_subaccount_code` is populated (format: `ACCT_*`)
-- Test a payment to verify split routing works (GHS 100 → church receives GHS 80 if fee is 20%)
+- Test a card payment to verify split routing works (the split percentage is set when cards are built, D-018)
 - If Paystack subaccount creation fails, church is flagged: `onboarding_status: paystack_pending`, and giving is disabled until resolved
 
 ### TC-03-06 — Two admin accounts required

@@ -77,6 +77,10 @@ Value objects (`app/ValueObjects`, for example `PhoneNumber`) replace primitive 
 - `EnsureStaffIsCurrent` ends a session the moment a user is deactivated or changes phone number; `UserObserver` deletes their tokens.
 - Cost-triggering endpoints (sending an SMS) have their own rate limits (D-025).
 
+## Response headers
+
+`SecurityHeaders` sets the fixed headers and `ContentSecurityPolicyHeaders` sets the Content-Security-Policy (D-056). Both read `config/security.php`. A new third-party script, font or image host must be added there, or the browser blocks it.
+
 ## Asynchronous work
 
 Six named queues, highest priority first: `critical` (OTP SMS only), `payments`, `notifications`, `reports`, `exports`, `scheduled`. Always pass a queue name when dispatching. A job declares `$tries`, `$timeout`, `$backoff` and a `failed()` handler. No outbound network call runs inside a request.

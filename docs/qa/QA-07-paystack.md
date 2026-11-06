@@ -39,11 +39,11 @@
 - No charge initiated with Paystack
 
 ### TC-07-03 — Subaccount percentage split
-**Action:** Initiate a GHS 100 test payment for a church with an 80% split (church gets 80%, platform keeps 20%)
+**Action:** Initiate a GHS 100 test payment for a church with the configured split (this plan assumes a 99% / 1% example until the card split is decided)
 **Expected:**
-- Paystack charge is created with `subaccount: "ACCT_*"` and `percentage_charge: 80`
-- On `charge.success`: church's Paystack balance receives GHS 80.00
-- Platform account balance receives GHS 20.00
+- Paystack charge is created with `subaccount: "ACCT_*"` and `percentage_charge: 99`
+- On `charge.success`: church's Paystack balance receives GHS 99.00
+- Platform account balance receives GHS 1.00
 - (Verify in Paystack test dashboard — split settlement visible in transaction details)
 
 ---
