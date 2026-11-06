@@ -191,6 +191,14 @@ describe('reports', function (): void {
     });
 });
 
+describe('church profile', function (): void {
+    it('reading and changing the details', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/church'), 'GET', '/v1/church', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/church', ['name' => 'Grace Assembly International', 'phone' => '0302111222']), 'PUT', '/v1/church', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/church', ['email' => 'nope']), 'PUT', '/v1/church', 422);
+    });
+});
+
 describe('church settings', function (): void {
     it('reading and changing them', function (): void {
         assertMatchesSpec($this->getJson(CHURCH_HOST.'/church/settings'), 'GET', '/v1/church/settings', 200);

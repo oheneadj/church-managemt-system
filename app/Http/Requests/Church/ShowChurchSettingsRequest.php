@@ -21,7 +21,7 @@ class ShowChurchSettingsRequest extends FormRequest
     {
         $church = $this->user()?->church;
 
-        return $church !== null && $this->allowed('viewSettings', $church);
+        return $church !== null && $this->allowed('view', $church);
     }
 
     /**

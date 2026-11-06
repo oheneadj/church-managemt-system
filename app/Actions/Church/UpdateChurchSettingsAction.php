@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Church;
 
 use App\DTOs\Church\UpdateChurchSettingsDTO;
-use App\Events\ChurchSettingsUpdated;
+use App\Events\ChurchUpdated;
 use App\Models\Church;
 use App\Repositories\ChurchRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +46,7 @@ final class UpdateChurchSettingsAction
 
             $church->settings = [...($church->settings ?? []), ...$new];
             $this->churches->save($church);
-            ChurchSettingsUpdated::dispatch($church, $dto->actor, $old, $new);
+            ChurchUpdated::dispatch($church, $dto->actor, $old, $new);
 
             return $church;
         });

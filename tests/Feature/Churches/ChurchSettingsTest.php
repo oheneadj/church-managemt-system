@@ -141,7 +141,7 @@ describe('the policy', function (): void {
     it('never lets anyone read or change the settings of a church they do not belong to', function (): void {
         $admin = settingsStaff($this->church, 'church-admin');
 
-        expect($admin->can('viewSettings', $this->church))->toBeTrue()->and($admin->can('viewSettings', $this->other))->toBeFalse()
-            ->and($admin->can('updateSettings', $this->church))->toBeTrue()->and($admin->can('updateSettings', $this->other))->toBeFalse();
+        expect($admin->can('view', $this->church))->toBeTrue()->and($admin->can('view', $this->other))->toBeFalse()
+            ->and($admin->can('update', $this->church))->toBeTrue()->and($admin->can('update', $this->other))->toBeFalse();
     });
 });

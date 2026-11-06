@@ -59,7 +59,7 @@ The root tenant record. Every other table references this.
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
-| `name` | VARCHAR(255) | No | Full church name |
+| `name` | VARCHAR(255) | No | Full church name. The church admin can change it (`PUT /church`); the web address (`slug`) does not change with it. |
 | `slug` | VARCHAR(100) | No | Subdomain slug. Unique. Lowercase, hyphenated. |
 | `custom_domain` | VARCHAR(255) | Yes | e.g. `portal.graceassembly.org.gh`. Unique where set. |
 | `denomination` | VARCHAR(255) | Yes | e.g. "Assemblies of God", "Presbyterian" |

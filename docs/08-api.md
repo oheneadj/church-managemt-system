@@ -1239,6 +1239,40 @@ Adding returns `201` with `{ "data": { "department_id", "member_id", "role", "jo
 
 ---
 
+## Church Profile
+
+### Get Church Profile
+```
+GET /api/v1/church
+Authorization: Bearer {token}
+```
+Any signed-in staff member may read the details of their own church (D-055). Nothing in them is secret, and payout, billing and credit details are never part of it.
+
+**Response `200`:**
+```json
+{
+  "data": {
+    "id": "ulid", "name": "Grace Assembly International", "slug": "grace-assembly", "denomination": "Pentecostal",
+    "address": "12 Ring Road", "city": "Kumasi", "region": "Ashanti", "phone": "+233302000000", "email": "office@grace.example",
+    "timezone": "Africa/Accra"
+  }
+}
+```
+A detail the church never gave is `null`.
+
+### Update Church Profile
+```
+PUT /api/v1/church
+Authorization: Bearer {token}
+Permission: church.settings (church admin)
+```
+
+**Body:** any of `name` (cannot be emptied, up to 255), `denomination` (255), `address` (1000), `city` (100), `region` (100), `phone`, `email`, and at least one. Sending `null` or an empty text clears an optional detail. The phone is put into international form (`0302111222` becomes `+233302111222`) and the email into lowercase; a bad phone or email is `422`.
+
+**Response `200`:** the same shape as Get Church Profile, after the change. Only the details sent are changed; every change is written to the change history with the old and new values, and sending what is already there saves and writes nothing. `403` for anyone but the church admin. The web address (`slug`), `timezone`, `member_number_prefix`, `plan` and `sms_credits` are not the church's to change here: sending one is `422` (it is refused, not silently ignored). Service times are the weekly schedules (`/service-schedules`), and the logo is not built yet.
+
+---
+
 ## Church Settings
 
 ### Get Settings

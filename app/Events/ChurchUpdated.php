@@ -9,9 +9,9 @@ use App\Models\User;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A church's settings were changed by the church admin. Carries the old and new values of the settings that changed.
+ * A church's profile or settings were changed by the church admin. Carries the old and new values of what changed.
  */
-class ChurchSettingsUpdated
+class ChurchUpdated
 {
     use Dispatchable;
 

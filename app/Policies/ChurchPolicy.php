@@ -9,23 +9,24 @@ use App\Models\Church;
 use App\Models\User;
 
 /**
- * Who may read and change a church's settings (docs/08, Church Settings; D-055 point 6). Any signed-in staff member may read
- * their own church's settings, because nothing in them is secret; only `church.settings` (the church admin) changes them.
+ * Who may read and change a church's profile and settings (docs/08, Church Profile and Church Settings; D-055 point 6). Any
+ * signed-in staff member may read their own church's details, because nothing in them is secret; only `church.settings` (the
+ * church admin) changes them.
  */
 class ChurchPolicy
 {
     /**
-     * Whether the user may read this church's settings.
+     * Whether the user may read this church's profile and settings.
      */
-    public function viewSettings(User $user, Church $church): bool
+    public function view(User $user, Church $church): bool
     {
         return $user->church_id === $church->id;
     }
 
     /**
-     * Whether the user may change this church's settings.
+     * Whether the user may change this church's profile and settings.
      */
-    public function updateSettings(User $user, Church $church): bool
+    public function update(User $user, Church $church): bool
     {
         return $user->church_id === $church->id && $user->hasPermissionTo(StaffPermission::ChurchSettings);
     }

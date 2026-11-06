@@ -23,7 +23,7 @@ class UpdateChurchSettingsRequest extends FormRequest
     {
         $church = $this->user()?->church;
 
-        return $church !== null && $this->allowed('updateSettings', $church);
+        return $church !== null && $this->allowed('update', $church);
     }
 
     /**

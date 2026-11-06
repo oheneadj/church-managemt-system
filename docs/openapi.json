@@ -2622,6 +2622,89 @@
                 }
             }
         },
+        "/v1/church": {
+            "get": {
+                "operationId": "church.show",
+                "summary": "Returns the details of the church the signed-in staff member belongs to",
+                "tags": [
+                    "ShowChurchProfile"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ChurchProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChurchProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "church.update",
+                "summary": "Runs UpdateChurchProfileAction for this request and returns the ChurchProfileResource",
+                "tags": [
+                    "UpdateChurchProfile"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateChurchProfileRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ChurchProfileResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChurchProfileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/church/settings": {
             "get": {
                 "operationId": "church.settings.show",
@@ -4156,6 +4239,72 @@
                     "is_active"
                 ],
                 "title": "ChangeStaffStatusRequest"
+            },
+            "ChurchProfileResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "denomination": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "region": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "denomination",
+                    "address",
+                    "city",
+                    "region",
+                    "phone",
+                    "email",
+                    "timezone"
+                ],
+                "title": "ChurchProfileResource"
             },
             "ChurchRegisteredResource": {
                 "type": "object",
@@ -7942,6 +8091,60 @@
                     "weekday"
                 ],
                 "title": "StoreServiceScheduleRequest"
+            },
+            "UpdateChurchProfileRequest": {
+                "type": "object",
+                "description": "Validates a change to the church's own details: its name, denomination, address, city, region, phone and email. Any of them\nmay be sent, but at least one. The name cannot be emptied; the others can be cleared. The phone is put into international\nform and the email into lowercase. The web address, time zone, member number letters, plan and credits are not the church's\nto change here, and sending one is refused rather than silently ignored.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "denomination": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "region": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "title": "UpdateChurchProfileRequest"
             },
             "UpdateChurchSettingsRequest": {
                 "type": "object",
