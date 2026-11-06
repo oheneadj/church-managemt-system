@@ -34,7 +34,7 @@ We handle three categories of sensitive data that make us a target:
 
 ### OTP Controls
 
-**Staff** sign in with email and password, then a 6-digit code emailed to them (D-054, decided, not built; the built sign-in is still phone and SMS code). **Members, the QR check-in and the WhatsApp check-in** have no passwords and use phone and SMS codes. The code controls below apply to every code, SMS or email.
+**Staff** sign in with email and password, then a 6-digit code emailed to them (D-054, built). **Members, the QR check-in and the WhatsApp check-in** have no passwords and use phone and SMS codes. The code controls below apply to every code, SMS or email.
 
 Staff passwords: at least 12 characters and at most 72 (bcrypt ignores everything after byte 72), not the person's email, hashed with Laravel's hasher, never logged or returned; 5 wrong passwords for an email lock it for 15 minutes; a reset ends every session and token of that user. Whether a password was exposed in a public breach is checked **after** it is set, on a worker, never while the person waits (D-054, `docs/14` section 8).
 
@@ -89,7 +89,7 @@ The church's web app is signed in with a Laravel session, not a token:
 - The session id is in an httpOnly, host-only cookie (`SESSION_DOMAIN=null`), so it is never readable by JavaScript and never sent to another church's subdomain.
 - 8 hours of inactivity (`SESSION_LIFETIME=480`), stored in Redis; a fresh session id is issued on sign-in.
 - Writes need a CSRF token (`/sanctum/csrf-cookie` then `X-XSRF-TOKEN`).
-- `EnsureStaffIsCurrent` signs a session out on the next request if the user was deactivated or their phone number changed.
+- `EnsureStaffIsCurrent` signs a session out on the next request if the user was deactivated or their email or password changed (the phone is only a contact number, D-054).
 - The tenant middleware runs before Sanctum so a user is never loaded without the church scope (tested).
 
 ### API Tokens (other clients)
@@ -339,9 +339,9 @@ RateLimiter::for('api', function (Request $request) {
     return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
 });
 
-RateLimiter::for('otp-request', function (Request $request) {
+RateLimiter::for('onboarding-otp', function (Request $request) {
     // Sending a code costs money, so this is separate from the verify limit (D-025).
-    // Real values live in config/limits.php: 1 a minute and 5 an hour per phone, 20 an hour per IP.
+    // Real values live in config/limits.php: 1 a minute and 3 an hour per phone, 10 an hour per IP.
 });
 
 RateLimiter::for('exports', function (Request $request) {

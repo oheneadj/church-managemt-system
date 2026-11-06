@@ -189,7 +189,7 @@ The full decision log is in [docs/13-decision-log.md](docs/13-decision-log.md). 
 
 - **SaaS only** — no self-hosted option in v1 or v2
 - **Single-database multi-tenancy** — `church_id` on every table, global scopes
-- **Staff auth** — email + password + a 6-digit code emailed to them (D-054, decided, not built); members and check-ins use phone and SMS codes, no passwords
+- **Staff auth** — email + password + a 6-digit code emailed to them (D-054); members and check-ins use phone and SMS codes, no passwords
 - **GHS only** — all amounts in Ghana Cedis, no currency conversion
 - **PayPerlez** for MoMo collections and automatic church payouts, platform fee deducted per transaction (D-018); **Paystack** for cards only
 - **PayPerlez** for SMS and OTP (Africa's Talking as fallback); **Meta Business API** for WhatsApp

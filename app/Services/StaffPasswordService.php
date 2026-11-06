@@ -52,6 +52,14 @@ class StaffPasswordService
     }
 
     /**
+     * Lifts the lockout of an email in a church, for the support runbook (docs/16).
+     */
+    public function resetLockout(Church $church, string $email): void
+    {
+        Cache::forget($this->attemptsKey($church, $email));
+    }
+
+    /**
      * The cache key of an email's count of wrong passwords in a church.
      */
     private function attemptsKey(Church $church, string $email): string

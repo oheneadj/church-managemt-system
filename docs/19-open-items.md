@@ -1,6 +1,6 @@
 # Open Items
 
-> One list of everything that is **decided but not built**, **waiting on someone outside**, or **still to be decided**. It exists so nothing agreed in a conversation is lost. When an item is built or settled, move it to "Closed" with the commit or decision. Last reviewed: 6 November 2026 (after the seven-issue consistency review).
+> One list of everything that is **decided but not built**, **waiting on someone outside**, or **still to be decided**. It exists so nothing agreed in a conversation is lost. When an item is built or settled, move it to "Closed" with the commit or decision. Last reviewed: 7 November 2026 (A1 closed).
 
 Decisions live in `13-decision-log.md`; risks and product questions live in `12-risks-and-open-questions.md`. This file is the work list that connects them.
 
@@ -10,10 +10,9 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 
 | # | Item | Decision | What is needed | Blocked by |
 |---|---|---|---|---|
-| A1 | **Staff sign in with email, password and an emailed code** | D-054 | **Built:** migration, the four auth endpoints and limiters, the sign-up fields, the React sign-in and forgot-password screens, the demo admin's email and password (`config/demo.php`), e2e sign-in. **Left:** remove the old `auth/otp/request` and `auth/otp/verify` staff endpoints and tests; rewrite QA-01 and QA-12 for staff; a migration making `users.email` NOT NULL | Nothing: the email sender is built (D-062) |
 | A3 | **Digital giving: MoMo through PayPerlez with automatic payout** | D-018, D-020, D-053 | Migration for `contributions.status`; `POST /contributions/initiate`; `PaymentProvider` and `DisbursementProvider` drivers; webhook and polling fallback; `disbursements` flow, platform fee, GHS 1 minimum balance; every existing sum, list, pledge recalculation, report and receipt filters on `completed`; church payout setup and account-name check (story 4.1); rewrite QA-06 TC-06-06 to 10, QA-14 E2E-09; run QA-15 | B1, B2, B3 |
 | A4 | **Card giving through Paystack** | D-020 | Card driver, subaccount, webhook, `charge.success` completing the pending row; rewrite QA-07 | B5, and A3 first |
-| A5 | **Staff management** | D-055 | `staff.manage` endpoints (list, invite, change role, deactivate, per-person permissions), the last-admin rule, QA-10 rows | A1 |
+| A5 | **Staff management** | D-055 | `staff.manage` endpoints (list, invite, change role, deactivate, per-person permissions), the last-admin rule, QA-10 rows | Nothing (A1 is built) |
 | A6 | **Reports, exports, broadcasts, settings endpoints (Sprint 5)**, including **buying SMS credits (story 5.4)**, which replaces the Top up notice in the header (D-061) | docs/08, QA-10, QA-11 | `reports/attendance`, `reports/giving`, `reports/members`, `exports/*` with an `exports` table (D-039 point 6), `messages/broadcast`, `GET /messages`, `church/settings`; the automatic text to absent members | Nothing |
 | A7 | **Africa's Talking as the SMS fallback** | D-020 | A second `SmsProvider` driver | Nothing (not urgent) |
 | A8 | **USSD giving and Moolre** | D-019 | Revisit when a church asks | A church asking |
@@ -75,7 +74,6 @@ Accepted by the Product Owner and recorded, so they are not mistaken for oversig
 | Section 5: integer primary key plus an external ULID | ULID `CHAR(26)` as the only key | D-016 |
 | Section 12: money as integers in the smallest unit | `DECIMAL(12,2)` in GHS, decimal strings in the API, a `Money` value object for display | D-017, D-034 |
 | Section 36: consent must not be pre-ticked | New members are texted by default, recorded with time and policy version; WhatsApp is off by default | D-041 |
-| Section 16: staff sign in with email and password | Now followed (D-054). The old phone and SMS staff endpoints still exist until they are removed (A1) | D-054 |
 
 ---
 
@@ -86,5 +84,6 @@ Move finished items here with the commit hash.
 | Item | Closed by |
 |---|---|
 | D9: every screen scrolled sideways at 375px (the menu links did not wrap) | The menu wraps; `e2e/mobile-layout.spec.ts` checks five pages in real Chrome, 6 November 2026 |
+| A1: staff sign in with email, password and an emailed code (migrations, the four auth endpoints and limiters, sign-up fields, React sign-in and forgot-password screens, demo admin, e2e, removal of the phone and SMS staff endpoints, `staff:reset-lockout`, QA-01 and QA-12 rewritten, `users.email` required) | D-054, 7 November 2026 |
 | A2: the email sender (`QueueEmailAction`, `SendEmailJob`, circuit breaker, `email:pause`, runbook, `env:check`) | D-062, 7 November 2026 |
 | Seven consistency issues (frontend framework, IDs and money, providers, data model vs API vs QA, authentication, permissions, smaller items) | Commits `4ec5191` to `d98e0fb` on 6 November 2026 |

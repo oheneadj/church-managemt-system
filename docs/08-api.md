@@ -178,7 +178,7 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. The React sign-in and forgot-password screens and the sign-up form use them. **Still to come:** removing the old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run for now and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
+> **D-054, built.** Staff sign in with email, password and a code emailed to them: `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below, used by the React sign-in, forgot-password and sign-up screens. The old phone and SMS staff endpoints (`auth/otp/request`, `auth/otp/verify`) are removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
 ### Sign in, step 1: password
 ```
@@ -264,7 +264,7 @@ The web app calls this on load to restore its session after a refresh.
 }
 ```
 
-`401` when there is no valid session or token, or when the staff member was deactivated or changed phone number.
+`401` when there is no valid session or token, or when the staff member was deactivated or changed their email or password.
 
 ---
 

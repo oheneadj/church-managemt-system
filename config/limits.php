@@ -9,14 +9,10 @@ return [
     | Rate limits
     |--------------------------------------------------------------------------
     | How many calls are allowed before a caller gets a 429 (docs/08, Rate Limits).
-    | Sending a sign-in code costs money, so it has its own tight limits.
+    | Sending a code costs money, so each kind of code has its own tight limits below.
     */
     'api_per_minute' => 300,
     'uploads_per_minute' => 20,
-    'otp_request_per_minute' => 1,
-    'otp_request_per_hour' => 5,
-    'otp_request_per_hour_per_ip' => 20,
-    'otp_verify_per_minute_per_ip' => 10,
 
     // Staff sign-in by email (D-054). Emailing a code costs a little and can be abused, so it is limited apart from the
     // password check: one code a minute and five an hour for one email, 20 an hour from one address. Guessing passwords

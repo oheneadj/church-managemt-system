@@ -15,10 +15,8 @@ use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
-use App\Http\Controllers\Api\V1\Auth\RequestOtpController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\VerifyLoginController;
-use App\Http\Controllers\Api\V1\Auth\VerifyOtpController;
 use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
 use App\Http\Controllers\Api\V1\Contributions\ShowContributionController;
 use App\Http\Controllers\Api\V1\Contributions\StoreContributionController;
@@ -81,14 +79,12 @@ Route::domain(config('tenancy.base_domain'))->prefix('webhooks')->name('webhooks
 });
 
 Route::middleware('tenant')->group(function (): void {
-    // Public: sign-in. Both are rate limited; the request limiter also protects SMS cost.
+    // Public: staff sign-in and password reset. Each step is rate limited.
     // Staff sign-in by email, password and an emailed code (D-054). The cost limit on emailed codes is inside the action.
     Route::post('auth/login', LoginController::class)->middleware('throttle:login')->name('auth.login');
     Route::post('auth/login/verify', VerifyLoginController::class)->middleware('throttle:login-verify')->name('auth.login.verify');
     Route::post('auth/password/forgot', ForgotPasswordController::class)->middleware('throttle:login')->name('auth.password.forgot');
     Route::post('auth/password/reset', ResetPasswordController::class)->middleware('throttle:login-verify')->name('auth.password.reset');
-    Route::post('auth/otp/request', RequestOtpController::class)->middleware('throttle:otp-request')->name('auth.otp.request');
-    Route::post('auth/otp/verify', VerifyOtpController::class)->middleware('throttle:otp-verify')->name('auth.otp.verify');
 
     // Public: a member who scanned the QR code at the venue. The code is the proof of presence; a texted code proves the phone.
     Route::get('checkin/qr/{token}', ShowQrServiceController::class)->middleware('throttle:checkin-verify')->name('checkin.qr.show');

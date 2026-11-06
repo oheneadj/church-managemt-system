@@ -72,6 +72,6 @@ it('says which endpoints need a token and which are public', function (): void {
 
     expect($spec['paths']['/v1/members']['get'])->not->toHaveKey('security')
         ->and($spec['security'])->toBe([['http' => []]])
-        ->and($spec['paths']['/v1/auth/otp/request']['post']['security'])->toBe([])
+        ->and($spec['paths']['/v1/auth/login']['post']['security'])->toBe([])
         ->and($spec['paths']['/health']['get']['security'])->toBe([]);
 });

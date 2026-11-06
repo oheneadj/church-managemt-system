@@ -37,23 +37,28 @@
 **Action:** Base64-decode the Sanctum token (it is an opaque token, not a JWT)
 **Expected:** The token is an opaque random string — no church_id, user_id, or permissions embedded in it
 
-### TC-12-04 — OTP brute force lockout
-**Action:** Submit 5 incorrect OTPs for the same phone number in sequence
+### TC-12-04 — Sign-in brute force lockout (D-054)
+**Action:** (a) Submit 5 wrong passwords for the same staff email in sequence. (b) Separately, request a code, then submit 5 wrong codes.
 **Expected:**
-- After the 5th failure: `429 { "message": "Too many attempts. Try again in 15 minutes." }`
-- Further attempts for this phone (from any IP) return `429` for 15 minutes
-- After 15 minutes: fresh OTP can be requested
+- After the 5th failure: `429 { "message": "Too many attempts. Try again in 15 minutes." }` with `Retry-After: 900`
+- Further attempts for this email in this church (from any IP) return `429` for 15 minutes, even with the right password or code
+- Another email in the same church is not locked
+- After 15 minutes, or after `php artisan staff:reset-lockout <church> <email>`, the person can sign in again
 
-### TC-12-05 — OTP cannot be reused
+### TC-12-05 — A sign-in code cannot be reused
 **Action:**
-1. Request OTP, receive code `382910`
-2. Verify with `382910` (success — token issued)
+1. Sign in with the right password, receive the emailed code `382910`
+2. Verify with `382910` (success)
 3. Verify with `382910` again (same code)
-**Expected:** Second verification fails — OTP was deleted from Redis on first use
+**Expected:** Second verification fails with `422 "Invalid code"` — the code was deleted from Redis on first use. The same holds for a password reset code.
 
-### TC-12-06 — OTP rate limit
-**Action:** Request OTP for the same phone twice in under 1 minute, and then 6 times in an hour (waiting a minute between)
-**Expected:** The second request in a minute returns `429` with a `Retry-After` header; the 6th in an hour returns `429` (1 a minute and 5 an hour per phone, D-025)
+### TC-12-06 — Emailed code rate limit
+**Action:** Ask for a sign-in code for the same email twice in under 1 minute, and then 6 times in an hour (waiting a minute between). Repeat with forgot password, for a real and an unknown email.
+**Expected:** The second request in a minute returns `429` with a `Retry-After` header; the 6th in an hour returns `429` (1 a minute and 5 an hour per email, 20 an hour per IP, D-054). The answer for a real and an unknown email is identical. Wrong passwords do not use these limits up. The same limits for text codes (sign-up, QR check-in) are in QA-03 and QA-05.
+
+### TC-12-06a — Staff sign-in does not reveal which accounts exist
+**Action:** Compare the status, body and response time of step 1 for a real email with a wrong password, an unknown email and an account with no password; and of forgot password for a real and an unknown email.
+**Expected:** The three step-1 answers are the same `422 "Invalid email or password"` with similar timing; the two forgot-password answers are the same `200`. A deactivated account is told so (`403`) only after the right password.
 
 ---
 

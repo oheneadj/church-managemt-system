@@ -4,57 +4,25 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\DTOs\OutboundSms;
-use App\Enums\RecipientType;
 use App\Exceptions\InvalidOtpException;
 use App\Exceptions\TooManyOtpAttemptsException;
-use App\Jobs\SendSmsJob;
 use App\Models\Church;
-use App\Models\User;
-use App\Repositories\UserRepositoryInterface;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Issues and checks one-time passcodes for staff sign-in.
- * Only a bcrypt hash of the code is stored, per church, and a phone is locked out after too many misses.
+ * Issues and checks one-time passcodes sent by text message: starting a church and the QR check-in. Staff sign in with
+ * an emailed code instead (D-054, `EmailLoginCodes`). Only a bcrypt hash of the code is stored, and a phone is locked out
+ * after too many misses.
  * The issuing and checking steps work on a "scope" (a church id, or the sign-up scope) so starting a church
  * can use the same rules before any church exists.
  */
 class OtpService
 {
     /**
-     * Takes the user repository and the one-time code store.
+     * Takes the one-time code store.
      */
-    public function __construct(private readonly UserRepositoryInterface $users, private readonly OneTimeCodes $codes) {}
-
-    /**
-     * Sends a code if the phone belongs to an active staff member of this church.
-     * It returns normally either way, so the caller cannot learn which numbers exist.
-     */
-    public function request(Church $church, PhoneNumber $phone): void
-    {
-        $user = $this->users->findActiveByPhone($phone->e164);
-
-        if ($user === null) {
-            // I still pay for one hash so an unknown number takes as long as a known one.
-            Hash::make('unused');
-
-            return;
-        }
-
-        $code = $this->issue($church->id, $phone);
-
-        SendSmsJob::dispatch(new OutboundSms(
-            churchId: $church->id,
-            phone: $phone->e164,
-            message: $this->message($code),
-            messageType: 'otp',
-            recipientType: RecipientType::User,
-            recipientId: $user->id,
-            logContent: '[otp redacted]',
-        ))->onQueue('critical');
-    }
+    public function __construct(private readonly OneTimeCodes $codes) {}
 
     /**
      * The text message that carries a code.
@@ -62,25 +30,6 @@ class OtpService
     public function message(string $code): string
     {
         return 'Your '.config('app.name')." code is: {$code}. Valid for ".(config('otp.ttl_seconds') / 60).' minutes. Do not share.';
-    }
-
-    /**
-     * Checks a code and returns the staff member it belongs to.
-     *
-     * @throws InvalidOtpException
-     * @throws TooManyOtpAttemptsException
-     */
-    public function verify(Church $church, PhoneNumber $phone, string $code): User
-    {
-        $this->check($church->id, $phone, $code);
-
-        $user = $this->users->findActiveByPhone($phone->e164);
-
-        if ($user === null) {
-            throw new InvalidOtpException;
-        }
-
-        return $user;
     }
 
     /**
@@ -101,14 +50,6 @@ class OtpService
     public function check(string $scope, PhoneNumber $phone, string $code): void
     {
         $this->codes->check($this->codeKey($scope, $phone), $this->attemptsKey($scope, $phone), $code);
-    }
-
-    /**
-     * Clears a phone's lockout and any pending code. Used by the support runbook (docs/16).
-     */
-    public function resetLockout(Church $church, PhoneNumber $phone): void
-    {
-        $this->codes->forget($this->codeKey($church->id, $phone), $this->attemptsKey($church->id, $phone));
     }
 
     // Keys carry the scope (the church id, or the sign-up scope) and a hash of the phone, so churches never share state and raw numbers stay out of Redis.

@@ -40,7 +40,8 @@ class EloquentChurchPurgeRepository implements ChurchPurgeRepositoryInterface
     }
 
     /**
-     * Removes the name, phone and email of every staff user, ends their sessions and soft-deletes them.
+     * Removes the name, phone, email and password of every staff user, ends their sessions and soft-deletes them. The email is
+     * required (D-054), so it is replaced by the erased marker like the phone; the soft delete frees it from the unique index.
      */
     public function anonymiseStaff(): void
     {
@@ -52,7 +53,8 @@ class EloquentChurchPurgeRepository implements ChurchPurgeRepositoryInterface
         $users->update([
             'name' => config('privacy.erased_marker'),
             'phone' => config('privacy.erased_marker'),
-            'email' => null,
+            'email' => config('privacy.erased_marker'),
+            'password' => null,
             'is_active' => false,
             'deleted_at' => now(),
         ]);

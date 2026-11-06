@@ -111,15 +111,6 @@ it('adds a number to a chosen address that is already used when none is typed', 
     $this->postJson(REGISTER, signUp(['slug' => '']))->assertCreated()->assertJsonPath('church.slug', 'victory-chapel-international-2');
 });
 
-it('lets the new admin sign in on the new church', function (): void {
-    $this->postJson(REGISTER, signUp())->assertCreated();
-    Queue::fake();
-
-    $this->postJson('http://victory-chapel.localhost/api/v1/auth/otp/request', ['phone' => '+233244300001'])->assertOk();
-
-    Queue::assertPushed(SendSmsJob::class, fn (SendSmsJob $job): bool => $job->sms->churchId !== null);
-});
-
 it('starts the new church with the default fund types, in order, and only for that church', function (): void {
     $other = Church::factory()->create(['slug' => 'older']);
 

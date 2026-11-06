@@ -2073,41 +2073,6 @@
                 "security": []
             }
         },
-        "/v1/auth/otp/request": {
-            "post": {
-                "operationId": "auth.otp.request",
-                "summary": "Runs RequestOtpAction for this request and returns the OtpRequestedResource",
-                "tags": [
-                    "RequestOtp"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RequestOtpRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "`OtpRequestedResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OtpRequestedResource"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                },
-                "security": []
-            }
-        },
         "/v1/checkin/qr/otp": {
             "post": {
                 "operationId": "checkin.qr.otp",
@@ -3173,41 +3138,6 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/VerifyLoginRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "`SignInResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SignInResource"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                },
-                "security": []
-            }
-        },
-        "/v1/auth/otp/verify": {
-            "post": {
-                "operationId": "auth.otp.verify",
-                "summary": "Runs VerifyOtpAction for this request and returns the SignInResource",
-                "tags": [
-                    "VerifyOtp"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/VerifyOtpRequest"
                             }
                         }
                     }
@@ -6059,20 +5989,6 @@
                 ],
                 "title": "RequestChurchOtpRequest"
             },
-            "RequestOtpRequest": {
-                "type": "object",
-                "description": "Validates a request to be sent a sign-in code.",
-                "properties": {
-                    "phone": {
-                        "type": "string",
-                        "pattern": "^\\+[1-9]\\d{7,14}$"
-                    }
-                },
-                "required": [
-                    "phone"
-                ],
-                "title": "RequestOtpRequest"
-            },
             "RequestQrCheckinOtpRequest": {
                 "type": "object",
                 "description": "Validates asking for a check-in code: the scanned code and the member's phone number.",
@@ -7070,24 +6986,6 @@
                     "code"
                 ],
                 "title": "VerifyLoginRequest"
-            },
-            "VerifyOtpRequest": {
-                "type": "object",
-                "description": "Validates a sign-in code submission.",
-                "properties": {
-                    "phone": {
-                        "type": "string",
-                        "pattern": "^\\+[1-9]\\d{7,14}$"
-                    },
-                    "otp": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "phone",
-                    "otp"
-                ],
-                "title": "VerifyOtpRequest"
             },
             "VisitorResource": {
                 "type": "object",

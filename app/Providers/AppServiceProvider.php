@@ -124,19 +124,6 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('limits.api_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
-        // Sending a code costs money, so it gets its own tight limits on top of the security ones:
-        // The limits per phone number and per IP address are set in config/limits.php.
-        RateLimiter::for('otp-request', function (Request $request): array {
-            $phone = PhoneNumber::tryFrom((string) $request->input('phone'))->e164 ?? 'invalid';
-            $key = $this->tenantKey($request).':'.hash('sha256', $phone);
-
-            return [
-                Limit::perMinute(config('limits.otp_request_per_minute'))->by($key),
-                Limit::perHour(config('limits.otp_request_per_hour'))->by($key),
-                Limit::perHour(config('limits.otp_request_per_hour_per_ip'))->by($request->ip()),
-            ];
-        });
-
         // Starting a church texts a code to a stranger's phone, so it is limited per number and per IP address.
         RateLimiter::for('onboarding-otp', function (Request $request): array {
             $phone = PhoneNumber::tryFrom((string) $request->input('admin_phone'))->e164 ?? 'invalid';
@@ -177,7 +164,6 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login-verify', fn (Request $request) => Limit::perMinute(config('limits.login_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
 
-        RateLimiter::for('otp-verify', fn (Request $request) => Limit::perMinute(config('limits.otp_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
     }
 
     /**

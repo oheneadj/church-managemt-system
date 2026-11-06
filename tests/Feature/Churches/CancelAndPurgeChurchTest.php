@@ -149,10 +149,13 @@ describe('purging', function (): void {
     });
 
     it('removes staff details and ends their sessions', function (): void {
+        User::query()->withoutGlobalScopes()->where('church_id', $this->church->id)->sole()->forceFill(['password' => 'a long passphrase here'])->save();
+
         ($this->purge)();
 
+        // The email is required (D-054), so it is replaced by the marker rather than emptied, and the password hash goes.
         $staff = User::query()->withoutGlobalScopes()->withTrashed()->where('church_id', $this->church->id)->sole();
-        expect($staff->name)->toBe('[deleted]')->and($staff->phone)->toBe('[deleted]')->and($staff->email)->toBeNull()
+        expect($staff->name)->toBe('[deleted]')->and($staff->phone)->toBe('[deleted]')->and($staff->email)->toBe('[deleted]')->and($staff->password)->toBeNull()
             ->and($staff->is_active)->toBeFalse()->and($staff->trashed())->toBeTrue()->and($staff->tokens()->count())->toBe(0);
     });
 

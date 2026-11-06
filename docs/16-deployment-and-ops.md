@@ -333,17 +333,17 @@ php artisan tinker
 
 Then create the admin user and invite them via email.
 
-### Runbook: Reset OTP Lockout
+### Runbook: Reset a Staff Sign-in Lockout
 
-If a staff member is locked out due to too many OTP attempts:
+If a staff member is locked out after five wrong passwords, or five wrong emailed codes (D-054):
 
 ```bash
-php artisan otp:reset-lockout grace-assembly +233244123456
+php artisan staff:reset-lockout grace-assembly akosua@example.com
 ```
 
-The command clears the lockout counter and any pending code for that church and number (the Redis keys are namespaced per church and hashed, so deleting a raw key by hand no longer works).
+The command clears the lockout counters and any pending sign-in or password reset code for that church and email (the Redis keys are namespaced per church and hashed, so deleting a raw key by hand does not work). The person then signs in again from the password step. Asking for another code is still limited to one a minute.
 
-Confirm the phone number with the church admin before doing this.
+Confirm the email with the church admin before doing this.
 
 ### Runbook: Restart Queue Workers
 

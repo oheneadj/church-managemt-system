@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Enums\EmailCodePurpose;
 use App\Models\Church;
 use App\Models\User;
+use App\Services\EmailLoginCodes;
 use Database\Seeders\RolesAndPermissionsSeeder;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 beforeEach(function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
     $this->church = Church::factory()->create(['slug' => 'grace', 'name' => 'Grace Assembly']);
-    $this->user = User::factory()->for($this->church)->create(['phone' => '+233244123456']);
+    $this->user = User::factory()->for($this->church)->create(['phone' => '+233244123456', 'email' => 'akosua@example.com']);
     $this->user->assignRole('church-admin');
 });
 
@@ -23,12 +23,12 @@ function fromApp(string $slug = 'grace'): array
 }
 
 /** Signs a user in the way the SPA does and returns the response plus the session id the browser keeps. */
-function signInFromBrowser(Church $church, string $phone, string $slug = 'grace'): array
+function signInFromBrowser(Church $church, string $email, string $slug = 'grace'): array
 {
-    Cache::put("church:{$church->id}:otp:".hash('sha256', $phone), Hash::make('123456'), 600);
+    $code = app(EmailLoginCodes::class)->issue($church, EmailCodePurpose::SignIn, $email);
 
     $response = test()->withHeaders(fromApp($slug))
-        ->postJson("http://{$slug}.localhost/api/v1/auth/otp/verify", ['phone' => $phone, 'otp' => '123456']);
+        ->postJson("http://{$slug}.localhost/api/v1/auth/login/verify", ['email' => $email, 'code' => $code]);
     $response->assertOk();
 
     return [$response, app('session.store')->getId()];
@@ -50,7 +50,7 @@ function asBrowser(string $sessionId, string $slug = 'grace'): TestCase
 }
 
 it('signs a browser in with a session cookie and no token', function (): void {
-    [$response] = signInFromBrowser($this->church, '+233244123456');
+    [$response] = signInFromBrowser($this->church, 'akosua@example.com');
 
     $response->assertJsonMissingPath('token')->assertJsonPath('user.id', $this->user->id)->assertJsonPath('church.slug', 'grace');
     expect($this->user->tokens()->count())->toBe(0);
@@ -60,7 +60,7 @@ it('signs a browser in with a session cookie and no token', function (): void {
 });
 
 it('keeps the user signed in on later requests, which is what survives a page refresh', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     asBrowser($cookie)->getJson('http://grace.localhost/api/v1/auth/me')
         ->assertOk()
@@ -73,7 +73,7 @@ it('rejects the same request without the cookie', function (): void {
 });
 
 it('ends the session on logout', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     asBrowser($cookie)->postJson('http://grace.localhost/api/v1/auth/logout')->assertNoContent();
 
@@ -81,7 +81,7 @@ it('ends the session on logout', function (): void {
 });
 
 it('cuts off a session when the staff member is deactivated', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     $this->user->update(['is_active' => false]);
 
@@ -89,7 +89,7 @@ it('cuts off a session when the staff member is deactivated', function (): void 
 });
 
 it('cuts off a session when the email changes (D-054: the phone number is only a contact number)', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     $this->user->update(['email' => 'changed@example.com']);
 
@@ -97,7 +97,7 @@ it('cuts off a session when the email changes (D-054: the phone number is only a
 });
 
 it('cuts off a session when the password changes', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     $this->user->forceFill(['password' => 'a brand new passphrase'])->save();
 
@@ -105,7 +105,7 @@ it('cuts off a session when the password changes', function (): void {
 });
 
 it('keeps a session when only the phone number changes', function (): void {
-    [, $cookie] = signInFromBrowser($this->church, '+233244123456');
+    [, $cookie] = signInFromBrowser($this->church, 'akosua@example.com');
 
     $this->user->update(['phone' => '+233200111222']);
 
@@ -114,25 +114,25 @@ it('keeps a session when only the phone number changes', function (): void {
 
 it('does not honour a church B session on church A', function (): void {
     $other = Church::factory()->create(['slug' => 'other']);
-    User::factory()->for($other)->create(['phone' => '+233244999888']);
-    [, $cookieB] = signInFromBrowser($other, '+233244999888', 'other');
+    User::factory()->for($other)->create(['email' => 'kofi@example.com']);
+    [, $cookieB] = signInFromBrowser($other, 'kofi@example.com', 'other');
 
     asBrowser($cookieB, 'grace')->getJson('http://grace.localhost/api/v1/auth/me')->assertUnauthorized();
 });
 
 it('issues a bearer token to a client that is not the browser app', function (): void {
-    Cache::put("church:{$this->church->id}:otp:".hash('sha256', '+233244123456'), Hash::make('123456'), 600);
+    $code = app(EmailLoginCodes::class)->issue($this->church, EmailCodePurpose::SignIn, 'akosua@example.com');
 
-    $this->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '123456'])
+    $this->postJson('http://grace.localhost/api/v1/auth/login/verify', ['email' => 'akosua@example.com', 'code' => $code])
         ->assertOk()
         ->assertJsonStructure(['token']);
 });
 
 it('does not treat a request from another origin as the app', function (): void {
-    Cache::put("church:{$this->church->id}:otp:".hash('sha256', '+233244123456'), Hash::make('123456'), 600);
+    $code = app(EmailLoginCodes::class)->issue($this->church, EmailCodePurpose::SignIn, 'akosua@example.com');
 
     $response = $this->withHeaders(['Origin' => 'http://evil.example', 'Accept' => 'application/json'])
-        ->postJson('http://grace.localhost/api/v1/auth/otp/verify', ['phone' => '+233244123456', 'otp' => '123456']);
+        ->postJson('http://grace.localhost/api/v1/auth/login/verify', ['email' => 'akosua@example.com', 'code' => $code]);
 
     $response->assertOk()->assertJsonStructure(['token']);
     expect($response->headers->getCookies())->toBeEmpty();

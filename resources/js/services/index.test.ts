@@ -47,10 +47,10 @@ describe('api client', () => {
             return reply(config, 200);
         };
 
-        await freshApi.post('/auth/otp/request', {});
-        await freshApi.post('/auth/otp/verify', {});
+        await freshApi.post('/auth/login', {});
+        await freshApi.post('/auth/login/verify', {});
 
-        expect(calls).toEqual(['GET /sanctum/csrf-cookie', 'POST /auth/otp/request', 'POST /auth/otp/verify']);
+        expect(calls).toEqual(['GET /sanctum/csrf-cookie', 'POST /auth/login', 'POST /auth/login/verify']);
     });
 
     it('does not fetch the CSRF cookie for reads', async () => {
@@ -114,7 +114,7 @@ describe('api client', () => {
     it('turns validation errors into an ApiError with field messages', async () => {
         api.defaults.adapter = (config) => reply(config, 422, { message: 'Invalid', errors: { phone: ['Bad phone'] } });
 
-        const error = await api.post('/auth/otp/request', {}).catch((e: unknown) => e);
+        const error = await api.post('/auth/login', {}).catch((e: unknown) => e);
 
         expect(error).toBeInstanceOf(ApiError);
         expect((error as ApiError).fieldErrors).toEqual({ phone: ['Bad phone'] });

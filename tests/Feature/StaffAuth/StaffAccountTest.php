@@ -72,8 +72,6 @@ it('lets two churches use the same email, and lets a deleted staff member free t
     expect(User::query()->withoutGlobalScopes()->where('email', 'akosua@example.com')->whereNull('deleted_at')->count())->toBe(2);
 });
 
-it('allows staff without an email for now, until every account has one', function (): void {
-    User::factory()->for($this->church)->count(2)->create(['email' => null]);
-
-    expect(User::query()->where('church_id', $this->church->id)->whereNull('email')->count())->toBe(2);
+it('refuses a staff account with no email, because the email is how staff sign in', function (): void {
+    expect(fn () => User::factory()->for($this->church)->create(['email' => null]))->toThrow(QueryException::class);
 });

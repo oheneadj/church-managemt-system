@@ -175,7 +175,7 @@ This middleware runs before all authenticated routes. If the subdomain doesn't m
 
 ### Authentication — Sanctum, password and emailed code
 
-**Staff authentication flow (D-054, decided, not built; the built flow is still phone and SMS code):**
+**Staff authentication flow (D-054, built):**
 
 ```
 1. POST /api/v1/auth/login        { email, password }

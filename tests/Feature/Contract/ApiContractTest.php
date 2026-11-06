@@ -256,14 +256,32 @@ describe('QR check-in', function (): void {
 describe('sign-in and who am I', function (): void {
     it('me', fn () => assertMatchesSpec($this->getJson(CHURCH_HOST.'/auth/me'), 'GET', '/v1/auth/me', 200));
 
-    it('otp request', function (): void {
+    it('login, step 1', function (): void {
         Queue::fake();
+        $staff = User::factory()->for($this->church)->create(['email' => 'akosua@example.com']);
+        $staff->forceFill(['password' => 'a long passphrase here'])->save();
 
-        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/otp/request', ['phone' => '+233244123456']), 'POST', '/v1/auth/otp/request', 200);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/login', ['email' => 'akosua@example.com', 'password' => 'a long passphrase here']), 'POST', '/v1/auth/login', 200);
     });
 
     it('a validation error follows the documented 422 shape', function (): void {
-        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/otp/request', ['phone' => 'abc']), 'POST', '/v1/auth/otp/request', 422);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/login', ['email' => 'abc']), 'POST', '/v1/auth/login', 422);
+    });
+
+    it('login, step 2, with a wrong code', function (): void {
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/login/verify', ['email' => 'akosua@example.com', 'code' => '000000']), 'POST', '/v1/auth/login/verify', 422);
+    });
+
+    it('forgot password', function (): void {
+        Queue::fake();
+
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/password/forgot', ['email' => 'nobody@example.com']), 'POST', '/v1/auth/password/forgot', 200);
+    });
+
+    it('reset password with a wrong code', function (): void {
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/auth/password/reset', [
+            'email' => 'nobody@example.com', 'code' => '000000', 'password' => 'a long passphrase here', 'password_confirmation' => 'a long passphrase here',
+        ]), 'POST', '/v1/auth/password/reset', 422);
     });
 });
 

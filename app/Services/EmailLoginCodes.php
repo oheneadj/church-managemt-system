@@ -41,6 +41,14 @@ class EmailLoginCodes
     }
 
     /**
+     * Drops the pending code and the count of wrong codes for this email and purpose, for the support runbook (docs/16).
+     */
+    public function forget(Church $church, EmailCodePurpose $purpose, string $email): void
+    {
+        $this->codes->forget($this->codeKey($church, $purpose, $email), $this->attemptsKey($church, $purpose, $email));
+    }
+
+    /**
      * The cache key of a pending code. The email is hashed, so no address is kept in Redis.
      */
     private function codeKey(Church $church, EmailCodePurpose $purpose, string $email): string
