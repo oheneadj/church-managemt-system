@@ -32,6 +32,9 @@ return [
     // Inviting staff emails a code to a stranger's address, so it is limited per church. The church admin does it rarely.
     'staff_invites_per_hour' => 20,
 
+    // A broadcast texts many people and costs credits, so a church may send a few an hour (docs/08, Rate Limits).
+    'broadcasts_per_hour' => 10,
+
     // Exports read a lot of personal data and use a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
     'exports_per_hour' => 5,
 

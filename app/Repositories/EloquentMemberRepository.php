@@ -48,6 +48,14 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     }
 
     /**
+     * The members a broadcast to this audience is sent to, a few at a time.
+     */
+    public function forBroadcast(BroadcastAudience $audience, int $chunkSize): LazyCollection
+    {
+        return $this->broadcastRecipients($audience)->orderBy('id')->lazyById($chunkSize);
+    }
+
+    /**
      * The members a broadcast to this audience is sent to. Members who must not be texted are never in it (SMS turned off, no
      * phone number, deceased). A church cannot have two members with one phone number (the database allows one), so each person
      * is texted once.

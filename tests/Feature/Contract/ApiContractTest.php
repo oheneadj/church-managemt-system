@@ -191,6 +191,17 @@ describe('reports', function (): void {
     });
 });
 
+describe('broadcast', function (): void {
+    it('sending one', function (): void {
+        Queue::fake();
+        $this->church->update(['sms_credits' => 100]);
+        Member::factory()->create(['church_id' => $this->church->id]);
+
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/messages/broadcast', ['channel' => 'sms', 'message' => 'Service is at 9am.'], ['Idempotency-Key' => 'contract-broadcast-1']), 'POST', '/v1/messages/broadcast', 202);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/messages/broadcast', ['channel' => 'whatsapp', 'message' => 'Hello'], ['Idempotency-Key' => 'contract-broadcast-2']), 'POST', '/v1/messages/broadcast', 422);
+    });
+});
+
 describe('broadcast estimate', function (): void {
     it('what a broadcast would reach and cost', function (): void {
         assertMatchesSpec($this->postJson(CHURCH_HOST.'/messages/broadcast/estimate', ['channel' => 'sms', 'message' => 'Service is at 9am.']), 'POST', '/v1/messages/broadcast/estimate', 200);

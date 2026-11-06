@@ -8,6 +8,7 @@ use App\Enums\MemberStatus;
 use App\Jobs\PurgeChurchJob;
 use App\Models\AttendanceRecord;
 use App\Models\AuditLog;
+use App\Models\Broadcast;
 use App\Models\Church;
 use App\Models\Contribution;
 use App\Models\Export;
@@ -157,6 +158,16 @@ describe('purging', function (): void {
 
         expect($export->refresh()->filters)->toBeNull()->and($export->file_path)->toBeNull()->and($export->status->value)->toBe('completed')
             ->and($other->refresh()->filters)->toBe(['search' => 'Other church']);
+    });
+
+    it('replaces what the church broadcast and who it was for, but keeps the record of the broadcast', function (): void {
+        $broadcast = Broadcast::factory()->create(['church_id' => $this->church->id, 'message' => 'Dear Abena, your loan is approved', 'filters' => ['department_id' => '01HZZZZZZZZZZZZZZZZZZZZZZZ'], 'status' => 'dispatched']);
+        $other = Broadcast::factory()->create(['message' => 'Other church message']);
+
+        ($this->purge)();
+
+        expect($broadcast->refresh()->message)->toBe('[deleted]')->and($broadcast->filters)->toBeNull()->and($broadcast->status->value)->toBe('dispatched')
+            ->and($other->refresh()->message)->toBe('Other church message');
     });
 
     it('removes staff details and ends their sessions', function (): void {

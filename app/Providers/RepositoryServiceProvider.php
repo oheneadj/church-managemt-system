@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Repositories\AttendanceRecordRepositoryInterface;
 use App\Repositories\AuditLogRepositoryInterface;
+use App\Repositories\BroadcastRepositoryInterface;
 use App\Repositories\ChurchPurgeRepositoryInterface;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\ConsentRepositoryInterface;
@@ -13,6 +14,7 @@ use App\Repositories\ContributionRepositoryInterface;
 use App\Repositories\DepartmentRepositoryInterface;
 use App\Repositories\EloquentAttendanceRecordRepository;
 use App\Repositories\EloquentAuditLogRepository;
+use App\Repositories\EloquentBroadcastRepository;
 use App\Repositories\EloquentChurchPurgeRepository;
 use App\Repositories\EloquentChurchRepository;
 use App\Repositories\EloquentConsentRepository;
@@ -59,6 +61,7 @@ class RepositoryServiceProvider extends ServiceProvider
     public array $bindings = [
         MemberRepositoryInterface::class => EloquentMemberRepository::class,
         ExportRepositoryInterface::class => EloquentExportRepository::class,
+        BroadcastRepositoryInterface::class => EloquentBroadcastRepository::class,
         FamilyRepositoryInterface::class => EloquentFamilyRepository::class,
         DepartmentRepositoryInterface::class => EloquentDepartmentRepository::class,
         FundTypeRepositoryInterface::class => EloquentFundTypeRepository::class,

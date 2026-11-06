@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Church;
 use App\Models\Member;
 use App\Repositories\AuditLogRepositoryInterface;
+use App\Repositories\BroadcastRepositoryInterface;
 use App\Repositories\ChurchPurgeRepositoryInterface;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\ExportRepositoryInterface;
@@ -28,6 +29,7 @@ class ChurchPurgeService
         private readonly ChurchPurgeRepositoryInterface $purge,
         private readonly AuditLogRepositoryInterface $audit,
         private readonly ExportRepositoryInterface $exports,
+        private readonly BroadcastRepositoryInterface $broadcasts,
         private readonly MemberErasureService $memberErasure,
     ) {}
 
@@ -48,6 +50,7 @@ class ChurchPurgeService
             $this->purge->clearContributionNotes();
             $this->purge->deleteMessageLogs();
             $this->exports->clearDetails();
+            $this->broadcasts->clearDetails();
             $this->audit->anonymiseAll();
             $this->retireChurch($church);
         } finally {

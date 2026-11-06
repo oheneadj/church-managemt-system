@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property string $id
  * @property string|null $church_id null only for a platform message sent before a church exists (the sign-up code)
+ * @property string|null $broadcast_id the broadcast this text belongs to, if it was sent as part of one
  * @property MessageChannel $channel
  * @property RecipientType $recipient_type
  * @property string|null $recipient_id
@@ -45,6 +46,7 @@ class MessageLog extends Model
     /** @var list<string> */
     protected $fillable = [
         'church_id',
+        'broadcast_id',
         'channel',
         'recipient_type',
         'recipient_id',

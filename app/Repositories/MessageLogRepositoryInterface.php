@@ -45,6 +45,13 @@ interface MessageLogRepositoryInterface
     public function paginate(ListMessagesDTO $filters): LengthAwarePaginator;
 
     /**
+     * The ids of the members who already have a text line for this broadcast, so a worker that runs again skips them.
+     *
+     * @return list<string>
+     */
+    public function recipientIdsForBroadcast(string $broadcastId): array;
+
+    /**
      * Removes the phone number and text from every logged message to this person, keeping the line itself.
      */
     public function anonymiseRecipient(string $recipientId): void;

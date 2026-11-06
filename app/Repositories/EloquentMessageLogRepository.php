@@ -34,6 +34,16 @@ class EloquentMessageLogRepository implements MessageLogRepositoryInterface
     }
 
     /**
+     * The ids of the members who already have a text line for this broadcast.
+     */
+    public function recipientIdsForBroadcast(string $broadcastId): array
+    {
+        $ids = MessageLog::query()->withoutGlobalScope(ChurchScope::class)->where('broadcast_id', $broadcastId)->whereNotNull('recipient_id')->pluck('recipient_id')->map(fn ($id): string => (string) $id);
+
+        return array_values($ids->all());
+    }
+
+    /**
      * Writes one line to the message log.
      */
     public function create(array $attributes): MessageLog

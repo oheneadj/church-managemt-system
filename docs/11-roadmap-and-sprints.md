@@ -139,7 +139,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 
 | # | Story | Owner | Points | Notes |
 |---|---|---|---|---|
-| 5.1 | SMS broadcast endpoint | Backend | 2 | Filter-based recipient selection, credit check. Part done: `POST /messages/broadcast/estimate` (who is reached, parts, credits; D-065). The send itself is next |
+| 5.1 | SMS broadcast endpoint | Backend | 2 | Filter-based recipient selection, credit check. Done: `POST /messages/broadcast/estimate` and `POST /messages/broadcast` (D-065): 202, a `broadcasts` record, one text for each member made by a worker, credits taken text by text |
 | 5.2 | WhatsApp broadcast endpoint | Backend | 2 | Opted-in members only |
 | 5.3 | Message log endpoint | Backend | 1 | Done: `GET /messages` for `sms.send`, filters channel, type and dates; sign-in and check-in codes are left out |
 | 5.4 | SMS top-up endpoint (Paystack payment → credit ledger) | Backend | 2 | |

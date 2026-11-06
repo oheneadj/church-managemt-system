@@ -1182,7 +1182,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-065 — Who a broadcast reaches and what it costs (story 5.1, part 1)
 **Date:** November 2026
 **Decided by:** Lead Engineer, from docs/02, docs/08, D-041, D-051, QA-08 TC-08-07 to TC-08-10 and QA-10
-**Status:** Active. Built: the estimate. The send is the next part.
+**Status:** Active. Built: the estimate and the send.
 
 **Decision:**
 1. **Who is reached.** Members of one status (active unless another is asked for) and, optionally, of one department (the two filters docs/08 names), who have a phone number and have not turned SMS off (`sms_opted_in`, D-041). A deceased member is never reached, whatever status is asked for. A church cannot have two members with one phone number (the database allows one), so each person is texted once.
@@ -1193,7 +1193,11 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 **Rationale:** One place (`BroadcastEstimator`) answers "how many and how much", for the preview now and for the real send next, so they can never disagree.
 
-**Revisit when:** the send is built (the audience rules above apply there too), WhatsApp broadcasts open, or plan limits on recipients are decided (Q4).
+6. **The send (`POST /messages/broadcast`) answers 202 and a worker does the texting.** It needs an `Idempotency-Key` (a double click would cost money) and is limited to 10 broadcasts an hour for the church (docs/08). The request refuses a broadcast the church cannot pay for (QA-08 TC-08-09) or that would reach nobody; otherwise it records a `broadcasts` row (who sent what, the filter, the parts) and queues `SendBroadcastJob`. The job re-reads the audience as it is when it runs, so a member who turned SMS off in between is not texted, and makes a `queued` message log line (`message_type: broadcast`, tied to the broadcast) and an SMS job for each member, a batch at a time. It is safe to run twice or after a crash: a member with a line is skipped and the database allows one line for each member of a broadcast.
+7. **Credits are taken text by text, not reserved up front** (D-051): the SMS job takes one credit for each part just before sending, and gives them back if the text fails for good. The request's check is for the broadcast as estimated; if other texts use the credits before the worker finishes, the later texts of the broadcast fail with "too few credits" and show as failed in the message log, and nothing is overspent.
+8. **Left out on purpose:** a send-later time, a cancel button, per-plan recipient limits (Q4 is open), and a history screen of broadcasts (the message log shows every text).
+
+**Revisit when:** WhatsApp broadcasts open, plan limits on recipients are decided (Q4), a church needs to cancel a broadcast part-way, or the credits should be reserved up front.
 
 ---
 

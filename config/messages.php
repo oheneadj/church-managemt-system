@@ -20,6 +20,9 @@ return [
     // accident. Four parts is about 600 characters in the plain alphabet (153 each after the first 160).
     'broadcast_max_parts' => 4,
 
+    // How many members a worker turns into texts at a time, so a large church does not fill the memory.
+    'broadcast_chunk_size' => 100,
+
     'hidden_types' => [
         'otp',
         'onboarding_otp',

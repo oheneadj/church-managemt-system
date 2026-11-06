@@ -90,6 +90,13 @@ interface MemberRepositoryInterface
     public function countBroadcastRecipients(BroadcastAudience $audience): int;
 
     /**
+     * The members a broadcast to this audience is sent to, read a few at a time, the same people the count above counts.
+     *
+     * @return LazyCollection<int, Member>
+     */
+    public function forBroadcast(BroadcastAudience $audience, int $chunkSize): LazyCollection;
+
+    /**
      * Soft-deletes the member. The row stays, so records that point to it keep working.
      */
     public function delete(Member $member): void;

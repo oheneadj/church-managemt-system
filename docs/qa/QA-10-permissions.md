@@ -82,7 +82,7 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 | Endpoint | CA | P | FS | DH | YP |
 |---|---|---|---|---|---|
 | POST /messages/broadcast/estimate (`sms.send`, *built*) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| POST /messages/broadcast (`sms.send`) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| POST /messages/broadcast (`sms.send`, *built*) | ✅ | ✅ | ❌ | ❌ | ❌ |
 | GET /messages (`sms.send`, D-055; *built*) | ✅ | ✅ | ❌ | ❌ | ❌ |
 
 ### Reports & Exports (*not built*)

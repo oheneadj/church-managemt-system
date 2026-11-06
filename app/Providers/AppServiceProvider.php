@@ -125,6 +125,11 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('limits.api_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
+        // A broadcast texts many people and costs credits, so a church may send a few an hour, however many staff send them.
+        RateLimiter::for('broadcast', fn (Request $request) => Limit::perHour(config('limits.broadcasts_per_hour'))
+            ->by($this->tenantKey($request))
+            ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can send at most '.config('limits.broadcasts_per_hour').' broadcasts per hour.'], 429, $headers)));
+
         // An export reads a lot of personal data and uses a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
         RateLimiter::for('exports', fn (Request $request) => Limit::perHour(config('limits.exports_per_hour'))
             ->by((string) $request->user()?->getAuthIdentifier())

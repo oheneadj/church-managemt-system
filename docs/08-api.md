@@ -1011,6 +1011,7 @@ Says who a broadcast would reach and what it would cost, so the compose page can
 POST /api/v1/messages/broadcast
 Authorization: Bearer {token}
 Permission: sms.send
+Idempotency-Key: <one new value for each broadcast>
 ```
 
 **Body:**
@@ -1024,18 +1025,21 @@ Permission: sms.send
   "message": "Dear member, you are warmly invited to our Annual Harvest Service this Sunday at 9am. God bless you."
 }
 ```
+`recipient_filter` is optional (all active members). The body is exactly the one Estimate a Broadcast takes, and the same rules apply: who is reached, the cost, the part limit and `channel` being `sms` for now.
 
 **Response `202`:**
 ```json
 {
   "queued": true,
+  "broadcast_id": "ulid",
   "estimated_recipients": 87,
   "estimated_credit_cost": 87,
   "current_credit_balance": 420
 }
 ```
+The broadcast is recorded (who sent it, the text, the filter, the parts) and a worker on the `notifications` queue turns it into **one text for each member**, as things are when it runs: a `queued` message log line (`message_type: broadcast`, shown in Get Message Log) and an SMS job. **Credits are taken text by text just before each is sent (D-051)**, one for each part, and given back if a text fails for good, so a broadcast can never overspend the church. The worker is safe to run twice: a member who already has a line for the broadcast is skipped, and the database allows only one.
 
-Recipients are confirmed and messages dispatched asynchronously. Credits are deducted per delivered message.
+**Errors:** `400` without an `Idempotency-Key` (the same key again returns the first answer and sends nothing more); `422` `{"message": "Insufficient SMS credits. You need 60 credits, you have 30. Purchase more credits to proceed."}` when the church cannot pay (nothing is recorded); `422` `{"message": "No members match: there is nobody to send this to."}`; `422` per field as for the estimate; `403` without `sms.send`; `429` `{"message": "You can send at most 10 broadcasts per hour."}` with `Retry-After` (for the whole church).
 
 ---
 

@@ -43,6 +43,7 @@ churches
   └── message_logs
   └── webhook_logs
   └── exports
+  └── broadcasts
   └── sms_credit_ledger
   └── visitor_records
   └── audit_logs
@@ -480,6 +481,7 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | Yes | FK → churches. Null only for a platform message sent before a church exists (the sign-up code); church screens never see those rows (D-037). |
+| `broadcast_id` | CHAR(26) | Yes | The broadcast this text is part of (D-065). A unique index on (`broadcast_id`, `recipient_id`) allows one line for each member of a broadcast. |
 | `channel` | VARCHAR(30) | No | `MessageChannel`: sms, whatsapp, email. |
 | `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church), unknown (a WhatsApp number on no church's list; its phone number is not stored). |
 | `recipient_id` | CHAR(26) | Yes | FK to the relevant table |
@@ -518,6 +520,27 @@ One row for each CSV export a staff member asked for (D-064). It is the trail th
 | `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
 
 **Index:** `(church_id, requested_by, created_at)`, `(status, completed_at)`
+
+---
+
+### `broadcasts`
+
+One message a staff member sent to many members (D-065). The record of who sent what, to whom (by filter) and how it went; each text it produces is a `message_logs` line with its id.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `sent_by` | CHAR(26) | No | FK → users: who sent it |
+| `channel` | VARCHAR(30) | No | `MessageChannel`: sms for now |
+| `message` | TEXT | No | The text sent. Replaced by the erased marker when a cancelled church is purged (a message can name people). |
+| `filters` | JSON | Yes | The recipient filter as sent. Forgotten at a purge. |
+| `parts_per_message` | SMALLINT | No | SMS parts (credits) for each person |
+| `recipient_count` | INT | Yes | How many members were texted, set once all texts are queued |
+| `status` | VARCHAR(30) | No | `BroadcastStatus`: queued, sending, dispatched, failed. Default: `queued` |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, created_at)`
 
 ---
 

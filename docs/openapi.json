@@ -2552,6 +2552,46 @@
                 "security": []
             }
         },
+        "/v1/messages/broadcast": {
+            "post": {
+                "operationId": "messages.broadcast",
+                "summary": "Runs SendBroadcastAction for this request and returns the JsonResponse",
+                "tags": [
+                    "SendBroadcast"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendBroadcastRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`BroadcastQueuedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastQueuedResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}/checkin": {
             "patch": {
                 "operationId": "services.checkin",
@@ -4245,6 +4285,34 @@
                     "enough_credits"
                 ],
                 "title": "BroadcastEstimateResource"
+            },
+            "BroadcastQueuedResource": {
+                "type": "object",
+                "properties": {
+                    "queued": {
+                        "type": "boolean"
+                    },
+                    "broadcast_id": {
+                        "type": "string"
+                    },
+                    "estimated_recipients": {
+                        "type": "integer"
+                    },
+                    "estimated_credit_cost": {
+                        "type": "integer"
+                    },
+                    "current_credit_balance": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "queued",
+                    "broadcast_id",
+                    "estimated_recipients",
+                    "estimated_credit_cost",
+                    "current_credit_balance"
+                ],
+                "title": "BroadcastQueuedResource"
             },
             "CaptureVisitorRequest": {
                 "type": "object",
@@ -7394,6 +7462,36 @@
                     "password_confirmation"
                 ],
                 "title": "ResetPasswordRequest"
+            },
+            "SendBroadcastRequest": {
+                "type": "object",
+                "description": "Validates a broadcast to send: the same fields as the question \"what would this cost?\", which it follows exactly.",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "const": "sms"
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "recipient_filter": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "$ref": "#/components/schemas/MemberStatus"
+                            },
+                            "department_id": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "channel",
+                    "message"
+                ],
+                "title": "SendBroadcastRequest"
             },
             "ServiceCollection": {
                 "type": "array",
