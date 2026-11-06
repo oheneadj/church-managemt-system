@@ -1246,7 +1246,12 @@ Adding returns `201` with `{ "data": { "department_id", "member_id", "role", "jo
 GET /api/v1/church/settings
 Authorization: Bearer {token}
 ```
-Any signed-in staff member may read the settings (D-055).
+Any signed-in staff member may read the settings of their own church (D-055). Nothing in them is secret.
+
+**Response `200`:** every setting, with the church's own choice or, where it has made none, the default:
+```json
+{ "data": { "youth_age_limit": 25, "absence_threshold": 3, "receipt_on_cash": true } }
+```
 
 ### Update Settings
 ```
@@ -1255,19 +1260,17 @@ Authorization: Bearer {token}
 Permission: church.settings (church admin)
 ```
 
-**Body (subset):**
+**Body:** at least one of the settings below, nothing else:
 ```json
-{
-  "settings": {
-    "absence_threshold_weeks": 3,
-    "receipt_on_cash": true,
-    "checkin_method": ["whatsapp", "manual"],
-    "weekly_report_day": "monday",
-    "birthday_alert_days_before": 7,
-    "youth_age_limit": 25
-  }
-}
+{ "settings": { "youth_age_limit": 25, "absence_threshold": 3, "receipt_on_cash": true } }
 ```
+| Setting | Meaning | Allowed | Default |
+|---|---|---|---|
+| `youth_age_limit` | A member younger than this many years counts as youth (the youth pastor's view, D-031) | whole number, 10 to 40 (`config/members.php`) | 25 |
+| `absence_threshold` | How many services in a row a member must miss to be listed as absent (QA-05 TC-05-12) | whole number, 2 to 12 (`config/attendance.php`) | 3 |
+| `receipt_on_cash` | Whether a recorded cash gift texts the member a receipt (D-051) | `true` or `false` | `true` |
+
+**Response `200`:** the same shape as Get Settings, after the change. Only the settings sent are changed; the others are kept. A name that is not a setting, an empty `settings`, or a value outside its range is `422`, so a typo is never silently ignored. Every change is written to the change history with the old and new values (a value the church never chose counts as the default), and sending what is already in force saves and writes nothing. `403` for anyone but the church admin. Other settings in the old sketch (`checkin_method`, `weekly_report_day`, `birthday_alert_days_before`) have no feature behind them yet and are added with that feature.
 
 ---
 

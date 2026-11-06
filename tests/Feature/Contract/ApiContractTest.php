@@ -191,6 +191,14 @@ describe('reports', function (): void {
     });
 });
 
+describe('church settings', function (): void {
+    it('reading and changing them', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/church/settings'), 'GET', '/v1/church/settings', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/church/settings', ['settings' => ['youth_age_limit' => 30]]), 'PUT', '/v1/church/settings', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/church/settings', ['settings' => ['youth_age_limit' => 5]]), 'PUT', '/v1/church/settings', 422);
+    });
+});
+
 describe('exports', function (): void {
     it('asking for a member export', function (): void {
         Queue::fake();

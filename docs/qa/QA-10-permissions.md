@@ -97,8 +97,8 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 
 | Endpoint | CA | P | FS | DH | YP |
 |---|---|---|---|---|---|
-| GET /church/settings | ✅ | ✅ | ✅ | ✅ | ✅ |
-| PUT /church/settings (`church.settings`) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| GET /church/settings (*built*) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| PUT /church/settings (`church.settings`, *built*) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | GET /staff, POST /staff, PUT /staff/{id} (`staff.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | PATCH /staff/{id}/status, PUT /staff/{id}/permissions (`staff.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 

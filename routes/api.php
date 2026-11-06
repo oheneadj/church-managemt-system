@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\VerifyLoginController;
+use App\Http\Controllers\Api\V1\Church\ShowChurchSettingsController;
+use App\Http\Controllers\Api\V1\Church\UpdateChurchSettingsController;
 use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
 use App\Http\Controllers\Api\V1\Contributions\ShowContributionController;
 use App\Http\Controllers\Api\V1\Contributions\StoreContributionController;
@@ -149,6 +151,9 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('pledges', StorePledgeController::class)->middleware('idempotent')->name('pledges.store');
         Route::get('pledges/{pledge}', ShowPledgeController::class)->name('pledges.show');
         Route::put('pledges/{pledge}', UpdatePledgeController::class)->name('pledges.update');
+
+        Route::get('church/settings', ShowChurchSettingsController::class)->name('church.settings.show');
+        Route::put('church/settings', UpdateChurchSettingsController::class)->name('church.settings.update');
 
         Route::get('messages', ListMessagesController::class)->name('messages.index');
 

@@ -23,6 +23,10 @@ return [
     */
     'youth_age_limit' => 25,
 
+    // The range a church may choose its own youth age limit from (church settings).
+    'youth_age_limit_min' => 10,
+    'youth_age_limit_max' => 40,
+
     /*
     |--------------------------------------------------------------------------
     | Member numbers

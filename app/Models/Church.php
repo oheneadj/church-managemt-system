@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property string $id
  * @property string $slug
+ * @property array<string, mixed>|null $settings the church's own choices; a setting it never chose is not in it (see settingsWithDefaults)
  * @property ChurchPlan $plan
  * @property CarbonImmutable|null $cancelled_at
  * @property CarbonImmutable|null $purged_at
@@ -109,6 +110,21 @@ class Church extends Model
     public function sendsCashReceipts(): bool
     {
         return (bool) data_get($this->settings, 'receipt_on_cash', config('giving.cash_receipts_default'));
+    }
+
+    /**
+     * Every church setting with the church's own choice or, where it has made none, the default. This is what the screens show
+     * and what the history compares against.
+     *
+     * @return array{youth_age_limit: int, absence_threshold: int, receipt_on_cash: bool}
+     */
+    public function settingsWithDefaults(): array
+    {
+        return [
+            'youth_age_limit' => $this->youthAgeLimit(),
+            'absence_threshold' => $this->absenceThreshold(),
+            'receipt_on_cash' => $this->sendsCashReceipts(),
+        ];
     }
 
     /**

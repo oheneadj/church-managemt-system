@@ -2622,6 +2622,90 @@
                 }
             }
         },
+        "/v1/church/settings": {
+            "get": {
+                "operationId": "church.settings.show",
+                "summary": "Returns the settings of the church the signed-in staff member belongs to",
+                "tags": [
+                    "ShowChurchSettings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ChurchSettingsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChurchSettingsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "church.settings.update",
+                "summary": "Runs UpdateChurchSettingsAction for this request and returns the ChurchSettingsResource",
+                "tags": [
+                    "UpdateChurchSettings"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateChurchSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ChurchSettingsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChurchSettingsResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/contributions/{contribution}": {
             "get": {
                 "operationId": "contributions.show",
@@ -4175,6 +4259,26 @@
                     "sms_credits"
                 ],
                 "title": "ChurchResource"
+            },
+            "ChurchSettingsResource": {
+                "type": "object",
+                "properties": {
+                    "youth_age_limit": {
+                        "type": "integer"
+                    },
+                    "absence_threshold": {
+                        "type": "integer"
+                    },
+                    "receipt_on_cash": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "youth_age_limit",
+                    "absence_threshold",
+                    "receipt_on_cash"
+                ],
+                "title": "ChurchSettingsResource"
             },
             "ContributionCollection": {
                 "type": "array",
@@ -7838,6 +7942,34 @@
                     "weekday"
                 ],
                 "title": "StoreServiceScheduleRequest"
+            },
+            "UpdateChurchSettingsRequest": {
+                "type": "object",
+                "description": "Validates a change to the church's settings. Any of the settings may be sent, but at least one, and a name that is not a\nsetting is refused, so a typo is never silently ignored. Each setting keeps to its range (config/members.php and\nconfig/attendance.php).",
+                "properties": {
+                    "settings": {
+                        "type": "object",
+                        "properties": {
+                            "youth_age_limit": {
+                                "type": "integer",
+                                "minimum": 10,
+                                "maximum": 40
+                            },
+                            "absence_threshold": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 12
+                            },
+                            "receipt_on_cash": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "settings"
+                ],
+                "title": "UpdateChurchSettingsRequest"
             },
             "UpdateFamilyRequest": {
                 "type": "object",
