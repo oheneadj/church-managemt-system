@@ -77,12 +77,12 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 | GET /fund-types | ✅ | ✅ | ✅ | ✅ | ✅ |
 | POST/PUT/PATCH /fund-types (`fund-types.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-### Communications (*not built*)
+### Communications (broadcast *not built*; the message log is built)
 
 | Endpoint | CA | P | FS | DH | YP |
 |---|---|---|---|---|---|
 | POST /messages/broadcast (`sms.send`) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| GET /messages (`sms.send`, D-055) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| GET /messages (`sms.send`, D-055; *built*) | ✅ | ✅ | ❌ | ❌ | ❌ |
 
 ### Reports & Exports (*not built*)
 

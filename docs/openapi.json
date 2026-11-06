@@ -1487,6 +1487,86 @@
                 }
             }
         },
+        "/v1/messages": {
+            "get": {
+                "operationId": "messages.index",
+                "summary": "Runs ListMessagesAction for this request and returns the MessageLogCollection",
+                "tags": [
+                    "ListMessages"
+                ],
+                "parameters": [
+                    {
+                        "name": "channel",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/MessageChannel"
+                        }
+                    },
+                    {
+                        "name": "message_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MessageLogCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MessageLogCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/pledges": {
             "get": {
                 "operationId": "pledges.index",
@@ -5606,6 +5686,134 @@
                     "affiliate"
                 ],
                 "title": "MembershipType"
+            },
+            "MessageChannel": {
+                "type": "string",
+                "description": "The allowed message channel values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "sms",
+                    "whatsapp",
+                    "email"
+                ],
+                "title": "MessageChannel"
+            },
+            "MessageLogCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MessageLogResource"
+                },
+                "title": "MessageLogCollection"
+            },
+            "MessageLogResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "sms",
+                            "whatsapp",
+                            "email"
+                        ]
+                    },
+                    "channel_label": {
+                        "type": "string",
+                        "enum": [
+                            "SMS",
+                            "WhatsApp",
+                            "Email"
+                        ]
+                    },
+                    "recipient_type": {
+                        "type": "string",
+                        "enum": [
+                            "member",
+                            "user",
+                            "visitor",
+                            "applicant",
+                            "unknown"
+                        ]
+                    },
+                    "recipient_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recipient_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recipient_email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "message_type": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "queued",
+                            "sent",
+                            "delivered",
+                            "failed"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Queued",
+                            "Sent",
+                            "Delivered",
+                            "Failed"
+                        ]
+                    },
+                    "cost_units": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "channel",
+                    "channel_label",
+                    "recipient_type",
+                    "recipient_id",
+                    "recipient_phone",
+                    "recipient_email",
+                    "message_type",
+                    "content",
+                    "status",
+                    "status_label",
+                    "cost_units",
+                    "sent_at",
+                    "created_at"
+                ],
+                "title": "MessageLogResource"
             },
             "MilestoneType": {
                 "type": "string",

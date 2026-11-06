@@ -1031,9 +1031,21 @@ GET /api/v1/messages
 Authorization: Bearer {token}
 Permission: sms.send
 ```
-Church admin and pastor only (D-055): the log holds phone numbers and message text.
+Church admin and pastor only (D-055): the log holds phone numbers and message text. Anyone else gets `403`.
 
-**Query params:** `?channel=sms&message_type=broadcast&from=2026-10-01`
+**Query params:** `?channel=sms&message_type=broadcast&from=2026-10-01&to=2026-10-31&per_page=25`. `channel` is `sms`, `whatsapp` or `email`; `from` and `to` are whole days (`Y-m-d`, `to` not before `from`).
+
+**Response `200`:** a page (newest first) of
+```json
+{
+  "id": "ulid", "channel": "whatsapp", "channel_label": "WhatsApp",
+  "recipient_type": "member", "recipient_id": "ulid", "recipient_phone": "+233244123456", "recipient_email": null,
+  "message_type": "checkin_reply", "content": "You are checked in.",
+  "status": "sent", "status_label": "Sent", "cost_units": "1.0000",
+  "sent_at": "2026-11-05T14:30:00+00:00", "created_at": "2026-11-05T14:30:00+00:00"
+}
+```
+Only the church's own messages are listed (another church's, and the sign-up code that has no church, never are). The provider's reference and raw answer are not shown. **The codes are left out** (`config/messages.php`, `hidden_types`): sign-in, password reset, invitation, check-in and sign-up codes and the breached-password warning carry no text worth reading and would only list other people's phone numbers and emails; they stay in the table for support until the 12-month clean-up.
 
 ---
 

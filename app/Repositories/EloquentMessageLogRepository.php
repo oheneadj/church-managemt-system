@@ -4,16 +4,35 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\DTOs\Messages\ListMessagesDTO;
 use App\DTOs\ProviderReceipt;
 use App\Enums\MessageStatus;
 use App\Models\MessageLog;
 use App\Scopes\ChurchScope;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Eloquent implementation of the message log writes.
  */
 class EloquentMessageLogRepository implements MessageLogRepositoryInterface
 {
+    /**
+     * One page of the current church's messages, newest first, narrowed by the filters.
+     */
+    public function paginate(ListMessagesDTO $filters): LengthAwarePaginator
+    {
+        return MessageLog::query()
+            ->whereNotIn('message_type', $filters->hiddenTypes)
+            ->when($filters->channel !== null, fn (Builder $q) => $q->where('channel', $filters->channel))
+            ->when($filters->messageType !== null, fn (Builder $q) => $q->where('message_type', $filters->messageType))
+            ->when($filters->from !== null, fn (Builder $q) => $q->whereDate('created_at', '>=', $filters->from))
+            ->when($filters->to !== null, fn (Builder $q) => $q->whereDate('created_at', '<=', $filters->to))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($filters->perPage);
+    }
+
     /**
      * Writes one line to the message log.
      */

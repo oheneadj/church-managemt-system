@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\V1\Members\StoreMemberMilestoneController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberController;
 use App\Http\Controllers\Api\V1\Members\UpdateMemberStatusController;
 use App\Http\Controllers\Api\V1\Members\UploadMemberPhotoController;
+use App\Http\Controllers\Api\V1\Messages\ListMessagesController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
 use App\Http\Controllers\Api\V1\Pledges\ListPledgesController;
@@ -143,6 +144,8 @@ Route::middleware('tenant')->group(function (): void {
         Route::post('pledges', StorePledgeController::class)->middleware('idempotent')->name('pledges.store');
         Route::get('pledges/{pledge}', ShowPledgeController::class)->name('pledges.show');
         Route::put('pledges/{pledge}', UpdatePledgeController::class)->name('pledges.update');
+
+        Route::get('messages', ListMessagesController::class)->name('messages.index');
 
         Route::get('staff', ListStaffController::class)->name('staff.index');
         Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');

@@ -10,6 +10,7 @@ use App\Models\Family;
 use App\Models\FundType;
 use App\Models\Member;
 use App\Models\MemberMilestone;
+use App\Models\MessageLog;
 use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -179,6 +180,15 @@ describe('fund types', function (): void {
         assertMatchesSpec($created, 'POST', '/v1/fund-types', 201);
 
         assertMatchesSpec($this->putJson(CHURCH_HOST.'/fund-types/'.$created->json('data.id'), ['name' => 'Harvest Offering']), 'PUT', '/v1/fund-types/{fund_type}', 200);
+    });
+});
+
+describe('messages', function (): void {
+    it('the message log', function (): void {
+        MessageLog::factory()->create(['church_id' => $this->church->id, 'message_type' => 'receipt']);
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/messages'), 'GET', '/v1/messages', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/messages?channel=pigeon'), 'GET', '/v1/messages', 422);
     });
 });
 
