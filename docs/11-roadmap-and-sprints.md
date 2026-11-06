@@ -144,7 +144,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 5.3 | Message log endpoint | Backend | 1 | Done: `GET /messages` for `sms.send`, filters channel, type and dates; sign-in and check-in codes are left out |
 | 5.4 | SMS top-up endpoint (Paystack payment → credit ledger) | Backend | 2 | |
 | 5.5 | Attendance trends report endpoint | Backend | 1 | Done: `GET /reports/attendance`, by week (default) or by service; weeks 1 to 52 |
-| 5.6 | Giving trends report endpoint | Backend | 1 | |
+| 5.6 | Giving trends report endpoint | Backend | 1 | Done: `GET /reports/giving`, monthly with a split by fund and a summary against the months before; totals only |
 | 5.7 | Member growth report endpoint | Backend | 1 | |
 | 5.8 | Export members (CSV, async, SMS download link) | Backend | 2 | |
 | 5.9 | Export contributions (CSV, async) | Backend | 1 | |

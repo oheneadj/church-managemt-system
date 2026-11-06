@@ -15,6 +15,11 @@ return [
     'attendance_weeks_default' => 12,
     'attendance_weeks_max' => 52,
 
+    // Giving trends are monthly: how many months back by default, and the most (the summary also looks at the same number of
+    // months before them, so one request reads at most twice this many).
+    'giving_months_default' => 12,
+    'giving_months_max' => 24,
+
     // How the attendance trend is grouped when the caller does not say (see App\Enums\ReportGrouping).
     'attendance_group_by_default' => 'week',
 

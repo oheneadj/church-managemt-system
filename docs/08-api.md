@@ -1095,8 +1095,31 @@ GET /api/v1/reports/giving
 Authorization: Bearer {token}
 Permission: giving.summary
 ```
+Church admin, pastor and finance secretary (`giving.summary`, D-046). It holds **totals only**: no member and no individual gift is named, which is why the pastor may read it although not the gift list.
 
-**Query params:** `?months=12`
+**Query params:** `?months=12&fund_type_id=ulid`. `months` is how far back to look, 1 to 24 (default 12, `config/reports.php`), counting the current month. `fund_type_id` narrows every figure to one fund.
+
+**Response `200`:** one row for each calendar month in the church's own time zone, newest first. A month with nothing given is `"0.00"` with no funds, never left out.
+```json
+{
+  "data": [
+    {
+      "month": "2026-10", "month_start": "2026-10-01",
+      "total": "15450.00", "total_formatted": "GHS 15,450.00",
+      "by_fund": [
+        { "fund_type_id": "ulid", "name": "Tithe", "total": "8000.00", "total_formatted": "GHS 8,000.00" },
+        { "fund_type_id": "ulid", "name": "Building Fund", "total": "7450.00", "total_formatted": "GHS 7,450.00" }
+      ]
+    }
+  ],
+  "summary": {
+    "total": "98200.00", "total_formatted": "GHS 98,200.00",
+    "previous_total": "90000.00", "previous_total_formatted": "GHS 90,000.00",
+    "change_percent": 9.1
+  }
+}
+```
+Every amount is an exact decimal string in cedis with a formatted sibling (never a float). Gifts that were voided are left out. `by_fund` lists the funds that received something that month, in the funds' display order, under each fund's current name. The summary sets the whole period against the **same number of months immediately before it**: `change_percent` is the rise or fall to one decimal place (`-66.7` is a fall), and `null` when nothing was given in those months. `422` for `months` outside 1 to 24 or a `fund_type_id` that is not an id.
 
 ---
 

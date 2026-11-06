@@ -86,6 +86,28 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     }
 
     /**
+     * What was given between these two moments, added up for each fund, voided gifts left out.
+     */
+    public function totalsByFundBetween(CarbonInterface $from, CarbonInterface $to, ?string $fundTypeId = null): array
+    {
+        $rows = Contribution::query()
+            ->where('is_voided', false)
+            ->whereBetween('contributed_at', [$from, $to])
+            ->when($fundTypeId !== null, fn (Builder $query) => $query->where('fund_type_id', $fundTypeId))
+            ->groupBy('fund_type_id')
+            ->selectRaw('fund_type_id, SUM(amount) AS total')
+            ->get();
+
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $totals[(string) $row->getAttribute('fund_type_id')] = Money::ghs((string) $row->getAttribute('total'))->amount;
+        }
+
+        return $totals;
+    }
+
+    /**
      * How many gifts at a service have no member, voided gifts left out.
      */
     public function anonymousCountForService(string $serviceId): int

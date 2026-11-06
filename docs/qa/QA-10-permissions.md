@@ -73,7 +73,7 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 | POST /pledges (`giving.record`) | ✅ | ❌ | ✅ | ❌ | ❌ |
 | PUT /pledges/{id} (`giving.edit`) | ✅ | ❌ | ✅ | ❌ | ❌ |
 | GET /services/{id}/offering-report (`giving.summary`) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| GET /reports/giving (*not built*) | ✅ | ✅ | ✅ | ❌ | ❌ |
+| GET /reports/giving (`giving.summary`, *built*) | ✅ | ✅ | ✅ | ❌ | ❌ |
 | GET /fund-types | ✅ | ✅ | ✅ | ✅ | ✅ |
 | POST/PUT/PATCH /fund-types (`fund-types.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 

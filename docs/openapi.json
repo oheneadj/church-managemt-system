@@ -2707,6 +2707,54 @@
                 }
             }
         },
+        "/v1/reports/giving": {
+            "get": {
+                "operationId": "reports.giving",
+                "summary": "Runs ShowGivingTrendAction for this request and returns the GivingTrendResource",
+                "tags": [
+                    "ShowGivingTrend"
+                ],
+                "parameters": [
+                    {
+                        "name": "months",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 24
+                        }
+                    },
+                    {
+                        "name": "fund_type_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`GivingTrendResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GivingTrendResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}": {
             "get": {
                 "operationId": "members.show",
@@ -4574,6 +4622,50 @@
                     "all_time_formatted"
                 ],
                 "title": "GivingSummaryResource"
+            },
+            "GivingTrendResource": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "total": {
+                                "type": "string"
+                            },
+                            "total_formatted": {
+                                "type": "string"
+                            },
+                            "previous_total": {
+                                "type": "string"
+                            },
+                            "previous_total_formatted": {
+                                "type": "string"
+                            },
+                            "change_percent": {
+                                "type": [
+                                    "number",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "total",
+                            "total_formatted",
+                            "previous_total",
+                            "previous_total_formatted",
+                            "change_percent"
+                        ]
+                    }
+                },
+                "required": [
+                    "data",
+                    "summary"
+                ],
+                "title": "GivingTrendResource"
             },
             "HealthReportResource": {
                 "type": "object",

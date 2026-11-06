@@ -191,6 +191,17 @@ describe('reports', function (): void {
     });
 });
 
+describe('giving trends', function (): void {
+    it('the giving trend, with and without a fund', function (): void {
+        $fund = FundType::factory()->create(['church_id' => $this->church->id]);
+        Contribution::factory()->create(['church_id' => $this->church->id, 'fund_type_id' => $fund->id, 'fund_name' => $fund->name, 'amount' => '150.00', 'contributed_at' => now()]);
+
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/giving'), 'GET', '/v1/reports/giving', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/giving?months=3&fund_type_id='.$fund->id), 'GET', '/v1/reports/giving', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/giving?months=0'), 'GET', '/v1/reports/giving', 422);
+    });
+});
+
 describe('messages', function (): void {
     it('the message log', function (): void {
         MessageLog::factory()->create(['church_id' => $this->church->id, 'message_type' => 'receipt']);

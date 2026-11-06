@@ -46,13 +46,14 @@
 ### TC-11-04 — Giving trend — monthly view
 **Action:** `GET /api/v1/reports/giving?months=12` (docs/08: `months`)
 **Expected:**
-- 12 data points (one per month)
-- Each point: `{ "month": "2026-10", "total": 15450.00, "by_fund": { "tithe": 8000.00, "offering": 5000.00, ... } }`
+- 12 rows, newest first, one per calendar month in the church's time zone; a month with nothing given is `"0.00"`, not omitted
+- Each row: `{ "month": "2026-10", "month_start": "2026-10-01", "total": "15450.00", "total_formatted": "GHS 15,450.00", "by_fund": [ { "fund_type_id", "name": "Tithe", "total": "8000.00", "total_formatted" }, ... ] }`
 - Voided contributions excluded from totals
+- `summary`: `total`, `previous_total` (the same number of months before) and `change_percent` (one decimal, `null` when the months before were empty)
 
 ### TC-11-05 — Giving trend by fund type
 **Action:** `GET /api/v1/reports/giving?fund_type_id={tithe_id}&months=6`
-**Expected:** Only tithe contributions in the totals
+**Expected:** Only tithe contributions in the totals, in `by_fund` and in the summary
 
 ### TC-11-06 — Giving trend accuracy against raw data
 **Action:** Sum all non-voided contribution amounts for October manually. Compare to report.

@@ -59,6 +59,14 @@ interface ContributionRepositoryInterface
     public function offeringTotalsWithoutService(CarbonInterface $from, CarbonInterface $to): array;
 
     /**
+     * What was given between these two moments (both included), added up for each fund, voided gifts left out, keyed by fund
+     * id. A fund with no gifts has no entry. Narrowed to one fund when an id is given.
+     *
+     * @return array<string, numeric-string>
+     */
+    public function totalsByFundBetween(CarbonInterface $from, CarbonInterface $to, ?string $fundTypeId = null): array;
+
+    /**
      * How many gifts at a service have no member, voided gifts left out.
      */
     public function anonymousCountForService(string $serviceId): int;

@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\V1\Pledges\ShowPledgeController;
 use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
 use App\Http\Controllers\Api\V1\Pledges\UpdatePledgeController;
 use App\Http\Controllers\Api\V1\Reports\ShowAttendanceTrendController;
+use App\Http\Controllers\Api\V1\Reports\ShowGivingTrendController;
 use App\Http\Controllers\Api\V1\Services\CancelServiceController;
 use App\Http\Controllers\Api\V1\Services\ListServicesController;
 use App\Http\Controllers\Api\V1\Services\SetServiceCheckinController;
@@ -149,6 +150,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('messages', ListMessagesController::class)->name('messages.index');
 
         Route::get('reports/attendance', ShowAttendanceTrendController::class)->name('reports.attendance');
+        Route::get('reports/giving', ShowGivingTrendController::class)->name('reports.giving');
 
         Route::get('staff', ListStaffController::class)->name('staff.index');
         Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');
