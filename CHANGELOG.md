@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Added QA-15 with 20 cases for the design in D-018, D-020 and D-053: the fee clamp (percentage, floor, cap, rounding, values from config), the GHS 1.00 minimum and GHS 30,000 maximum for digital gifts, a church with no verified payout account, the payout row and its amounts, the church bearing the payout fee, one payout per gift under repeated events, no payout before a gift completes, retries and permanent failure, the GHS 1.00 minimum operating balance, restart safety, daily reconciliation, no clawback after payout, call logging and tenant isolation. Indexed it in `qa/README.md`. One open point is marked in the plan: D-018 does not name a rounding mode, and the plan assumes half up until it is confirmed.
 - **Why:** `qa/README.md` listed these cases as still to be written, and the agreement requires 100% tests on financial code (section 20) and a database guarantee against duplicate payments (section 11); writing the cases first fixes what the code must do.
 - **Files:** docs/qa/QA-15-payouts.md, docs/qa/README.md, CHANGELOG.md
-- **Commit:** (added right after the commit)
+- **Commit:** `02f6076` (2026-10-29)
 
 #### chore(deps): update Symfony to the patched 8.1.10 and 8.1.11 releases (2026-10-29)
 - **What:** Ran `composer update 'symfony/*'`: http-foundation, http-kernel, filesystem, routing, yaml, mime and the packages that move with them (console, mailer, translation, finder and others) went from 8.1.5 to 8.1.9 up to 8.1.10 and 8.1.11. Only `composer.lock` changed. `composer audit` went from 9 advisories on 6 packages (reported 28 October and 4 November) to none. The full test suite, Pint and PHPStan pass on the new versions.
