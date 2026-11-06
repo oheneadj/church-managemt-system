@@ -1173,7 +1173,9 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 **Rationale:** Email costs nothing, opens on the computer where a CSV is used, and reuses the sender with its log, retries and circuit breaker. A short link and a short-lived file keep a list of people's contact details from lying about.
 
-**Revisit when:** the contribution export (5.9) is built (it follows the same rules), the React export button is built, or a church needs very large exports (then stream to the file or split it).
+8. **The giving records export (story 5.9) follows the same rules.** One job (`BuildExportJob`) and one builder contract serve both kinds. It needs `giving.export` (church admin, finance secretary), takes the gift list's filters, always includes voided gifts (flagged) so it can be audited, lists gifts oldest first with exact amounts, the church's own dates and the fund name the gift was recorded under, and never holds notes, the void reason or phone numbers. The 5-an-hour limit is shared between the two kinds.
+
+**Revisit when:** the React export buttons are built, a digital gift can be pending or failed (D-053: the giving export then lists completed gifts only), or a church needs very large exports (then stream to the file or split it).
 
 ---
 

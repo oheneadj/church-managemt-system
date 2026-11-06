@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ExportStatus;
-use App\Jobs\ExportMembersJob;
+use App\Jobs\BuildExportJob;
 use App\Jobs\SendEmailJob;
 use App\Models\Church;
 use App\Models\Department;
@@ -40,7 +40,7 @@ function exportStaff(Church $church, string $role): User
 /** Runs the job for an export now, as a worker would. */
 function runExportJob(string $exportId): void
 {
-    app()->call([new ExportMembersJob($exportId), 'handle']);
+    app()->call([new BuildExportJob($exportId), 'handle']);
 }
 
 /** Makes an export for the user and builds its file now, as a worker would. */
@@ -84,7 +84,7 @@ describe('asking for an export', function (): void {
             ->and($response->json('message'))->toBe('Export queued. You will receive a download link by email when it is ready.')
             ->and($export->requested_by)->toBe($this->admin->id)->and($export->status)->toBe(ExportStatus::Queued)
             ->and($export->type->value)->toBe('members')->and($export->filters)->toBe(['status' => 'active', 'search' => 'Mensah']);
-        Queue::assertPushedOn('exports', ExportMembersJob::class, fn (ExportMembersJob $job): bool => $job->exportId === $export->id);
+        Queue::assertPushedOn('exports', BuildExportJob::class, fn (BuildExportJob $job): bool => $job->exportId === $export->id);
         expect(Storage::allFiles())->toBe([]);
     });
 
@@ -272,7 +272,7 @@ describe('telling the staff member', function (): void {
     it('marks the export failed when the job gives up, with nothing sent', function (): void {
         $export = Export::factory()->create(['church_id' => $this->church->id, 'requested_by' => $this->admin->id]);
 
-        (new ExportMembersJob($export->id))->failed(new RuntimeException('the disk is full'));
+        (new BuildExportJob($export->id))->failed(new RuntimeException('the disk is full'));
 
         expect($export->refresh()->status)->toBe(ExportStatus::Failed)->and($export->file_path)->toBeNull();
         Queue::assertNotPushed(SendEmailJob::class);

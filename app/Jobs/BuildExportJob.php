@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Actions\Email\QueueEmailAction;
+use App\Contracts\ExportFileBuilder;
 use App\DTOs\OutboundEmail;
 use App\Enums\ExportStatus;
+use App\Enums\ExportType;
 use App\Enums\RecipientType;
 use App\Mail\ExportReadyMail;
 use App\Models\Export;
 use App\Models\User;
 use App\Repositories\ExportRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
+use App\Services\ContributionCsvBuilder;
 use App\Services\MemberCsvBuilder;
 use App\Services\TenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,12 +26,12 @@ use LogicException;
 use Throwable;
 
 /**
- * Builds the member list CSV for one export, stores it privately and emails the staff member who asked a link that works for a
- * short time (D-064). It runs on a worker with no request, so it works as the export's church. It is safe to run twice: an
+ * Builds the CSV for one export (the member list or the giving records), stores it privately and emails the staff member who
+ * asked a link that works for a short time (D-064). It runs on a worker with no request, so it works as the export's church. It is safe to run twice: an
  * export that is already finished is left alone. A failure that survives the retries marks the export failed (`failed()`), and
  * nothing is sent. Only ids are logged, never a name, a phone number or a link (agreement section 17).
  */
-class ExportMembersJob implements ShouldQueue
+class BuildExportJob implements ShouldQueue
 {
     use Queueable;
 
@@ -52,7 +55,6 @@ class ExportMembersJob implements ShouldQueue
     public function handle(
         ExportRepositoryInterface $exports,
         UserRepositoryInterface $users,
-        MemberCsvBuilder $builder,
         TenantContext $tenant,
         QueueEmailAction $emails,
     ): void {
@@ -65,13 +67,24 @@ class ExportMembersJob implements ShouldQueue
         $church = $export->church ?? throw new LogicException('An export always belongs to a church.');
         $requester = $users->findById($export->requested_by) ?? throw new LogicException('An export is always asked for by a staff member.');
 
-        $tenant->run($church, function () use ($exports, $builder, $emails, $export, $requester): void {
+        $tenant->run($church, function () use ($exports, $emails, $export, $requester): void {
             $exports->markProcessing($export);
-            $built = $builder->build($export, $requester);
+            $built = $this->builderFor($export->type)->build($export, $requester);
             $exports->markCompleted($export, $built['path'], $built['rows']);
 
             $this->emailTheLink($emails, $export, $requester);
         });
+    }
+
+    /**
+     * The builder of the file for this kind of export.
+     */
+    private function builderFor(ExportType $type): ExportFileBuilder
+    {
+        return match ($type) {
+            ExportType::Members => app(MemberCsvBuilder::class),
+            ExportType::Contributions => app(ContributionCsvBuilder::class),
+        };
     }
 
     /**
@@ -85,7 +98,7 @@ class ExportMembersJob implements ShouldQueue
             app(ExportRepositoryInterface::class)->markFailed($export);
         }
 
-        Log::error('A member export failed.', ['export_id' => $this->exportId, 'church_id' => $export?->church_id, 'exception' => $exception === null ? null : $exception::class]);
+        Log::error('An export failed.', ['export_id' => $this->exportId, 'church_id' => $export?->church_id, 'exception' => $exception === null ? null : $exception::class]);
     }
 
     /**

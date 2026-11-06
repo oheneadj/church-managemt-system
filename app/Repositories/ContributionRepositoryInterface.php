@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Every query on contributions lives behind this contract.
@@ -82,6 +83,13 @@ interface ContributionRepositoryInterface
      * @return LengthAwarePaginator<int, Contribution>
      */
     public function paginate(ListContributionsDTO $filters): LengthAwarePaginator;
+
+    /**
+     * Every gift the filters find, voided ones included, oldest first, read a few at a time, for the CSV export.
+     *
+     * @return LazyCollection<int, Contribution>
+     */
+    public function forExport(ListContributionsDTO $filters, int $chunkSize): LazyCollection;
 
     /**
      * Records a gift and loads what the answer shows.

@@ -103,10 +103,13 @@
 ### TC-11-11 — Contribution CSV export
 **Action:** `POST /api/v1/exports/contributions` with the same `from` and `to` filters as the list (`2026-10-01`, `2026-10-31`)
 **Expected:**
+- `202` and the same async flow as TC-11-09 (an `exports` row, a job on the `exports` queue, a 1-hour link by email); the file is `contributions-{date}.csv`
 - CSV headers: `id, date, member_name, fund_type, amount_ghs, payment_method, reference, is_voided, recorded_by`
-- Only October contributions included
-- Voided contributions included but flagged `is_voided: true` (for audit purposes)
-- Amounts are GHS values (not pesewas)
+- Only October contributions included, oldest first; the other gift-list filters (`member_id`, `service_id`, `fund_type_id`, `payment_method`) work too
+- Voided contributions included but flagged `is_voided` = `true` (for audit purposes), even when the list's voided switch is not sent
+- Amounts are GHS values to two decimals (not pesewas), exact; `date` is in the church's time zone; `fund_type` is the name the gift was recorded under
+- A gift with no member shows `Anonymous`; an erased member shows `[deleted]`; no notes, void reason or phone number; a text starting `=`, `+`, `-` or `@` has a leading `'`
+- Only `giving.export` (church admin, finance secretary): the pastor, department head and youth pastor get `403`; the 5-an-hour limit is shared with the member export
 
 ### TC-11-12 — Export rate limit
 **Action:** Submit 6 member export requests within one hour as the same staff member

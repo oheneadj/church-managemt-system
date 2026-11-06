@@ -10,6 +10,7 @@ namespace App\Enums;
 enum ExportType: string
 {
     case Members = 'members';
+    case Contributions = 'contributions';
 
     /**
      * Human-readable text for screens and messages.
@@ -18,6 +19,7 @@ enum ExportType: string
     {
         return match ($this) {
             self::Members => 'Member list',
+            self::Contributions => 'Giving records',
         };
     }
 }

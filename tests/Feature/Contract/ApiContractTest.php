@@ -197,6 +197,8 @@ describe('exports', function (): void {
 
         assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/members', ['status' => 'active']), 'POST', '/v1/exports/members', 202);
         assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/members', ['status' => 'retired']), 'POST', '/v1/exports/members', 422);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/contributions', ['from' => '2026-10-01']), 'POST', '/v1/exports/contributions', 202);
+        assertMatchesSpec($this->postJson(CHURCH_HOST.'/exports/contributions', ['from' => 'soon']), 'POST', '/v1/exports/contributions', 422);
     });
 });
 

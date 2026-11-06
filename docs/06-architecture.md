@@ -242,7 +242,7 @@ All side effects that don't need to be synchronous are queued:
 | `SendEmailJob` (invitations, exports) | `notifications` | Normal |
 | `ProcessPaystackWebhookJob` | `payments` | High |
 | `GenerateOfferingReportJob` | `reports` | Low |
-| `ExportMembersJob` | `exports` | Low |
+| `BuildExportJob` (member list and giving records CSV) | `exports` | Low |
 | `SendBirthdayAlertJob` | `scheduled` | Low |
 
 **Queue workers run as separate processes** managed by Coolify's process supervisor (Supervisor). If a job fails, it retries 3 times with exponential backoff. After 3 failures, it lands in the `failed_jobs` table and triggers a monitoring alert.

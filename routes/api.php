@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\Departments\ListDepartmentsController;
 use App\Http\Controllers\Api\V1\Departments\RemoveDepartmentMemberController;
 use App\Http\Controllers\Api\V1\Departments\StoreDepartmentController;
 use App\Http\Controllers\Api\V1\Departments\UpdateDepartmentController;
+use App\Http\Controllers\Api\V1\Exports\QueueContributionExportController;
 use App\Http\Controllers\Api\V1\Exports\QueueMemberExportController;
 use App\Http\Controllers\Api\V1\Families\ListFamiliesController;
 use App\Http\Controllers\Api\V1\Families\ShowFamilyController;
@@ -152,6 +153,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('messages', ListMessagesController::class)->name('messages.index');
 
         Route::post('exports/members', QueueMemberExportController::class)->middleware('throttle:exports')->name('exports.members');
+        Route::post('exports/contributions', QueueContributionExportController::class)->middleware('throttle:exports')->name('exports.contributions');
 
         Route::get('reports/attendance', ShowAttendanceTrendController::class)->name('reports.attendance');
         Route::get('reports/giving', ShowGivingTrendController::class)->name('reports.giving');

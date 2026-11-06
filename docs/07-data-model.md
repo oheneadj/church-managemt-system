@@ -508,7 +508,7 @@ One row for each CSV export a staff member asked for (D-064). It is the trail th
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
 | `requested_by` | CHAR(26) | No | FK → users: who asked |
-| `type` | VARCHAR(30) | No | `ExportType`: members. (Contributions arrive with story 5.9.) |
+| `type` | VARCHAR(30) | No | `ExportType`: members, contributions. |
 | `status` | VARCHAR(30) | No | `ExportStatus`: queued, processing, completed, failed. Default: `queued` |
 | `filters` | JSON | Yes | The filters sent, as sent. Forgotten when a cancelled church is purged (a search can hold a name). |
 | `row_count` | INT | Yes | Rows in the file, set when it is ready |

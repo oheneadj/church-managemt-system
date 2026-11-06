@@ -1178,6 +1178,11 @@ POST /api/v1/exports/contributions
 Authorization: Bearer {token}
 Permission: giving.export
 ```
+Church admin and finance secretary (`giving.export`; the pastor sees giving totals but not individual gifts, so not this, D-046). It works exactly like the member export above (D-064): `202` with an `export_id`, a worker on the `exports` queue builds the private file, the staff member is emailed a link that works for 1 hour, the file is deleted after 7 days, `403` without the permission, and the same limit of 5 exports an hour (members and giving records together) with `429`.
+
+**Body:** The filters of `GET /contributions`: `member_id`, `service_id`, `fund_type_id`, `payment_method`, `from`, `to` (whole days, `Y-m-d`, `to` not before `from`). The voided switch and the page size do not apply: the file **always includes voided gifts, flagged**, so it can be audited. A value that is not valid is `422`.
+
+**Columns:** `id, date, member_name, fund_type, amount_ghs, payment_method, reference, is_voided, recorded_by`, **oldest first**. `date` is the day the gift was given in the church's own time zone; `member_name` is the member's name, `Anonymous` for a gift with no member, and `[deleted]` for a member whose data was erased; `fund_type` is the fund's name when the gift was recorded (a later rename does not change it, D-048); `amount_ghs` is an exact two-place decimal in cedis; `reference` is the payment provider's reference for a digital gift and empty for cash; `is_voided` is `true` or `false`. The notes, the void reason and phone numbers are never in the file. A text starting with `=`, `+`, `-` or `@` gets a leading `'`, as in the member export. A church with no gifts gets a file with only the header.
 
 ---
 

@@ -14,6 +14,7 @@ use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Eloquent implementation of the contribution queries.
@@ -179,18 +180,42 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
      */
     public function paginate(ListContributionsDTO $filters): LengthAwarePaginator
     {
-        return Contribution::query()
+        return $this->matching($filters)
             ->with(self::DETAIL)
             ->where('is_voided', $filters->isVoided)
+            ->orderByDesc('contributed_at')
+            ->orderByDesc('id')
+            ->paginate($filters->perPage);
+    }
+
+    /**
+     * Every gift the filters find, voided ones included, oldest first, read a few at a time with the member and the staff
+     * member who recorded it (erased people too, who show as deleted), for the CSV export.
+     */
+    public function forExport(ListContributionsDTO $filters, int $chunkSize): LazyCollection
+    {
+        return $this->matching($filters)
+            ->with(['member' => fn ($member) => $member->withTrashed(), 'recordedBy' => fn ($user) => $user->withTrashed()])
+            ->orderBy('contributed_at')
+            ->orderBy('id')
+            ->lazy($chunkSize);
+    }
+
+    /**
+     * The gifts of the current church that match the filters (not the voided switch or the order). The list and the export
+     * share it, so the file holds what the screen showed.
+     *
+     * @return Builder<Contribution>
+     */
+    private function matching(ListContributionsDTO $filters): Builder
+    {
+        return Contribution::query()
             ->when($filters->memberId !== null, fn (Builder $q) => $q->where('member_id', $filters->memberId))
             ->when($filters->serviceId !== null, fn (Builder $q) => $q->where('service_id', $filters->serviceId))
             ->when($filters->fundTypeId !== null, fn (Builder $q) => $q->where('fund_type_id', $filters->fundTypeId))
             ->when($filters->paymentMethod !== null, fn (Builder $q) => $q->where('payment_method', $filters->paymentMethod))
             ->when($filters->from !== null, fn (Builder $q) => $q->whereDate('contributed_at', '>=', $filters->from))
-            ->when($filters->to !== null, fn (Builder $q) => $q->whereDate('contributed_at', '<=', $filters->to))
-            ->orderByDesc('contributed_at')
-            ->orderByDesc('id')
-            ->paginate($filters->perPage);
+            ->when($filters->to !== null, fn (Builder $q) => $q->whereDate('contributed_at', '<=', $filters->to));
     }
 
     /**

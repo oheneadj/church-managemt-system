@@ -2185,10 +2185,49 @@
                 "security": []
             }
         },
+        "/v1/exports/contributions": {
+            "post": {
+                "operationId": "exports.contributions",
+                "summary": "Runs QueueExportAction for this request and returns the JsonResponse",
+                "tags": [
+                    "QueueContributionExport"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExportContributionsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`ExportQueuedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExportQueuedResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/exports/members": {
             "post": {
                 "operationId": "exports.members",
-                "summary": "Runs QueueMemberExportAction for this request and returns the JsonResponse",
+                "summary": "Runs QueueExportAction for this request and returns the JsonResponse",
                 "tags": [
                     "QueueMemberExport"
                 ],
@@ -4463,6 +4502,33 @@
                     "reason"
                 ],
                 "title": "EraseMemberRequest"
+            },
+            "ExportContributionsRequest": {
+                "type": "object",
+                "description": "Validates a request for the giving records as a CSV. It takes the filters of the gift list (`GET /contributions`) except\nthe voided switch and the page size: the file always holds voided gifts too, flagged, so it can be audited.",
+                "properties": {
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "service_id": {
+                        "type": "string"
+                    },
+                    "fund_type_id": {
+                        "type": "string"
+                    },
+                    "payment_method": {
+                        "$ref": "#/components/schemas/PaymentMethod"
+                    },
+                    "from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "to": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                },
+                "title": "ExportContributionsRequest"
             },
             "ExportMembersRequest": {
                 "type": "object",

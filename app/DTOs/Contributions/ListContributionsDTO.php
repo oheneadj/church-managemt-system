@@ -26,6 +26,25 @@ final readonly class ListContributionsDTO
     ) {}
 
     /**
+     * Builds the DTO from filters kept as plain text (an export remembers the filters it was asked for). The voided switch is
+     * not one of them: an export holds voided gifts too.
+     *
+     * @param  array<string, string>  $filters
+     */
+    public static function fromFilters(array $filters, int $perPage): self
+    {
+        return new self(
+            $perPage,
+            $filters['member_id'] ?? null,
+            $filters['service_id'] ?? null,
+            $filters['fund_type_id'] ?? null,
+            $filters['payment_method'] ?? null,
+            $filters['from'] ?? null,
+            $filters['to'] ?? null,
+        );
+    }
+
+    /**
      * Builds the DTO from the validated request.
      */
     public static function fromRequest(ListContributionsRequest $request): self
