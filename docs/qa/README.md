@@ -32,6 +32,7 @@
 | QA-12 | [Data Safety & Security](QA-12-security.md) | Encryption, headers, rate limits, OWASP | R9 (breach) |
 | QA-13 | [Performance](QA-13-performance.md) | Response times, 3G simulation, N+1 queries | R7 (connectivity) |
 | QA-14 | [End-to-End: Sunday Service](QA-14-e2e-sunday.md) | Full Sunday flow from open to report | Launch gate |
+| QA-15 | [Payouts and Platform Fee](QA-15-payouts.md) | Fee clamp, automatic payout, retries, minimum balance, limits (not built yet) | D-018, financial integrity |
 
 ---
 
@@ -45,7 +46,7 @@
 
 **Rule:** Destructive tests (delete, void, deactivate) run on local or staging only. Never on production.
 
-**Provider note (Oct 2026, D-018 / D-020):** several plans (QA-06, QA-07, QA-08, QA-09) were written when Paystack and Africa's Talking were the only providers. MoMo collections, payouts, SMS and OTP now run on PayPerlez, so run those cases against the PayPerlez **test** environment. Paystack cases (QA-07) apply to card payments only. Payout and fee-calculation cases (disbursement success, retry, minimum balance, platform fee clamp) still need to be added.
+**Provider note (Oct 2026, D-018 / D-020):** several plans (QA-06, QA-07, QA-08, QA-09) were written when Paystack and Africa's Talking were the only providers. MoMo collections, payouts, SMS and OTP now run on PayPerlez, so run those cases against the PayPerlez **test** environment. Paystack cases (QA-07) apply to card payments only. Payout and fee-calculation cases are in QA-15.
 
 ---
 
