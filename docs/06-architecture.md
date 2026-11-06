@@ -209,7 +209,7 @@ This middleware runs before all authenticated routes. If the subdomain doesn't m
 ```
 church-admin        → full access to their church
 pastor              → members (read, add and edit), giving summaries, pastoral care, communications
-finance-secretary   → giving (full), members (read), reports (export)
+finance-secretary   → giving (full), members (read, list export), reports (view, export)
 department-head     → members in their department only
 youth-pastor        → youth members, youth milestones, youth attendance
 ```

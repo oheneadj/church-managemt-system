@@ -57,12 +57,13 @@ class MemberPolicy
     }
 
     /**
-     * Whether the user may export everything held about this member (a subject access request).
+     * Whether the user may export everything held about this member (a subject access request). This is its own
+     * permission, apart from the member-list export, because the record includes the address and ID number (D-055).
      */
     public function export(User $user, Member $member): bool
     {
         return $user->church_id === $member->church_id
-            && $user->hasPermissionTo(StaffPermission::MembersExport)
+            && $user->hasPermissionTo(StaffPermission::MembersDataExport)
             && $this->view($user, $member);
     }
 

@@ -13,6 +13,7 @@ enum StaffPermission: string
     case MembersEdit = 'members.edit';
     case MembersDeactivate = 'members.deactivate';
     case MembersExport = 'members.export';
+    case MembersDataExport = 'members.data-export';
     case MembersErase = 'members.erase';
     case MilestonesView = 'milestones.view';
     case GivingSummary = 'giving.summary';
@@ -36,7 +37,8 @@ enum StaffPermission: string
             self::MembersView => 'View members',
             self::MembersEdit => 'Add and edit members',
             self::MembersDeactivate => 'Deactivate members',
-            self::MembersExport => 'Export members',
+            self::MembersExport => 'Export the member list',
+            self::MembersDataExport => 'Export one member\'s full personal record',
             self::MembersErase => 'Erase a member\'s personal data',
             self::MilestonesView => 'View member milestones',
             self::GivingSummary => 'View giving summaries',

@@ -156,7 +156,7 @@ public function update(User $user, Member $member): bool
 
 **Roles:** `church-admin`, `pastor`, `finance-secretary`, `department-head`, `youth-pastor`
 
-**Key permissions:** `members.view`, `members.edit`, `giving.summary`, `giving.record`, `giving.edit`, `giving.export`, `sms.send`, `reports.view`, `reports.export`
+**Key permissions:** `members.view`, `members.edit`, `members.export`, `members.data-export`, `giving.summary`, `giving.record`, `giving.edit`, `giving.export`, `sms.send`, `reports.view`, `reports.export`
 
 **Tenant resolution:** `ResolveTenant` middleware resolves the church from the subdomain (`grace-assembly.yourapp.com` → Church with slug `grace-assembly`). Sets `app('current.church')`. Returns 404 on unknown subdomain.
 

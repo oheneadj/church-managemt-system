@@ -477,7 +477,7 @@ The photo is rotated to match the camera, cropped to a 512 pixel square and re-e
 ```
 GET /api/v1/members/{id}/data-export
 ```
-**Permission:** `members.export`, and the member must be visible to the caller. `403` otherwise; `404` for another church's member.
+**Permission:** `members.data-export` (church admin only, D-055), and the member must be visible to the caller. `403` otherwise; `404` for another church's member.
 
 **Response `200`:** `exported_at`, `member` (every personal field, with the encrypted address and ID number readable), `family` (name and role), `departments`, `milestones`, `consents` (each agreement to receive texts or WhatsApp messages: purpose, when, withdrawn when, policy version) and `history` (each change: event, field names, who, reason, when). The photo file is not part of the JSON. Each export is recorded in the member's change log (`exported`), without the data.
 
@@ -1023,8 +1023,9 @@ Recipients are confirmed and messages dispatched asynchronously. Credits are ded
 ```
 GET /api/v1/messages
 Authorization: Bearer {token}
-Permission: members.view
+Permission: sms.send
 ```
+Church admin and pastor only (D-055): the log holds phone numbers and message text.
 
 **Query params:** `?channel=sms&message_type=broadcast&from=2026-10-01`
 
@@ -1082,8 +1083,9 @@ Permission: reports.view
 ```
 POST /api/v1/exports/members
 Authorization: Bearer {token}
-Permission: members.view
+Permission: members.export
 ```
+Church admin and finance secretary by default (D-055). The national ID is never in the file.
 
 **Body:** Any filter set (same as `GET /api/members` query params).
 
@@ -1166,12 +1168,13 @@ Adding returns `201` with `{ "data": { "department_id", "member_id", "role", "jo
 GET /api/v1/church/settings
 Authorization: Bearer {token}
 ```
+Any signed-in staff member may read the settings (D-055).
 
 ### Update Settings
 ```
 PUT /api/v1/church/settings
 Authorization: Bearer {token}
-Permission: church-admin
+Permission: church.settings (church admin)
 ```
 
 **Body (subset):**
@@ -1187,6 +1190,21 @@ Permission: church-admin
   }
 }
 ```
+
+---
+
+## Staff
+
+> **Designed (D-055), not built.** All need `staff.manage` (church admin). A staff member of another church is `404`.
+
+```
+GET   /api/v1/staff                         paginated; each: id, name, email, phone, roles, extra permissions, is_active, last_login_at
+POST  /api/v1/staff                         { "name", "email", "phone", "role" }   (Idempotency-Key required)
+PUT   /api/v1/staff/{id}                    any of name, phone, role
+PATCH /api/v1/staff/{id}/status             { "is_active": false }
+PUT   /api/v1/staff/{id}/permissions        { "grant": ["members.export"], "revoke": ["sms.send"] }
+```
+`POST` creates the user without a password and emails an invitation code; the person sets their password through `auth/password/reset` (D-054). A role or permission change applies on the user's next request. Deactivating a user ends their sessions and tokens at once (`EnsureStaffIsCurrent`). Deactivating, or removing the church admin role from, the last active church admin is `409`. `422` for a role that does not exist or an email already used by a staff member of this church. Every change is written to the change history.
 
 ---
 

@@ -7,6 +7,7 @@ export const PERMISSIONS = {
     MEMBERS_EDIT: 'members.edit',
     MEMBERS_DEACTIVATE: 'members.deactivate',
     MEMBERS_EXPORT: 'members.export',
+    MEMBERS_DATA_EXPORT: 'members.data-export',
     MEMBERS_ERASE: 'members.erase',
     MILESTONES_VIEW: 'milestones.view',
     GIVING_SUMMARY: 'giving.summary',

@@ -90,7 +90,7 @@ describe('export', function (): void {
         Sanctum::actingAs(privacyStaff($this->church, $role), ['*']);
 
         $this->getJson(PRIVACY_MEMBERS.'/'.$this->member->id.'/data-export')->assertForbidden();
-    })->with(['department-head', 'youth-pastor']);
+    })->with(['department-head', 'youth-pastor', 'pastor', 'finance-secretary']);
 
     it('returns 404 for another church\'s member', function (): void {
         $other = Church::factory()->create(['slug' => 'other']);

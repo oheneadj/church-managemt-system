@@ -17,6 +17,13 @@ it('lets the pastor add and edit members but not deactivate or export them', fun
         ->not->toContain(StaffPermission::MembersExport);
 });
 
+it('gives the finance secretary the member list export but not the one-member data export', function (): void {
+    $finance = StaffRole::FinanceSecretary->permissions();
+
+    expect($finance)->toContain(StaffPermission::MembersExport)
+        ->not->toContain(StaffPermission::MembersDataExport);
+});
+
 it('keeps milestones from the finance secretary and the department head', function (StaffRole $role): void {
     expect($role->permissions())->not->toContain(StaffPermission::MilestonesView);
 })->with([StaffRole::FinanceSecretary, StaffRole::DepartmentHead]);

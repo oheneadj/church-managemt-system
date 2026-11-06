@@ -199,7 +199,8 @@ Members authenticate via OTP — no password required.
 | Add / edit member | ✓ | ✓ | ✗ | ✗ | ✗ | Own only |
 | View giving history | ✓ | Summary only | ✓ Full | ✗ | ✗ | Own only |
 | View pastoral notes | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Export member list | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Export member list (CSV) | ✓ | ✗ | ✓ (default, can be granted or removed per person) | ✗ | ✗ | ✗ |
+| Export one member's full record | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Deactivate member | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | View youth milestones | ✓ | ✓ | ✗ | ✗ | ✓ | Own only |
 

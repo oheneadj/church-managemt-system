@@ -988,6 +988,27 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-055 — The staff permission matrix, and who may export what
+**Date:** October 2026
+**Decided by:** Product Owner (the two export rules marked), Lead Engineer (the rest, to remove conflicts between QA-10, docs/02, docs/03, docs/08 and the code)
+**Status:** Active. The export permissions are built; the staff-management endpoints are designed, not built.
+
+**Decision:**
+1. **Member list export (`members.export`)** is held by the church admin and, by default, the finance secretary, and the church admin can grant or take it away per person once per-person permissions exist. *(Product Owner.)* This follows docs/02 and docs/03; QA-10 and D-030 said church admin only.
+2. **One member's full personal record (`members.data-export`)** is a separate permission, held by the church admin only, because the record includes the decrypted address and national ID number. *(Product Owner.)* `GET /members/{id}/data-export` now needs it. The member-list CSV never includes the national ID (QA-11 TC-11-10).
+3. **Pastor.** Adds and edits members, milestones and photos (`members.edit`, D-030), moves a member only between prospect and active, sees giving totals but not individual gifts (D-046), sends messages. Only the church admin deactivates, erases, exports a single record or changes settings.
+4. **The message log (`GET /messages`) needs `sms.send`** (church admin, pastor), not `members.view`, because it holds phone numbers and message text. docs/08 said `members.view`, which every role has; QA-10 said church admin and pastor.
+5. **The member growth report needs `reports.view`**, so the finance secretary may read it as well as the church admin and pastor (it is counts only). QA-10 had excluded the finance secretary.
+6. **Church settings:** any signed-in staff member may read them (nothing in them is secret); only `church.settings` (church admin) changes them.
+7. **Staff management** needs `staff.manage` (church admin): list staff, invite (name, email, phone, role; an invitation code is emailed and the person sets a password through the reset flow, D-054), change name, phone and role, deactivate or reactivate, and grant or revoke single permissions on top of the role. A role or permission change applies on the user's next request (permissions are read on every request), so there is no token re-issue. The last active church admin cannot be deactivated or lose the role (`409`).
+8. **A deactivated user** who enters the right password is told `403` "Your account has been deactivated. Contact your church admin." and no code is sent. A wrong password stays the generic `422` (D-054).
+
+**Rationale:** The agreement requires one authorisation rule enforced on the server through policies, and no conflicting statements of it. Giving an export its own permission means the most sensitive export does not widen when a role is widened.
+
+**Revisit when:** staff management is built (point 7), or a church wants the pastor to see named gifts (`giving.view`, D-046).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
