@@ -20,6 +20,14 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 
     /**
+     * The staff member of the current church with this email, active or not, if any.
+     */
+    public function findByEmail(string $email): ?User
+    {
+        return User::query()->whereRaw('lower(email) = ?', [mb_strtolower(trim($email))])->first();
+    }
+
+    /**
      * Adds a staff user.
      *
      * @param  array<string, mixed>  $attributes

@@ -17,6 +17,12 @@ interface UserRepositoryInterface
     public function findActiveByPhone(string $phone): ?User;
 
     /**
+     * The staff member of the current church with this email, active or not, if there is one. Capitals and spaces around
+     * the email do not matter. A deleted staff member is never found.
+     */
+    public function findByEmail(string $email): ?User;
+
+    /**
      * Adds a staff user.
      *
      * @param  array<string, mixed>  $attributes

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Observers\UserObserver;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -17,7 +18,18 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
- * A staff account. Members are a separate table; staff sign in with phone and OTP only.
+ * A staff account. Members are a separate table. Staff sign in with email, password and an emailed code (D-054); the
+ * phone number is a contact number and is not used to sign in.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $name
+ * @property string $phone
+ * @property string|null $email
+ * @property string|null $password the hash, or null until the person sets a password
+ * @property CarbonImmutable|null $email_verified_at
+ * @property bool $is_active
+ * @property CarbonImmutable|null $last_login_at
  */
 #[ObservedBy(UserObserver::class)]
 class User extends Authenticatable
@@ -26,6 +38,9 @@ class User extends Authenticatable
 
     /** @use HasFactory<UserFactory> */
     use HasFactory;
+
+    /** @var list<string> */
+    protected $hidden = ['password'];
 
     /** @var list<string> */
     protected $fillable = [
@@ -46,6 +61,8 @@ class User extends Authenticatable
     {
         return [
             'is_active' => 'boolean',
+            'password' => 'hashed',
+            'email_verified_at' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
         ];
     }
