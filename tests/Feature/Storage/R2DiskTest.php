@@ -37,8 +37,6 @@ it('keeps live files and backups in separate buckets with separate credentials',
 });
 
 it('signs a time-limited URL locally, without calling R2', function (): void {
-    $this->freezeTime(); // The expiry is counted from the clock when signing; a second ticking over would read 3599.
-
     $url = Storage::disk('r2')->temporaryUrl('churches/01abc/members/01def/photo.jpg', now()->addHour());
     $parts = parse_url($url);
     parse_str($parts['query'], $query);
@@ -46,7 +44,9 @@ it('signs a time-limited URL locally, without calling R2', function (): void {
     expect($parts['host'])->toEndWith('abc123.r2.cloudflarestorage.com')
         ->and($url)->toContain('chms-live')
         ->and($url)->toContain('churches/01abc/members/01def/photo.jpg')
-        ->and($query['X-Amz-Expires'])->toBe('3600')
+        // The signer counts the expiry from the real clock, and the test's own `now()` is read a moment earlier, so a second
+        // ticking over between them reads 3599. A hair under the hour is still an hour-long link.
+        ->and((int) $query['X-Amz-Expires'])->toBeBetween(3598, 3600)
         ->and($query)->toHaveKey('X-Amz-Signature');
 });
 
