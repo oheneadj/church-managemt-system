@@ -293,3 +293,4 @@ Everything is documented. When in doubt, read the relevant doc:
 - Security controls → `docs/15-security.md`
 - Integrations → `docs/14-integrations.md`
 - Definition of Done → `docs/10-definition-of-done.md`
+- Open work, waiting items and standing deviations from the agreement → `docs/19-open-items.md`

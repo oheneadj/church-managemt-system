@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### docs: write the open items down in one register (2026-11-06)
+- **What:** Added `docs/19-open-items.md`, the single list of what is decided but not built (staff email sign-in, the email sender, digital giving, cards, staff management, Sprint 5 endpoints, the SMS fallback, USSD), what waits on someone outside (the legal opinion, PayPerlez event names and fee schedule, Meta approval, the card split), what is still to decide (the fee rounding mode and the product questions), the gaps to close before launch, and the standing deviations from the Universal agreement. Linked from `CLAUDE.md`, `docs/12` and the README file list.
+- **Why:** The owner asked for the issues to be kept written down to come back to; several were only in conversation or scattered across decisions D-018, D-043, D-054 and the QA plans.
+- **Files:** docs/19-open-items.md, CLAUDE.md, docs/12-risks-and-open-questions.md, README.md, CHANGELOG.md
+- **Commit:** (added right after the commit)
+
 #### docs(qa): payout and platform fee test plan (QA-15) (2026-10-29)
 - **What:** Added QA-15 with 20 cases for the design in D-018, D-020 and D-053: the fee clamp (percentage, floor, cap, rounding, values from config), the GHS 1.00 minimum and GHS 30,000 maximum for digital gifts, a church with no verified payout account, the payout row and its amounts, the church bearing the payout fee, one payout per gift under repeated events, no payout before a gift completes, retries and permanent failure, the GHS 1.00 minimum operating balance, restart safety, daily reconciliation, no clawback after payout, call logging and tenant isolation. Indexed it in `qa/README.md`. One open point is marked in the plan: D-018 does not name a rounding mode, and the plan assumes half up until it is confirmed.
 - **Why:** `qa/README.md` listed these cases as still to be written, and the agreement requires 100% tests on financial code (section 20) and a database guarantee against duplicate payments (section 11); writing the cases first fixes what the code must do.

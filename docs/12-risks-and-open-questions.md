@@ -190,6 +190,8 @@ Each risk is rated on two axes:
 
 ## Open Questions
 
+> The work list that connects these questions to decisions and code is `19-open-items.md`.
+
 Items we need an answer to before the work they affect can begin. Sorted by sprint dependency.
 
 ---

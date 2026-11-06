@@ -175,6 +175,8 @@ docs/
 ├── 15-security.md              — Security controls & threat model
 ├── 16-deployment-and-ops.md    — Deployment & ops runbooks
 ├── 17-monitoring-and-alerting.md — Monitoring & on-call guide
+├── 18-incident-response.md     — Severity levels & incident process
+├── 19-open-items.md            — Decided-not-built work, waiting items, open questions
 ├── qa/                         — QA test plans & tracker
 └── reference/                  — Onboarding guide & post-mortems
 ```
