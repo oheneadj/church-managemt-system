@@ -8,6 +8,10 @@ export const servicesApi = {
             .get<Page<Service>>('/services', { params: { page: filters.page, ...(filters.type === '' ? {} : { type: filters.type }) } })
             .then((r) => r.data),
 
+    /** The services dated on one day (YYYY-MM-DD), for choosing which one a gift was given at. */
+    onDate: (date: string): Promise<Page<Service>> =>
+        api.get<Page<Service>>('/services', { params: { from: date, to: date } }).then((r) => r.data),
+
     get: (id: string): Promise<Service> => api.get<{ data: Service }>(`/services/${id}`).then((r) => r.data.data),
 
     create: (input: ServiceInput): Promise<Service> => api.post<{ data: Service }>('/services', input).then((r) => r.data.data),

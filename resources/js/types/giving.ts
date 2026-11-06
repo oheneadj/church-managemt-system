@@ -35,6 +35,19 @@ export interface Contribution {
     created_at: string | null;
 }
 
+/** What the record-a-gift form sends (docs/08, Record Cash Contribution). Empty optional fields are left out. */
+export interface ContributionInput {
+    member_id?: string;
+    service_id?: string;
+    fund_type_id: string;
+    /** An exact decimal in GHS, as the person typed it. */
+    amount: string;
+    payment_method: 'cash';
+    /** A moment in UTC. Left out for a gift given today, so the server uses the time it was entered. */
+    contributed_at?: string;
+    notes?: string;
+}
+
 /** The gift list's filters as they live in the address bar. Dates are YYYY-MM-DD; an empty text means "no filter". */
 export interface ContributionFilters {
     from: string;

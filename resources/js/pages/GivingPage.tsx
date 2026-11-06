@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { ContributionFilterBar } from '@/components/Giving/ContributionFilterBar';
 import { ContributionListItem } from '@/components/Giving/ContributionListItem';
+import { RecordGiftDialog } from '@/components/Giving/RecordGiftDialog';
 import { VoidContributionDialog } from '@/components/Giving/VoidContributionDialog';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -20,13 +22,15 @@ const LOADING_ROWS = 5;
 
 /**
  * The church's gifts, newest first, with filters by date, fund and how they were given. Staff who may correct giving can
- * void a gift. The filters and the page are in the address.
+ * void a gift, and staff who may record giving can add a cash gift. The filters and the page are in the address.
  */
 export function GivingPage() {
     const { filters, setFilter, setPage } = useContributionFilters();
     const [, setParams] = useSearchParams();
     const gifts = useContributions(filters);
     const canVoid = useCan(PERMISSIONS.GIVING_EDIT);
+    const canRecord = useCan(PERMISSIONS.GIVING_RECORD);
+    const [recording, setRecording] = useState(false);
     const [voiding, setVoiding] = useState<Contribution | undefined>(undefined);
 
     return (
@@ -34,6 +38,7 @@ export function GivingPage() {
             <PageHeader
                 title="Giving"
                 description={gifts.data ? `${gifts.data.meta.total} gifts found` : 'Every gift the church has recorded'}
+                actions={canRecord ? <Button onClick={() => setRecording(true)}>Record a gift</Button> : undefined}
             />
             <ContributionFilterBar filters={filters} onChange={setFilter} onClear={() => setParams({})} />
 
@@ -67,6 +72,7 @@ export function GivingPage() {
                 </>
             )}
 
+            <RecordGiftDialog open={recording} onOpenChange={setRecording} />
             <VoidContributionDialog gift={voiding} onClose={() => setVoiding(undefined)} />
         </div>
     );

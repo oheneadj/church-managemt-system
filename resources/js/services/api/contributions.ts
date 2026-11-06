@@ -1,5 +1,6 @@
+import { IDEMPOTENCY_HEADER } from '@/lib/idempotencyKey';
 import { api } from '@/services';
-import type { Contribution, ContributionFilters } from '@/types/giving';
+import type { Contribution, ContributionFilters, ContributionInput } from '@/types/giving';
 import type { Page } from '@/types/members';
 
 export const contributionsApi = {
@@ -16,6 +17,12 @@ export const contributionsApi = {
                 },
             })
             .then((r) => r.data),
+
+    /** Records a cash gift. The key makes a double click or a retry record one gift (docs/08, Idempotency). */
+    record: (input: ContributionInput, idempotencyKey: string): Promise<Contribution> =>
+        api
+            .post<{ data: Contribution }>('/contributions', input, { headers: { [IDEMPOTENCY_HEADER]: idempotencyKey } })
+            .then((r) => r.data.data),
 
     /** Voids a gift with the reason the person gave. The gift stays on record, marked. */
     void: (id: string, reason: string): Promise<Contribution> =>

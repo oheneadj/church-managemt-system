@@ -94,6 +94,35 @@ describe('GivingPage', () => {
         expect(screen.queryByRole('button', { name: 'Void' })).not.toBeInTheDocument();
     });
 
+    it('offers Record a gift to staff who may record giving, and opens the form', async () => {
+        const user = userEvent.setup();
+        open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_RECORD]);
+
+        await user.click(await screen.findByRole('button', { name: 'Record a gift' }));
+
+        expect(await screen.findByRole('dialog', { name: 'Record a cash gift' })).toBeInTheDocument();
+    });
+
+    it('gives the form its own Fund field, apart from the Fund filter behind it', async () => {
+        const user = userEvent.setup();
+        open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_RECORD]);
+
+        await user.click(await screen.findByRole('button', { name: 'Record a gift' }));
+        const dialog = await screen.findByRole('dialog', { name: 'Record a cash gift' });
+
+        // Two fields with the same id would tie the form's label to the filter's drop-down instead.
+        expect(within(dialog).getByRole('combobox', { name: /^Fund/ })).toBeInTheDocument();
+        const ids = [...document.querySelectorAll('[id]')].map((element) => element.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('hides Record a gift from staff who may not record giving', async () => {
+        open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_EDIT]);
+
+        await screen.findAllByRole('listitem');
+        expect(screen.queryByRole('button', { name: 'Record a gift' })).not.toBeInTheDocument();
+    });
+
     it('says plainly when there are no gifts', async () => {
         vi.mocked(contributionsApi.list).mockResolvedValue(pageOf([]));
         open();

@@ -12,6 +12,15 @@ export function useServices(filters: ServiceFilters) {
     });
 }
 
+/** The services dated on one day. An empty date (not typed yet, or not a real day) makes no request. */
+export function useServicesOnDate(date: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.services.onDate(date),
+        queryFn: () => servicesApi.onDate(date),
+        enabled: date !== '',
+    });
+}
+
 /** One service with its attendance count. */
 export function useService(id: string) {
     return useQuery({

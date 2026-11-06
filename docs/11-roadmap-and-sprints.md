@@ -122,7 +122,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 4.11 | Contribution void endpoint | Backend | 1 | |
 | 4.12 | Sunday offering report endpoint | Backend | 2 | |
 | 4.13 | Contribution list + filters page (React) | Frontend | 3 | Done: filters in the address, void with a reason (`giving.edit`), menu item for `giving.view` |
-| 4.14 | Record cash contribution form (React) | Frontend | 2 | Member search, fund type select |
+| 4.14 | Record cash contribution form (React) | Frontend | 2 | Done: a dialog on the Giving page (member search or anonymous, fund, amount, day, optional service, notes); D-057 |
 | 4.15 | Initiate MoMo payment flow (React) | Frontend | 3 | Paystack inline / redirect |
 | 4.16 | Sunday offering report page (React) — printable | Frontend | 2 | |
 | 4.17 | Pledge management page (React) | Frontend | 2 | |
@@ -240,7 +240,7 @@ Blocked: [anything blocking me / none]
 ## Current Sprint
 
 > **Sprint 4** — Giving & Contributions
-> Started: 2026-10-28 · Updated: 2026-10-28
+> Started: 2026-10-28 · Updated: 2026-11-06
 > Sprint 3 (Attendance) is complete. The order of work for Sprint 4 is in D-046: cash giving first, digital payments after the legal and provider questions in D-018 are closed.
 
 | Done | Stories |
@@ -250,8 +250,8 @@ Blocked: [anything blocking me / none]
 | | 4.9 pledges (make, list, read, change), 4.10 the paid amount and status that follow the gifts and voids (recalculated, D-047), the daily `pledges:refresh` job |
 | | 4.12 Sunday offering report (by fund and payment method, voided gifts left out; gifts with no service reported with the day's first service; fund names kept on the gift, D-048) |
 | | 4.7 receipts (the `ContributionReceived` event and a queued listener that texts the member), and SMS credits charged for church-paid texts (D-051) |
-| Frontend | 4.13 gift list with filters and void |
-| Next | The screens 4.14 to 4.18 |
+| Frontend | 4.13 gift list with filters and void, 4.14 record a cash gift (D-057) |
+| Next | The screens 4.16 offering report page, 4.17 pledges page, 4.18 SMS credit balance (4.15 waits with the digital payments) |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
 > **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).

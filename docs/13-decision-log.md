@@ -1031,6 +1031,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-057 — How the record-a-gift screen is built (Sprint 4, story 4.14)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04, docs/08, QA-06, the React addendum and D-017, D-036, D-049
+**Status:** Active
+
+**Decision:**
+1. **A dialog on the Giving page**, opened by a "Record a gift" button shown only to staff with `giving.record`. The form is its own component inside the dialog, so each opening starts blank with a new idempotency key and nothing is reset by hand.
+2. **Who gave** is chosen with a member search (`MemberPicker`, reusable for the pledge page); leaving it empty records an anonymous gift. The picker asks the server for nothing until something is typed. It sits above the form because a search box is itself a form and forms cannot nest.
+3. **Fund, amount, day, optional service, optional notes.** The amount is checked exactly in whole pesewas (`moneyToPesewas`, text to `bigint`), never as a floating-point number, against the cash maximum mirrored from `config/giving.php` (D-017). The browser does no money arithmetic.
+4. **The day** is typed day first (D-049) and may not be in the future. A gift dated today is sent with no time, so the server records the moment it was entered; an earlier day is sent at noon UTC so it stays the same day in the church's calendar (Ghana is on UTC).
+5. **The service drop-down** lists the services dated on the chosen day (`GET /services?from=&to=`); a service picked for another day, before the date was changed, is dropped rather than sent.
+6. **The same key is sent again** when the same attempt is repeated after a failure, so a double click or a retry records one gift (docs/08, Idempotency); the server's field messages are shown beside the fields.
+7. **Left out on purpose:** choosing a pledge to pay (it comes with the pledge page, story 4.17) and mobile money or card (the digital slice).
+
+**Rationale:** The simplest screen that does what the finance secretary does every Sunday, with the rules in the schema and the server as the judge. A real-browser run caught a duplicate field id with the gift filter that no component test could.
+
+**Revisit when:** the pledge page is built (add the pledge choice), or a church wants to record a whole service's cash in one go.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.
