@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\DTOs\Reports\MemberStatusChange;
 use App\Models\AuditLog;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -19,6 +21,14 @@ interface AuditLogRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function append(array $attributes): AuditLog;
+
+    /**
+     * The status history of the current church's members from the first moment to the last (both included): each time a member
+     * was added with a status or moved to another one, oldest first. Lines whose values were erased are left out.
+     *
+     * @return list<MemberStatusChange>
+     */
+    public function memberStatusChangesBetween(CarbonInterface $from, CarbonInterface $to): array;
 
     /**
      * Replaces the personal values in a record's history with a marker, keeping every line and the names of the fields. This is the one change ever made to history, required by the right to erasure.

@@ -2910,6 +2910,47 @@
                 }
             }
         },
+        "/v1/reports/members": {
+            "get": {
+                "operationId": "reports.members",
+                "summary": "Runs ShowMemberGrowthAction for this request and returns the MemberGrowthResource",
+                "tags": [
+                    "ShowMemberGrowth"
+                ],
+                "parameters": [
+                    {
+                        "name": "months",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 24
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MemberGrowthResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MemberGrowthResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}/offering-report": {
             "get": {
                 "operationId": "services.offering-report",
@@ -5339,6 +5380,69 @@
                     "role_label"
                 ],
                 "title": "MemberFamilyResource"
+            },
+            "MemberGrowthResource": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "month": {
+                                    "type": "string"
+                                },
+                                "month_start": {
+                                    "type": "string"
+                                },
+                                "new": {
+                                    "type": "integer"
+                                },
+                                "lost": {
+                                    "type": "integer"
+                                },
+                                "net": {
+                                    "type": "integer"
+                                },
+                                "active_total": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "month",
+                                "month_start",
+                                "new",
+                                "lost",
+                                "net",
+                                "active_total"
+                            ]
+                        }
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "new": {
+                                "type": "integer"
+                            },
+                            "lost": {
+                                "type": "integer"
+                            },
+                            "net": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "new",
+                            "lost",
+                            "net"
+                        ]
+                    }
+                },
+                "required": [
+                    "data",
+                    "summary"
+                ],
+                "title": "MemberGrowthResource"
             },
             "MemberMilestoneResource": {
                 "type": "object",

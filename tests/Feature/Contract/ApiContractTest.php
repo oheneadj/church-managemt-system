@@ -191,6 +191,13 @@ describe('reports', function (): void {
     });
 });
 
+describe('member growth', function (): void {
+    it('the member growth report', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/members'), 'GET', '/v1/reports/members', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/members?months=0'), 'GET', '/v1/reports/members', 422);
+    });
+});
+
 describe('giving trends', function (): void {
     it('the giving trend, with and without a fund', function (): void {
         $fund = FundType::factory()->create(['church_id' => $this->church->id]);

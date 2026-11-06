@@ -1129,6 +1129,21 @@ GET /api/v1/reports/members
 Authorization: Bearer {token}
 Permission: reports.view
 ```
+Church admin, pastor and finance secretary (`reports.view`, D-055 point 5). Counts only: no member is named.
+
+**Query params:** `?months=12`: how far back to look, 1 to 24 (default 12, `config/reports.php`), counting the current month.
+
+**Response `200`:** one row for each calendar month in the church's own time zone, newest first. A quiet month is a row of zeros, never left out.
+```json
+{
+  "data": [
+    { "month": "2026-10", "month_start": "2026-10-01", "new": 4, "lost": 1, "net": 3, "active_total": 212 },
+    { "month": "2026-09", "month_start": "2026-09-01", "new": 0, "lost": 0, "net": 0, "active_total": 209 }
+  ],
+  "summary": { "new": 14, "lost": 5, "net": 9 }
+}
+```
+What the numbers mean (D-063): **`new`** is the people who became *active* that month (added as active, a prospect confirmed as a member, or a member who came back); a prospect is not counted until they are confirmed. **`lost`** is the active members who left active membership that month (to inactive, transferred, deceased or archived, or back to prospect, so the figures add up). **`net`** is `new` minus `lost`. **`active_total`** is the number of active members at the end of the month: this month's is today's real count and each earlier month is worked back from the next. It is read from the member change history, so a member whose data was erased has no readable history and is not in the earlier months. `422` for `months` outside 1 to 24.
 
 ---
 

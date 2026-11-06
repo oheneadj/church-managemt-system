@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\DTOs\Reports\MemberStatusChange;
+use App\Enums\AuditEvent;
+use App\Enums\MemberStatus;
 use App\Models\AuditLog;
+use App\Models\Member;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +27,36 @@ class EloquentAuditLogRepository implements AuditLogRepositoryInterface
     public function append(array $attributes): AuditLog
     {
         return AuditLog::query()->create($attributes);
+    }
+
+    /**
+     * The status history of the current church's members from the first moment to the last, oldest first.
+     */
+    public function memberStatusChangesBetween(CarbonInterface $from, CarbonInterface $to): array
+    {
+        $lines = AuditLog::query()
+            ->where('auditable_type', (new Member)->getMorphClass())
+            ->whereIn('event', [AuditEvent::Created->value, AuditEvent::StatusChanged->value])
+            ->whereBetween('created_at', [$from, $to])
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get(['event', 'old_values', 'new_values', 'created_at']);
+
+        $changes = [];
+
+        foreach ($lines as $line) {
+            // An erased member's values are replaced by a marker, which is not a status, so the line is skipped.
+            $to = MemberStatus::tryFrom((string) ($line->new_values['status'] ?? ''));
+            $before = $line->old_values === null ? null : MemberStatus::tryFrom((string) ($line->old_values['status'] ?? ''));
+
+            if ($to === null || ($line->event === AuditEvent::StatusChanged && $before === null) || $line->created_at === null) {
+                continue;
+            }
+
+            $changes[] = new MemberStatusChange($before, $to, $line->created_at);
+        }
+
+        return $changes;
     }
 
     /**

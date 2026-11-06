@@ -20,6 +20,10 @@ return [
     'giving_months_default' => 12,
     'giving_months_max' => 24,
 
+    // Member growth is monthly too: how many months back by default, and the most.
+    'members_months_default' => 12,
+    'members_months_max' => 24,
+
     // How the attendance trend is grouped when the caller does not say (see App\Enums\ReportGrouping).
     'attendance_group_by_default' => 'week',
 

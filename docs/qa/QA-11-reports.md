@@ -68,11 +68,14 @@
 ### Member Growth Report
 
 ### TC-11-08 — Member growth — monthly view
-**Action:** `GET /api/v1/reports/members` (docs/08)
+**Action:** `GET /api/v1/reports/members?months=12` (docs/08, D-063)
 **Expected:**
-- Shows new members added per month
-- Shows members who became inactive/transferred per month
-- Net growth calculation: `new - lost`
+- 12 rows, newest first, one per calendar month in the church's time zone; a quiet month is zeros, not omitted
+- Each row: `{ "month": "2026-10", "month_start": "2026-10-01", "new": 4, "lost": 1, "net": 3, "active_total": 212 }`
+- `new` counts people who became active that month: added as active, a prospect confirmed, or a returning member (a prospect is not counted until confirmed)
+- `lost` counts active members who left active membership that month (inactive, transferred, deceased, archived, or back to prospect); a status change that leaves the member active counts as neither
+- `net = new - lost`; this month's `active_total` equals the active member count today, and each earlier month is worked back from the next
+- `summary` adds up `new`, `lost` and `net` over the months asked for; `months=0` and `months=25` are `422`
 
 ---
 

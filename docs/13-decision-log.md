@@ -1140,6 +1140,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 **Revisit when:** emails go to people other than staff (add bounce handling and preferences), volume justifies the Resend API driver, or a second language is needed.
 
+### D-063 — What the member growth report counts (story 5.7)
+**Date:** November 2026
+**Decided by:** Product Owner (what "new" and "lost" mean), Lead Engineer (the rest), from docs/02, docs/03 and QA-11
+**Status:** Active
+
+**Decision:**
+1. **"New" means became active.** *(Product Owner.)* A person is new in the month they became an active member: added as active, a prospect confirmed as a member (docs/03, stage 3), or a member who came back. A prospect is not counted until confirmed. The people who were only added to the list are not growth.
+2. **"Lost" means left active membership.** *(Product Owner: inactive, transferred, deceased, archived.)* The Lead Engineer also counts a move from active back to prospect, because the report shows the active total at each month's end and the figures must add up (new minus lost is then exactly the change in the active total). A status change that leaves the member active is neither.
+3. **Read from the member change history** (D-030, `audit_logs`), not from the member list, so it follows the same status rules. This month's active total is today's real count; earlier months are worked back from it. A member whose data was erased has no readable history (the values are masked) and is not in the earlier months.
+4. **Months** are calendar months in the church's own time zone, 1 to 24 (default 12). Anyone with `reports.view` (church admin, pastor, finance secretary) may read it; it is counts only (D-055 point 5).
+
+**Rationale:** "Net active member count over time" (docs/02) only makes sense if new and lost describe the same thing as the active count. Reading the history keeps one definition of "active" across the app.
+
+**Revisit when:** a church wants prospects or visitors in the same chart (add them as separate series), or members are moved in bulk (check the history still records each move).
+
+---
+
 ---
 
 ## Deferred Decisions
