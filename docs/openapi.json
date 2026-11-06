@@ -2496,6 +2496,54 @@
                 }
             }
         },
+        "/v1/reports/attendance": {
+            "get": {
+                "operationId": "reports.attendance",
+                "summary": "Runs ShowAttendanceTrendAction for this request and returns the AttendanceTrendResource",
+                "tags": [
+                    "ShowAttendanceTrend"
+                ],
+                "parameters": [
+                    {
+                        "name": "weeks",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 52
+                        }
+                    },
+                    {
+                        "name": "group_by",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ReportGrouping"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AttendanceTrendResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttendanceTrendResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/contributions/{contribution}": {
             "get": {
                 "operationId": "contributions.show",
@@ -3746,6 +3794,55 @@
                     "errors"
                 ],
                 "title": "AttendanceRecordedResource"
+            },
+            "AttendanceTrendResource": {
+                "type": "object",
+                "properties": {
+                    "group_by": {
+                        "type": "string",
+                        "enum": [
+                            "week",
+                            "service"
+                        ]
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
+                            }
+                        }
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "average": {
+                                "type": "integer"
+                            },
+                            "highest": {
+                                "type": "integer"
+                            },
+                            "lowest": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "average",
+                            "highest",
+                            "lowest"
+                        ]
+                    }
+                },
+                "required": [
+                    "group_by",
+                    "data",
+                    "summary"
+                ],
+                "title": "AttendanceTrendResource"
             },
             "CaptureVisitorRequest": {
                 "type": "object",
@@ -6515,6 +6612,15 @@
                     "password_confirmation"
                 ],
                 "title": "RegisterChurchRequest"
+            },
+            "ReportGrouping": {
+                "type": "string",
+                "description": "How the attendance trend report is grouped: one row for each week, or one row for each service.\n",
+                "enum": [
+                    "week",
+                    "service"
+                ],
+                "title": "ReportGrouping"
             },
             "RequestChurchOtpRequest": {
                 "type": "object",

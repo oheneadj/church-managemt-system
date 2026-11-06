@@ -1057,23 +1057,35 @@ GET /api/v1/reports/attendance
 Authorization: Bearer {token}
 Permission: reports.view
 ```
+Church admin, pastor and finance secretary (`reports.view`). It is worked out when asked, so it is always current.
 
-**Query params:** `?weeks=12` (default 12)
+**Query params:** `?weeks=12&group_by=week`. `weeks` is how far back to look, 1 to 52 (default 12, `config/reports.php`), counting the current week. `group_by` is `week` (default) or `service`.
 
-**Response:**
+**Response, `group_by=week`:** one row for each ISO week (Monday to Sunday, in the church's own time zone), newest first. A week with no service is a row with `total: 0`, never left out.
 ```json
 {
+  "group_by": "week",
   "data": [
-    { "service_date": "2026-10-19", "service_name": "Sunday Morning Service", "total": 118 },
-    { "service_date": "2026-10-12", "service_name": "Sunday Morning Service", "total": 124 }
+    { "week": "2026-W43", "week_start": "2026-10-19", "total": 0, "first_timers": 0, "services": 0 },
+    { "week": "2026-W42", "week_start": "2026-10-12", "total": 124, "first_timers": 3, "services": 2 }
   ],
-  "summary": {
-    "average": 121,
-    "highest": 156,
-    "lowest": 98
-  }
+  "summary": { "average": 121, "highest": 156, "lowest": 98 }
 }
 ```
+`total` adds up every service of the week; `first_timers` is the visitors whose first visit date is in the week; `services` is how many services were counted.
+
+**Response, `group_by=service`:** one row for each service in the same weeks, newest first.
+```json
+{
+  "group_by": "service",
+  "data": [
+    { "service_id": "ulid", "service_date": "2026-10-18", "service_name": "Sunday Morning Service", "total": 118 }
+  ],
+  "summary": { "average": 121, "highest": 156, "lowest": 98 }
+}
+```
+
+**What counts.** A service's total is its paper headcount (`headcount_override`) if it has one, otherwise everyone checked in, members and visitors together (a removed check-in is not counted). A service counts only once something is recorded for it, and only up to today, so a service nobody recorded and one still to come are left out. The summary (whole numbers, the average rounded) covers only the weeks (or services) in which something was recorded, so empty weeks do not pull it down; with none it is all 0. `422` for `weeks` outside 1 to 52 or an unknown `group_by`.
 
 ---
 

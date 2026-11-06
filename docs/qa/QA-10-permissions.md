@@ -88,7 +88,7 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 
 | Endpoint | CA | P | FS | DH | YP |
 |---|---|---|---|---|---|
-| GET /reports/attendance (`reports.view`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+| GET /reports/attendance (`reports.view`, *built*) | ✅ | ✅ | ✅ | ❌ | ❌ |
 | GET /reports/members (`reports.view`, D-055) | ✅ | ✅ | ✅ | ❌ | ❌ |
 | POST /exports/members (`members.export`, D-055) | ✅ | ❌ | ✅ | ❌ | ❌ |
 | POST /exports/contributions (`giving.export`) | ✅ | ❌ | ✅ | ❌ | ❌ |

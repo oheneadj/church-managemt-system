@@ -53,6 +53,14 @@ interface ServiceRepositoryInterface
     public function checkinCodeExists(string $code): bool;
 
     /**
+     * The services held from the first date to the last (both included), newest first, each with its count of check-ins in
+     * `attendance_records_count`. A service counts as held when something was recorded for it: a check-in, or a paper headcount.
+     *
+     * @return Collection<int, Service>
+     */
+    public function heldBetween(CarbonInterface $from, CarbonInterface $to): Collection;
+
+    /**
      * The church's first service on this calendar date: the earliest start time, services with no start time last, then
      * the lowest id. Gifts with no service are reported with it (D-048).
      */

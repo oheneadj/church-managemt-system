@@ -13,6 +13,13 @@ use Carbon\CarbonInterface;
 interface VisitorRecordRepositoryInterface
 {
     /**
+     * The first-visit dates (YYYY-MM-DD), one for each visitor who first came from the first date to the last (both included).
+     *
+     * @return list<string>
+     */
+    public function firstVisitDatesBetween(CarbonInterface $from, CarbonInterface $to): array;
+
+    /**
      * The visitor of this church with this phone number, if one was recorded before.
      */
     public function findByPhone(string $e164): ?VisitorRecord;

@@ -20,12 +20,16 @@
 ### Attendance Trends Report
 
 ### TC-11-01 — Attendance trend — 12-week view
-**Action:** `GET /api/v1/reports/attendance?weeks=12` (docs/08: `weeks`, default 12)
+**Action:** `GET /api/v1/reports/attendance?weeks=12` (docs/08: `weeks`, default 12, `group_by=week` by default)
 **Expected:**
-- Returns 12 data points (one per week)
-- Each point: `{ "week": "2026-W42", "total": 87, "first_timers": 3 }` (`first_timers` counts `visitor_records` whose first visit is that week's services)
+- Returns 12 rows, newest first, one per ISO week (Monday to Sunday, in the church's time zone)
+- Each row: `{ "week": "2026-W42", "week_start": "2026-10-12", "total": 87, "first_timers": 3, "services": 1 }` (`first_timers` counts visitors whose first visit date is in that week)
 - Weeks with no service: `"total": 0` (not omitted)
-- Average attendance shown in summary
+- `summary` has `average` (rounded), `highest` and `lowest` over the weeks in which a service was recorded
+
+### TC-11-01a — Attendance trend by service
+**Action:** `GET /api/v1/reports/attendance?group_by=service&weeks=12`
+**Expected:** one row per recorded service in those weeks, newest first: `{ "service_id", "service_date", "service_name", "total" }`; a paper headcount replaces the digital count; services nobody recorded and services still to come are not listed; `weeks=0`, `weeks=53` and an unknown `group_by` are `422`
 
 ### TC-11-02 — Attendance trend accuracy
 **Action:** For a specific Sunday with 45 check-ins, verify the report shows 45

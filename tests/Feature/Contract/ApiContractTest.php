@@ -183,6 +183,14 @@ describe('fund types', function (): void {
     });
 });
 
+describe('reports', function (): void {
+    it('the attendance trend, by week and by service', function (): void {
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/attendance'), 'GET', '/v1/reports/attendance', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/attendance?group_by=service&weeks=4'), 'GET', '/v1/reports/attendance', 200);
+        assertMatchesSpec($this->getJson(CHURCH_HOST.'/reports/attendance?weeks=0'), 'GET', '/v1/reports/attendance', 422);
+    });
+});
+
 describe('messages', function (): void {
     it('the message log', function (): void {
         MessageLog::factory()->create(['church_id' => $this->church->id, 'message_type' => 'receipt']);

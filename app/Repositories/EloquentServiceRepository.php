@@ -84,6 +84,21 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     }
 
     /**
+     * The services held from the first date to the last, newest first, each with its count of check-ins.
+     */
+    public function heldBetween(CarbonInterface $from, CarbonInterface $to): Collection
+    {
+        return Service::query()
+            ->whereBetween('service_date', [$from->toDateString(), $to->toDateString()])
+            ->where(fn (Builder $query) => $query->whereHas('attendanceRecords')->orWhereNotNull('headcount_override'))
+            ->withCount('attendanceRecords')
+            ->orderByDesc('service_date')
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
      * The church's first service on this calendar date: the earliest start time, services with no start time last, then the lowest id.
      */
     public function firstOnDate(CarbonInterface $date): ?Service
