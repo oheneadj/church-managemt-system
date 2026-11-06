@@ -60,7 +60,6 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 | D6 | `npm audit`: 12 moderate and low findings in dev tools (`@typescript-eslint`, the `shadcn` CLI); below the CI gate of high | CHANGELOG, 6 November |
 | D7 | Anonymising visitor records on erasure (a visitor with a name and phone is personal data) | D-039 point 6 |
 | D8 | Payout, fee and reconciliation tests are written (QA-15) but have no code behind them | QA-15 |
-| D9 | **Every screen scrolls sideways at 375px** (page 416px wide): a sidebar link in the app shell runs past the right edge. The Definition of Done requires 375px to work. Found 6 November while testing story 4.14 | docs/10, `AppLayout` |
 | D10 | The local `public/hot` file points at port 5175 where nothing runs, so a developer who opens the site without `npm run dev` gets a blank page and no hint why | found 6 November |
 
 ---
@@ -84,4 +83,5 @@ Move finished items here with the commit hash.
 
 | Item | Closed by |
 |---|---|
+| D9: every screen scrolled sideways at 375px (the menu links did not wrap) | The menu wraps; `e2e/mobile-layout.spec.ts` checks five pages in real Chrome, 6 November 2026 |
 | Seven consistency issues (frontend framework, IDs and money, providers, data model vs API vs QA, authentication, permissions, smaller items) | Commits `4ec5191` to `d98e0fb` on 6 November 2026 |

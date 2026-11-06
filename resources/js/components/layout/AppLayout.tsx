@@ -36,7 +36,7 @@ function NavItem({ label, to, permission }: { label: string; to: string; permiss
 
 /**
  * The signed-in shell: a sidebar for navigation and a header with the church and the sign-out button.
- * It collapses to a top bar on small screens, because most staff use phones. Neither is printed, so a printed
+ * It collapses to a top bar on small screens (the links wrap onto a second line instead of running past the edge), because most staff use phones. Neither is printed, so a printed
  * report is the report alone.
  */
 export function AppLayout() {
@@ -48,7 +48,7 @@ export function AppLayout() {
         <div className="flex min-h-svh flex-col md:flex-row">
             <aside className="border-b bg-sidebar print:hidden text-sidebar-foreground md:w-60 md:border-r md:border-b-0">
                 <div className="px-4 py-4 font-semibold">{churchName}</div>
-                <nav aria-label="Main" className="flex gap-1 px-2 pb-2 md:flex-col">
+                <nav aria-label="Main" className="flex flex-wrap gap-1 px-2 pb-2 md:flex-col">
                     {NAV_ITEMS.map((item) => (
                         <NavItem key={item.to} {...item} />
                     ))}
