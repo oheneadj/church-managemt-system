@@ -15,7 +15,7 @@ return [
         'intro' => [
             'sign_in' => 'Use this code to finish signing in to :church.',
             'password_reset' => 'Use this code to choose a new password for :church.',
-            'staff_invitation' => 'You have been invited to help run :church. Use this code to choose a password and sign in.',
+            'staff_invitation' => 'You have been invited to help run :church. Use this code to choose a password and sign in: on the sign-in page, choose “Have an invitation code?”.',
         ],
         'valid_for' => 'The code works once and expires in :minutes minutes.',
         'ignore' => 'If you did not ask for this code, you can ignore this email. Nobody can sign in without it.',

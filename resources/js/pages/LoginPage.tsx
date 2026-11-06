@@ -117,6 +117,9 @@ export function LoginPage() {
                     <Button asChild variant="link">
                         <Link to={ROUTES.FORGOT_PASSWORD}>Forgot your password?</Link>
                     </Button>
+                    <Button asChild variant="link">
+                        <Link to={ROUTES.CHOOSE_PASSWORD}>Have an invitation code?</Link>
+                    </Button>
                 </form>
             ) : (
                 <form onSubmit={checkCode} noValidate className="flex flex-col gap-4">

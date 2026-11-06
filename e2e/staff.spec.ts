@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { CHURCH_URL } from './helpers/config';
+import { emailedCodeFor } from './helpers/signInCode';
 
 test.describe('staff', () => {
     test('the church admin invites someone, changes their role, switches them off and on again', async ({ page }) => {
@@ -61,5 +62,48 @@ test.describe('staff', () => {
 
         await expect(invite.getByText('A staff member with this email already exists.')).toBeVisible();
         await expect(invite).toBeVisible();
+    });
+
+    test('an invited person chooses their password with the emailed code, then signs in', async ({ page, browser }) => {
+        const stamp = Date.now().toString(36);
+        const email = `chooser-${stamp}@example.com`;
+        const password = 'an invited e2e passphrase';
+
+        // The church admin invites them.
+        const sent = new Date();
+        await page.goto(`${CHURCH_URL}/staff`);
+        await page.getByRole('button', { name: 'Invite staff' }).click();
+        const invite = page.getByRole('dialog');
+        await invite.getByLabel(/^Name/).fill(`Aab Chooser ${stamp}`);
+        await invite.getByLabel(/^Email/).fill(email);
+        await invite.getByLabel(/^Phone/).fill(`0205${String(Date.now()).slice(-6)}`);
+        await invite.getByLabel(/^Role/).selectOption('pastor');
+        await invite.getByRole('button', { name: 'Send invitation' }).click();
+        await expect(page.getByRole('dialog')).toHaveCount(0);
+
+        // The invited person, signed out, uses the code from the email to choose a password.
+        const guest = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+        const visitor = await guest.newPage();
+        await visitor.goto(`${CHURCH_URL}/login`);
+        await visitor.getByRole('link', { name: 'Have an invitation code?' }).click();
+        await expect(visitor.getByRole('heading', { level: 1, name: 'Choose your password' })).toBeVisible();
+        await visitor.getByLabel(/^Email address/).fill(email);
+        await visitor.getByLabel(/^Code/).fill(await emailedCodeFor(email, sent));
+        await visitor.getByLabel(/^New password/).fill(password);
+        await visitor.getByLabel(/Type the new password again/).fill(password);
+        await visitor.getByRole('button', { name: 'Save password' }).click();
+        await expect(visitor.getByRole('heading', { name: 'Password saved' })).toBeVisible();
+
+        // They can now sign in the normal way.
+        await visitor.getByRole('link', { name: 'Go to sign in' }).click();
+        await visitor.getByLabel(/Email address/).fill(email);
+        await visitor.getByLabel(/Password/).fill(password);
+        const asked = new Date();
+        await visitor.getByRole('button', { name: 'Continue' }).click();
+        await visitor.getByLabel(/Code/).fill(await emailedCodeFor(email, asked));
+        await visitor.getByRole('button', { name: 'Sign in' }).click();
+        await expect(visitor).toHaveURL(/\/dashboard$/);
+
+        await guest.close();
     });
 });

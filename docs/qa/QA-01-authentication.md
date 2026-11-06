@@ -86,7 +86,7 @@
 - A password shorter than 12 characters, longer than 72 bytes, equal to the email, or not matching the confirmation is `422` on `password` and does **not** use the code up
 - A wrong code is `422 "Invalid code"`; five wrong codes lock it for 15 minutes (`429`)
 - Within a few minutes, if the password is in the known-breach list, an email tells the person to choose another (the check never delays or blocks the request); if the list is unreachable nothing happens to the account
-- The same flow sets the first password of a staff member who has none
+- The same flow sets the first password of a staff member who has none, including a person invited by the church admin (D-055): the invitation code in their email works in `auth/password/reset`, and the web app's `/choose-password` page ("Have an invitation code?" on the sign-in page) takes the email, the code and the new password
 
 ### TC-01-13 — Authenticated endpoint without token
 **Action:** `GET /members` with no `Authorization` header

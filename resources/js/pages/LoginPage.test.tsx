@@ -25,6 +25,7 @@ function renderLogin() {
         [
             { path: ROUTES.LOGIN, element: <LoginPage /> },
             { path: ROUTES.FORGOT_PASSWORD, element: <p>Forgot page reached</p> },
+            { path: ROUTES.CHOOSE_PASSWORD, element: <p>Choose page reached</p> },
             { path: ROUTES.DASHBOARD, element: <p>Dashboard reached</p> },
         ],
         { initialEntries: [ROUTES.LOGIN] },
@@ -160,6 +161,15 @@ describe('LoginPage', () => {
         await user.click(screen.getByRole('link', { name: 'Forgot your password?' }));
 
         expect(await screen.findByText('Forgot page reached')).toBeInTheDocument();
+    });
+
+    it('links to choosing a password with an invitation code', async () => {
+        const user = userEvent.setup();
+        renderLogin();
+
+        await user.click(screen.getByRole('link', { name: 'Have an invitation code?' }));
+
+        expect(await screen.findByText('Choose page reached')).toBeInTheDocument();
     });
 
     it('skips the form when already signed in', () => {

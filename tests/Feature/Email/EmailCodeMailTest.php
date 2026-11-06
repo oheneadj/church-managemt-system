@@ -31,6 +31,13 @@ it('has a subject that names the church and what the code is for', function (Ema
     'invitation' => [EmailCodePurpose::StaffInvitation, 'Your invitation code for Grace Assembly'],
 ]);
 
+it('tells an invited person where to use the code, without a link', function (): void {
+    $mail = codeMail(EmailCodePurpose::StaffInvitation);
+
+    $mail->assertSeeInText('Have an invitation code?');
+    $mail->assertDontSeeInHtml('/choose-password');
+});
+
 it('tells the reader what to do if they did not ask for it, and has no button or sign-in link to click', function (): void {
     $mail = codeMail();
 
