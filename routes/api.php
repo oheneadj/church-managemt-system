@@ -58,6 +58,8 @@ use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\ListServiceSchedulesController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\StoreServiceScheduleController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\UpdateServiceScheduleController;
+use App\Http\Controllers\Api\V1\Staff\ChangeStaffPermissionsController;
+use App\Http\Controllers\Api\V1\Staff\ChangeStaffStatusController;
 use App\Http\Controllers\Api\V1\Staff\InviteStaffController;
 use App\Http\Controllers\Api\V1\Staff\ListStaffController;
 use App\Http\Controllers\Api\V1\Staff\UpdateStaffController;
@@ -145,6 +147,8 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('staff', ListStaffController::class)->name('staff.index');
         Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');
         Route::put('staff/{staff}', UpdateStaffController::class)->name('staff.update');
+        Route::patch('staff/{staff}/status', ChangeStaffStatusController::class)->name('staff.status');
+        Route::put('staff/{staff}/permissions', ChangeStaffPermissionsController::class)->name('staff.permissions');
 
         Route::get('fund-types', ListFundTypesController::class)->name('fund-types.index');
         Route::post('fund-types', StoreFundTypeController::class)->name('fund-types.store');

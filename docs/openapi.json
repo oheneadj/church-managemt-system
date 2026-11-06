@@ -357,6 +357,129 @@
                 }
             }
         },
+        "/v1/staff/{staff}/permissions": {
+            "put": {
+                "operationId": "staff.permissions",
+                "summary": "Runs ChangeStaffPermissionsAction for this request and returns the StaffResource",
+                "tags": [
+                    "ChangeStaffPermissions"
+                ],
+                "parameters": [
+                    {
+                        "name": "staff",
+                        "in": "path",
+                        "required": true,
+                        "description": "The staff ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangeStaffPermissionsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StaffResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/staff/{staff}/status": {
+            "patch": {
+                "operationId": "staff.status",
+                "summary": "Runs ChangeStaffStatusAction for this request and returns the StaffResource",
+                "tags": [
+                    "ChangeStaffStatus"
+                ],
+                "parameters": [
+                    {
+                        "name": "staff",
+                        "in": "path",
+                        "required": true,
+                        "description": "The staff ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangeStaffStatusRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StaffResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/members/{member}/erasure": {
             "post": {
                 "operationId": "members.erase",
@@ -3572,6 +3695,40 @@
                 ],
                 "title": "CaptureVisitorRequest"
             },
+            "ChangeStaffPermissionsRequest": {
+                "type": "object",
+                "description": "Validates granting and removing single permissions on top of a staff member's role. At least one list is needed, a\npermission cannot be in both, and a permission the role itself gives cannot be removed here: change the role instead.",
+                "properties": {
+                    "grant": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StaffPermission"
+                        },
+                        "uniqueItems": true
+                    },
+                    "revoke": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StaffPermission"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "title": "ChangeStaffPermissionsRequest"
+            },
+            "ChangeStaffStatusRequest": {
+                "type": "object",
+                "description": "Validates switching a staff member on or off.",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_active"
+                ],
+                "title": "ChangeStaffStatusRequest"
+            },
             "ChurchRegisteredResource": {
                 "type": "object",
                 "properties": {
@@ -6469,6 +6626,31 @@
                     "$ref": "#/components/schemas/StaffResource"
                 },
                 "title": "StaffCollection"
+            },
+            "StaffPermission": {
+                "type": "string",
+                "description": "Every permission a staff role can carry. The value is the permission name stored by Spatie Permission.\n",
+                "enum": [
+                    "members.view",
+                    "members.edit",
+                    "members.deactivate",
+                    "members.export",
+                    "members.data-export",
+                    "members.erase",
+                    "milestones.view",
+                    "giving.summary",
+                    "giving.view",
+                    "giving.record",
+                    "giving.edit",
+                    "giving.export",
+                    "sms.send",
+                    "reports.view",
+                    "reports.export",
+                    "church.settings",
+                    "staff.manage",
+                    "fund-types.manage"
+                ],
+                "title": "StaffPermission"
             },
             "StaffResource": {
                 "type": "object",

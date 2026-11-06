@@ -66,6 +66,34 @@ interface UserRepositoryInterface
     public function changeRole(User $user, StaffRole $role): User;
 
     /**
+     * Switches a staff member on or off and returns them. Switching off ends their tokens (UserObserver).
+     */
+    public function setActive(User $user, bool $isActive): User;
+
+    /**
+     * The names of the permissions the staff member was given directly, on top of their role, sorted.
+     *
+     * @return list<string>
+     */
+    public function extraPermissions(User $user): array;
+
+    /**
+     * The names of the permissions the staff member's role gives them, sorted.
+     *
+     * @return list<string>
+     */
+    public function rolePermissions(User $user): array;
+
+    /**
+     * Gives the staff member these permissions directly and removes these ones, and returns them with their roles and
+     * permissions loaded. A permission to remove must be one that was given directly.
+     *
+     * @param  list<string>  $grant
+     * @param  list<string>  $revoke
+     */
+    public function changeExtraPermissions(User $user, array $grant, array $revoke): User;
+
+    /**
      * The ids of the current church's active staff who hold this role, locked until the transaction ends, so two changes
      * made at the same moment cannot both remove the last one.
      *

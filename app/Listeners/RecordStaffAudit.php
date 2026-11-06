@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Enums\AuditEvent;
 use App\Events\StaffInvited;
+use App\Events\StaffStatusChanged;
 use App\Events\StaffUpdated;
 use App\Services\AuditLogger;
 
@@ -34,7 +35,15 @@ class RecordStaffAudit
     }
 
     /**
-     * Records which of name, phone and role changed, with their old and new values.
+     * Records that a staff member was deactivated or reactivated.
+     */
+    public function handleStatusChanged(StaffStatusChanged $event): void
+    {
+        $this->audit->record($event->staff, AuditEvent::StatusChanged, $event->actor, ['is_active' => $event->wasActive], ['is_active' => $event->staff->is_active]);
+    }
+
+    /**
+     * Records which of name, phone, role and extra permissions changed, with their old and new values.
      */
     public function handleUpdated(StaffUpdated $event): void
     {

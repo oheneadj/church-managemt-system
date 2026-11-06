@@ -193,6 +193,15 @@ describe('staff', function (): void {
         assertMatchesSpec($this->putJson(CHURCH_HOST.'/staff/'.$invited->json('data.id'), ['name' => 'Akosua Owusu']), 'PUT', '/v1/staff/{staff}', 200);
     });
 
+    it('deactivate and change permissions', function (): void {
+        $staff = User::factory()->for($this->church)->create();
+        $staff->assignRole('pastor');
+
+        assertMatchesSpec($this->patchJson(CHURCH_HOST.'/staff/'.$staff->id.'/status', ['is_active' => false]), 'PATCH', '/v1/staff/{staff}/status', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/staff/'.$staff->id.'/permissions', ['grant' => ['members.export']]), 'PUT', '/v1/staff/{staff}/permissions', 200);
+        assertMatchesSpec($this->putJson(CHURCH_HOST.'/staff/'.$staff->id.'/permissions', []), 'PUT', '/v1/staff/{staff}/permissions', 422);
+    });
+
     it('a validation error follows the documented 422 shape', function (): void {
         assertMatchesSpec($this->postJson(CHURCH_HOST.'/staff', [], ['Idempotency-Key' => 'contract-staff-2']), 'POST', '/v1/staff', 422);
     });

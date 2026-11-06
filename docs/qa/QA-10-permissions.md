@@ -100,7 +100,7 @@ Milestones appear on `GET /members/{id}` only for CA, P and YP (`milestones.view
 | GET /church/settings | ✅ | ✅ | ✅ | ✅ | ✅ |
 | PUT /church/settings (`church.settings`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | GET /staff, POST /staff, PUT /staff/{id} (`staff.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| PATCH /staff/{id}/status, PUT /staff/{id}/permissions (`staff.manage`, *not built*) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| PATCH /staff/{id}/status, PUT /staff/{id}/permissions (`staff.manage`) | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -131,14 +131,17 @@ Each cell in the matrix above is one test case. For each cell:
 **Action:** Log in as a Pastor. Open a member and change their status.
 **Expected:** only Prospect and Active are offered; Inactive, Transferred, Deceased and Archived are not.
 
-### TC-10-N+2 — Role and permission changes by the church admin (the role change is built; permissions and deactivation are *not built*)
+### TC-10-N+2 — Role and permission changes by the church admin
 **Action:** Church admin changes a user's role from `finance-secretary` to `pastor` (`PUT /staff/{id}`)
 **Expected:**
 - The user's next request already uses the new permissions (permissions are read on every request; no token re-issue)
 - The giving permissions are gone and `GET /contributions` is `403`
 
-**Action:** Church admin grants `members.export` to a department head, then removes it
-**Expected:** `POST /exports/members` is `202` while granted and `403` after.
+**Action:** Church admin grants `members.export` to a department head (`PUT /staff/{id}/permissions`), then removes it
+**Expected:** `POST /exports/members` is `202` while granted and `403` after (the export endpoint is *not built*; until then `GET /staff` shows the extra permission and `can('members.export')` follows it).
+
+**Action:** Church admin tries to remove `sms.send` from a pastor
+**Expected:** `422` on `revoke.0`: the role gives that permission; change the role instead.
 
 **Action:** Church admin deactivates, or removes the church admin role from, the only active church admin
 **Expected:** `409`; nothing changes.

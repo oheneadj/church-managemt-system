@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Scopes\ChurchScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Spatie\Permission\Contracts\Permission;
 
 /**
  * Eloquent implementation of the staff user queries.
@@ -104,6 +106,48 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 
     /**
+     * Switches a staff member on or off and returns them.
+     */
+    public function setActive(User $user, bool $isActive): User
+    {
+        $user->update(['is_active' => $isActive]);
+
+        return $user;
+    }
+
+    /**
+     * The names of the permissions the staff member was given directly, sorted.
+     */
+    public function extraPermissions(User $user): array
+    {
+        return $this->sortedNames($user->getDirectPermissions());
+    }
+
+    /**
+     * The names of the permissions the staff member's role gives them, sorted.
+     */
+    public function rolePermissions(User $user): array
+    {
+        return $this->sortedNames($user->getPermissionsViaRoles());
+    }
+
+    /**
+     * Gives these permissions directly and removes these ones.
+     */
+    public function changeExtraPermissions(User $user, array $grant, array $revoke): User
+    {
+        if ($grant !== []) {
+            $user->givePermissionTo($grant);
+        }
+
+        if ($revoke !== []) {
+            $user->revokePermissionTo($revoke);
+        }
+
+        return $user->load(['roles', 'permissions']);
+    }
+
+    /**
      * The ids of the current church's active staff who hold this role, locked until the transaction ends.
      */
     public function lockActiveWithRole(StaffRole $role): array
@@ -121,5 +165,16 @@ class EloquentUserRepository implements UserRepositoryInterface
     public function create(array $attributes): User
     {
         return User::query()->create($attributes);
+    }
+
+    /**
+     * The permission names of a collection of permissions, sorted, so two lists can be compared.
+     *
+     * @param  Collection<int, Permission>  $permissions
+     * @return list<string>
+     */
+    private function sortedNames(Collection $permissions): array
+    {
+        return array_values($permissions->map(fn (Permission $permission): string => (string) $permission->name)->sort()->all());
     }
 }
