@@ -20,6 +20,10 @@ export const router = createBrowserRouter([
                 lazy: async () => ({ Component: (await import('@/pages/LoginPage')).LoginPage }),
             },
             {
+                path: ROUTES.FORGOT_PASSWORD,
+                lazy: async () => ({ Component: (await import('@/pages/ForgotPasswordPage')).ForgotPasswordPage }),
+            },
+            {
                 path: ROUTE_PATTERNS.CHECKIN,
                 lazy: async () => ({ Component: (await import('@/pages/QrCheckInPage')).QrCheckInPage }),
             },

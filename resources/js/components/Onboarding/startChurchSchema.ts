@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { OTP_LENGTH, PREFIX_MAX_LENGTH, PREFIX_MIN_LENGTH, SLUG_MAX_LENGTH, SLUG_MIN_LENGTH, SLUG_PATTERN } from '@/constants/onboarding';
-import { PASSWORD_MAX_BYTES, PASSWORD_MIN_LENGTH } from '@/constants/password';
 import { PHONE_INPUT_PATTERN } from '@/constants/validation';
+import { newPasswordField } from '@/lib/newPasswordField';
 import type { StartChurchInput } from '@/types/onboarding';
 
 /**
@@ -31,10 +31,7 @@ export const startChurchSchema = z
         admin_name: z.string().trim().min(1, 'Enter your name').max(255),
         admin_phone: z.string().trim().regex(PHONE_INPUT_PATTERN, 'Enter a valid phone number'),
         admin_email: z.string().trim().toLowerCase().max(255).pipe(z.email('Enter a valid email address')),
-        password: z
-            .string()
-            .min(PASSWORD_MIN_LENGTH, `Use at least ${PASSWORD_MIN_LENGTH} characters`)
-            .refine((password) => new TextEncoder().encode(password).length <= PASSWORD_MAX_BYTES, { error: 'That password is too long' }),
+        password: newPasswordField,
         password_confirmation: z.string(),
         otp: z
             .string()

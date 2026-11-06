@@ -178,7 +178,7 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. **Still to come:** the React sign-in screen. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
+> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. The React sign-in and forgot-password screens and the sign-up form use them. **Still to come:** removing the old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run for now and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
 ### Sign in, step 1: password
 ```

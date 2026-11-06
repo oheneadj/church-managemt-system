@@ -10,7 +10,7 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 
 | # | Item | Decision | What is needed | Blocked by |
 |---|---|---|---|---|
-| A1 | **Staff sign in with email, password and an emailed code** | D-054 | Migration (`users.password`, required unique `email`, `email_verified_at`); `auth/login`, `auth/login/verify`, `auth/password/forgot` and `reset` endpoints and limiters; React login screen (email, password, code); onboarding form takes email and password; rewrite QA-01 and QA-12 for staff | Nothing: the email sender is built (D-062) |
+| A1 | **Staff sign in with email, password and an emailed code** | D-054 | **Built:** migration, the four auth endpoints and limiters, the sign-up fields, the React sign-in and forgot-password screens, the demo admin's email and password (`config/demo.php`), e2e sign-in. **Left:** remove the old `auth/otp/request` and `auth/otp/verify` staff endpoints and tests; rewrite QA-01 and QA-12 for staff; a migration making `users.email` NOT NULL | Nothing: the email sender is built (D-062) |
 | A3 | **Digital giving: MoMo through PayPerlez with automatic payout** | D-018, D-020, D-053 | Migration for `contributions.status`; `POST /contributions/initiate`; `PaymentProvider` and `DisbursementProvider` drivers; webhook and polling fallback; `disbursements` flow, platform fee, GHS 1 minimum balance; every existing sum, list, pledge recalculation, report and receipt filters on `completed`; church payout setup and account-name check (story 4.1); rewrite QA-06 TC-06-06 to 10, QA-14 E2E-09; run QA-15 | B1, B2, B3 |
 | A4 | **Card giving through Paystack** | D-020 | Card driver, subaccount, webhook, `charge.success` completing the pending row; rewrite QA-07 | B5, and A3 first |
 | A5 | **Staff management** | D-055 | `staff.manage` endpoints (list, invite, change role, deactivate, per-person permissions), the last-admin rule, QA-10 rows | A1 |
@@ -75,7 +75,7 @@ Accepted by the Product Owner and recorded, so they are not mistaken for oversig
 | Section 5: integer primary key plus an external ULID | ULID `CHAR(26)` as the only key | D-016 |
 | Section 12: money as integers in the smallest unit | `DECIMAL(12,2)` in GHS, decimal strings in the API, a `Money` value object for display | D-017, D-034 |
 | Section 36: consent must not be pre-ticked | New members are texted by default, recorded with time and policy version; WhatsApp is off by default | D-041 |
-| Section 16: staff sign in with email and password | Now followed (D-054), but not yet built, so today's code still signs staff in with phone and SMS code | D-054 |
+| Section 16: staff sign in with email and password | Now followed (D-054). The old phone and SMS staff endpoints still exist until they are removed (A1) | D-054 |
 
 ---
 

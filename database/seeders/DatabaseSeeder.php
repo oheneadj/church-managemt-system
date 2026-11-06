@@ -33,6 +33,12 @@ class DatabaseSeeder extends Seeder
             ['church_id' => $church->id, 'phone' => '+233200000000'],
             ['name' => 'Demo Admin'],
         );
+        // Signs in with an email and password like every staff member (D-054). The password is not mass assignable.
+        $admin->forceFill([
+            'email' => config('demo.admin_email'),
+            'password' => config('demo.admin_password'),
+            'email_verified_at' => now(),
+        ])->save();
         $admin->assignRole(StaffRole::ChurchAdmin);
 
         if (! FundType::query()->withoutGlobalScopes()->where('church_id', $church->id)->exists()) {

@@ -24,6 +24,16 @@ export interface OtpRequested {
     expires_in: number;
 }
 
+/** The answer to "a code was emailed" (sign-in and forgot password). */
+export type CodeSent = OtpRequested;
+
+export interface ResetPasswordInput {
+    email: string;
+    code: string;
+    password: string;
+    password_confirmation: string;
+}
+
 /**
  * What sign-in and "who am I" return. The browser app is signed in by a cookie, so there is no token here.
  */

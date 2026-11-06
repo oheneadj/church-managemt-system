@@ -968,7 +968,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-054 — Staff sign in with email, password and a code sent by email
 **Date:** October 2026
 **Decided by:** Product Owner (chose the agreement's rule over D-012 for staff, and chose an emailed second code)
-**Status:** Decided, not built. The built sign-in still uses phone + SMS code until this ships. Supersedes D-012 for staff; amends D-025, D-027 and D-037.
+**Status:** Built (7 Nov 2026): the email sender, the four endpoints, the sign-up fields and the React screens. Still to do: remove the old phone and SMS staff endpoints, rewrite QA-01 and QA-12, and make `users.email` required once nothing creates a staff user without one. Supersedes D-012 for staff; amends D-025, D-027 and D-037.
 
 **Decision:**
 1. **Staff identity is email + password.** The Universal agreement (section 16) says admin and staff authentication is always email and password. `users` gets `password` (hashed with Laravel's default hasher, never logged or returned), `email` becomes required and unique per church (while not deleted), and `email_verified_at` is set by the first successful code. `users.phone` stays as a contact number and for SMS notices; it is no longer the identity or the sign-in key.
