@@ -46,9 +46,7 @@ final class VerifyLoginCodeAction
             throw new InvalidOtpException;
         }
 
-        if ($user->email_verified_at === null) {
-            $user->forceFill(['email_verified_at' => now()])->save();
-        }
+        $this->users->markEmailVerified($user);
 
         if ($dto->browserSession !== null) {
             $this->sessions->startBrowserSession($user, $dto->browserSession);

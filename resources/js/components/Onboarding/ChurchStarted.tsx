@@ -17,8 +17,8 @@ export function ChurchStarted({ started }: ChurchStartedProps) {
                 <span className="font-medium break-all">{started.church.url.replace(/^https?:\/\//, '')}</span>.
             </p>
             <p className="text-sm text-muted-foreground">
-                Sign in there with the same phone number. We will text you a new code. We recommend adding a second admin once you are in,
-                in case of staff changes.
+                Sign in there with your email and password. We will email you a code. We recommend adding a second admin once you are in, in
+                case of staff changes.
             </p>
             <Button asChild>
                 <a href={started.login_url}>Go to my church</a>

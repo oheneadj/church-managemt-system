@@ -7,6 +7,9 @@ function freshPhone(): string {
     return `0200${String(Date.now()).slice(-6)}`;
 }
 
+/** A password that passes the staff rules (D-054): long enough and not the email. */
+const E2E_PASSWORD = 'an e2e passphrase for sign up';
+
 test.describe('starting a church', () => {
     test('a new church signs up with a texted code and gets its own address', async ({ page }) => {
         const stamp = Date.now().toString(36);
@@ -18,6 +21,9 @@ test.describe('starting a church', () => {
         await page.getByLabel(/Church name/).fill(`E2E Church ${stamp}`);
         await page.getByLabel(/Member number letters/).fill('eee');
         await page.getByLabel(/Your name/).fill('E2E Admin');
+        await page.getByLabel(/Your email address/).fill(`e2e-${stamp}@example.com`);
+        await page.getByLabel('Choose a password').fill(E2E_PASSWORD);
+        await page.getByLabel('Type the password again').fill(E2E_PASSWORD);
         await page.getByLabel(/Your phone number/).fill(phone);
 
         const before = logPosition();
@@ -39,6 +45,9 @@ test.describe('starting a church', () => {
         await page.getByLabel(/Web address/).fill('admin');
         await page.getByLabel(/Member number letters/).fill('mis');
         await page.getByLabel(/Your name/).fill('E2E Admin');
+        await page.getByLabel(/Your email address/).fill(`mistakes-${phone}@example.com`);
+        await page.getByLabel('Choose a password').fill(E2E_PASSWORD);
+        await page.getByLabel('Type the password again').fill(E2E_PASSWORD);
         await page.getByLabel(/Your phone number/).fill(phone);
 
         const before = logPosition();

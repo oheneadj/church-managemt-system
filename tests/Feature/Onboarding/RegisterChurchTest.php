@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 use App\Enums\StaffRole;
 use App\Events\ChurchRegistered;
+use App\Jobs\CheckPasswordBreachJob;
+use App\Jobs\SendEmailJob;
 use App\Jobs\SendSmsJob;
 use App\Models\Church;
 use App\Models\FundType;
 use App\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
@@ -21,6 +25,7 @@ use Illuminate\Support\Facades\RateLimiter;
 
 const REGISTER = 'http://localhost/api/v1/onboarding/churches';
 const SEND_CODE = 'http://localhost/api/v1/onboarding/otp';
+const SIGN_UP_PASSWORD = 'a long passphrase here';
 
 /**
  * Asks for a code for the phone and returns the six digits that were texted.
@@ -59,6 +64,9 @@ function signUp(array $overrides = []): array
         'member_number_prefix' => 'vci',
         'admin_name' => 'Kofi Mensah',
         'admin_phone' => $phone,
+        'admin_email' => 'kofi@example.com',
+        'password' => SIGN_UP_PASSWORD,
+        'password_confirmation' => SIGN_UP_PASSWORD,
         'otp' => codeFor($phone),
         ...$overrides,
     ];
@@ -225,7 +233,7 @@ it('treats a slug typed in capitals as lowercase', function (): void {
 });
 
 it('requires the fields it needs and reports each one', function (): void {
-    $this->postJson(REGISTER, [])->assertUnprocessable()->assertJsonValidationErrors(['church_name', 'member_number_prefix', 'admin_name', 'admin_phone', 'otp']);
+    $this->postJson(REGISTER, [])->assertUnprocessable()->assertJsonValidationErrors(['church_name', 'member_number_prefix', 'admin_name', 'admin_phone', 'admin_email', 'password', 'otp']);
 });
 
 it('rejects a prefix that is not letters of the right length', function (string $prefix): void {
@@ -252,4 +260,76 @@ it('serves the app page on the platform host without a church', function (): voi
 
 it('still answers 404 for an unknown church subdomain', function (): void {
     $this->get('http://nobody.localhost/members')->assertNotFound();
+});
+
+describe('the admin signs in with an email and a password (D-054)', function (): void {
+    it('creates the admin with the email in lowercase and a hashed password, unproven until the first emailed code', function (): void {
+        $this->postJson(REGISTER, signUp(['admin_email' => '  Kofi.Mensah@Example.COM ']))->assertCreated();
+
+        $admin = User::query()->withoutGlobalScopes()->where('phone', '+233244300001')->firstOrFail();
+        expect($admin->email)->toBe('kofi.mensah@example.com')
+            ->and($admin->password)->not->toBe(SIGN_UP_PASSWORD)
+            ->and(Hash::check(SIGN_UP_PASSWORD, $admin->password))->toBeTrue()
+            ->and($admin->email_verified_at)->toBeNull();
+    });
+
+    it('lets the new admin start signing in on the new church with that email and password', function (): void {
+        $this->postJson(REGISTER, signUp())->assertCreated();
+        Queue::fake();
+
+        $this->postJson('http://victory-chapel.localhost/api/v1/auth/login', ['email' => 'kofi@example.com', 'password' => SIGN_UP_PASSWORD])
+            ->assertOk()->assertJsonPath('message', 'Code sent');
+
+        Queue::assertPushed(SendEmailJob::class, fn (SendEmailJob $job): bool => $job->email->email === 'kofi@example.com');
+    });
+
+    it('wants an email address and says which field is wrong', function (string $email): void {
+        $this->postJson(REGISTER, signUp(['admin_email' => $email]))->assertStatus(422)->assertJsonValidationErrors('admin_email');
+
+        expect(Church::query()->where('slug', 'victory-chapel')->exists())->toBeFalse();
+    })->with(['', 'not an email', 'kofi@']);
+
+    it('wants a password that is long enough, matches its confirmation, is not the email and is at most 72 bytes', function (array $override): void {
+        $this->postJson(REGISTER, signUp($override))->assertStatus(422)->assertJsonValidationErrors('password');
+
+        expect(Church::query()->where('slug', 'victory-chapel')->exists())->toBeFalse();
+    })->with([
+        'too short' => [['password' => 'short one', 'password_confirmation' => 'short one']],
+        'does not match' => [['password_confirmation' => 'a different passphrase']],
+        'the email itself' => [['admin_email' => 'kofi.mensah@example.com', 'password' => 'kofi.mensah@example.com', 'password_confirmation' => 'kofi.mensah@example.com']],
+        'too long' => [['password' => str_repeat('x', 73), 'password_confirmation' => str_repeat('x', 73)]],
+    ]);
+
+    it('does not use up the texted code when the password is refused, so the same code works after', function (): void {
+        $body = signUp();
+
+        $this->postJson(REGISTER, [...$body, 'password' => 'short one', 'password_confirmation' => 'short one'])->assertStatus(422);
+
+        $this->postJson(REGISTER, $body)->assertCreated();
+    });
+
+    it('queues the breach check for the new password without ever putting the password on the queue', function (): void {
+        Queue::fake();
+        $body = signUp();
+
+        $this->postJson(REGISTER, $body)->assertCreated();
+
+        $job = Queue::pushed(CheckPasswordBreachJob::class)->sole();
+        expect($job)->toBeInstanceOf(ShouldBeEncrypted::class)->and(serialize($job))->not->toContain(SIGN_UP_PASSWORD);
+        Queue::assertPushedOn('notifications', CheckPasswordBreachJob::class);
+    });
+
+    it('queues no breach check and creates no admin when the church is not created', function (): void {
+        Queue::fake();
+        Church::factory()->create(['slug' => 'victory-chapel']);
+
+        $this->postJson(REGISTER, signUp(['slug' => 'victory-chapel']))->assertStatus(422);
+
+        Queue::assertNotPushed(CheckPasswordBreachJob::class);
+        expect(User::query()->withoutGlobalScopes()->where('email', 'kofi@example.com')->exists())->toBeFalse();
+    });
+
+    it('keeps the phone number required, because it is still proven with a texted code', function (): void {
+        $this->postJson(REGISTER, [...signUp(), 'admin_phone' => ''])->assertStatus(422)->assertJsonValidationErrors('admin_phone');
+    });
 });

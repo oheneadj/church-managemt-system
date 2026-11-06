@@ -7,6 +7,9 @@ const valid = {
     member_number_prefix: 'vci',
     admin_name: 'Kofi Mensah',
     admin_phone: '024 430 0001',
+    admin_email: 'Kofi@Example.com',
+    password: 'a long passphrase here',
+    password_confirmation: 'a long passphrase here',
     otp: '123456',
 };
 
@@ -17,6 +20,14 @@ function errorsOf(overrides: Partial<typeof valid>): string[] {
 }
 
 describe('startChurchSchema', () => {
+    it('checks the email and password the way the server does', () => {
+        expect(errorsOf({ admin_email: 'not-an-email' })).toContain('admin_email');
+        expect(errorsOf({ password: 'short', password_confirmation: 'short' })).toContain('password');
+        expect(errorsOf({ password_confirmation: 'something else entirely' })).toContain('password_confirmation');
+        expect(errorsOf({ password: 'kofi@example.com', password_confirmation: 'kofi@example.com' })).toContain('password');
+        expect(errorsOf({ password: 'é'.repeat(37), password_confirmation: 'é'.repeat(37) })).toContain('password');
+    });
+
     it('accepts the smallest valid sign-up, with the web address left empty', () => {
         expect(errorsOf({})).toEqual([]);
     });

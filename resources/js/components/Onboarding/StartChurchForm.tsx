@@ -8,14 +8,26 @@ import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { OTP_LENGTH, PREFIX_MAX_LENGTH } from '@/constants/onboarding';
+import { PASSWORD_MIN_LENGTH } from '@/constants/password';
 import { useStartChurch } from '@/hooks/useStartChurch';
 import { showFieldErrors } from '@/lib/showFieldErrors';
 import type { StartedChurch } from '@/types/onboarding';
 
-const FIELDS = ['church_name', 'slug', 'denomination', 'city', 'member_number_prefix', 'admin_name', 'admin_phone', 'otp'] as const;
+const FIELDS = [
+    'church_name',
+    'slug',
+    'denomination',
+    'city',
+    'member_number_prefix',
+    'admin_name',
+    'admin_phone',
+    'admin_email',
+    'password',
+    'otp',
+] as const;
 
 /**
- * The "start a church" form. The person proves their phone with a texted code on the same page, then the
+ * The "start a church" form. The person gives an email and a password, proves their phone with a texted code on the same page, then the
  * church and its first admin are created together. Server messages appear next to the box they belong to.
  */
 export function StartChurchForm() {
@@ -112,6 +124,39 @@ export function StartChurchForm() {
                 placeholder="Kofi Mensah"
                 error={errors.admin_name?.message}
                 {...register('admin_name')}
+            />
+            <TextField
+                id="admin_email"
+                label="Your email address"
+                type="email"
+                inputMode="email"
+                required
+                autoComplete="email"
+                placeholder="kofi@example.com"
+                error={errors.admin_email?.message}
+                {...register('admin_email')}
+            />
+            <p className="-mt-1 mb-2 text-sm text-muted-foreground">You sign in with this email. We email you a code each time.</p>
+            <TextField
+                id="password"
+                label="Choose a password"
+                type="password"
+                required
+                autoComplete="new-password"
+                error={errors.password?.message}
+                {...register('password')}
+            />
+            <p className="-mt-1 mb-2 text-sm text-muted-foreground">
+                At least {PASSWORD_MIN_LENGTH} characters. A few ordinary words together make a strong one.
+            </p>
+            <TextField
+                id="password_confirmation"
+                label="Type the password again"
+                type="password"
+                required
+                autoComplete="new-password"
+                error={errors.password_confirmation?.message}
+                {...register('password_confirmation')}
             />
             <TextField
                 id="admin_phone"

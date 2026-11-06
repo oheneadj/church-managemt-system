@@ -29,6 +29,17 @@ interface UserRepositoryInterface
     public function findById(string $id): ?User;
 
     /**
+     * Sets a staff member's password (hashed by the model) and, when asked, marks their email as proven. The password is
+     * not mass assignable on purpose, so this is the only way it is set.
+     */
+    public function setPassword(User $user, string $password, bool $proveEmail = false): User;
+
+    /**
+     * Marks the staff member's email as proven, if it is not already.
+     */
+    public function markEmailVerified(User $user): User;
+
+    /**
      * Adds a staff user.
      *
      * @param  array<string, mixed>  $attributes

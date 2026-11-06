@@ -8,7 +8,8 @@ use App\Http\Requests\Onboarding\RegisterChurchRequest;
 use App\ValueObjects\PhoneNumber;
 
 /**
- * Everything needed to start a church: the church, its first admin and the code that proves the admin's phone.
+ * Everything needed to start a church: the church, its first admin (name, phone, email and password) and the code that
+ * proves the admin's phone. The email is proven later, by the first emailed sign-in code (D-054).
  * `slug` is null when the person asked us to choose the web address from the church name.
  */
 final readonly class RegisterChurchDTO
@@ -24,6 +25,8 @@ final readonly class RegisterChurchDTO
         public string $memberNumberPrefix,
         public string $adminName,
         public PhoneNumber $adminPhone,
+        public string $adminEmail,
+        public string $password,
         public string $otp,
     ) {}
 
@@ -42,6 +45,8 @@ final readonly class RegisterChurchDTO
             memberNumberPrefix: $data['member_number_prefix'],
             adminName: $data['admin_name'],
             adminPhone: PhoneNumber::tryFrom($data['admin_phone']) ?? throw new \LogicException('Validated phone must parse.'),
+            adminEmail: $data['admin_email'],
+            password: $data['password'],
             otp: $data['otp'],
         );
     }

@@ -14,12 +14,13 @@ use App\Repositories\UserRepositoryInterface;
 use App\Services\ChurchSlugGenerator;
 use App\Services\DefaultFundTypes;
 use App\Services\OnboardingOtpService;
+use App\Services\PasswordBreachScheduler;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Starts a church: checks the web address, proves the admin's phone with the texted code, then creates the
- * church and its first admin together. It is all or nothing, so a failure never leaves half a church behind.
+ * church and its first admin (with the email and password they will sign in with, D-054) together. It is all or nothing, so a failure never leaves half a church behind.
  */
 final class RegisterChurchAction
 {
@@ -32,6 +33,7 @@ final class RegisterChurchAction
         private readonly ChurchSlugGenerator $slugs,
         private readonly OnboardingOtpService $otp,
         private readonly DefaultFundTypes $defaultFundTypes,
+        private readonly PasswordBreachScheduler $breaches,
     ) {}
 
     /**
@@ -89,9 +91,13 @@ final class RegisterChurchAction
             'church_id' => $church->id,
             'name' => $dto->adminName,
             'phone' => $dto->adminPhone->e164,
+            'email' => $dto->adminEmail,
         ]);
+        $this->users->setPassword($admin, $dto->password);
         $admin->assignRole(StaffRole::ChurchAdmin);
         $this->defaultFundTypes->createFor($church);
+        // The breach check runs later, on a worker, with only a hash of the password (D-054).
+        $this->breaches->schedule($admin, $dto->password);
 
         ChurchRegistered::dispatch($church, $admin);
 

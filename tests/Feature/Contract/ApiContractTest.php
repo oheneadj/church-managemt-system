@@ -290,7 +290,7 @@ describe('starting a church', function (): void {
         });
 
         assertMatchesSpec($this->postJson(PLATFORM_HOST.'/onboarding/churches', [
-            'church_name' => 'Victory Chapel', 'member_number_prefix' => 'VCI', 'admin_name' => 'Kofi Mensah', 'admin_phone' => '+233244300002', 'otp' => $code,
+            'church_name' => 'Victory Chapel', 'member_number_prefix' => 'VCI', 'admin_name' => 'Kofi Mensah', 'admin_phone' => '+233244300002', 'admin_email' => 'kofi@example.com', 'password' => 'a long passphrase here', 'password_confirmation' => 'a long passphrase here', 'otp' => $code,
         ]), 'POST', '/v1/onboarding/churches', 201);
     });
 });

@@ -10,6 +10,9 @@ export interface StartChurchInput {
     member_number_prefix: string;
     admin_name: string;
     admin_phone: string;
+    admin_email: string;
+    password: string;
+    password_confirmation: string;
     otp: string;
 }
 

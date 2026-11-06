@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Onboarding;
 
+use App\Rules\StaffPasswordRule;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,7 +24,7 @@ class RegisterChurchRequest extends FormRequest
     }
 
     /**
-     * Tidies the input before it is validated: phone to international form, slug lowercase (an empty one means
+     * Tidies the input before it is validated: phone to international form, email lowercase, slug lowercase (an empty one means
      * "choose for me"), prefix in capitals.
      */
     protected function prepareForValidation(): void
@@ -32,6 +33,7 @@ class RegisterChurchRequest extends FormRequest
 
         $this->merge([
             'admin_phone' => PhoneNumber::tryFrom((string) $this->input('admin_phone'))->e164 ?? $this->input('admin_phone'),
+            'admin_email' => mb_strtolower(trim((string) $this->input('admin_email'))),
             'slug' => $slug === '' ? null : $slug,
             'member_number_prefix' => str($this->input('member_number_prefix'))->trim()->upper()->toString(),
         ]);
@@ -60,6 +62,8 @@ class RegisterChurchRequest extends FormRequest
             ],
             'admin_name' => ['required', 'string', 'max:255'],
             'admin_phone' => ['required', 'string', 'regex:'.PhoneNumber::E164_PATTERN],
+            'admin_email' => ['required', 'string', 'email:rfc', 'max:255'],
+            'password' => ['required', 'string', 'confirmed', new StaffPasswordRule('admin_email')],
             'otp' => ['required', 'string', 'digits:'.config('otp.length')],
         ];
     }

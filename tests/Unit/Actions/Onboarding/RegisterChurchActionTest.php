@@ -11,6 +11,7 @@ use App\Repositories\UserRepositoryInterface;
 use App\Services\ChurchSlugGenerator;
 use App\Services\DefaultFundTypes;
 use App\Services\OnboardingOtpService;
+use App\Services\PasswordBreachScheduler;
 use App\ValueObjects\PhoneNumber;
 
 // The success path touches roles and the database, so the feature tests cover it. These cover the order of the
@@ -22,7 +23,7 @@ beforeEach(function (): void {
     $this->users = Mockery::mock(UserRepositoryInterface::class);
     $this->slugs = Mockery::mock(ChurchSlugGenerator::class);
     $this->otp = Mockery::mock(OnboardingOtpService::class);
-    $this->action = new RegisterChurchAction($this->churches, $this->users, $this->slugs, $this->otp, Mockery::mock(DefaultFundTypes::class));
+    $this->action = new RegisterChurchAction($this->churches, $this->users, $this->slugs, $this->otp, Mockery::mock(DefaultFundTypes::class), Mockery::mock(PasswordBreachScheduler::class));
     $this->dto = fn (?string $slug = 'grace') => new RegisterChurchDTO(
         churchName: 'Grace Assembly',
         slug: $slug,
@@ -31,6 +32,8 @@ beforeEach(function (): void {
         memberNumberPrefix: 'GRC',
         adminName: 'Kofi Mensah',
         adminPhone: PhoneNumber::tryFrom('+233244300001'),
+        adminEmail: 'kofi@example.com',
+        password: 'a long passphrase here',
         otp: '123456',
     );
 });

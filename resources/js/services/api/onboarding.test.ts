@@ -27,6 +27,9 @@ describe('onboardingApi', () => {
             member_number_prefix: 'VCI',
             admin_name: 'Kofi',
             admin_phone: '0244300001',
+            admin_email: 'kofi@example.com',
+            password: 'a long passphrase here',
+            password_confirmation: 'a long passphrase here',
             otp: '123456',
         });
 

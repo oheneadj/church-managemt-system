@@ -47,7 +47,7 @@ final class ResetPasswordAction
         }
 
         DB::transaction(function () use ($user, $dto): void {
-            $user->forceFill(['password' => $dto->password, 'email_verified_at' => $user->email_verified_at ?? now()])->save();
+            $this->users->setPassword($user, $dto->password, proveEmail: true);
 
             $this->breaches->schedule($user, $dto->password);
         });

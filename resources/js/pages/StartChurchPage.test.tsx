@@ -37,6 +37,9 @@ async function fillDetails() {
     await userEvent.type(screen.getByLabelText(/Church name/), 'Victory Chapel');
     await userEvent.type(screen.getByLabelText(/Member number letters/), 'vci');
     await userEvent.type(screen.getByLabelText(/Your name/), 'Kofi Mensah');
+    await userEvent.type(screen.getByLabelText(/Your email address/), 'kofi@example.com');
+    await userEvent.type(screen.getByLabelText(/Choose a password/), 'a long passphrase here');
+    await userEvent.type(screen.getByLabelText(/Type the password again/), 'a long passphrase here');
     await userEvent.type(screen.getByLabelText(/Your phone number/), '0244300001');
 }
 
@@ -79,7 +82,13 @@ describe('StartChurchPage', () => {
 
         expect(onboardingApi.requestOtp).toHaveBeenCalledWith('0244300001');
         expect(onboardingApi.startChurch).toHaveBeenCalledWith(
-            expect.objectContaining({ church_name: 'Victory Chapel', member_number_prefix: 'vci', otp: '123456', slug: undefined }),
+            expect.objectContaining({
+                church_name: 'Victory Chapel',
+                member_number_prefix: 'vci',
+                admin_email: 'kofi@example.com',
+                otp: '123456',
+                slug: undefined,
+            }),
         );
         expect(await screen.findByRole('link', { name: 'Go to my church' })).toHaveAttribute('href', started.login_url);
         expect(screen.getByText(/second admin/)).toBeInTheDocument();

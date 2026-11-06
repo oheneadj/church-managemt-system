@@ -19,6 +19,12 @@ class StaffPasswordRule implements DataAwareRule, ValidationRule
     private array $data = [];
 
     /**
+     * Takes the name of the request field that holds the person's email, which the password may not equal. It is `email`
+     * everywhere except starting a church, where it is `admin_email`.
+     */
+    public function __construct(private readonly string $emailField = 'email') {}
+
+    /**
      * Receives the rest of the request, so the password can be compared with the email.
      *
      * @param  array<string, mixed>  $data
@@ -42,7 +48,7 @@ class StaffPasswordRule implements DataAwareRule, ValidationRule
             ! is_string($value) => 'The password must be text.',
             mb_strlen($value) < $minimum => "The password must be at least {$minimum} characters.",
             strlen($value) > $maximum => "The password is too long. Use at most {$maximum} characters.",
-            strtolower($value) === strtolower((string) ($this->data['email'] ?? '')) => 'The password cannot be your email address.',
+            strtolower($value) === strtolower((string) ($this->data[$this->emailField] ?? '')) => 'The password cannot be your email address.',
             default => null,
         };
 

@@ -153,10 +153,11 @@ POST /api/v1/onboarding/churches
   "admin_phone": "+233244300001",
   "admin_email": "kofi@example.com",
   "password": "a long passphrase",
+  "password_confirmation": "a long passphrase",
   "otp": "123456"
 }
 ```
-`slug`, `denomination` and `city` are optional. Without a `slug` the address is built from the church name (`grace-assembly`, then `grace-assembly-2` if taken). A typed `slug` is lowercase letters, numbers and single hyphens, 3 to 40 characters, and not one of the names kept for the platform (`config/onboarding.php`). `member_number_prefix` is 2 to 6 letters and is stored in capitals.
+`slug`, `denomination` and `city` are optional. Without a `slug` the address is built from the church name (`grace-assembly`, then `grace-assembly-2` if taken). A typed `slug` is lowercase letters, numbers and single hyphens, 3 to 40 characters, and not one of the names kept for the platform (`config/onboarding.php`). `member_number_prefix` is 2 to 6 letters and is stored in capitals. `admin_email` and `password` are how the admin signs in (D-054): the email is stored in lowercase, the password needs 12 to 72 bytes, must match `password_confirmation` and must not equal the email. The phone is still proven with the texted `otp`, and stays as a contact number. The password is checked against known breaches afterwards in a queued job, and the admin is emailed if it was found.
 
 **Response `201`:**
 ```json
@@ -167,7 +168,7 @@ POST /api/v1/onboarding/churches
 }
 ```
 
-The church (plan `starter`, no payment) and its first admin (role `church-admin`) are created together, or not at all. The admin then signs in on `login_url` with a new code.
+The church (plan `starter`, no payment) and its first admin (role `church-admin`) are created together, or not at all. The admin then signs in on `login_url` with the email and password, then a code emailed to them.
 
 **Errors:** `422` with `{"message": "Invalid code"}` for a wrong, used or expired code; `429` after five wrong codes for a phone (15-minute lockout); `422` on `slug` when the address is taken, with free alternatives in the message (the code is not used up); `422` per field for the rest.
 
@@ -177,7 +178,7 @@ The church (plan `starter`, no payment) and its first admin (role `church-admin`
 
 ## Auth Endpoints
 
-> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. **Still to come:** the React sign-in screen and the sign-up form's email and password. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
+> **D-054, in progress.** Staff sign in with email, password and a code emailed to them. **Built:** `auth/login`, `auth/login/verify`, `auth/password/forgot` and `auth/password/reset` below. **Still to come:** the React sign-in screen. The old `auth/otp/request` and `auth/otp/verify` (phone and SMS code) still run until the screen switches, and are then removed. Members, QR check-in and WhatsApp check-in keep phone and SMS codes.
 
 ### Sign in, step 1: password
 ```
