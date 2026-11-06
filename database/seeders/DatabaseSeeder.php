@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
 
         $admin = User::query()->withoutGlobalScopes()->firstOrCreate(
             ['church_id' => $church->id, 'phone' => '+233200000000'],
-            ['name' => 'Demo Admin'],
+            ['name' => 'Demo Admin', 'email' => config('demo.admin_email')],
         );
         // Signs in with an email and password like every staff member (D-054). The password is not mass assignable.
         $admin->forceFill([
