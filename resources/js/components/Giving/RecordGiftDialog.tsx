@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useContributionMutations } from '@/hooks/useContributions';
 import { useFundTypes } from '@/hooks/useFundTypes';
+import { usePledgesForGift } from '@/hooks/usePledges';
 import { useServicesOnDate } from '@/hooks/useServices';
 import { newIdempotencyKey } from '@/lib/idempotencyKey';
 import { showFieldErrors } from '@/lib/showFieldErrors';
@@ -24,7 +25,7 @@ interface RecordGiftDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const FIELDS = ['fund_type_id', 'amount', 'contributed_on', 'service_id', 'notes'] as const;
+const FIELDS = ['fund_type_id', 'amount', 'contributed_on', 'service_id', 'pledge_id', 'notes'] as const;
 
 /**
  * Records a cash gift: who gave (or nobody, for an anonymous gift), which fund, how much, the day and, if there was
@@ -59,16 +60,25 @@ function RecordGiftForm({ onClose }: { onClose: () => void }) {
     const { errors } = form.formState;
     const day = dateTextToIso(useWatch({ control: form.control, name: 'contributed_on' })) ?? '';
     const services = useServicesOnDate(day);
+    const fundId = useWatch({ control: form.control, name: 'fund_type_id' });
+    const pledges = usePledgesForGift(member?.id ?? '', fundId);
 
     const fundOptions = (funds.data ?? []).map((fund) => ({ value: fund.id, label: fund.name }));
     const serviceOptions = (services.data?.data ?? []).map((service) => ({ value: service.id, label: service.name }));
 
+    // Only a pledge that can still take a gift is offered: the server refuses one that is paid in full (D-047).
+    const pledgeOptions = (pledges.data?.data ?? [])
+        .filter((pledge) => pledge.status !== 'fulfilled')
+        .map((pledge) => ({ value: pledge.id, label: `${pledge.description} · ${pledge.amount_outstanding_formatted} outstanding` }));
+
     const submit = form.handleSubmit((values) => {
         // A service chosen for another day, before the date was changed, is dropped rather than sent.
         const serviceId = serviceOptions.some((option) => option.value === values.service_id) ? values.service_id : undefined;
+        // The same for a pledge chosen before the member or the fund was changed.
+        const pledgeId = pledgeOptions.some((option) => option.value === values.pledge_id) ? values.pledge_id : undefined;
 
         record.mutate(
-            { input: toGiftInput(values, member?.id, serviceId), idempotencyKey },
+            { input: toGiftInput(values, member?.id, serviceId, pledgeId), idempotencyKey },
             {
                 onSuccess: () => {
                     toast.success('Gift recorded.');
@@ -123,6 +133,16 @@ function RecordGiftForm({ onClose }: { onClose: () => void }) {
                     error={errors.service_id?.message}
                     {...form.register('service_id')}
                 />
+                {pledgeOptions.length > 0 && (
+                    <SelectField
+                        id="record-gift-pledge"
+                        label="Pays a pledge (optional)"
+                        options={pledgeOptions}
+                        emptyLabel="No pledge"
+                        error={errors.pledge_id?.message}
+                        {...form.register('pledge_id')}
+                    />
+                )}
                 <TextAreaField id="record-gift-notes" label="Notes (optional)" error={errors.notes?.message} {...form.register('notes')} />
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={onClose}>

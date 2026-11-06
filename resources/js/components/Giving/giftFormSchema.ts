@@ -15,6 +15,7 @@ export const giftFormSchema = z.object({
         notAfter: { date: today, message: 'A gift cannot be dated in the future' },
     }),
     service_id: z.string(),
+    pledge_id: z.string(),
     notes: z.string().trim().max(2000, 'Keep it under 2000 characters'),
 });
 
@@ -22,20 +23,27 @@ export type GiftFormValues = z.infer<typeof giftFormSchema>;
 
 /** A new gift starts dated today, with nothing chosen. `todayText` is today as the date box shows it. */
 export function blankGiftValues(todayText: string): GiftFormValues {
-    return { fund_type_id: '', amount: '', contributed_on: todayText, service_id: '', notes: '' };
+    return { fund_type_id: '', amount: '', contributed_on: todayText, service_id: '', pledge_id: '', notes: '' };
 }
 
 /**
- * Turns the form values into the request body. A gift with no member is anonymous. A gift dated today is sent without a
+ * Turns the form values into the request body. A gift with no member is anonymous. The service and the pledge are passed
+ * in already checked against what the form offered, so a choice made for another day, member or fund is never sent. A gift dated today is sent without a
  * time, so the server uses the moment it was entered; an earlier day is sent at noon UTC (see `GIFT_PAST_DAY_TIME`).
  * Empty optional boxes are left out.
  */
-export function toGiftInput(values: GiftFormValues, memberId: string | undefined, serviceId: string | undefined): ContributionInput {
+export function toGiftInput(
+    values: GiftFormValues,
+    memberId: string | undefined,
+    serviceId: string | undefined,
+    pledgeId?: string,
+): ContributionInput {
     const day = dateTextToIso(values.contributed_on) ?? values.contributed_on;
 
     return {
         member_id: memberId,
         service_id: serviceId,
+        pledge_id: pledgeId,
         fund_type_id: values.fund_type_id,
         amount: values.amount,
         payment_method: 'cash',

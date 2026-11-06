@@ -26,6 +26,15 @@ describe('pledgesApi', () => {
         expect(api.get).toHaveBeenCalledWith('/pledges', { params: { page: 1, fund_type_id: 'fund-2' } });
     });
 
+    it("asks for one member's pledges to one fund, as many as the server allows on a page", async () => {
+        vi.mocked(api.get).mockReturnValue(respond(pageOf([pledge()])));
+
+        const page = await pledgesApi.forGift('member-1', 'fund-1');
+
+        expect(api.get).toHaveBeenCalledWith('/pledges', { params: { member_id: 'member-1', fund_type_id: 'fund-1', per_page: 100 } });
+        expect(page.data).toHaveLength(1);
+    });
+
     it('makes a pledge with the idempotency key in the header, and returns it without its wrapper', async () => {
         vi.mocked(api.post).mockReturnValue(respond({ data: pledge() }));
         const input = {

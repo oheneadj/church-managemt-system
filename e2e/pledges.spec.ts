@@ -10,7 +10,7 @@ function inDays(days: number): string {
 }
 
 test.describe('pledges', () => {
-    test('adds a member, makes a pledge for them, sees it unpaid, then lowers its amount', async ({ page }) => {
+    test('adds a member, makes a pledge for them, lowers its amount, then pays part of it with a gift', async ({ page }) => {
         const stamp = Date.now().toString(36);
         const lastName = `Pledger${stamp}`;
         const description = `E2E pledge ${stamp}`;
@@ -57,6 +57,25 @@ test.describe('pledges', () => {
         await change.getByRole('button', { name: 'Save changes' }).click();
         await expect(page.getByText('Pledge changed.')).toBeVisible();
         await expect(page.getByRole('listitem').filter({ hasText: description })).toContainText('Paid GHS 0.00 of GHS 800.00');
+
+        // A gift that names the pledge moves its progress.
+        await page.goto(`${CHURCH_URL}/giving`);
+        await page.getByRole('button', { name: 'Record a gift' }).click();
+        const gift = page.getByRole('dialog', { name: 'Record a cash gift' });
+        await gift.getByLabel('Member (optional)').fill(lastName);
+        await gift.getByRole('button', { name: 'Search' }).click();
+        await gift.getByRole('button', { name: 'Choose' }).click();
+        await gift.getByLabel(/^Fund/).selectOption({ label: 'Building Fund' });
+        await gift.getByLabel(/^Amount/).fill('200');
+        await gift.getByLabel(/Pays a pledge/).selectOption({ label: `${description} · GHS 800.00 outstanding` });
+        await gift.getByRole('button', { name: 'Record gift' }).click();
+        await expect(page.getByText('Gift recorded.')).toBeVisible();
+
+        await page.goto(`${CHURCH_URL}/pledges`);
+        const paid = page.getByRole('listitem').filter({ hasText: description });
+        await expect(paid).toContainText('Paid GHS 200.00 of GHS 800.00');
+        await expect(paid).toContainText('GHS 600.00 outstanding');
+        await expect(paid.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25');
     });
 
     test('refuses a pledge with nothing filled in, without leaving the form', async ({ page }) => {

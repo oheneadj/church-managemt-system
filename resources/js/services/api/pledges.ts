@@ -1,4 +1,5 @@
 import { IDEMPOTENCY_HEADER } from '@/lib/idempotencyKey';
+import { GIFT_PLEDGES_PER_PAGE } from '@/constants/giving';
 import { api } from '@/services';
 import type { Pledge, PledgeChange, PledgeFilters, PledgeInput } from '@/types/giving';
 import type { Page } from '@/types/members';
@@ -13,6 +14,12 @@ export const pledgesApi = {
                     ...(filters.fund === '' ? {} : { fund_type_id: filters.fund }),
                 },
             })
+            .then((r) => r.data),
+
+    /** One member's pledges to one fund, for choosing which one a gift pays. A member has few, so one page is enough. */
+    forGift: (memberId: string, fundId: string): Promise<Page<Pledge>> =>
+        api
+            .get<Page<Pledge>>('/pledges', { params: { member_id: memberId, fund_type_id: fundId, per_page: GIFT_PLEDGES_PER_PAGE } })
             .then((r) => r.data),
 
     /** Makes a pledge. The key makes a double click or a retry make one pledge (docs/08, Idempotency). */

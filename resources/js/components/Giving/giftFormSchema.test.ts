@@ -59,6 +59,11 @@ describe('toGiftInput', () => {
         });
     });
 
+    it('names the pledge the gift pays, or leaves it out', () => {
+        expect(toGiftInput(giftFormSchema.parse(valid), 'member-1', undefined, 'pledge-1').pledge_id).toBe('pledge-1');
+        expect(toGiftInput(giftFormSchema.parse(valid), 'member-1', undefined, undefined).pledge_id).toBeUndefined();
+    });
+
     it('leaves out the member, service and notes when there are none, which makes an anonymous gift', () => {
         const input = toGiftInput(giftFormSchema.parse(valid), undefined, undefined);
 

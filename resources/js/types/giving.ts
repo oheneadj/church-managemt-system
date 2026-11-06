@@ -74,6 +74,8 @@ export interface ContributionInput {
     member_id?: string;
     service_id?: string;
     fund_type_id: string;
+    /** The pledge this gift pays. It must be the member's, for the same fund, and not paid in full. */
+    pledge_id?: string;
     /** An exact decimal in GHS, as the person typed it. */
     amount: string;
     payment_method: 'cash';

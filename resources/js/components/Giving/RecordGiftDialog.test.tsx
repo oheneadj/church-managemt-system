@@ -6,9 +6,10 @@ import { RecordGiftDialog } from '@/components/Giving/RecordGiftDialog';
 import { contributionsApi } from '@/services/api/contributions';
 import { fundTypesApi } from '@/services/api/fundTypes';
 import { membersApi } from '@/services/api/members';
+import { pledgesApi } from '@/services/api/pledges';
 import { servicesApi } from '@/services/api/services';
 import { ApiError } from '@/services/ApiError';
-import { contribution, fundType, memberSummary, pageOf, service } from '@/test/fixtures';
+import { contribution, fundType, memberSummary, pageOf, pledge, service } from '@/test/fixtures';
 import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
@@ -16,6 +17,7 @@ vi.mock('@/services/api/contributions');
 vi.mock('@/services/api/fundTypes');
 vi.mock('@/services/api/members');
 vi.mock('@/services/api/services');
+vi.mock('@/services/api/pledges');
 
 function open() {
     const onOpenChange = vi.fn();
@@ -42,6 +44,7 @@ describe('RecordGiftDialog', () => {
         vi.mocked(servicesApi.onDate).mockResolvedValue(pageOf([service({ id: 'service-1', name: 'Sunday Morning Service' })]));
         vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary({ id: 'member-1', full_name: 'Abena Asante' })]));
         vi.mocked(contributionsApi.record).mockResolvedValue(contribution());
+        vi.mocked(pledgesApi.forGift).mockResolvedValue(pageOf([]));
     });
 
     it('records an anonymous gift when no member is chosen, and closes', async () => {
@@ -153,5 +156,109 @@ describe('RecordGiftDialog', () => {
 
         const calls = vi.mocked(contributionsApi.record).mock.calls;
         expect(calls[0]?.[1]).toBe(calls[1]?.[1]);
+    });
+
+    describe('paying a pledge', () => {
+        /** Chooses the member found by searching. */
+        async function chooseMember(user: ReturnType<typeof userEvent.setup>) {
+            await user.type(screen.getByLabelText('Member (optional)'), 'Abena');
+            await user.click(screen.getByRole('button', { name: 'Search' }));
+            await user.click(await screen.findByRole('button', { name: 'Choose' }));
+        }
+
+        beforeEach(() => {
+            vi.mocked(pledgesApi.forGift).mockResolvedValue(
+                pageOf([
+                    pledge({ id: 'pledge-1', description: 'Building 2026', amount_outstanding_formatted: 'GHS 700.00' }),
+                    pledge({ id: 'pledge-done', description: 'Old pledge', status: 'fulfilled', status_label: 'Fulfilled' }),
+                ]),
+            );
+        });
+
+        it('offers the pledges that can take the gift once a member and a fund are chosen, and not ones paid in full', async () => {
+            const user = userEvent.setup();
+            open();
+
+            await chooseMember(user);
+            await user.selectOptions(await fundSelect(), 'fund-1');
+
+            expect(await screen.findByRole('option', { name: 'Building 2026 · GHS 700.00 outstanding' })).toBeInTheDocument();
+            expect(screen.queryByRole('option', { name: /Old pledge/ })).not.toBeInTheDocument();
+            expect(pledgesApi.forGift).toHaveBeenCalledWith('member-1', 'fund-1');
+        });
+
+        it('sends the pledge the gift pays', async () => {
+            const user = userEvent.setup();
+            open();
+
+            await chooseMember(user);
+            await user.selectOptions(await fundSelect(), 'fund-1');
+            await user.type(screen.getByLabelText(/Amount/), '200');
+            await screen.findByRole('option', { name: /Building 2026/ });
+            await user.selectOptions(screen.getByRole('combobox', { name: /Pays a pledge/ }), 'pledge-1');
+            await user.click(screen.getByRole('button', { name: 'Record gift' }));
+
+            await waitFor(() => expect(contributionsApi.record).toHaveBeenCalled());
+            expect(vi.mocked(contributionsApi.record).mock.calls[0]?.[0]).toMatchObject({
+                member_id: 'member-1',
+                fund_type_id: 'fund-1',
+                pledge_id: 'pledge-1',
+            });
+        });
+
+        it('sends no pledge when none is chosen', async () => {
+            const user = userEvent.setup();
+            open();
+
+            await chooseMember(user);
+            await user.selectOptions(await fundSelect(), 'fund-1');
+            await user.type(screen.getByLabelText(/Amount/), '200');
+            await screen.findByRole('option', { name: /Building 2026/ });
+            await user.click(screen.getByRole('button', { name: 'Record gift' }));
+
+            await waitFor(() => expect(contributionsApi.record).toHaveBeenCalled());
+            expect(vi.mocked(contributionsApi.record).mock.calls[0]?.[0].pledge_id).toBeUndefined();
+        });
+
+        it('does not ask about pledges for an anonymous gift', async () => {
+            const user = userEvent.setup();
+            open();
+
+            await user.selectOptions(await fundSelect(), 'fund-1');
+
+            expect(screen.queryByRole('combobox', { name: /Pays a pledge/ })).not.toBeInTheDocument();
+            expect(pledgesApi.forGift).not.toHaveBeenCalled();
+        });
+
+        it('drops a pledge chosen for one fund when the fund is changed, instead of sending it', async () => {
+            const user = userEvent.setup();
+            open();
+
+            await chooseMember(user);
+            await user.selectOptions(await fundSelect(), 'fund-1');
+            await user.type(screen.getByLabelText(/Amount/), '200');
+            await screen.findByRole('option', { name: /Building 2026/ });
+            await user.selectOptions(screen.getByRole('combobox', { name: /Pays a pledge/ }), 'pledge-1');
+            vi.mocked(pledgesApi.forGift).mockResolvedValue(pageOf([]));
+            await user.selectOptions(screen.getByLabelText(/^Fund/), 'fund-2');
+            await user.click(screen.getByRole('button', { name: 'Record gift' }));
+
+            await waitFor(() => expect(contributionsApi.record).toHaveBeenCalled());
+            expect(vi.mocked(contributionsApi.record).mock.calls[0]?.[0].pledge_id).toBeUndefined();
+        });
+
+        it('carries on without the pledge field when the pledges cannot be read', async () => {
+            vi.mocked(pledgesApi.forGift).mockRejectedValue(new ApiError('This action is unauthorized.', 403));
+            const user = userEvent.setup();
+            open();
+
+            await chooseMember(user);
+            await user.selectOptions(await fundSelect(), 'fund-1');
+            await user.type(screen.getByLabelText(/Amount/), '200');
+            await user.click(screen.getByRole('button', { name: 'Record gift' }));
+
+            await waitFor(() => expect(contributionsApi.record).toHaveBeenCalled());
+            expect(screen.queryByRole('combobox', { name: /Pays a pledge/ })).not.toBeInTheDocument();
+        });
     });
 });

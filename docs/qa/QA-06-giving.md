@@ -206,6 +206,13 @@ Voided contribution does NOT appear in totals.
 - At 375 px wide the table fits without the page scrolling sideways
 - A pastor (giving.summary only) sees the same page; a department head gets "This report was not found." and no link
 
+### TC-06-15b — Paying a pledge from the gift form (browser)
+**Action:** For a member with an Active GHS 800.00 pledge to the Building Fund, open **Giving, Record a gift**, choose that member and the Building Fund, and look at the form
+**Expected:**
+- A "Pays a pledge (optional)" choice appears and lists the pledge with its outstanding amount; it does not appear for an anonymous gift, before a fund is chosen, or when the member has no pledge to that fund; a pledge already paid in full is not listed
+- Recording a GHS 200 gift that names the pledge makes the pledge show "Paid GHS 200.00 of GHS 800.00", GHS 600.00 outstanding and 25% on the Pledges page
+- Changing the member or the fund after choosing a pledge does not send the old pledge
+
 ### TC-06-20 — Pledges page (browser)
 **Action:** As a finance secretary, open **Pledges** from the menu, choose **New pledge**, search for a member, pick a fund, enter a description, an amount and a target date, and make the pledge
 **Expected:**

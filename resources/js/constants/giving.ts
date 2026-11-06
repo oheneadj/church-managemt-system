@@ -21,6 +21,9 @@ export const PLEDGE_MAX = '999999.99';
 /** The longest description a pledge may have. */
 export const PLEDGE_DESCRIPTION_MAX = 255;
 
+/** How many of a member's pledges to one fund are asked for when choosing which one a gift pays; 100 is the most the server allows. */
+export const GIFT_PLEDGES_PER_PAGE = 100;
+
 /** The order payment methods are listed in on the offering report: cash first, as in docs/04. */
 export const OFFERING_METHOD_ORDER = ['cash', 'momo', 'card', 'ussd'] as const satisfies readonly PaymentMethod[];
 

@@ -1086,6 +1086,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-060 — A gift names the pledge it pays, in the record-a-gift form
+**Date:** November 2026
+**Decided by:** Lead Engineer, from D-047 point 1 (the finance secretary picks the pledge; nothing is linked by matching), D-057 point 7 and `ValidPledgeForGift`
+**Status:** Active. Completes the part of story 4.14 that waited for the pledge page.
+
+**Decision:**
+1. **A "Pays a pledge (optional)" choice appears in the record-a-gift form** only once a member and a fund have been chosen and that member has a pledge to that fund that can still take a gift. It lists those pledges with what is still outstanding, as the API wrote it ("Building 2026 · GHS 700.00 outstanding"), and sends `pledge_id` with the gift. A pledge already paid in full (`fulfilled`) is not offered, because the server would refuse it.
+2. **It asks the server for the member's pledges to that fund** (`GET /pledges?member_id=&fund_type_id=`), nothing until both are chosen, and carries on without the field if the pledges cannot be read (for example a person with `giving.record` but not `giving.view`).
+3. **A stale choice is never sent.** A pledge chosen before the member or the fund was changed is dropped on submit unless it is still on offer, the same safeguard as the service choice (D-057).
+4. **Nothing is added up in the browser.** The server recalculates the pledge's paid amount, progress and status when the gift is saved (D-047), and the pledge list refreshes because recording a gift refreshes the pledge keys.
+
+**Rationale:** Without it a gift could not pay a pledge from the screen, so progress bars would never move for cash gifts, which is how most churches give.
+
+**Revisit when:** a church wants the form to suggest the only open pledge automatically, or to split one gift across two pledges.
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

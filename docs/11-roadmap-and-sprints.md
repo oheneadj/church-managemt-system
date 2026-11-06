@@ -251,7 +251,8 @@ Blocked: [anything blocking me / none]
 | | 4.12 Sunday offering report (by fund and payment method, voided gifts left out; gifts with no service reported with the day's first service; fund names kept on the gift, D-048) |
 | | 4.7 receipts (the `ContributionReceived` event and a queued listener that texts the member), and SMS credits charged for church-paid texts (D-051) |
 | Frontend | 4.13 gift list with filters and void, 4.14 record a cash gift (D-057), 4.16 offering report page (D-058), 4.17 pledges page (D-059) |
-| Next | 4.18 SMS credit balance, and choosing the pledge a gift pays in the record-a-gift form (left out of 4.14 on purpose, D-057). 4.15 waits with the digital payments |
+| | The pledge a gift pays can be chosen in the record-a-gift form (D-060) |
+| Next | 4.18 SMS credit balance. 4.15 waits with the digital payments |
 | Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
 
 > **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).

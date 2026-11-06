@@ -12,6 +12,18 @@ export function usePledges(filters: PledgeFilters) {
     });
 }
 
+/**
+ * A member's pledges to one fund, for the record-a-gift form. Nothing is asked until both the member and the fund are
+ * chosen. It sits under the pledge keys, so recording a gift (which refreshes those) refreshes it too.
+ */
+export function usePledgesForGift(memberId: string, fundId: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.pledges.forGift(memberId, fundId),
+        queryFn: () => pledgesApi.forGift(memberId, fundId),
+        enabled: memberId !== '' && fundId !== '',
+    });
+}
+
 /** Making and changing pledges. Either one refreshes every pledge list. */
 export function usePledgeMutations() {
     const queryClient = useQueryClient();
