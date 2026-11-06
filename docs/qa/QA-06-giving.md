@@ -8,12 +8,13 @@
 
 ## Setup
 
-- Test church with Paystack subaccount configured (test environment)
-- Finance secretary user with `giving.record` and `giving.edit` permissions
-- Pastor user with `giving.summary` only
+- Test church with a verified payout account and PayPerlez test keys for the MoMo cases (D-018); a Paystack subaccount only for card cases
+- Finance secretary user with `giving.view`, `giving.record`, `giving.edit` and `giving.summary` permissions
+- Pastor user with `giving.summary` only (no `giving.view`, D-046)
 - 10 members with phone numbers
-- Fund types: Tithe, Offering, Building Fund
-- Africa's Talking sandbox for SMS receipts
+- Fund types: Tithe, Sunday Offering, Building Fund (the church's seven defaults come from `config/giving.php`)
+- SMS receipts go through PayPerlez's test environment (D-038) or the `log` driver locally
+- Every `POST` that records a gift or pledge sends an `Idempotency-Key` header (docs/08); all paths are under `/api/v1`
 
 ---
 
@@ -22,7 +23,7 @@
 ### Cash Recording
 
 ### TC-06-01 — Record a cash contribution
-**Action:** `POST /api/contributions` with:
+**Action:** `POST /api/v1/contributions` with:
 ```json
 {
   "member_id": "{member_ulid}",
@@ -34,9 +35,9 @@
 }
 ```
 **Expected:**
-- Contribution created with ULID
-- `payment_method: cash`, `status: completed`
-- `paystack_reference` is null (no payment gateway involved)
+- Contribution created with ULID, `201`
+- `payment_method: cash`; a cash gift has no status, no processing fee and no payment reference: it exists once it is recorded (docs/08)
+- `fund_name` holds the fund's name at that moment (D-048)
 - SMS receipt queued for delivery to member's phone
 
 ### TC-06-02 — Cash receipt SMS format
@@ -53,9 +54,9 @@ Thank you for your faithfulness.
 ### TC-06-03 — Record contribution without member (anonymous)
 **Action:** Submit contribution with no `member_id`
 **Expected:**
-- Contribution created with `member_id: null`, `is_anonymous: true`
+- Contribution created with `member_id: null`; the response shows `is_anonymous: true` (worked out from the missing member, not stored)
 - No SMS receipt attempted
-- Appears in Sunday offering report as "Anonymous"
+- Counted in the offering report's `anonymous_count`; the report holds totals only and never names a giver
 
 ### TC-06-04 — Validation: Amount must be positive
 **Action:** Submit `"amount": -50` or `"amount": 0`
@@ -68,6 +69,8 @@ Thank you for your faithfulness.
 ---
 
 ### MoMo Payments
+
+> **Not built yet, and the cases below are the old Paystack design.** MoMo now goes through PayPerlez with automatic payout (D-018, D-020), the endpoint is `POST /api/v1/contributions/initiate` (docs/08), and the digital path waits for the legal opinion and PayPerlez's webhook event names (D-046). They also assume a gift row with `status` pending, completed or failed, which `docs/07-data-model.md` does not have yet. They are rewritten together with that design decision, not before.
 
 ### TC-06-06 — Initiate MoMo payment — MTN
 **Action:** `POST /api/contributions/momo` with:
@@ -118,10 +121,10 @@ Thank you for your faithfulness.
 ### Void / Correction
 
 ### TC-06-11 — Void a contribution
-**Action:** `PATCH /api/contributions/{id}/void` with `{ "reason": "Member requested reversal" }`
+**Action:** `PATCH /api/v1/contributions/{id}/void` with `{ "reason": "Member requested reversal" }`
 **Expected:**
 - `is_voided: true`, `voided_at` timestamp set, `void_reason` saved
-- `voided_by_user_id` set to the acting user's ID
+- `voided_by` set to the acting user's ID
 - Contribution still exists (no deletion)
 - Sunday offering report total EXCLUDES voided contributions
 - Original contribution SMS receipt is NOT retracted (no "unsend")
@@ -131,7 +134,7 @@ Thank you for your faithfulness.
 **Expected:** `422 { "message": "This contribution has already been voided." }`
 
 ### TC-06-13 — Cannot delete a contribution
-**Action:** `DELETE /api/contributions/{id}`
+**Action:** `DELETE /api/v1/contributions/{id}`
 **Expected:** `405 Method Not Allowed` — no DELETE endpoint exists for contributions
 
 ---
@@ -139,23 +142,24 @@ Thank you for your faithfulness.
 ### Pledge Tracking
 
 ### TC-06-14 — Create a pledge
-**Action:** `POST /api/pledges` with:
+**Action:** `POST /api/v1/pledges` with:
 ```json
 {
   "member_id": "{member_ulid}",
   "fund_type_id": "{building_fund_id}",
-  "pledged_amount": 1000.00,
-  "due_date": "2026-12-31"
+  "description": "Building Fund 2026 Pledge",
+  "amount_pledged": 1000.00,
+  "target_date": "2026-12-31"
 }
 ```
 **Expected:**
-- Pledge created with `amount_paid: 0`, `amount_outstanding: 1000.00`
+- Pledge created (`201`, `status: active`) with `amount_paid: "0.00"`, `amount_outstanding: "1000.00"`
 
 ### TC-06-15 — Pledge amount_paid updates when contribution is recorded
 **Action:** Record a GHS 300 contribution for this member and fund type, with `pledge_id` set to the pledge (D-047: the gift names its pledge; nothing is matched by guesswork)
 **Expected:**
 - `pledges.amount_paid` = 300.00 (recalculated from the gifts in the same transaction)
-- `amount_outstanding` = 700.00 (computed: pledged_amount - amount_paid)
+- `amount_outstanding` = 700.00 (computed: amount_pledged - amount_paid)
 
 ### TC-06-16 — Pledge amount_paid reverts on contribution void
 **Action:** Void the GHS 300 contribution from TC-06-15
@@ -180,10 +184,13 @@ Total:          GHS 975.00
 Voided contribution does NOT appear in totals.
 
 ### TC-06-18 — Role restriction: Pastor sees summary only
-**Action:** As a user with `giving.summary` but NOT `giving.record` → `GET /api/contributions`
-**Expected:** `403` on the full list endpoint
+**Action:** As a user with `giving.summary` but NOT `giving.view` (the pastor, D-046) → `GET /api/v1/contributions` and `GET /api/v1/pledges`
+**Expected:** `403` on both list endpoints
 
-**Action:** `GET /api/reports/giving-trends`
+**Action:** `GET /api/v1/services/{id}/offering-report`
+**Expected:** `200` — totals only (no giver's name or id)
+
+**Action:** `GET /api/v1/reports/giving` (Sprint 5)
 **Expected:** `200` — summary data only (totals and trends, no individual records)
 
 ---

@@ -73,7 +73,7 @@
 ### TC-03-08 — Church settings are pre-populated with defaults
 **Action:** After onboarding, check church settings page
 **Expected:**
-- Default fund types are seeded: Tithe, Offering, Building Fund, Missions, Special Offering
+- Default fund types are seeded from `config/giving.php`: Tithe, Sunday Offering, Building Fund, Benevolence, Missions, Special Offering, Other (docs/04, D-046)
 - Cash receipt SMS is enabled by default
 - WhatsApp CHECKIN is disabled (pending Meta setup)
 

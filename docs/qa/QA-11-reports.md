@@ -20,10 +20,10 @@
 ### Attendance Trends Report
 
 ### TC-11-01 — Attendance trend — 12-week view
-**Action:** `GET /api/reports/attendance-trends?period=12w`
+**Action:** `GET /api/v1/reports/attendance?weeks=12` (docs/08: `weeks`, default 12)
 **Expected:**
 - Returns 12 data points (one per week)
-- Each point: `{ "week": "2026-W42", "total": 87, "first_timers": 3 }`
+- Each point: `{ "week": "2026-W42", "total": 87, "first_timers": 3 }` (`first_timers` counts `visitor_records` whose first visit is that week's services)
 - Weeks with no service: `"total": 0` (not omitted)
 - Average attendance shown in summary
 
@@ -40,14 +40,14 @@
 ### Giving Trends Report
 
 ### TC-11-04 — Giving trend — monthly view
-**Action:** `GET /api/reports/giving-trends?period=12m`
+**Action:** `GET /api/v1/reports/giving?months=12` (docs/08: `months`)
 **Expected:**
 - 12 data points (one per month)
 - Each point: `{ "month": "2026-10", "total": 15450.00, "by_fund": { "tithe": 8000.00, "offering": 5000.00, ... } }`
 - Voided contributions excluded from totals
 
 ### TC-11-05 — Giving trend by fund type
-**Action:** `GET /api/reports/giving-trends?fund_type_id={tithe_id}&period=6m`
+**Action:** `GET /api/v1/reports/giving?fund_type_id={tithe_id}&months=6`
 **Expected:** Only tithe contributions in the totals
 
 ### TC-11-06 — Giving trend accuracy against raw data
@@ -55,7 +55,7 @@
 **Expected:** Report total matches manual sum exactly (to 2 decimal places)
 
 ### TC-11-07 — Giving trend: pastor sees summary only
-**Action:** As a pastor (giving.summary permission) → `GET /api/reports/giving-trends`
+**Action:** As a pastor (giving.summary permission) → `GET /api/v1/reports/giving`
 **Expected:** Summary totals returned — no breakdown by member, no individual amounts
 
 ---
@@ -63,7 +63,7 @@
 ### Member Growth Report
 
 ### TC-11-08 — Member growth — monthly view
-**Action:** `GET /api/reports/member-growth?period=12m`
+**Action:** `GET /api/v1/reports/members` (docs/08)
 **Expected:**
 - Shows new members added per month
 - Shows members who became inactive/transferred per month
@@ -74,9 +74,9 @@
 ### CSV Exports
 
 ### TC-11-09 — Member CSV export — async flow
-**Action:** `POST /api/exports/members`
+**Action:** `POST /api/v1/exports/members`
 **Expected:**
-- Response: `202 { "export_id": "ulid", "status": "processing", "message": "Export is being prepared. You will receive an SMS when it is ready." }`
+- Response: `202 { "export_id": "ulid", "message": "Export queued. You will receive a download link via SMS when ready." }` (an `exports` table to track it is added with stories 5.8 and 5.9, D-039 point 6)
 - Background job dispatched to `exports` queue
 - Once complete: CSV uploaded to R2
 - Admin receives SMS: "Your member export is ready. Download it here: [signed URL]"
@@ -92,7 +92,7 @@
 - National ID NOT exported (PII — excluded by design)
 
 ### TC-11-11 — Contribution CSV export
-**Action:** `POST /api/exports/contributions?start_date=2026-10-01&end_date=2026-10-31`
+**Action:** `POST /api/v1/exports/contributions` with the same `from` and `to` filters as the list (`2026-10-01`, `2026-10-31`)
 **Expected:**
 - CSV headers: `id, date, member_name, fund_type, amount_ghs, payment_method, reference, is_voided, recorded_by`
 - Only October contributions included

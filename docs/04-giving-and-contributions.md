@@ -122,11 +122,12 @@ Fund types are configurable per church. The system ships with sensible defaults;
 - Tithe
 - Sunday Offering
 - Building Fund
-- Pledge (links to a specific pledge record)
 - Benevolence
 - Missions
 - Special Offering
 - Other
+
+"Pledge" is not a fund: a gift that pays a pledge is linked to the pledge record itself with `pledge_id` (D-047). The list lives in `config/giving.php`.
 
 ---
 
@@ -140,8 +141,8 @@ Every contribution — whether MoMo, card, or cash — creates a single `contrib
 | `church_id` | Foreign key | Multi-tenancy scoping |
 | `member_id` | Foreign key (nullable) | Null = anonymous or visitor |
 | `service_id` | Foreign key (nullable) | Which service it was given at |
-| `amount` | Decimal (10, 2) | Always in GHS |
-| `fund_type` | Enum / FK | Tithe, Offering, Pledge, etc. |
+| `amount` | Decimal (12, 2) | Always in GHS (D-017) |
+| `fund_type_id` | Foreign key | The fund (Tithe, Sunday Offering, etc.); the fund's name at that moment is kept in `fund_name` (D-048) |
 | `payment_method` | Enum | `momo`, `card`, `cash`, `ussd` |
 | `paystack_reference` | String (nullable) | For Paystack MoMo/card; null otherwise |
 | `payperlez_reference` | String (nullable) | For PayPerlez collections; null otherwise |
