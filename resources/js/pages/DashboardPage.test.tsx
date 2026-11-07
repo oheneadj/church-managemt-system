@@ -4,12 +4,14 @@ import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ApiError } from '@/services/ApiError';
+import { attendanceApi } from '@/services/api/attendance';
 import { membersApi } from '@/services/api/members';
 import { reportsApi } from '@/services/api/reports';
-import { givingByMonth, memberSummary, pageOf } from '@/test/fixtures';
+import { absentMember, givingByMonth, memberSummary, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 import type { AttendanceReport } from '@/types/reports';
 
+vi.mock('@/services/api/attendance');
 vi.mock('@/services/api/members');
 vi.mock('@/services/api/reports');
 
@@ -39,6 +41,7 @@ describe('DashboardPage', () => {
         vi.resetAllMocks();
         vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()], { total: 212 }));
         vi.mocked(reportsApi.attendance).mockResolvedValue(byService);
+        vi.mocked(attendanceApi.absent).mockResolvedValue(pageOf([absentMember()], { total: 7 }));
         vi.mocked(reportsApi.giving).mockResolvedValue(givingByMonth({ data: [givingByMonth().data[0]!] }));
     });
 
@@ -68,6 +71,16 @@ describe('DashboardPage', () => {
         expect(giving).toHaveAttribute('href', '/reports?tab=giving');
     });
 
+    it('shows how many members have gone absent, by the church setting, leading to the list', async () => {
+        open();
+
+        await screen.findByText('Absent members');
+        const absent = card('Absent members');
+        expect(within(absent).getByText('7')).toBeInTheDocument();
+        expect(absent).toHaveAttribute('href', '/attendance/absent');
+        expect(attendanceApi.absent).toHaveBeenCalledWith({ consecutive: null, page: 1 });
+    });
+
     it('asks for the active members only, and the reports for one service list and one month', async () => {
         open();
         await screen.findByText('GHS 15,450.00');
@@ -83,7 +96,9 @@ describe('DashboardPage', () => {
         await screen.findByText('212');
         expect(screen.queryByText('Last service')).not.toBeInTheDocument();
         expect(screen.queryByText('Given this month')).not.toBeInTheDocument();
+        expect(screen.queryByText('Absent members')).not.toBeInTheDocument();
         expect(reportsApi.attendance).not.toHaveBeenCalled();
+        expect(attendanceApi.absent).not.toHaveBeenCalled();
         expect(reportsApi.giving).not.toHaveBeenCalled();
     });
 

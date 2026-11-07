@@ -1,5 +1,6 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
+import type { AbsentMember } from '@/types/services';
 import type { AttendanceReport, GivingReport, MemberGrowthReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
@@ -408,6 +409,18 @@ export function memberGrowthReport(overrides: Partial<MemberGrowthReport> = {}):
             { month: '2026-08', month_start: '2026-08-01', new: 1, lost: 5, net: -4, active_total: 209 },
         ],
         summary: { new: 5, lost: 6, net: -1 },
+        ...overrides,
+    };
+}
+
+/** A member who has missed the last few services, as `GET /attendance/absent` sends them. */
+export function absentMember(overrides: Partial<AbsentMember> = {}): AbsentMember {
+    return {
+        id: 'member-7',
+        member_number: 'GRC-0007',
+        full_name: 'Kofi Boateng',
+        phone: '+233244111222',
+        last_attended_at: '2026-10-11T10:05:00+00:00',
         ...overrides,
     };
 }

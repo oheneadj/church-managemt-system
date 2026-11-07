@@ -131,3 +131,20 @@ export interface ServiceScheduleInput {
     ends_at: string | null;
     is_active?: boolean;
 }
+
+/** A member who has missed the last few Sunday services in a row (docs/08, List Absent Members). */
+export interface AbsentMember {
+    id: string;
+    member_number: string;
+    full_name: string;
+    /** In international form, for example +233244123456. */
+    phone: string;
+    /** When they were last checked in to anything, or null if they never have been. */
+    last_attended_at: string | null;
+}
+
+/** What the absent members list is asked for. A `consecutive` of null means the church's own setting. */
+export interface AbsentFilters {
+    consecutive: number | null;
+    page: number;
+}

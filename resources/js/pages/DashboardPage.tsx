@@ -1,3 +1,4 @@
+import { AbsentMembersCard } from '@/components/Dashboard/AbsentMembersCard';
 import { GivingCard } from '@/components/Dashboard/GivingCard';
 import { LastServiceCard } from '@/components/Dashboard/LastServiceCard';
 import { MembersCard } from '@/components/Dashboard/MembersCard';
@@ -8,8 +9,8 @@ import { useChurchStore } from '@/stores/useChurchStore';
 
 /**
  * The home page (story 5.10): a few summary cards that suit the signed-in person's role, each leading to the page behind it.
- * The active members are for everyone. The last service's attendance is for staff who may read reports, and this month's
- * giving for staff who may read giving totals. A card a person may not see is not drawn, and the server refuses it anyway.
+ * The active members are for everyone. The last service's attendance and the members who have gone absent are for staff who
+ * may read reports, and this month's giving for staff who may read giving totals. A card a person may not see is not drawn, and the server refuses it anyway.
  */
 export function DashboardPage() {
     const user = useAuthStore((state) => state.user);
@@ -25,9 +26,10 @@ export function DashboardPage() {
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">Here is how {church?.name} is doing.</p>
             </header>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <MembersCard />
                 {canSeeAttendance && <LastServiceCard />}
+                {canSeeAttendance && <AbsentMembersCard />}
                 {canSeeGiving && <GivingCard />}
             </div>
         </section>

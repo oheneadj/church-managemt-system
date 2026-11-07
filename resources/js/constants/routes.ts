@@ -24,6 +24,7 @@ export const ROUTES = {
     STAFF: '/staff',
     SETTINGS: '/settings',
     REPORTS: '/reports',
+    ABSENT_MEMBERS: '/attendance/absent',
     MESSAGES: '/messages',
     BROADCAST_NEW: '/messages/new',
     FAMILIES: '/families',

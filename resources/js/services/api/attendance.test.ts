@@ -66,3 +66,17 @@ describe('attendanceApi', () => {
         expect(api.post).toHaveBeenCalledWith('/services/service-1/visitors', { name: 'Yaw Boateng' });
     });
 });
+
+describe('attendanceApi.absent', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('asks for the page, and for a number of services only when one is chosen, so the church setting applies otherwise', async () => {
+        vi.mocked(api.get).mockReturnValue(respond(pageOf([])));
+
+        await attendanceApi.absent({ consecutive: null, page: 2 });
+        await attendanceApi.absent({ consecutive: 5, page: 1 });
+
+        expect(api.get).toHaveBeenNthCalledWith(1, '/attendance/absent', { params: { page: 2 } });
+        expect(api.get).toHaveBeenNthCalledWith(2, '/attendance/absent', { params: { page: 1, consecutive: 5 } });
+    });
+});

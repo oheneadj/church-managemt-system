@@ -1,5 +1,6 @@
 import { ChartColumn } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { SelectField } from '@/components/form/SelectField';
 import { AttendanceTable } from '@/components/Reports/AttendanceTable';
 import { ATTENDANCE_SERIES, attendancePoints } from '@/components/Reports/attendancePoints';
@@ -11,6 +12,7 @@ import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { Skeleton } from '@/components/ui/skeleton';
 import { REPORT_GROUPINGS } from '@/constants/enums';
 import { ATTENDANCE_WEEK_CHOICES } from '@/constants/reports';
+import { ROUTES } from '@/constants/routes';
 import { useAttendanceFilters } from '@/hooks/useAttendanceFilters';
 import { useAttendanceReport } from '@/hooks/useReports';
 import { formatCount } from '@/utils/formatCount';
@@ -43,6 +45,10 @@ export function AttendanceReportView() {
                     onChange={(event) => setFilter('group', event.target.value)}
                 />
             </section>
+
+            <Link to={ROUTES.ABSENT_MEMBERS} className="self-start text-sm underline underline-offset-4">
+                See who has gone absent
+            </Link>
 
             {report.isPending && <Skeleton aria-busy="true" className="h-[280px] w-full rounded-xl" />}
             {report.isError && <ErrorNotice message={report.error.message} onRetry={() => void report.refetch()} />}
