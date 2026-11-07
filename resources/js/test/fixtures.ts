@@ -1,6 +1,7 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
 import type { AbsentMember } from '@/types/services';
+import type { ActivityLine } from '@/types/activity';
 import type { AttendanceReport, GivingReport, MemberGrowthReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Department, Family, Member, MemberSummary, Page } from '@/types/members';
@@ -436,6 +437,18 @@ export function department(overrides: Partial<Department> = {}): Department {
         head: null,
         is_active: true,
         members_count: 0,
+        ...overrides,
+    };
+}
+
+/** One line of the recent activity feed, as `GET /activity` sends it. */
+export function activityLine(overrides: Partial<ActivityLine> = {}): ActivityLine {
+    return {
+        id: 'activity-1',
+        kind: 'member_added',
+        text: 'Kwame Boateng was added as a member.',
+        actor_name: 'Abena Pastor',
+        occurred_at: '2026-11-09T10:00:00+00:00',
         ...overrides,
     };
 }

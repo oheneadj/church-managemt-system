@@ -4,13 +4,15 @@ import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ApiError } from '@/services/ApiError';
+import { activityApi } from '@/services/api/activity';
 import { attendanceApi } from '@/services/api/attendance';
 import { membersApi } from '@/services/api/members';
 import { reportsApi } from '@/services/api/reports';
-import { absentMember, givingByMonth, memberSummary, pageOf } from '@/test/fixtures';
+import { absentMember, activityLine, givingByMonth, memberSummary, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 import type { AttendanceReport } from '@/types/reports';
 
+vi.mock('@/services/api/activity');
 vi.mock('@/services/api/attendance');
 vi.mock('@/services/api/members');
 vi.mock('@/services/api/reports');
@@ -42,6 +44,18 @@ describe('DashboardPage', () => {
         vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()], { total: 212 }));
         vi.mocked(reportsApi.attendance).mockResolvedValue(byService);
         vi.mocked(attendanceApi.absent).mockResolvedValue(pageOf([absentMember()], { total: 7 }));
+        vi.mocked(activityApi.recent).mockResolvedValue(
+            pageOf([
+                activityLine(),
+                activityLine({
+                    id: 'activity-2',
+                    kind: 'gift_recorded',
+                    text: 'A gift of GHS 1,250.50 to Building Fund was recorded.',
+                    actor_name: null,
+                    occurred_at: null,
+                }),
+            ]),
+        );
         vi.mocked(reportsApi.giving).mockResolvedValue(givingByMonth({ data: [givingByMonth().data[0]!] }));
     });
 
@@ -97,6 +111,8 @@ describe('DashboardPage', () => {
         expect(screen.queryByText('Last service')).not.toBeInTheDocument();
         expect(screen.queryByText('Given this month')).not.toBeInTheDocument();
         expect(screen.queryByText('Absent members')).not.toBeInTheDocument();
+        expect(screen.queryByText('Recent activity')).not.toBeInTheDocument();
+        expect(activityApi.recent).not.toHaveBeenCalled();
         expect(reportsApi.attendance).not.toHaveBeenCalled();
         expect(attendanceApi.absent).not.toHaveBeenCalled();
         expect(reportsApi.giving).not.toHaveBeenCalled();
@@ -146,5 +162,78 @@ describe('DashboardPage', () => {
 
         expect(await screen.findByLabelText('Given this month is loading')).toBeInTheDocument();
         expect(await screen.findByText('212')).toBeInTheDocument();
+    });
+});
+
+describe('DashboardPage: recent activity', () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+        vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()], { total: 212 }));
+        vi.mocked(reportsApi.attendance).mockResolvedValue(byService);
+        vi.mocked(reportsApi.giving).mockResolvedValue(givingByMonth({ data: [givingByMonth().data[0]!] }));
+        vi.mocked(attendanceApi.absent).mockResolvedValue(pageOf([], { total: 0 }));
+        vi.mocked(activityApi.recent).mockResolvedValue(
+            pageOf([
+                activityLine(),
+                activityLine({
+                    id: 'activity-2',
+                    kind: 'gift_recorded',
+                    text: 'A gift of GHS 1,250.50 to Building Fund was recorded.',
+                    actor_name: null,
+                    occurred_at: null,
+                }),
+            ]),
+        );
+    });
+
+    it('shows the sentences the server wrote, with who did it and when', async () => {
+        open();
+
+        const first = (await screen.findByText('Kwame Boateng was added as a member.')).closest('li') as HTMLElement;
+        expect(within(first).getByText('Abena Pastor · 9 Nov 2026, 10:00')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Recent activity' })).toBeInTheDocument();
+    });
+
+    it('shows a line with no actor or time as just its sentence', async () => {
+        open();
+
+        const second = (await screen.findByText('A gift of GHS 1,250.50 to Building Fund was recorded.')).closest('li') as HTMLElement;
+        expect(second.querySelectorAll('span')).toHaveLength(2);
+        expect(within(second).queryByText(/·/)).not.toBeInTheDocument();
+    });
+
+    it('asks for the latest ten lines only', async () => {
+        open();
+        await screen.findByText('Kwame Boateng was added as a member.');
+
+        expect(activityApi.recent).toHaveBeenCalledWith(10);
+    });
+
+    it('says plainly when nothing has happened yet', async () => {
+        vi.mocked(activityApi.recent).mockResolvedValue(pageOf([]));
+        open();
+
+        expect(await screen.findByText('Nothing yet')).toBeInTheDocument();
+    });
+
+    it('keeps the cards when the feed cannot be read, and tries again', async () => {
+        vi.mocked(activityApi.recent)
+            .mockRejectedValueOnce(new ApiError('The server is busy.', 500))
+            .mockResolvedValue(pageOf([activityLine()]));
+        open();
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('The server is busy.');
+        expect(await screen.findByText('212')).toBeInTheDocument();
+
+        screen.getByRole('button', { name: 'Try again' }).click();
+        expect(await screen.findByText('Kwame Boateng was added as a member.')).toBeInTheDocument();
+    });
+
+    it('is not shown, and not asked for, to someone who may not read reports', async () => {
+        open([PERMISSIONS.MEMBERS_VIEW]);
+
+        await screen.findByText('212');
+        expect(screen.queryByText('Recent activity')).not.toBeInTheDocument();
+        expect(activityApi.recent).not.toHaveBeenCalled();
     });
 });

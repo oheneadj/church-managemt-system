@@ -60,6 +60,9 @@ export const QUERY_KEYS = {
             ['messages', 'list', filters] as const,
         estimate: (input: { message: string; status: string; department: string }) => ['messages', 'estimate', input] as const,
     },
+    activity: {
+        recent: (count: number) => ['activity', 'recent', count] as const,
+    },
     absentMembers: {
         list: (filters: { consecutive: number | null; page: number }) => ['absent-members', 'list', filters] as const,
     },
