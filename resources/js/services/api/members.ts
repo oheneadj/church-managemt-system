@@ -1,17 +1,11 @@
 import { api } from '@/services';
+import { memberFilterParams } from '@/services/api/filterParams';
 import type { Member, MemberFilters, MemberInput, MemberSummary, Milestone, MilestoneInput, Page } from '@/types/members';
 import type { MemberStatus } from '@/constants/enums';
 
-/** Turns the filters into query parameters, leaving out the ones that are empty. */
+/** The list's query: its filters and the page. */
 function toQuery(filters: MemberFilters): Record<string, string | number> {
-    const query: Record<string, string | number> = { page: filters.page };
-
-    if (filters.search !== '') query.search = filters.search;
-    if (filters.status !== '') query.status = filters.status;
-    if (filters.gender !== '') query.gender = filters.gender;
-    if (filters.department_id !== '') query.department_id = filters.department_id;
-
-    return query;
+    return { page: filters.page, ...memberFilterParams(filters) };
 }
 
 export const membersApi = {

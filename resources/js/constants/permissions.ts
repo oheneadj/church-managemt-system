@@ -14,6 +14,7 @@ export const PERMISSIONS = {
     GIVING_VIEW: 'giving.view',
     GIVING_RECORD: 'giving.record',
     GIVING_EDIT: 'giving.edit',
+    GIVING_EXPORT: 'giving.export',
     SMS_SEND: 'sms.send',
     REPORTS_VIEW: 'reports.view',
     CHURCH_SETTINGS: 'church.settings',

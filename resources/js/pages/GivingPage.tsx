@@ -1,6 +1,7 @@
 import { HandCoins } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { ContributionExportButton } from '@/components/Giving/ContributionExportButton';
 import { ContributionFilterBar } from '@/components/Giving/ContributionFilterBar';
 import { ContributionListItem } from '@/components/Giving/ContributionListItem';
 import { RecordGiftDialog } from '@/components/Giving/RecordGiftDialog';
@@ -30,6 +31,7 @@ export function GivingPage() {
     const gifts = useContributions(filters);
     const canVoid = useCan(PERMISSIONS.GIVING_EDIT);
     const canRecord = useCan(PERMISSIONS.GIVING_RECORD);
+    const canExport = useCan(PERMISSIONS.GIVING_EXPORT);
     const [recording, setRecording] = useState(false);
     const [voiding, setVoiding] = useState<Contribution | undefined>(undefined);
 
@@ -38,7 +40,14 @@ export function GivingPage() {
             <PageHeader
                 title="Giving"
                 description={gifts.data ? `${gifts.data.meta.total} gifts found` : 'Every gift the church has recorded'}
-                actions={canRecord ? <Button onClick={() => setRecording(true)}>Record a gift</Button> : undefined}
+                actions={
+                    canExport || canRecord ? (
+                        <>
+                            {canExport && <ContributionExportButton filters={filters} />}
+                            {canRecord && <Button onClick={() => setRecording(true)}>Record a gift</Button>}
+                        </>
+                    ) : undefined
+                }
             />
             <ContributionFilterBar filters={filters} onChange={setFilter} onClear={() => setParams({})} />
 

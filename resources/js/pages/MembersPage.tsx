@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react';
 import { Link } from 'react-router';
+import { MemberExportButton } from '@/components/Members/MemberExportButton';
 import { MemberFilterBar } from '@/components/Members/MemberFilterBar';
 import { MemberListItem } from '@/components/Members/MemberListItem';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export function MembersPage() {
     const { filters, setFilter, setPage, clear } = useMemberFilters();
     const members = useMembers(filters);
     const canEdit = useCan(PERMISSIONS.MEMBERS_EDIT);
+    const canExport = useCan(PERMISSIONS.MEMBERS_EXPORT);
 
     const addButton = canEdit ? (
         <Button asChild size="lg">
@@ -37,7 +39,14 @@ export function MembersPage() {
             <PageHeader
                 title="Members"
                 description={members.data ? `${members.data.meta.total} found` : 'Everyone in your church'}
-                actions={addButton}
+                actions={
+                    canExport || addButton ? (
+                        <>
+                            {canExport && <MemberExportButton filters={filters} />}
+                            {addButton}
+                        </>
+                    ) : undefined
+                }
             />
             <MemberFilterBar filters={filters} onChange={setFilter} onClear={clear} />
 

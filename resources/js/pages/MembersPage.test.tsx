@@ -6,12 +6,14 @@ import { ROUTES } from '@/constants/routes';
 import { MembersPage } from '@/pages/MembersPage';
 import { ApiError } from '@/services/ApiError';
 import { departmentsApi } from '@/services/api/departments';
+import { exportsApi } from '@/services/api/exports';
 import { membersApi } from '@/services/api/members';
 import { memberSummary, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 
 vi.mock('@/services/api/members');
 vi.mock('@/services/api/departments');
+vi.mock('@/services/api/exports');
 
 function open(url: string = ROUTES.MEMBERS, permissions: Permission[] = []) {
     return renderPage(<MembersPage />, { path: ROUTES.MEMBERS, url, permissions });
@@ -140,5 +142,41 @@ describe('MembersPage', () => {
         await screen.findByRole('link', { name: /Emmanuel/ });
 
         expect(screen.queryByRole('link', { name: 'Add member' })).not.toBeInTheDocument();
+    });
+});
+
+describe('MembersPage: export', () => {
+    beforeEach(() => {
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([]));
+        vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()]));
+        vi.mocked(exportsApi.members).mockResolvedValue({ export_id: 'e1', message: 'Export queued.' });
+    });
+
+    it('shows the Export list button only to staff who may export', async () => {
+        const first = open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EXPORT]);
+        await screen.findByText('Emmanuel Mensah-Boateng');
+        expect(screen.getByRole('button', { name: 'Export list' })).toBeInTheDocument();
+        first.unmount();
+
+        open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EDIT]);
+        await screen.findByText('Emmanuel Mensah-Boateng');
+        expect(screen.queryByRole('button', { name: 'Export list' })).not.toBeInTheDocument();
+    });
+
+    it('exports with the filters now on screen, so the file holds what the list shows', async () => {
+        const user = userEvent.setup();
+        open('/members?status=active&search=Abena&page=2', [PERMISSIONS.MEMBERS_EXPORT]);
+        await screen.findByText('Emmanuel Mensah-Boateng');
+
+        await user.click(screen.getByRole('button', { name: 'Export list' }));
+        await user.click(await screen.findByRole('button', { name: 'Email me the link' }));
+
+        await waitFor(() => expect(exportsApi.members).toHaveBeenCalledTimes(1));
+        expect(vi.mocked(exportsApi.members).mock.calls[0]?.[0]).toMatchObject({
+            search: 'Abena',
+            status: 'active',
+            gender: '',
+            department_id: '',
+        });
     });
 });

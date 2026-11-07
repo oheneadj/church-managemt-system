@@ -5,11 +5,13 @@ import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { GivingPage } from '@/pages/GivingPage';
 import { contributionsApi } from '@/services/api/contributions';
+import { exportsApi } from '@/services/api/exports';
 import { fundTypesApi } from '@/services/api/fundTypes';
 import { contribution, fundType, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 
 vi.mock('@/services/api/contributions');
+vi.mock('@/services/api/exports');
 vi.mock('@/services/api/fundTypes');
 
 const FINANCE: Permission[] = [PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_EDIT];
@@ -128,5 +130,42 @@ describe('GivingPage', () => {
         open();
 
         expect(await screen.findByText('No gifts found')).toBeInTheDocument();
+    });
+});
+
+describe('GivingPage: export', () => {
+    beforeEach(() => {
+        vi.mocked(fundTypesApi.active).mockResolvedValue([fundType()]);
+        vi.mocked(contributionsApi.list).mockResolvedValue(pageOf([contribution()]));
+        vi.mocked(exportsApi.contributions).mockResolvedValue({ export_id: 'e1', message: 'Export queued.' });
+    });
+
+    it('shows the Export gifts button only to staff who hold giving.export, not to someone who can only record gifts', async () => {
+        const first = open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_EXPORT]);
+        await screen.findByText(/Emmanuel Mensah/);
+        expect(screen.getByRole('button', { name: 'Export gifts' })).toBeInTheDocument();
+        first.unmount();
+
+        open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_RECORD]);
+        await screen.findByText(/Emmanuel Mensah/);
+        expect(screen.queryByRole('button', { name: 'Export gifts' })).not.toBeInTheDocument();
+    });
+
+    it('exports with the dates, fund and way of giving now on screen, and says voided gifts are included', async () => {
+        const user = userEvent.setup();
+        open([PERMISSIONS.GIVING_VIEW, PERMISSIONS.GIVING_EXPORT], '/giving?from=2026-10-01&to=2026-10-31&fund=fund-1&method=cash');
+        await screen.findByText(/Emmanuel Mensah/);
+
+        await user.click(screen.getByRole('button', { name: 'Export gifts' }));
+        expect(await screen.findByRole('alertdialog')).toHaveTextContent('Voided gifts are included and marked');
+        await user.click(screen.getByRole('button', { name: 'Email me the link' }));
+
+        await waitFor(() => expect(exportsApi.contributions).toHaveBeenCalledTimes(1));
+        expect(vi.mocked(exportsApi.contributions).mock.calls[0]?.[0]).toMatchObject({
+            from: '2026-10-01',
+            to: '2026-10-31',
+            fund: 'fund-1',
+            method: 'cash',
+        });
     });
 });

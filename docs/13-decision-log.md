@@ -1175,7 +1175,9 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 8. **The giving records export (story 5.9) follows the same rules.** One job (`BuildExportJob`) and one builder contract serve both kinds. It needs `giving.export` (church admin, finance secretary), takes the gift list's filters, always includes voided gifts (flagged) so it can be audited, lists gifts oldest first with exact amounts, the church's own dates and the fund name the gift was recorded under, and never holds notes, the void reason or phone numbers. The 5-an-hour limit is shared between the two kinds.
 
-**Revisit when:** the React export buttons are built, a digital gift can be pending or failed (D-053: the giving export then lists completed gifts only), or a church needs very large exports (then stream to the file or split it).
+9. **The React buttons (built).** *Export list* on the Members page (`members.export`) and *Export gifts* on the Giving page (`giving.export`) ask for the file with the filters now on screen, so it holds what the list shows. Each asks first, because a file of people's private details is leaving the system: it says where the link goes (the staff member's own email), that it works for 1 hour and that the file is deleted after 7 days. The server's own words are shown, including the 5-an-hour limit. The button stays off while the request is on its way. The export has no `Idempotency-Key`: the hourly limit and the disabled button are what stop a double click from asking twice.
+
+**Revisit when:** a digital gift can be pending or failed (D-053: the giving export then lists completed gifts only), or a church needs very large exports (then stream to the file or split it).
 
 ---
 
