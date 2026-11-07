@@ -14,6 +14,7 @@ use App\Enums\MessageStatus;
 use App\Enums\MilestoneType;
 use App\Enums\PaymentMethod;
 use App\Enums\PledgeStatus;
+use App\Enums\ReportGrouping;
 use App\Enums\ServiceType;
 use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
@@ -56,6 +57,7 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['STAFF_ROLES', StaffRole::class],
     ['MESSAGE_CHANNELS', MessageChannel::class],
     ['MESSAGE_STATUSES', MessageStatus::class],
+    ['REPORT_GROUPINGS', ReportGrouping::class],
     ['STAFF_PERMISSIONS', StaffPermission::class],
 ]);
 

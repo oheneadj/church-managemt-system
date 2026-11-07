@@ -172,4 +172,11 @@ export const MESSAGE_STATUSES = [
     { value: 'failed', label: 'Failed' },
 ] as const satisfies readonly Option<string>[];
 
+export const REPORT_GROUPINGS = [
+    { value: 'week', label: 'By week' },
+    { value: 'service', label: 'By service' },
+] as const satisfies readonly Option<string>[];
+
+export type ReportGrouping = (typeof REPORT_GROUPINGS)[number]['value'];
+
 export type MessageStatus = (typeof MESSAGE_STATUSES)[number]['value'];

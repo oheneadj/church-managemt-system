@@ -15,6 +15,7 @@ export const PERMISSIONS = {
     GIVING_RECORD: 'giving.record',
     GIVING_EDIT: 'giving.edit',
     SMS_SEND: 'sms.send',
+    REPORTS_VIEW: 'reports.view',
     CHURCH_SETTINGS: 'church.settings',
     STAFF_MANAGE: 'staff.manage',
 } as const;

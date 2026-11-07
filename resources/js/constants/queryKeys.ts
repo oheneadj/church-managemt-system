@@ -58,6 +58,9 @@ export const QUERY_KEYS = {
             ['messages', 'list', filters] as const,
         estimate: (input: { message: string; status: string; department: string }) => ['messages', 'estimate', input] as const,
     },
+    reports: {
+        attendance: (filters: { weeks: number; groupBy: string }) => ['reports', 'attendance', filters] as const,
+    },
     departments: {
         all: ['departments'] as const,
     },

@@ -1,5 +1,6 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
+import type { AttendanceReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
@@ -346,6 +347,20 @@ export function messageLogLine(overrides: Partial<MessageLogLine> = {}): Message
         cost_units: '1.0000',
         sent_at: '2026-11-05T14:30:00+00:00',
         created_at: '2026-11-05T14:29:00+00:00',
+        ...overrides,
+    };
+}
+
+/** The attendance trend by week, newest first, as `GET /reports/attendance` sends it. */
+export function attendanceByWeek(overrides: Partial<Extract<AttendanceReport, { group_by: 'week' }>> = {}): AttendanceReport {
+    return {
+        group_by: 'week',
+        data: [
+            { week: '2026-W43', week_start: '2026-10-19', total: 0, first_timers: 0, services: 0 },
+            { week: '2026-W42', week_start: '2026-10-12', total: 124, first_timers: 3, services: 2 },
+            { week: '2026-W41', week_start: '2026-10-05', total: 98, first_timers: 1, services: 1 },
+        ],
+        summary: { average: 111, highest: 124, lowest: 98 },
         ...overrides,
     };
 }

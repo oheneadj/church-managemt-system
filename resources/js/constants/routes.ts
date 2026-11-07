@@ -23,6 +23,7 @@ export const ROUTES = {
     PLEDGES: '/pledges',
     STAFF: '/staff',
     SETTINGS: '/settings',
+    REPORTS: '/reports',
     MESSAGES: '/messages',
     BROADCAST_NEW: '/messages/new',
     FAMILIES: '/families',
