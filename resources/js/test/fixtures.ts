@@ -1,4 +1,5 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
+import type { MessageLogLine } from '@/types/messages';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
@@ -326,4 +327,25 @@ export function churchProfile(overrides: Partial<ChurchProfile> = {}): ChurchPro
 /** The church's settings, as `GET /church/settings` sends them. */
 export function churchSettings(overrides: Partial<ChurchSettings> = {}): ChurchSettings {
     return { youth_age_limit: 25, absence_threshold: 3, receipt_on_cash: true, absent_alert: false, ...overrides };
+}
+
+/** One line of the message log, as `GET /messages` sends it. */
+export function messageLogLine(overrides: Partial<MessageLogLine> = {}): MessageLogLine {
+    return {
+        id: 'message-1',
+        channel: 'sms',
+        channel_label: 'SMS',
+        recipient_type: 'member',
+        recipient_id: 'member-1',
+        recipient_phone: '+233244123456',
+        recipient_email: null,
+        message_type: 'broadcast',
+        content: 'Service starts at 9am this Sunday.',
+        status: 'sent',
+        status_label: 'Sent',
+        cost_units: '1.0000',
+        sent_at: '2026-11-05T14:30:00+00:00',
+        created_at: '2026-11-05T14:29:00+00:00',
+        ...overrides,
+    };
 }

@@ -158,3 +158,18 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number]['value'];
 export type StaffRole = (typeof STAFF_ROLES)[number]['value'];
 export type PledgeStatus = (typeof PLEDGE_STATUSES)[number]['value'];
 export type CheckInMethod = (typeof CHECKIN_METHODS)[number]['value'];
+
+export const MESSAGE_CHANNELS = [
+    { value: 'sms', label: 'SMS' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'email', label: 'Email' },
+] as const satisfies readonly Option<string>[];
+
+export const MESSAGE_STATUSES = [
+    { value: 'queued', label: 'Queued' },
+    { value: 'sent', label: 'Sent' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'failed', label: 'Failed' },
+] as const satisfies readonly Option<string>[];
+
+export type MessageStatus = (typeof MESSAGE_STATUSES)[number]['value'];

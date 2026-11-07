@@ -9,6 +9,8 @@ use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MembershipType;
 use App\Enums\MemberStatus;
+use App\Enums\MessageChannel;
+use App\Enums\MessageStatus;
 use App\Enums\MilestoneType;
 use App\Enums\PaymentMethod;
 use App\Enums\PledgeStatus;
@@ -52,6 +54,8 @@ it('mirrors each enum exactly, values and labels', function (string $constant, s
     ['CHECKIN_METHODS', CheckInMethod::class],
     ['PLEDGE_STATUSES', PledgeStatus::class],
     ['STAFF_ROLES', StaffRole::class],
+    ['MESSAGE_CHANNELS', MessageChannel::class],
+    ['MESSAGE_STATUSES', MessageStatus::class],
     ['STAFF_PERMISSIONS', StaffPermission::class],
 ]);
 

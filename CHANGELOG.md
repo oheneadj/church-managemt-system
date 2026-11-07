@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(messages): the message log page, story 5.12 (2026-11-09)
+- **What:** A Messages page at `/messages` (menu link shown only with `sms.send`: church admin and pastor) listing every message the platform sent for the church, newest first: who got it, what it said, how it was sent, its kind, when, and whether it arrived (the status word is shown beside its colour). Filters for how it was sent, the kind and the From and To days, kept in the address with page 1 on every change, a Clear filters button, loading, empty and error states with Try again. A kind this app does not know is shown as the server named it. `MESSAGE_CHANNELS` and `MESSAGE_STATUSES` are mirrored from the PHP enums and a backend test fails if they drift. The page is added to the 375px layout check.
+- **Why:** Story 5.12 and docs/02 ("full history of all outbound messages with status and recipient"). `GET /messages` existed with no screen, and the broadcasts and absence texts now fill the log, so a church admin needs to see what was sent and what failed.
+- **Files:** resources/js/ (pages/MessagesPage and its test, components/Messages/ (MessageFilterBar, MessageListItem), hooks/ (useMessages, useMessageFilters), services/api/messages and its test, types/messages, constants/ (enums, messages, queryKeys, routes), components/layout/AppLayout, router/index, test/fixtures), tests/Feature/Operations/FrontendEnumsTest.php, e2e/ (messages.spec, mobile-layout.spec), docs/ (11-roadmap-and-sprints), CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### feat(settings): the settings page, story 5.14 (2026-11-09)
 - **What:** A Settings page at `/settings` for the church admin (menu link shown only with `church.settings`). Two forms, each with its own Save: **Church details** (name, denomination, address, town, region, phone, email; the web address is shown and cannot be changed) and **Preferences** (youth age, how many missed Sundays make a member absent, text a receipt for cash gifts, and the new switch for the automatic absence text, with a note that it uses SMS credits). Numbers are checked against the same ranges as the server, an emptied optional detail is sent as null to clear it, a server message appears beside its box, and a new church name shows in the menu at once. Also: the settings page is added to the 375px layout check.
 - **Why:** Story 5.14. The church profile and settings endpoints existed with no screen, and the absence text (D-067) is off until a church admin switches it on, so it needed somewhere to be switched on.
@@ -779,6 +785,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- Message log page (story 5.12): every message sent for the church with its status, filtered by how it was sent, kind and dates; a Messages menu item shown only to staff with `sms.send`
 - Settings page (story 5.14): church details and preferences, including the switch for the automatic absence text; a Settings menu item shown only to staff with `church.settings`
 - Giving screen (story 4.13): the gift list with date, fund and method filters kept in the address, voided gifts, and a Void button with a required reason for staff who may correct giving; a Giving menu item shown only to staff with `giving.view`
 - Check-in can only be opened on the service's own day (D-052); the screen says why when it cannot

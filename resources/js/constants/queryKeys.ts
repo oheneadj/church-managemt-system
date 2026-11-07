@@ -52,6 +52,11 @@ export const QUERY_KEYS = {
         profile: ['church', 'profile'] as const,
         settings: ['church', 'settings'] as const,
     },
+    messages: {
+        all: ['messages'] as const,
+        list: (filters: { channel: string; type: string; from: string; to: string; page: number }) =>
+            ['messages', 'list', filters] as const,
+    },
     departments: {
         all: ['departments'] as const,
     },

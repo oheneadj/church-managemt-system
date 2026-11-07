@@ -150,7 +150,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 5.9 | Export contributions (CSV, async) | Backend | 1 | Done: `POST /exports/contributions`, same worker, private file and emailed 1-hour link as the member export (D-064) |
 | 5.10 | Dashboard home page (React) — role-specific summary cards | Frontend | 4 | |
 | 5.11 | Broadcast compose page (React) — SMS + WhatsApp | Frontend | 3 | Recipient preview + credit estimate |
-| 5.12 | Message log page (React) | Frontend | 2 | |
+| 5.12 | Message log page (React) | Frontend | 2 | Done: `/messages` for staff with `sms.send`, filters by how it was sent, kind and dates in the address |
 | 5.13 | Reports page (React) — attendance + giving charts | Frontend | 3 | |
 | 5.14 | Settings page (React) — church profile, service defaults, comms prefs | Frontend | 2 | Backend done: `GET` and `PUT /church/settings` (youth age limit, absence threshold, cash receipts) and `GET` and `PUT /church` (name, denomination, address, city, region, phone, email). The page is built (`/settings`: church details and preferences, for the church admin); the logo upload is still to build |
 | 5.15 | Role management page (React) — invite staff, assign roles | Frontend | 2 | Done: `/staff` for the church admin (menu link shown only with `staff.manage`): invite, change name, phone and role, deactivate (asks first) and reactivate; extra permissions are shown but not edited here |

@@ -51,6 +51,10 @@ export const router = createBrowserRouter([
                                 lazy: async () => ({ Component: (await import('@/pages/StaffPage')).StaffPage }),
                             },
                             {
+                                path: ROUTES.MESSAGES,
+                                lazy: async () => ({ Component: (await import('@/pages/MessagesPage')).MessagesPage }),
+                            },
+                            {
                                 path: ROUTES.SETTINGS,
                                 lazy: async () => ({ Component: (await import('@/pages/SettingsPage')).SettingsPage }),
                             },
