@@ -7,7 +7,7 @@ import { ReportsPage } from '@/pages/ReportsPage';
 import { fundTypesApi } from '@/services/api/fundTypes';
 import { reportsApi } from '@/services/api/reports';
 import { ApiError } from '@/services/ApiError';
-import { attendanceByWeek, fundType, givingByMonth } from '@/test/fixtures';
+import { attendanceByWeek, fundType, givingByMonth, memberGrowthReport } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 
 vi.mock('@/services/api/reports');
@@ -203,6 +203,92 @@ describe('ReportsPage: giving', () => {
     });
 });
 
+describe('ReportsPage: member growth', () => {
+    const membersTab = '/reports?tab=members';
+
+    beforeEach(() => {
+        vi.resetAllMocks();
+        vi.mocked(reportsApi.memberGrowth).mockResolvedValue(memberGrowthReport());
+    });
+
+    it('shows the active members today, the new, lost and net for the period, and a column for each month', async () => {
+        open(membersTab);
+
+        const tile = (label: string) => screen.getAllByText(label)[0]?.closest('div') as HTMLElement;
+        await screen.findByText('Active members');
+        expect(within(tile('Active members')).getByText('212')).toBeInTheDocument();
+        expect(within(tile('New')).getByText('5')).toBeInTheDocument();
+        expect(within(tile('Lost')).getByText('6')).toBeInTheDocument();
+        expect(within(tile('Net')).getByText('-1')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'October 2026: Net +3' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'August 2026: Net -4' })).toBeInTheDocument();
+        const legend = screen.getByRole('list', { name: 'Legend' });
+        expect(within(legend).getByText('New')).toBeInTheDocument();
+        expect(within(legend).getByText('Lost')).toBeInTheDocument();
+        expect(reportsApi.memberGrowth).toHaveBeenCalledWith(12);
+    });
+
+    it('asks again for another number of months and keeps it in the address', async () => {
+        const user = userEvent.setup();
+        const { router } = open(membersTab);
+        await screen.findByText('Active members');
+
+        await user.selectOptions(screen.getByLabelText('Show'), '24');
+
+        await waitFor(() => expect(reportsApi.memberGrowth).toHaveBeenLastCalledWith(24));
+        expect(router.state.location.search).toContain('months=24');
+    });
+
+    it('swaps the chart for a table with the active total at the end of each month', async () => {
+        const user = userEvent.setup();
+        open(membersTab);
+        await screen.findByText('Active members');
+
+        await user.click(screen.getByRole('button', { name: 'Show as table' }));
+
+        const table = screen.getByRole('table', { name: 'Membership by month, newest first' });
+        expect(within(table).getByRole('row', { name: /October 2026 4 1 \+3 212/ })).toBeInTheDocument();
+        expect(within(table).getByRole('row', { name: /August 2026 1 5 -4 209/ })).toBeInTheDocument();
+    });
+
+    it('says plainly when nobody joined or left, and still shows the active members', async () => {
+        vi.mocked(reportsApi.memberGrowth).mockResolvedValue(
+            memberGrowthReport({
+                data: [{ month: '2026-10', month_start: '2026-10-01', new: 0, lost: 0, net: 0, active_total: 212 }],
+                summary: { new: 0, lost: 0, net: 0 },
+            }),
+        );
+        open(membersTab);
+
+        expect(await screen.findByText('No change in membership')).toBeInTheDocument();
+        expect(within(screen.getByText('Active members').closest('div') as HTMLElement).getByText('212')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Show as table' })).not.toBeInTheDocument();
+    });
+
+    it('says what went wrong and tries again', async () => {
+        vi.mocked(reportsApi.memberGrowth)
+            .mockRejectedValueOnce(new ApiError('The server is busy.', 500))
+            .mockResolvedValue(memberGrowthReport());
+        const user = userEvent.setup();
+        open(membersTab);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('The server is busy.');
+        await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+        expect(await screen.findByText('Active members')).toBeInTheDocument();
+    });
+
+    it('is hidden, and never asked for, from someone who may read only giving', async () => {
+        vi.mocked(reportsApi.giving).mockResolvedValue(givingByMonth());
+        vi.mocked(fundTypesApi.active).mockResolvedValue([]);
+        open('/reports?tab=members', [PERMISSIONS.GIVING_SUMMARY]);
+
+        await screen.findByText('GHS 18,450.00');
+        expect(screen.queryByRole('tab', { name: 'Members' })).not.toBeInTheDocument();
+        expect(reportsApi.memberGrowth).not.toHaveBeenCalled();
+    });
+});
+
 describe('ReportsPage: who sees which tab', () => {
     beforeEach(() => {
         vi.resetAllMocks();
@@ -215,6 +301,7 @@ describe('ReportsPage: who sees which tab', () => {
         open('/reports', [PERMISSIONS.REPORTS_VIEW, PERMISSIONS.GIVING_SUMMARY]);
 
         expect(await screen.findByRole('tab', { name: 'Attendance' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Members' })).toBeInTheDocument();
         expect(screen.getByRole('tab', { name: 'Giving' })).toBeInTheDocument();
     });
 

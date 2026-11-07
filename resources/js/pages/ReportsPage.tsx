@@ -1,6 +1,7 @@
 import { ChartColumn } from 'lucide-react';
 import { AttendanceReportView } from '@/components/Reports/AttendanceReportView';
 import { GivingReportView } from '@/components/Reports/GivingReportView';
+import { MemberGrowthView } from '@/components/Reports/MemberGrowthView';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +10,7 @@ import { useCan } from '@/hooks/useCan';
 import { useUrlTab } from '@/hooks/useUrlTab';
 
 /** The reports a person may open, one tab each. The tab is in the address. */
-type ReportTab = 'attendance' | 'giving';
+type ReportTab = 'attendance' | 'members' | 'giving';
 
 /** The tabs this person may open, for the tab bar: the server checks each report again, so these only hide what it would refuse. */
 function ReportTabs({ tabs }: { tabs: readonly [ReportTab, ...ReportTab[]] }) {
@@ -19,11 +20,17 @@ function ReportTabs({ tabs }: { tabs: readonly [ReportTab, ...ReportTab[]] }) {
         <Tabs value={tab} onValueChange={selectTab}>
             <TabsList>
                 {tabs.includes('attendance') && <TabsTrigger value="attendance">Attendance</TabsTrigger>}
+                {tabs.includes('members') && <TabsTrigger value="members">Members</TabsTrigger>}
                 {tabs.includes('giving') && <TabsTrigger value="giving">Giving</TabsTrigger>}
             </TabsList>
             {tabs.includes('attendance') && (
                 <TabsContent value="attendance">
                     <AttendanceReportView />
+                </TabsContent>
+            )}
+            {tabs.includes('members') && (
+                <TabsContent value="members">
+                    <MemberGrowthView />
                 </TabsContent>
             )}
             {tabs.includes('giving') && (
@@ -43,7 +50,10 @@ function ReportTabs({ tabs }: { tabs: readonly [ReportTab, ...ReportTab[]] }) {
 export function ReportsPage() {
     const canSeeAttendance = useCan(PERMISSIONS.REPORTS_VIEW);
     const canSeeGiving = useCan(PERMISSIONS.GIVING_SUMMARY);
-    const tabs: ReportTab[] = [...(canSeeAttendance ? (['attendance'] as const) : []), ...(canSeeGiving ? (['giving'] as const) : [])];
+    const tabs: ReportTab[] = [
+        ...(canSeeAttendance ? (['attendance', 'members'] as const) : []),
+        ...(canSeeGiving ? (['giving'] as const) : []),
+    ];
     const [first, ...rest] = tabs;
 
     return (

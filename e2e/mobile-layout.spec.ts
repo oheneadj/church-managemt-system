@@ -15,6 +15,7 @@ const PAGES = [
     '/messages',
     '/messages/new',
     '/reports',
+    '/reports?tab=members',
     '/reports?tab=giving',
 ];
 

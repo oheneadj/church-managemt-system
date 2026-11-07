@@ -75,3 +75,23 @@ export interface GivingFilters {
     months: number;
     fundId: string;
 }
+
+/** One calendar month of membership change (D-063). A quiet month is a row of zeros. */
+export interface MemberGrowthRow {
+    month: string;
+    month_start: string;
+    /** People who became active this month. */
+    new: number;
+    /** Active members who left active membership this month. */
+    lost: number;
+    /** `new` minus `lost`. */
+    net: number;
+    /** How many active members there were at the end of the month. */
+    active_total: number;
+}
+
+/** Membership change by month, newest first. Counts only: no member is named. */
+export interface MemberGrowthReport {
+    data: MemberGrowthRow[];
+    summary: { new: number; lost: number; net: number };
+}

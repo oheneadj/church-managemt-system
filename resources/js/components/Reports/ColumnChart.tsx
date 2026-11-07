@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CHART_MAX_LABELS, CHART_MIN_SLOT_PX, CHART_VALUE_TICKS } from '@/constants/reports';
-import { chartScale } from '@/utils/chartScale';
+import { divergingScale } from '@/utils/chartScale';
 import { formatCount } from '@/utils/formatCount';
 
 /** One thing the columns are made of, such as a fund. Its colour is a CSS colour, normally one of the chart colour tokens. */
@@ -11,8 +11,9 @@ export interface ChartSeries {
 }
 
 /**
- * How much of one series is in one column. `value` is only for drawing; `text` is what is shown to people. Several parts of one
- * column may share a series (and so a colour), each with its own `name` for the tooltip.
+ * How much of one series is in one column. `value` is only for drawing, and a negative one is drawn below the baseline;
+ * `text` is what is shown to people. Several parts of one column may share a series (and so a colour), each with its own
+ * `name` for the tooltip.
  */
 export interface ColumnPart {
     seriesKey: string;
@@ -54,9 +55,14 @@ const TALL_SHARE = 0.55;
 /** The height of the plot, not counting the labels under it. */
 const PLOT_HEIGHT_CLASS = 'h-48';
 
-/** What a column adds up to. Used only to draw it: the words come from the figures the server formatted. */
-function totalOf(point: ColumnPoint): number {
-    return point.parts.reduce((sum, part) => sum + part.value, 0);
+/** How tall a column's part above the baseline is. Used only to draw it: the words come from the figures the server formatted. */
+function upOf(point: ColumnPoint): number {
+    return point.parts.reduce((sum, part) => sum + Math.max(part.value, 0), 0);
+}
+
+/** How deep a column's part below the baseline is, as a positive number. */
+function downOf(point: ColumnPoint): number {
+    return point.parts.reduce((sum, part) => sum + Math.max(-part.value, 0), 0);
 }
 
 /**
@@ -75,18 +81,28 @@ function tooltipHeight(share: number): { bottom: string } | { top: number } {
     return share > TALL_SHARE ? { top: 0 } : { bottom: `calc(${share * 100}% + 8px)` };
 }
 
-/** The coloured blocks of one column, stacked from the bottom with a 2px gap in the surface colour between them. */
-function Stack({ point, colours }: { point: ColumnPoint; colours: ReadonlyMap<string, string> }) {
-    const total = totalOf(point);
-    const blocks = point.parts.filter((part) => part.value > 0);
+interface StackProps {
+    parts: readonly ColumnPart[];
+    colours: ReadonlyMap<string, string>;
+    /** Whether the blocks grow up from the baseline or down from it. */
+    direction: 'up' | 'down';
+}
+
+/**
+ * The coloured blocks of one side of a column, stacked away from the baseline with a 2px gap in the surface colour between
+ * them. The end furthest from the baseline is the rounded one.
+ */
+function Stack({ parts, colours, direction }: StackProps) {
+    const total = parts.reduce((sum, part) => sum + Math.abs(part.value), 0);
+    const up = direction === 'up';
 
     return (
-        <span className="flex h-full w-full flex-col-reverse">
-            {blocks.map((part, index) => (
+        <span className={`flex h-full w-full ${up ? 'flex-col-reverse' : 'flex-col'}`}>
+            {parts.map((part, index) => (
                 <span
                     key={`${part.seriesKey}-${part.name ?? ''}`}
-                    className={`block w-full ${index === blocks.length - 1 ? 'rounded-t-[4px]' : ''} ${index > 0 ? 'border-t-2 border-background' : ''}`}
-                    style={{ height: `${(part.value / total) * 100}%`, backgroundColor: colours.get(part.seriesKey) }}
+                    className={`block w-full ${index === parts.length - 1 ? (up ? 'rounded-t-[4px]' : 'rounded-b-[4px]') : ''} ${index > 0 ? 'border-t-2 border-background' : ''}`}
+                    style={{ height: `${(Math.abs(part.value) / total) * 100}%`, backgroundColor: colours.get(part.seriesKey) }}
                 />
             ))}
         </span>
@@ -102,10 +118,12 @@ function Stack({ point, colours }: { point: ColumnPoint; colours: ReadonlyMap<st
  */
 export function ColumnChart({ points, series, axisCaption, refreshing = false }: ColumnChartProps) {
     const [active, setActive] = useState<number | undefined>(undefined);
-    const largest = Math.max(0, ...points.map(totalOf));
-    const scale = chartScale(largest, CHART_VALUE_TICKS);
+    const mostUp = Math.max(0, ...points.map(upOf));
+    const scale = divergingScale(mostUp, Math.max(0, ...points.map(downOf)), CHART_VALUE_TICKS);
+    // Where a value sits up the plot, as a percentage of its height. 0 is the baseline, which is the bottom unless something goes down.
+    const at = (value: number) => ((value - scale.min) / (scale.max - scale.min)) * 100;
     const labelEvery = Math.ceil(points.length / CHART_MAX_LABELS);
-    const highest = points.findIndex((point) => totalOf(point) === largest && largest > 0);
+    const highest = points.findIndex((point) => upOf(point) === mostUp && mostUp > 0);
     const activePoint = active === undefined ? undefined : points[active];
     const colours = new Map(series.map((one) => [one.key, one.color]));
     const names = new Map(series.map((one) => [one.key, one.name]));
@@ -116,11 +134,7 @@ export function ColumnChart({ points, series, axisCaption, refreshing = false }:
                 <div aria-hidden="true" className={`relative mt-6 ${PLOT_HEIGHT_CLASS} w-11 shrink-0 text-xs text-muted-foreground`}>
                     {axisCaption !== undefined && <span className="absolute -top-6 right-0">{axisCaption}</span>}
                     {scale.ticks.map((tick) => (
-                        <span
-                            key={tick}
-                            className="absolute right-0 translate-y-1/2 tabular-nums"
-                            style={{ bottom: `${(tick / scale.max) * 100}%` }}
-                        >
+                        <span key={tick} className="absolute right-0 translate-y-1/2 tabular-nums" style={{ bottom: `${at(tick)}%` }}>
                             {formatCount(tick)}
                         </span>
                     ))}
@@ -130,35 +144,64 @@ export function ColumnChart({ points, series, axisCaption, refreshing = false }:
                         className={`transition-opacity ${refreshing ? 'opacity-50' : ''}`}
                         style={{ minWidth: points.length * CHART_MIN_SLOT_PX }}
                     >
-                        <div className={`relative ${PLOT_HEIGHT_CLASS} border-b border-viz-baseline`}>
-                            {scale.ticks.slice(1).map((tick) => (
-                                <div
-                                    key={tick}
-                                    aria-hidden="true"
-                                    className="absolute inset-x-0 border-t border-viz-grid"
-                                    style={{ bottom: `${(tick / scale.max) * 100}%` }}
-                                />
-                            ))}
-                            <div className="absolute inset-0 flex items-end gap-0.5" onMouseLeave={() => setActive(undefined)}>
+                        <div className={`relative ${PLOT_HEIGHT_CLASS}`}>
+                            {scale.ticks
+                                .filter((tick) => tick !== 0)
+                                .map((tick) => (
+                                    <div
+                                        key={tick}
+                                        aria-hidden="true"
+                                        className="absolute inset-x-0 border-t border-viz-grid"
+                                        style={{ bottom: `${at(tick)}%` }}
+                                    />
+                                ))}
+                            <div
+                                aria-hidden="true"
+                                className="absolute inset-x-0 border-t border-viz-baseline"
+                                style={{ bottom: `${at(0)}%` }}
+                            />
+                            <div className="absolute inset-0 flex gap-0.5" onMouseLeave={() => setActive(undefined)}>
                                 {points.map((point, index) => (
                                     <button
                                         key={point.id}
                                         type="button"
                                         aria-label={`${point.title}: ${point.totalText}`}
-                                        className="flex h-full min-w-0 flex-1 items-end justify-center rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                        className="relative h-full min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                                         onMouseEnter={() => setActive(index)}
                                         onFocus={() => setActive(index)}
                                         onBlur={() => setActive(undefined)}
                                     >
                                         <span
                                             aria-hidden="true"
-                                            className={`relative block w-full max-w-6 ${active === index ? 'brightness-110' : ''}`}
-                                            style={{ height: `${(totalOf(point) / scale.max) * 100}%` }}
+                                            className={`absolute inset-y-0 left-1/2 block w-full max-w-6 -translate-x-1/2 ${active === index ? 'brightness-110' : ''}`}
                                         >
-                                            <Stack point={point} colours={colours} />
-                                            {index === highest && point.peakText !== undefined && (
-                                                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap text-foreground">
-                                                    {point.peakText}
+                                            {upOf(point) > 0 && (
+                                                <span
+                                                    className="absolute inset-x-0 block"
+                                                    style={{ bottom: `${at(0)}%`, height: `${at(upOf(point)) - at(0)}%` }}
+                                                >
+                                                    <Stack
+                                                        parts={point.parts.filter((part) => part.value > 0)}
+                                                        colours={colours}
+                                                        direction="up"
+                                                    />
+                                                    {index === highest && point.peakText !== undefined && (
+                                                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap text-foreground">
+                                                            {point.peakText}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            )}
+                                            {downOf(point) > 0 && (
+                                                <span
+                                                    className="absolute inset-x-0 block"
+                                                    style={{ top: `${100 - at(0)}%`, height: `${at(0) - at(-downOf(point))}%` }}
+                                                >
+                                                    <Stack
+                                                        parts={point.parts.filter((part) => part.value < 0)}
+                                                        colours={colours}
+                                                        direction="down"
+                                                    />
                                                 </span>
                                             )}
                                         </span>
@@ -169,14 +212,14 @@ export function ColumnChart({ points, series, axisCaption, refreshing = false }:
                                 <div
                                     role="tooltip"
                                     className="pointer-events-none absolute z-10 flex flex-col gap-0.5 rounded-lg border bg-popover px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-sm"
-                                    style={{ ...tooltipAcross(active, points.length), ...tooltipHeight(totalOf(activePoint) / scale.max) }}
+                                    style={{ ...tooltipAcross(active, points.length), ...tooltipHeight(at(upOf(activePoint)) / 100) }}
                                 >
                                     <span className="text-sm font-semibold">{activePoint.totalText}</span>
                                     <span className="text-muted-foreground">{activePoint.title}</span>
                                     {activePoint.detail && <span className="text-muted-foreground">{activePoint.detail}</span>}
                                     {series.length > 1 &&
                                         activePoint.parts
-                                            .filter((part) => part.value > 0)
+                                            .filter((part) => part.value !== 0)
                                             .map((part) => (
                                                 <span key={`${part.seriesKey}-${part.name ?? ''}`} className="flex items-center gap-1.5">
                                                     <span

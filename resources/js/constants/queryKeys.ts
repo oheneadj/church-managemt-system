@@ -61,6 +61,7 @@ export const QUERY_KEYS = {
     reports: {
         attendance: (filters: { weeks: number; groupBy: string }) => ['reports', 'attendance', filters] as const,
         giving: (filters: { months: number; fundId: string }) => ['reports', 'giving', filters] as const,
+        memberGrowth: (months: number) => ['reports', 'member-growth', months] as const,
     },
     departments: {
         all: ['departments'] as const,

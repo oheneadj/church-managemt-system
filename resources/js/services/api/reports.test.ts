@@ -25,3 +25,13 @@ describe('reportsApi.giving', () => {
         expect(api.get).toHaveBeenLastCalledWith('/reports/giving', { params: { months: 6, fund_type_id: 'fund-1' } });
     });
 });
+
+describe('reportsApi.memberGrowth', () => {
+    it('asks for the months', async () => {
+        vi.mocked(api.get).mockResolvedValue({ data: { data: [], summary: {} } });
+
+        await reportsApi.memberGrowth(24);
+
+        expect(api.get).toHaveBeenCalledWith('/reports/members', { params: { months: 24 } });
+    });
+});

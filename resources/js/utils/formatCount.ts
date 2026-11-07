@@ -7,3 +7,10 @@ const COUNT = new Intl.NumberFormat('en-GB');
 export function formatCount(value: number): string {
     return COUNT.format(value);
 }
+
+const SIGNED = new Intl.NumberFormat('en-GB', { signDisplay: 'exceptZero' });
+
+/** A change in a count with its sign: "+3", "-2", "0". */
+export function formatSignedCount(value: number): string {
+    return SIGNED.format(value);
+}

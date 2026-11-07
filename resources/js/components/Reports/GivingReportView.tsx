@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GIVING_MONTH_CHOICES, NO_FIGURE } from '@/constants/reports';
+import { REPORT_MONTH_CHOICES, NO_FIGURE } from '@/constants/reports';
 import { useFundTypes } from '@/hooks/useFundTypes';
 import { useGivingFilters } from '@/hooks/useGivingFilters';
 import { useGivingReport } from '@/hooks/useReports';
@@ -37,7 +37,7 @@ export function GivingReportView() {
                 <SelectField
                     id="giving-months"
                     label="Show"
-                    options={GIVING_MONTH_CHOICES}
+                    options={REPORT_MONTH_CHOICES}
                     value={String(filters.months)}
                     onChange={(event) => setFilter('months', event.target.value)}
                 />

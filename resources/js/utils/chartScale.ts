@@ -22,3 +22,25 @@ export function chartScale(largest: number, aimForTicks: number): ChartScale {
 
     return { max: step * count, ticks: Array.from({ length: count + 1 }, (_, index) => index * step) };
 }
+
+export interface DivergingScale extends ChartScale {
+    /** The bottom of the axis: 0, or a round negative number when something is drawn below the baseline. */
+    min: number;
+}
+
+/**
+ * A value axis for columns that go up from 0 and may also go down from it (new members and lost ones). One step size is shared
+ * by both sides so the grid lines up, and each side is only as tall as its largest column needs. With nothing below the
+ * baseline it is the same axis `chartScale` gives, so a chart that never goes down is unchanged.
+ */
+export function divergingScale(up: number, down: number, aimForTicks: number): DivergingScale {
+    const step = chartScale(Math.max(up, down), aimForTicks).ticks[1] ?? 1;
+    const upSteps = Math.max(Math.ceil(up / step), 1);
+    const downSteps = Math.ceil(down / step);
+
+    return {
+        min: 0 - downSteps * step,
+        max: upSteps * step,
+        ticks: Array.from({ length: downSteps + upSteps + 1 }, (_, index) => (index - downSteps) * step),
+    };
+}

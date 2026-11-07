@@ -189,3 +189,76 @@ describe('ColumnChart with several series', () => {
         expect(screen.getByRole('tooltip')).not.toHaveTextContent('Building Fund');
     });
 });
+
+describe('ColumnChart with columns that go below the baseline', () => {
+    const GROWTH: readonly ChartSeries[] = [
+        { key: 'new', name: 'New', color: 'blue' },
+        { key: 'lost', name: 'Lost', color: 'red' },
+    ];
+    const month: ColumnPoint = {
+        id: '2026-10',
+        label: 'Oct 26',
+        title: 'October 2026',
+        totalText: 'Net +3',
+        parts: [
+            { seriesKey: 'new', value: 4, text: '4' },
+            { seriesKey: 'lost', value: -1, text: '1' },
+        ],
+    };
+
+    it('draws the lost part below a baseline that is no longer at the bottom, and the new part above it', () => {
+        const { container } = render(<ColumnChart points={[month]} series={GROWTH} />);
+
+        const baseline = container.querySelector<HTMLElement>('.border-viz-baseline');
+        expect(parseFloat(baseline?.style.bottom ?? '0')).toBeGreaterThan(0);
+        const above = container.querySelector<HTMLElement>('button span[style*="bottom"]');
+        const below = container.querySelector<HTMLElement>('button span[style*="top"]');
+        expect(above?.style.bottom).toBe(baseline?.style.bottom);
+        expect(below).not.toBeNull();
+    });
+
+    it('rounds the end of each part that is furthest from the baseline', () => {
+        const { container } = render(<ColumnChart points={[month]} series={GROWTH} />);
+
+        const blocks = container.querySelectorAll<HTMLElement>('button span[style*="background-color"]');
+        expect(blocks[0]?.style.backgroundColor).toBe('blue');
+        expect(blocks[0]?.className).toContain('rounded-t-[4px]');
+        expect(blocks[1]?.style.backgroundColor).toBe('red');
+        expect(blocks[1]?.className).toContain('rounded-b-[4px]');
+    });
+
+    it('counts the axis down as well as up, in steps shared by both sides', () => {
+        render(<ColumnChart points={[month]} series={GROWTH} />);
+
+        for (const tick of ['-1', '0', '1', '2', '3', '4']) {
+            expect(screen.getAllByText(tick).length).toBeGreaterThan(0);
+        }
+    });
+
+    it('lists the lost part in the tooltip as well as the new one', async () => {
+        const user = userEvent.setup();
+        render(<ColumnChart points={[month]} series={GROWTH} />);
+
+        await user.hover(screen.getByRole('button', { name: 'October 2026: Net +3' }));
+
+        const tooltip = screen.getByRole('tooltip');
+        expect(tooltip).toHaveTextContent('4New');
+        expect(tooltip).toHaveTextContent('1Lost');
+    });
+
+    it('draws nothing for a quiet month, yet keeps its column to hover', () => {
+        const quiet: ColumnPoint = {
+            ...month,
+            id: 'q',
+            totalText: 'Net 0',
+            parts: [
+                { seriesKey: 'new', value: 0, text: '0' },
+                { seriesKey: 'lost', value: 0, text: '0' },
+            ],
+        };
+        const { container } = render(<ColumnChart points={[quiet]} series={GROWTH} />);
+
+        expect(container.querySelectorAll('button span[style*="background-color"]')).toHaveLength(0);
+        expect(screen.getByRole('button', { name: 'October 2026: Net 0' })).toBeInTheDocument();
+    });
+});

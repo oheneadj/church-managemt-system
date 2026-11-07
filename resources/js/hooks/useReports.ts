@@ -20,3 +20,12 @@ export function useGivingReport(filters: GivingFilters) {
         placeholderData: keepPreviousData,
     });
 }
+
+/** Membership change by month. The previous figures stay on screen, dimmed, while a new choice loads. */
+export function useMemberGrowthReport(months: number) {
+    return useQuery({
+        queryKey: QUERY_KEYS.reports.memberGrowth(months),
+        queryFn: () => reportsApi.memberGrowth(months),
+        placeholderData: keepPreviousData,
+    });
+}

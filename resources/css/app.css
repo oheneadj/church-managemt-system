@@ -82,6 +82,7 @@
     --viz-series-4: #eda100;
     --viz-series-5: #e87ba4;
     --viz-other: #898781;
+    --viz-negative: #e34948;
     --viz-grid: #e1e0d9;
     --viz-baseline: #c3c2b7;
     --radius: 0.625rem;
@@ -125,6 +126,7 @@
     --viz-series-4: #c98500;
     --viz-series-5: #d55181;
     --viz-other: #898781;
+    --viz-negative: #e66767;
     --viz-grid: #2c2c2a;
     --viz-baseline: #383835;
     --sidebar: oklch(0.205 0 0);

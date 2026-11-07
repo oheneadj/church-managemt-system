@@ -19,15 +19,15 @@ export const CHART_MIN_SLOT_PX = 12;
 export const CHART_VALUE_TICKS = 4;
 export const CHART_MAX_LABELS = 5;
 
-/** How far back the giving report may look. The server accepts 1 to 24 months (config/reports.php); the default is its own 12. */
-export const GIVING_MONTH_CHOICES = [
+/** How far back the monthly reports (giving and member growth) may look. The server accepts 1 to 24 months (config/reports.php); the default is its own 12. */
+export const REPORT_MONTH_CHOICES = [
     { value: '3', label: 'Last 3 months' },
     { value: '6', label: 'Last 6 months' },
     { value: '12', label: 'Last 12 months' },
     { value: '24', label: 'Last 24 months' },
 ] as const;
 
-export const GIVING_MONTHS_DEFAULT = 12;
+export const REPORT_MONTHS_DEFAULT = 12;
 
 /**
  * The chart colours funds use, in order. A fund takes the colour at its place in the church's list of funds, so it keeps its

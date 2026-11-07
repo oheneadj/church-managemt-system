@@ -1,6 +1,6 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
-import type { AttendanceReport, GivingReport } from '@/types/reports';
+import type { AttendanceReport, GivingReport, MemberGrowthReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
@@ -395,6 +395,19 @@ export function givingByMonth(overrides: Partial<GivingReport> = {}): GivingRepo
             previous_total_formatted: 'GHS 16,000.00',
             change_percent: 15.3,
         },
+        ...overrides,
+    };
+}
+
+/** Membership change by month, newest first, as `GET /reports/members` sends it. */
+export function memberGrowthReport(overrides: Partial<MemberGrowthReport> = {}): MemberGrowthReport {
+    return {
+        data: [
+            { month: '2026-10', month_start: '2026-10-01', new: 4, lost: 1, net: 3, active_total: 212 },
+            { month: '2026-09', month_start: '2026-09-01', new: 0, lost: 0, net: 0, active_total: 209 },
+            { month: '2026-08', month_start: '2026-08-01', new: 1, lost: 5, net: -4, active_total: 209 },
+        ],
+        summary: { new: 5, lost: 6, net: -1 },
         ...overrides,
     };
 }

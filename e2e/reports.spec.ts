@@ -38,4 +38,23 @@ test.describe('reports', () => {
         await expect(page.getByLabel('Show')).toHaveValue('6');
         await expect(page.getByRole('alert')).toHaveCount(0);
     });
+
+    test('the church admin opens the member growth report and changes the period, with the choice kept in the address', async ({
+        page,
+    }) => {
+        await page.goto(`${CHURCH_URL}/reports`);
+        await page.getByRole('tab', { name: 'Members' }).click();
+        await expect(page).toHaveURL(/tab=members/);
+
+        // Active members always show, even when nobody joined or left; never an error.
+        await expect(page.getByText('Active members', { exact: true })).toBeVisible();
+        await expect(page.getByRole('alert')).toHaveCount(0);
+
+        await page.getByLabel('Show').selectOption('24');
+        await expect(page).toHaveURL(/months=24/);
+
+        await page.reload();
+        await expect(page.getByLabel('Show')).toHaveValue('24');
+        await expect(page.getByRole('alert')).toHaveCount(0);
+    });
 });
