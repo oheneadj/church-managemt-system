@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\PlatformAdmin;
 use App\Models\User;
 
 return [
@@ -44,6 +45,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // The platform owner's own side (D-069): its own session and its own accounts, so a church's staff can never be
+        // signed in to it and a platform admin is never signed in to a church.
+        'platform' => [
+            'driver' => 'session',
+            'provider' => 'platform_admins',
+        ],
     ],
 
     /*
@@ -67,6 +75,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'platform_admins' => [
+            'driver' => 'eloquent',
+            'model' => PlatformAdmin::class,
         ],
 
         // 'users' => [

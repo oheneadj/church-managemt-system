@@ -54,6 +54,10 @@ use App\Http\Controllers\Api\V1\Messages\ListMessagesController;
 use App\Http\Controllers\Api\V1\Messages\SendBroadcastController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
+use App\Http\Controllers\Api\V1\Platform\PlatformLoginController;
+use App\Http\Controllers\Api\V1\Platform\PlatformLogoutController;
+use App\Http\Controllers\Api\V1\Platform\PlatformMeController;
+use App\Http\Controllers\Api\V1\Platform\PlatformVerifyLoginController;
 use App\Http\Controllers\Api\V1\Pledges\ListPledgesController;
 use App\Http\Controllers\Api\V1\Pledges\ShowPledgeController;
 use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
@@ -89,6 +93,17 @@ use Illuminate\Support\Facades\Route;
 Route::domain(config('tenancy.base_domain'))->prefix('onboarding')->name('onboarding.')->group(function (): void {
     Route::post('otp', RequestChurchOtpController::class)->middleware('throttle:onboarding-otp')->name('otp');
     Route::post('churches', RegisterChurchController::class)->middleware('throttle:onboarding-register')->name('churches.store');
+});
+
+// The platform owner's own side (D-069): its own accounts and session, only on the platform host, never on a church's address.
+Route::domain(config('tenancy.base_domain'))->prefix('platform')->name('platform.')->group(function (): void {
+    Route::post('auth/login', PlatformLoginController::class)->middleware('throttle:platform-login')->name('auth.login');
+    Route::post('auth/login/verify', PlatformVerifyLoginController::class)->middleware('throttle:platform-login-verify')->name('auth.login.verify');
+
+    Route::middleware('auth:platform')->group(function (): void {
+        Route::get('auth/me', PlatformMeController::class)->name('auth.me');
+        Route::post('auth/logout', PlatformLogoutController::class)->name('auth.logout');
+    });
 });
 
 // Meta calls one address for every church, so the webhook lives on the platform host with no church in the request (docs/08, Webhooks).

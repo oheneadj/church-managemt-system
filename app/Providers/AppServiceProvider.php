@@ -176,6 +176,11 @@ class AppServiceProvider extends ServiceProvider
         // The limit on how many codes are emailed is counted only when one is sent, inside EmailCodeRequestLimiter.
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(config('limits.login_attempts_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
 
+        // The platform admin side has no church to key on, so its limits are by address alone.
+        RateLimiter::for('platform-login', fn (Request $request) => Limit::perMinute(config('limits.login_attempts_per_minute_per_ip'))->by('platform:'.$request->ip()));
+
+        RateLimiter::for('platform-login-verify', fn (Request $request) => Limit::perMinute(config('limits.login_verify_per_minute_per_ip'))->by('platform:'.$request->ip()));
+
         RateLimiter::for('login-verify', fn (Request $request) => Limit::perMinute(config('limits.login_verify_per_minute_per_ip'))->by($this->tenantKey($request).':'.$request->ip()));
 
     }

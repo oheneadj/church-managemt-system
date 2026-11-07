@@ -28,6 +28,7 @@ use App\Repositories\EloquentMemberDepartmentRepository;
 use App\Repositories\EloquentMemberMilestoneRepository;
 use App\Repositories\EloquentMemberRepository;
 use App\Repositories\EloquentMessageLogRepository;
+use App\Repositories\EloquentPlatformAdminRepository;
 use App\Repositories\EloquentPledgeRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentServiceScheduleRepository;
@@ -43,6 +44,7 @@ use App\Repositories\MemberDepartmentRepositoryInterface;
 use App\Repositories\MemberMilestoneRepositoryInterface;
 use App\Repositories\MemberRepositoryInterface;
 use App\Repositories\MessageLogRepositoryInterface;
+use App\Repositories\PlatformAdminRepositoryInterface;
 use App\Repositories\PledgeRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\ServiceScheduleRepositoryInterface;
@@ -73,6 +75,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ContributionRepositoryInterface::class => EloquentContributionRepository::class,
         AttendanceRecordRepositoryInterface::class => EloquentAttendanceRecordRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
+        PlatformAdminRepositoryInterface::class => EloquentPlatformAdminRepository::class,
         MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
         ConsentRepositoryInterface::class => EloquentConsentRepository::class,
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,

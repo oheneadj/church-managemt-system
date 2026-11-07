@@ -2412,6 +2412,133 @@
                 }
             }
         },
+        "/v1/platform/auth/login": {
+            "post": {
+                "operationId": "platform.auth.login",
+                "summary": "Runs PlatformLoginAction for this request and says a code was sent",
+                "tags": [
+                    "PlatformLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`LoginCodeSentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginCodeSentResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/platform/auth/logout": {
+            "post": {
+                "operationId": "platform.auth.logout",
+                "summary": "Runs PlatformLogoutAction for this request and returns an empty answer",
+                "tags": [
+                    "PlatformLogout"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/platform/auth/me": {
+            "get": {
+                "operationId": "platform.auth.me",
+                "summary": "Returns the signed-in admin",
+                "tags": [
+                    "PlatformMe"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PlatformAdminResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlatformAdminResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/platform/auth/login/verify": {
+            "post": {
+                "operationId": "platform.auth.login.verify",
+                "summary": "Runs PlatformVerifyLoginAction for this request and returns the signed-in admin",
+                "tags": [
+                    "PlatformVerifyLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformVerifyLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PlatformAdminResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlatformAdminResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/checkin/qr": {
             "post": {
                 "operationId": "checkin.qr.store",
@@ -7330,6 +7457,65 @@
                 ],
                 "title": "PaymentMethod"
             },
+            "PlatformAdminResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "title": "PlatformAdminResource"
+            },
+            "PlatformLoginRequest": {
+                "type": "object",
+                "description": "Validates step one of platform sign-in: an email and a password, with the same rules as church staff's.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 1024
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "PlatformLoginRequest"
+            },
+            "PlatformVerifyLoginRequest": {
+                "type": "object",
+                "description": "Validates step two of platform sign-in: an email and the emailed code, with the same rules as church staff's.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "code"
+                ],
+                "title": "PlatformVerifyLoginRequest"
+            },
             "PledgeCollection": {
                 "type": "array",
                 "items": {
@@ -9032,8 +9218,8 @@
                     }
                 }
             },
-            "AuthorizationException": {
-                "description": "Authorization error",
+            "AuthenticationException": {
+                "description": "Unauthenticated",
                 "content": {
                     "application/json": {
                         "schema": {
@@ -9051,8 +9237,8 @@
                     }
                 }
             },
-            "AuthenticationException": {
-                "description": "Unauthenticated",
+            "AuthorizationException": {
+                "description": "Authorization error",
                 "content": {
                     "application/json": {
                         "schema": {

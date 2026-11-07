@@ -622,6 +622,22 @@ Append-only change history (`patterns/Pattern — Audit Trails.md`, D-030). Writ
 
 ---
 
+### `platform_admins`
+
+The platform owner's own accounts, apart from every church (D-069). There is no `church_id` and no tenant scope; a church's staff are in `users`. An account is switched off with `is_active`, never deleted.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `name` | VARCHAR(255) | No | |
+| `email` | VARCHAR(255) | No | Unique, always lowercase |
+| `password` | VARCHAR(255) | No | Hashed. Set from the command line (`platform:create-admin`), never through the app |
+| `is_active` | BOOLEAN | No | Default true. A switched-off account cannot sign in |
+| `last_login_at` | TIMESTAMP | Yes | |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+---
+
 ## Key Relationships Summary
 
 ```

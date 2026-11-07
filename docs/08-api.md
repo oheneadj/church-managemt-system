@@ -1067,6 +1067,22 @@ Only the church's own messages are listed (another church's, and the sign-up cod
 
 ---
 
+## Platform (the owner's own side)
+
+> **D-069.** Everything here is on the platform host (the bare base domain), never on a church's address (`404` there), and has nothing to do with any church: it is for the platform owner's own accounts. A church's staff can never sign in to it (`401`), and a platform admin has no access to any church (`401` on every church call). It is used from a browser: a sign-in is an httpOnly session cookie, there are no tokens.
+
+```
+POST /api/v1/platform/auth/login          { "email", "password" }   -> 200 { "message": "Code sent", "expires_in": 600 }
+POST /api/v1/platform/auth/login/verify   { "email", "code" }       -> 200 { "data": { "id", "name", "email" } }
+GET  /api/v1/platform/auth/me             -> 200 { "data": { "id", "name", "email" } }     (signed in)
+POST /api/v1/platform/auth/logout         -> 204                                            (signed in)
+```
+Sign-in is the same two steps as church staff (D-054): the right password emails a 6-digit code (10 minutes, single use), and the code signs the browser in. A wrong password, an unknown email and a switched-off account all give one `422` "Invalid email or password" and send nothing; five wrong passwords for an email, or five wrong codes, lock it for 15 minutes (`429`); asking for a code is limited to 1 a minute and 5 an hour for one email and 20 an hour from one address (`429`, `Retry-After`). The codes and counts are the platform's own, so a church's code never opens this side.
+
+There is no sign-up. An account is created on the server with `php artisan platform:create-admin {email} {name}`, which asks for the password (at least 12 characters, never given as an argument) and refuses an email already in use. An account is switched off, never deleted.
+
+---
+
 ## Recent Activity
 
 ### Get Recent Activity
