@@ -58,6 +58,19 @@ describe('listing', function (): void {
             ->assertJsonStructure(['data', 'meta' => ['total'], 'links']);
     });
 
+    it('names the head of each department, or says there is none', function (): void {
+        $head = deptStaff($this->church, 'pastor');
+        $head->update(['name' => 'Abena Pastor']);
+        Department::factory()->create(['church_id' => $this->church->id, 'name' => 'Choir', 'head_user_id' => $head->id]);
+        Department::factory()->create(['church_id' => $this->church->id, 'name' => 'Ushers', 'head_user_id' => null]);
+
+        $rows = deptAs($this->admin)->getJson(DEPARTMENTS)->assertOk()->json('data');
+
+        expect($rows[0]['head'])->toBe(['id' => $head->id, 'name' => 'Abena Pastor'])
+            ->and($rows[0]['head_user_id'])->toBe($head->id)
+            ->and($rows[1]['head'])->toBeNull();
+    });
+
     it('filters by active state', function (): void {
         Department::factory()->create(['church_id' => $this->church->id, 'is_active' => true]);
         Department::factory()->create(['church_id' => $this->church->id, 'is_active' => false]);
@@ -98,7 +111,7 @@ describe('creating', function (): void {
         $head = deptStaff($this->church, 'department-head');
 
         $response = deptAs($this->admin)->postJson(DEPARTMENTS, ['name' => 'Choir', 'description' => 'Sunday choir', 'head_user_id' => $head->id])
-            ->assertCreated()->assertJsonPath('data.head_user_id', $head->id)->assertJsonPath('data.is_active', true);
+            ->assertCreated()->assertJsonPath('data.head_user_id', $head->id)->assertJsonPath('data.head.id', $head->id)->assertJsonPath('data.is_active', true);
 
         expect(Department::query()->findOrFail($response->json('data.id'))->church_id)->toBe($this->church->id);
     });
@@ -118,6 +131,18 @@ describe('creating', function (): void {
 
         deptAs($this->admin)->postJson(DEPARTMENTS, ['name' => 'Choir'])->assertUnprocessable()->assertJsonValidationErrors('name');
         deptAs($this->admin)->postJson(DEPARTMENTS, ['name' => 'Ushers'])->assertCreated();
+    });
+
+    it('shows the new head after a change, and none after the head is cleared', function (): void {
+        $head = deptStaff($this->church, 'pastor');
+        $head->update(['name' => 'Abena Pastor']);
+        $department = Department::factory()->create(['church_id' => $this->church->id, 'head_user_id' => null]);
+
+        deptAs($this->admin)->putJson(DEPARTMENTS.'/'.$department->id, ['head_user_id' => $head->id])->assertOk()
+            ->assertJsonPath('data.head', ['id' => $head->id, 'name' => 'Abena Pastor']);
+
+        deptAs($this->admin)->putJson(DEPARTMENTS.'/'.$department->id, ['head_user_id' => null])->assertOk()
+            ->assertJsonPath('data.head_user_id', null)->assertJsonPath('data.head', null);
     });
 
     it('refuses a head from another church or one who is deactivated', function (): void {

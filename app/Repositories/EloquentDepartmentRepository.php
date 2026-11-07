@@ -21,6 +21,7 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
     public function paginate(ListDepartmentsDTO $filters): LengthAwarePaginator
     {
         return Department::query()
+            ->with('head:id,name')
             ->withCount(['members' => function (Builder $members) use ($filters): void {
                 /** @var Builder<Member> $members */
                 $members->visibleTo($filters->viewer);
@@ -36,7 +37,7 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
      */
     public function create(array $attributes): Department
     {
-        return Department::query()->create($attributes)->refresh();
+        return Department::query()->create($attributes)->refresh()->load('head:id,name');
     }
 
     /**
@@ -46,6 +47,6 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
     {
         $department->update($attributes);
 
-        return $department;
+        return $department->load('head:id,name');
     }
 }

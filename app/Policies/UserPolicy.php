@@ -22,6 +22,16 @@ class UserPolicy
     }
 
     /**
+     * Whether the user may see the staff directory: the names of the active staff, so one can be chosen as a department's head.
+     * It follows `members.edit` (the church admin and the pastor), because that is who edits departments, and it shows no
+     * email or phone, which stay with `staff.manage`.
+     */
+    public function viewDirectory(User $user): bool
+    {
+        return $user->hasPermissionTo(StaffPermission::MembersEdit);
+    }
+
+    /**
      * Whether the user may invite a staff member.
      */
     public function create(User $user): bool

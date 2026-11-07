@@ -74,6 +74,7 @@ use App\Http\Controllers\Api\V1\Staff\ChangeStaffPermissionsController;
 use App\Http\Controllers\Api\V1\Staff\ChangeStaffStatusController;
 use App\Http\Controllers\Api\V1\Staff\InviteStaffController;
 use App\Http\Controllers\Api\V1\Staff\ListStaffController;
+use App\Http\Controllers\Api\V1\Staff\ListStaffDirectoryController;
 use App\Http\Controllers\Api\V1\Staff\UpdateStaffController;
 use App\Http\Controllers\Api\V1\Webhooks\ReceiveWhatsAppWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\VerifyWhatsAppWebhookController;
@@ -173,6 +174,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('reports/members', ShowMemberGrowthController::class)->name('reports.members');
 
         Route::get('staff', ListStaffController::class)->name('staff.index');
+        Route::get('staff/directory', ListStaffDirectoryController::class)->name('staff.directory');
         Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');
         Route::put('staff/{staff}', UpdateStaffController::class)->name('staff.update');
         Route::patch('staff/{staff}/status', ChangeStaffStatusController::class)->name('staff.status');

@@ -2102,6 +2102,58 @@
                 }
             }
         },
+        "/v1/staff/directory": {
+            "get": {
+                "operationId": "staff.directory",
+                "summary": "Runs ListStaffDirectoryAction for this request and returns each staff member as an id and a name",
+                "tags": [
+                    "ListStaffDirectory"
+                ],
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StaffSummaryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StaffSummaryResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/auth/login": {
             "post": {
                 "operationId": "auth.login",
@@ -4840,6 +4892,25 @@
                         "type": [
                             "string",
                             "null"
+                        ]
+                    },
+                    "head": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "who heads it, or null when nobody does",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
                         ]
                     },
                     "is_active": {

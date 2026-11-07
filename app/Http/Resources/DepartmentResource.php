@@ -27,6 +27,8 @@ class DepartmentResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'head_user_id' => $this->head_user_id,
+            /** @var array{id: string, name: string}|null who heads it, or null when nobody does */
+            'head' => $this->whenLoaded('head', fn () => $this->head === null ? null : new StaffSummaryResource($this->head)),
             'is_active' => $this->is_active,
             'members_count' => $this->whenCounted('members'),
         ];

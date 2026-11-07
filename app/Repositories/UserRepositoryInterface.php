@@ -44,6 +44,13 @@ interface UserRepositoryInterface
     public function paginate(int $perPage): LengthAwarePaginator;
 
     /**
+     * One page of the current church's active staff, by name, with only the columns a directory shows.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function paginateActive(int $perPage): LengthAwarePaginator;
+
+    /**
      * Whether a staff member of the current church already has this email (capitals do not matter), apart from the one given.
      */
     public function emailTaken(string $email, ?string $exceptUserId = null): bool;

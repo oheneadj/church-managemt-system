@@ -64,6 +64,14 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 
     /**
+     * One page of the current church's active staff, by name, with only the columns a directory shows.
+     */
+    public function paginateActive(int $perPage): LengthAwarePaginator
+    {
+        return User::query()->where('is_active', true)->select(['id', 'name'])->orderBy('name')->orderBy('id')->paginate($perPage);
+    }
+
+    /**
      * Whether a staff member of the current church already has this email, apart from the one given.
      */
     public function emailTaken(string $email, ?string $exceptUserId = null): bool
