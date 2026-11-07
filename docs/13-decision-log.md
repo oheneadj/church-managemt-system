@@ -1259,6 +1259,27 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-069 — The platform admin side, SMS credit packages, and building digital payments (A3, A4, 5.4)
+**Date:** November 2026
+**Decided by:** Product Owner (points 1 to 4, 7 Nov 2026), Lead Engineer (points 5 to 8, defaults the Product Owner may change)
+**Status:** Active. Nothing built yet; this records the decisions and the order.
+
+**Decision:**
+1. **The platform has an admin side, run by the platform owner, not by any church.** It does not exist yet and is built now. The first thing on it is managing the **SMS credit packages** (bundles) that churches buy. It is separate from the church staff screens: a church admin can never reach it, and it can never reach a church's members or giving (docs/05: no master key into a church's data).
+2. **Packages are set by the Product Owner on that side**, not in code or config. A package has a name, a number of credits, a price in GHS, an active switch and a place in the list. This replaces "decide the prices and bundles now" (docs/12 Q4, C2): the numbers are entered by the owner when ready, and a church sees only the active ones.
+3. **Both payment paths are built now:** MoMo through PayPerlez with automatic payout to the church (D-018) and cards through Paystack with the subaccount split (D-020, A4). Churches also buy credit packages through the same two providers (QA-08 TC-08-13): that money is the platform's own revenue, so it has no payout and no split.
+4. **Settlement: a church's money is never held by the platform.** Each gift is settled to the church as soon as it is paid: PayPerlez payouts are sent at once, per gift, and Paystack splits the gift to the church's subaccount at charge time, so the funds sit with the providers in transit, never in a platform balance. *(Product Owner's statement of the model. The legal opinion on the Bank of Ghana position, open item B1, stays on the register: this decision does not replace it.)*
+5. **Platform admins are their own accounts,** in their own table with no church, created from the command line (never by self-sign-up) and signing in on the platform host with email, password and an emailed code, as D-054 does for staff, with their own sessions and limits. *(My default.)*
+6. **One provider layer for everything that moves money:** a `PaymentProvider` interface (collect, read status) and a `DisbursementProvider` interface (pay out, read balance, verify an account), with a PayPerlez driver and a Paystack driver behind them (D-020), money crossing as decimal strings in GHS, one webhook endpoint per provider with signature checks and stored payloads, and a scheduled polling fallback for anything still pending (agreement section 10).
+7. **Order of building, each its own commit:** (a) the platform admin foundation and package management; (b) the provider layer, the webhooks and the polling fallback; (c) buying credits, which is the simplest payment (no payout, no split) and proves (b); (d) a church's payout account setup and verification, `contributions.status`, the platform fee and the initiate-a-gift call (A3); (e) the automatic payout, its retries, alerts and daily reconciliation; (f) card giving with the Paystack subaccount (A4); (g) the screens for each. Every step that touches money has full test coverage (docs/10) and uses no floats (D-017).
+8. **Still open and not blocking:** the exact PayPerlez webhook event names (B2, polling covers it), the live fee schedule (B3, the screen says "plus a small processing fee"), the card fee and split design (B5, decided at step f), and written confirmation of immediate availability (B6).
+
+**Rationale:** Buying credits uses the same collection call as a gift but has no payout and no split, so it is the safest first use of the provider layer, and the owner's packages are what it sells.
+
+**Revisit when:** the legal opinion (B1) changes the model, a second platform admin is needed (roles on that side), or PayPerlez confirms its webhook events.
+
+---
+
 ---
 
 ## Deferred Decisions
