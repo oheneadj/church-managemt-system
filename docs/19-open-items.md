@@ -84,7 +84,7 @@ Move finished items here with the commit hash.
 
 | Item | Closed by |
 |---|---|
-| A10: setting a department's head (a read-only staff directory for `members.edit`, the head's name on departments, and a head choice on the Departments screen that never changes the head unless it is changed) | Commits `527ef38` and the departments head screen, 9 November 2026 |
+| A10: setting a department's head (a read-only staff directory for `members.edit`, the head's name on departments, and a head choice on the Departments screen that never changes the head unless it is changed) | Commits `527ef38` and `2bc33b0`, 9 November 2026 |
 | D9: every screen scrolled sideways at 375px (the menu links did not wrap) | The menu wraps; `e2e/mobile-layout.spec.ts` checks five pages in real Chrome, 6 November 2026 |
 | A1: staff sign in with email, password and an emailed code (migrations, the four auth endpoints and limiters, sign-up fields, React sign-in and forgot-password screens, demo admin, e2e, removal of the phone and SMS staff endpoints, `staff:reset-lockout`, QA-01 and QA-12 rewritten, `users.email` required) | D-054, 7 November 2026 |
 | A2: the email sender (`QueueEmailAction`, `SendEmailJob`, circuit breaker, `email:pause`, runbook, `env:check`) | D-062, 7 November 2026 |
