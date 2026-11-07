@@ -2,7 +2,7 @@ import { ChartColumn } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/SelectField';
 import { AttendanceTable } from '@/components/Reports/AttendanceTable';
-import { attendancePoints } from '@/components/Reports/attendancePoints';
+import { ATTENDANCE_SERIES, attendancePoints } from '@/components/Reports/attendancePoints';
 import { ColumnChart } from '@/components/Reports/ColumnChart';
 import { StatTile } from '@/components/Reports/StatTile';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,11 @@ export function AttendanceReportView() {
                         {asTable ? (
                             <AttendanceTable report={report.data} />
                         ) : (
-                            <ColumnChart points={attendancePoints(report.data)} unit="people" refreshing={report.isPlaceholderData} />
+                            <ColumnChart
+                                points={attendancePoints(report.data)}
+                                series={ATTENDANCE_SERIES}
+                                refreshing={report.isPlaceholderData}
+                            />
                         )}
                     </figure>
                 </>

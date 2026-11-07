@@ -25,8 +25,10 @@ describe('attendancePoints', () => {
         expect(middle).toEqual({
             id: '2026-W42',
             label: '12 Oct',
-            value: 124,
             title: 'Week of 12 Oct 2026',
+            totalText: '124 people',
+            peakText: '124',
+            parts: [{ seriesKey: 'people', value: 124, text: '124' }],
             detail: '2 services · 3 first-timers',
         });
     });
@@ -34,7 +36,8 @@ describe('attendancePoints', () => {
     it('keeps a week with no service as a column of 0 that says so, and uses the singular for one', () => {
         const points = attendancePoints(weeks);
 
-        expect(points[2]).toMatchObject({ value: 0, detail: 'No service recorded' });
+        expect(points[2]).toMatchObject({ totalText: '0 people', detail: 'No service recorded' });
+        expect(points[2]?.parts[0]?.value).toBe(0);
         expect(points[0]?.detail).toBe('1 service · 1 first-timer');
     });
 
@@ -48,9 +51,11 @@ describe('attendancePoints', () => {
             ],
         };
 
-        expect(attendancePoints(byService)).toEqual([
-            { id: 's1', label: '11 Oct', value: 40, title: 'Midweek Prayer, 11 Oct 2026' },
-            { id: 's2', label: '18 Oct', value: 118, title: 'Sunday Morning Service, 18 Oct 2026' },
+        const points = attendancePoints(byService);
+
+        expect(points.map((point) => [point.id, point.label, point.title, point.totalText])).toEqual([
+            ['s1', '11 Oct', 'Midweek Prayer, 11 Oct 2026', '40 people'],
+            ['s2', '18 Oct', 'Sunday Morning Service, 18 Oct 2026', '118 people'],
         ]);
     });
 });

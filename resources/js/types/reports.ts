@@ -37,3 +37,41 @@ export interface AttendanceFilters {
     weeks: number;
     groupBy: ReportGrouping;
 }
+
+/** What one fund gave in one month. Amounts are exact decimal strings in cedis, each with the text to show. */
+export interface GivingFundAmount {
+    fund_type_id: string;
+    name: string;
+    total: string;
+    total_formatted: string;
+}
+
+/** One calendar month: everything given, and the funds that gave something. A month with nothing is "0.00" with no funds. */
+export interface GivingMonthRow {
+    month: string;
+    month_start: string;
+    total: string;
+    total_formatted: string;
+    by_fund: GivingFundAmount[];
+}
+
+/** The whole period set against the same number of months before it. `change_percent` is null when nothing was given then. */
+export interface GivingSummary {
+    total: string;
+    total_formatted: string;
+    previous_total: string;
+    previous_total_formatted: string;
+    change_percent: number | null;
+}
+
+/** Giving by month, newest first. Totals only: no member and no single gift is named. */
+export interface GivingReport {
+    data: GivingMonthRow[];
+    summary: GivingSummary;
+}
+
+/** What the giving report is asked for. An empty `fundId` means every fund. */
+export interface GivingFilters {
+    months: number;
+    fundId: string;
+}

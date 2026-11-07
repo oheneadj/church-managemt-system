@@ -15,6 +15,7 @@ const PAGES = [
     '/messages',
     '/messages/new',
     '/reports',
+    '/reports?tab=giving',
 ];
 
 test.describe('on a 375px phone', () => {

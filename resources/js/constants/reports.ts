@@ -17,4 +17,33 @@ export const CHART_MIN_SLOT_PX = 12;
 
 /** How many ticks the value axis aims for, and how many labels the bottom axis aims for. */
 export const CHART_VALUE_TICKS = 4;
-export const CHART_MAX_LABELS = 6;
+export const CHART_MAX_LABELS = 5;
+
+/** How far back the giving report may look. The server accepts 1 to 24 months (config/reports.php); the default is its own 12. */
+export const GIVING_MONTH_CHOICES = [
+    { value: '3', label: 'Last 3 months' },
+    { value: '6', label: 'Last 6 months' },
+    { value: '12', label: 'Last 12 months' },
+    { value: '24', label: 'Last 24 months' },
+] as const;
+
+export const GIVING_MONTHS_DEFAULT = 12;
+
+/**
+ * The chart colours funds use, in order. A fund takes the colour at its place in the church's list of funds, so it keeps its
+ * colour whatever is filtered. Funds past these share one grey, "Other funds", and the table view still lists each one.
+ */
+export const FUND_SERIES_COLOURS = [
+    'var(--viz-series-1)',
+    'var(--viz-series-2)',
+    'var(--viz-series-3)',
+    'var(--viz-series-4)',
+    'var(--viz-series-5)',
+] as const;
+
+export const OTHER_FUNDS_COLOUR = 'var(--viz-other)';
+export const OTHER_FUNDS_KEY = 'other-funds';
+export const OTHER_FUNDS_NAME = 'Other funds';
+
+/** The text for a figure that does not exist, such as the change against months in which nothing was given. */
+export const NO_FIGURE = '–';

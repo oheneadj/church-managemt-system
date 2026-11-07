@@ -1,6 +1,6 @@
 import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
-import type { AttendanceReport } from '@/types/reports';
+import type { AttendanceReport, GivingReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
@@ -361,6 +361,40 @@ export function attendanceByWeek(overrides: Partial<Extract<AttendanceReport, { 
             { week: '2026-W41', week_start: '2026-10-05', total: 98, first_timers: 1, services: 1 },
         ],
         summary: { average: 111, highest: 124, lowest: 98 },
+        ...overrides,
+    };
+}
+
+/** Giving by month, newest first, as `GET /reports/giving` sends it: October from two funds, September from one, August nothing. */
+export function givingByMonth(overrides: Partial<GivingReport> = {}): GivingReport {
+    return {
+        data: [
+            {
+                month: '2026-10',
+                month_start: '2026-10-01',
+                total: '15450.00',
+                total_formatted: 'GHS 15,450.00',
+                by_fund: [
+                    { fund_type_id: 'fund-1', name: 'Tithe', total: '8000.00', total_formatted: 'GHS 8,000.00' },
+                    { fund_type_id: 'fund-3', name: 'Building Fund', total: '7450.00', total_formatted: 'GHS 7,450.00' },
+                ],
+            },
+            {
+                month: '2026-09',
+                month_start: '2026-09-01',
+                total: '3000.00',
+                total_formatted: 'GHS 3,000.00',
+                by_fund: [{ fund_type_id: 'fund-1', name: 'Tithe', total: '3000.00', total_formatted: 'GHS 3,000.00' }],
+            },
+            { month: '2026-08', month_start: '2026-08-01', total: '0.00', total_formatted: 'GHS 0.00', by_fund: [] },
+        ],
+        summary: {
+            total: '18450.00',
+            total_formatted: 'GHS 18,450.00',
+            previous_total: '16000.00',
+            previous_total_formatted: 'GHS 16,000.00',
+            change_percent: 15.3,
+        },
         ...overrides,
     };
 }
