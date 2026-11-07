@@ -30,6 +30,16 @@ enum StaffRole: string
     }
 
     /**
+     * The names of the permissions this role carries, for a screen that must tell them apart from extras granted to one person.
+     *
+     * @return list<string>
+     */
+    public function permissionNames(): array
+    {
+        return array_map(fn (StaffPermission $permission): string => $permission->value, $this->permissions());
+    }
+
+    /**
      * The permissions this role carries. The church admin carries all of them.
      *
      * @return list<StaffPermission>

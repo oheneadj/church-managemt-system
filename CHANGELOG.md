@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(staff): the staff list says which permissions each role already gives (2026-11-09)
+- **What:** Each staff member in `GET /staff` (and in the answers to the change and status calls) now also carries `role_permissions`: the permissions their role already gives, apart from `extra_permissions`, the ones granted on top. It is worked out in memory from the role enum (`StaffRole::permissionNames()`), so it adds no queries. A change of role changes it; the church admin carries every permission.
+- **Why:** The screen for granting extra permissions (A5) must show which permissions can be taken away. The server refuses to revoke one the role gives (`422`) and ignores a grant of one the role already gives, so without this the screen would either offer choices that do nothing or copy the role table into the frontend, where it could drift. This is an additive field, not a breaking change.
+- **Files:** app/Http/Resources/StaffResource.php, app/Enums/StaffRole.php, tests/Feature/Staff/ (StaffApiTest, StaffStatusAndPermissionsTest), docs/08-api.md, docs/openapi.json, CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### feat(members): the departments screen, story 2.8 (screen) (2026-11-09)
 - **What:** A Departments page at `/departments` for staff with `members.edit` (church admin and pastor), reached from a Departments button on the Members page and a link under Settings, and offered to nobody else. It lists every department with what it does, how many members (that the person may see) it has, and whether it is in use or retired. **Add a department** and **Change** open one dialog with the name (up to 255 characters) and what it does (up to 2,000, may be emptied to clear it); a name another department already has is refused by the server and shown beside the box. **Retire** asks first and says that members already in it stay in it; **Bring back** does not ask. A save refreshes every list of departments (so the members filter and the member form follow) and the member lists, which show each member's departments by name. Changing a department sends only its name and description, so its head is never changed by accident. The page is added to the 375px layout check. Checked against the real demo church: add a department, see it as a members filter, be refused a duplicate name, retire it, and see it leave the filter.
 - **Why:** Story 2.8 had the endpoints and the member form's department choice but no way for a church to create or retire its own departments. **The department head is not set on this screen** (open item A10): choosing one needs the staff list, which only the church admin may read, while a pastor may edit departments.
@@ -839,6 +845,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- The staff list says which permissions each person's role already gives (`role_permissions`), apart from the extras granted to them
 - Departments screen (story 2.8): add, change and retire the groups members belong to, for staff who may edit members; reached from the Members page and Settings
 - Giving funds screen (story 4.2): add, change and switch off the funds gifts are given for, from Settings, for the church admin
 - Absent members screen (story 3.13): the members who have missed the last few Sunday services, with a phone link and their last visit; a dashboard card and a link from the attendance report lead to it

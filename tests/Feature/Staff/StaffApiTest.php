@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AuditEvent;
 use App\Enums\EmailCodePurpose;
+use App\Enums\StaffPermission;
 use App\Jobs\SendEmailJob;
 use App\Mail\EmailCodeMail;
 use App\Models\AuditLog;
@@ -58,6 +59,19 @@ describe('listing', function (): void {
         expect($rows[0])->toMatchArray(['id' => $pastor->id, 'email' => $pastor->email, 'phone' => $pastor->phone, 'roles' => ['pastor'], 'extra_permissions' => ['members.export'], 'is_active' => true])
             ->and($rows[0])->toHaveKey('last_login_at')
             ->and($rows[2]['is_active'])->toBeFalse();
+    });
+
+    it('says which permissions each person\'s role already gives, apart from the extras, so a screen can tell them apart', function (): void {
+        $pastor = staffOf($this->church, 'pastor', ['name' => 'Abena Pastor']);
+        $pastor->givePermissionTo('members.export');
+
+        $rows = collect($this->getJson(STAFF)->assertOk()->json('data'))->keyBy('name');
+
+        // The pastor's role gives these six; the extra one is listed apart and is not among them.
+        expect($rows['Abena Pastor']['role_permissions'])->toEqualCanonicalizing(['members.view', 'members.edit', 'milestones.view', 'giving.summary', 'reports.view', 'sms.send'])
+            ->and($rows['Abena Pastor']['extra_permissions'])->toBe(['members.export'])
+            // The church admin carries every permission there is.
+            ->and($rows['Kofi Admin']['role_permissions'])->toHaveCount(count(StaffPermission::cases()));
     });
 
     it('never shows a password, and never another church\'s staff (isolation)', function (): void {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,6 +30,13 @@ class StaffResource extends JsonResource
             'phone' => $this->phone,
             /** @var list<string> */
             'roles' => $this->roles->pluck('name')->values(),
+            /** @var list<string> permissions the person's role already gives, so a screen can tell them from the extras */
+            'role_permissions' => $this->getRoleNames()
+                ->map(fn (string $name): ?StaffRole => StaffRole::tryFrom($name))
+                ->filter()
+                ->flatMap(fn (StaffRole $role): array => $role->permissionNames())
+                ->unique()
+                ->values(),
             /** @var list<string> permissions granted on top of the role */
             'extra_permissions' => $this->permissions->pluck('name')->values(),
             'is_active' => $this->is_active,

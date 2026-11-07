@@ -113,6 +113,11 @@ describe('extra permissions', function (): void {
             ->assertJsonPath('data.extra_permissions', ['members.export']);
     });
 
+    it('follows a change of role, and answers with the permissions the new role gives', function (): void {
+        $this->putJson(STAFF.'/'.$this->pastor->id, ['role' => 'youth-pastor'])->assertOk()
+            ->assertJsonPath('data.role_permissions', ['members.view', 'milestones.view']);
+    });
+
     it('does not turn a role permission into an extra one, and says nothing changed', function (): void {
         $this->putJson(STAFF.'/'.$this->pastor->id.'/permissions', ['grant' => ['sms.send']])->assertOk()->assertJsonPath('data.extra_permissions', []);
 
