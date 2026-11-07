@@ -34,10 +34,11 @@ class UpdateChurchSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'settings' => ['required', 'array:youth_age_limit,absence_threshold,receipt_on_cash'],
+            'settings' => ['required', 'array:youth_age_limit,absence_threshold,receipt_on_cash,absent_alert'],
             'settings.youth_age_limit' => ['integer', 'min:'.config('members.youth_age_limit_min'), 'max:'.config('members.youth_age_limit_max')],
             'settings.absence_threshold' => ['integer', 'min:'.config('attendance.absence_threshold_min'), 'max:'.config('attendance.absence_threshold_max')],
             'settings.receipt_on_cash' => ['boolean'],
+            'settings.absent_alert' => ['boolean'],
         ];
     }
 }

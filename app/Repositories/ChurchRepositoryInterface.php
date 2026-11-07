@@ -61,4 +61,16 @@ interface ChurchRepositoryInterface
      * @return Collection<int, Church>
      */
     public function cancelledBefore(CarbonInterface $cutoff): Collection;
+
+    /**
+     * The church with this id, if there is one. Read from a job, which runs with no church in context.
+     */
+    public function find(string $id): ?Church;
+
+    /**
+     * The churches that switched the automatic absence text on and are still running: active, not cancelled and not purged.
+     *
+     * @return Collection<int, Church>
+     */
+    public function withAbsenceAlerts(): Collection;
 }

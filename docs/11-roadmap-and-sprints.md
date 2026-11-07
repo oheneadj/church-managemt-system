@@ -96,7 +96,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 3.10 | Manual attendance entry (React) — bulk mark members present | Frontend | 3 | Search-as-you-type member select |
 | 3.11 | QR code display page (React) — shown at church entrance | Frontend | 2 | Large QR, auto-refresh, no nav chrome |
 | 3.12 | Attendance report page (React) | Frontend | 2 | |
-| 3.13 | Absent members alert job (3+ consecutive absences) | Backend | 2 | Queued, configurable threshold |
+| 3.13 | Absent members alert job (3+ consecutive absences) | Backend | 2 | Queued, configurable threshold. Built (D-067): off until the church switches it on, once for each stretch of absence |
 
 **Sprint 3 exit criteria:** A service can be created, opened for check-in, and members can check in via WhatsApp CHECKIN command. Manual bulk entry works. A report shows who attended.
 

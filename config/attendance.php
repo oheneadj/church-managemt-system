@@ -86,4 +86,15 @@ return [
     'absence_threshold_max' => 12,
     'absence_service_types' => ['sunday'],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Automatic text to absent members (docs/11 story 3.13, D-067)
+    |--------------------------------------------------------------------------
+    | Off until a church switches it on in its settings ("absent_alert"). A member is texted once for each stretch of absence,
+    | paid for from the church's SMS credits. :name is the name the member likes to be called and :church the church's name.
+    | The words stay in the plain alphabet, so the text costs the fewest credits (D-051).
+    */
+    'absent_alert_default' => false,
+    'absence_alert_message' => 'Hello :name, we have missed you at :church. We hope all is well. Please reply or call if there is anything we can pray about with you.',
+
 ];

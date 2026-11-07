@@ -93,4 +93,27 @@ class EloquentChurchRepository implements ChurchRepositoryInterface
     {
         return Church::query()->whereNotNull('cancelled_at')->where('cancelled_at', '<=', $cutoff)->whereNull('purged_at')->get();
     }
+
+    /**
+     * The church with this id, if there is one.
+     */
+    public function find(string $id): ?Church
+    {
+        return Church::query()->find($id);
+    }
+
+    /**
+     * The churches that switched the automatic absence text on and are still running.
+     *
+     * @return Collection<int, Church>
+     */
+    public function withAbsenceAlerts(): Collection
+    {
+        return Church::query()
+            ->where('settings->absent_alert', true)
+            ->where('is_active', true)
+            ->whereNull('cancelled_at')
+            ->whereNull('purged_at')
+            ->get();
+    }
 }

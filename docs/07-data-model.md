@@ -84,7 +84,7 @@ The root tenant record. Every other table references this.
 | `timezone` | VARCHAR(50) | No | Default: `Africa/Accra` |
 | `member_number_prefix` | VARCHAR(10) | Yes | Letters in front of every member number (the `GRC` in `GRC-0042`). Typed by the admin at onboarding. Null until set; adding a member fails until it is (D-030). |
 | `member_number_seq` | INT | No | Last member number handed out. Default: 0. Only incremented under a row lock, never reset, so a number is never reused (D-030). |
-| `settings` | JSON | Yes | The church's own settings, only the ones it chose: `youth_age_limit`, `absence_threshold`, `receipt_on_cash` (docs/08, Church Settings). A setting it never chose is not in the JSON and the default applies. |
+| `settings` | JSON | Yes | The church's own settings, only the ones it chose: `youth_age_limit`, `absence_threshold`, `receipt_on_cash`, `absent_alert` (docs/08, Church Settings). A setting it never chose is not in the JSON and the default applies. |
 | `is_active` | BOOLEAN | No | Default: true. False = suspended. |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |

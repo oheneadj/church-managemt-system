@@ -29,4 +29,7 @@ Schedule::command('pledges:refresh')->dailyAt('04:00')->timezone('UTC')->onOneSe
 Schedule::command('services:generate-scheduled')->dailyAt('05:00')->timezone('UTC')->onOneServer();
 
 // Closes services left open after their day ended. Every hour, on the hour, UTC (it only compares dates).
+// Texts members who missed several services in a row, for churches that switched it on. 09:00 UTC, once a day (D-067).
+Schedule::command('attendance:alert-absent')->dailyAt('09:00')->timezone('UTC')->onOneServer();
+
 Schedule::command('services:close-stale')->hourly()->timezone('UTC')->onOneServer();

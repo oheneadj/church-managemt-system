@@ -8,11 +8,13 @@ use App\DTOs\Attendance\AttendanceSummary;
 use App\DTOs\Attendance\ListServiceAttendanceDTO;
 use App\Enums\CheckInMethod;
 use App\Enums\MemberStatus;
+use App\Enums\MessageStatus;
 use App\Models\AttendanceRecord;
 use App\Models\Member;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\VisitorRecord;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -139,6 +141,64 @@ class EloquentAttendanceRecordRepository implements AttendanceRecordRepositoryIn
      */
     public function absentMembers(User $viewer, array $serviceTypes, int $consecutive, int $perPage): LengthAwarePaginator
     {
+        return ($this->absentQuery($serviceTypes, $consecutive) ?? Member::query()->whereRaw('1 = 0'))
+            ->visibleTo($viewer)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->orderBy('id')
+            ->paginate($perPage);
+    }
+
+    /**
+     * The absent members who are due the automatic text: the ones who may be texted and have not already had one for this
+     * stretch of absence. A text that failed for good does not count, so the member is tried again. A member who has been
+     * back since their last text is due again once they miss the same number of services again.
+     *
+     * @param  list<string>  $serviceTypes
+     * @return Collection<int, Member>
+     */
+    public function absentMembersToAlert(array $serviceTypes, int $consecutive): Collection
+    {
+        $absent = $this->absentQuery($serviceTypes, $consecutive);
+
+        if ($absent === null) {
+            return new Collection;
+        }
+
+        return $absent
+            ->where('sms_opted_in', true)
+            ->where('phone', '!=', '')
+            ->withMax(['attendanceAlerts as last_alert_at' => fn (Builder $logs) => $logs->where('status', '!=', MessageStatus::Failed->value)], 'created_at')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (Member $member): bool => $this->isDueAlert($member))
+            ->values();
+    }
+
+    /**
+     * Whether the member has had no text since they were last at church (or has never been).
+     */
+    private function isDueAlert(Member $member): bool
+    {
+        $alertedAt = $member->getAttribute('last_alert_at');
+
+        if ($alertedAt === null) {
+            return true;
+        }
+
+        return $member->last_attended_at !== null && Carbon::parse((string) $alertedAt)->lt(Carbon::parse($member->last_attended_at));
+    }
+
+    /**
+     * The active members who missed each of the last `$consecutive` held services of the given kinds, with the time of their
+     * last check-in, or null when there are not yet that many services to judge by. The list and the automatic text share it,
+     * so the text goes to the people the list shows.
+     *
+     * @param  list<string>  $serviceTypes
+     * @return Builder<Member>|null
+     */
+    private function absentQuery(array $serviceTypes, int $consecutive): ?Builder
+    {
         $recent = Service::query()
             ->whereIn('type', $serviceTypes)
             ->whereDate('service_date', '<=', today())
@@ -151,18 +211,13 @@ class EloquentAttendanceRecordRepository implements AttendanceRecordRepositoryIn
 
         if ($oldest === null || $recent->count() < $consecutive) {
             // Not enough history yet to say anyone missed that many in a row.
-            return Member::query()->whereRaw('1 = 0')->paginate($perPage);
+            return null;
         }
 
         return Member::query()
-            ->visibleTo($viewer)
             ->where('status', MemberStatus::Active)
             ->whereDate('created_at', '<=', $oldest->service_date)
             ->whereDoesntHave('attendanceRecords', fn (Builder $records) => $records->whereIn('service_id', $recent->pluck('id')))
-            ->withMax('attendanceRecords as last_attended_at', 'checked_in_at')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->orderBy('id')
-            ->paginate($perPage);
+            ->withMax('attendanceRecords as last_attended_at', 'checked_in_at');
     }
 }

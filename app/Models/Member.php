@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $last_name
  * @property-read string $full_name
  * @property-read string|null $last_attended_at the latest check-in time, present only on the absent-members query
+ * @property-read string|null $last_alert_at when the last automatic absence text was made, present only on the alert query
  * @property string|null $preferred_name
  * @property Gender $gender
  * @property CarbonImmutable|null $date_of_birth
@@ -187,6 +188,16 @@ class Member extends Model
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
+     * The automatic absence texts sent to this member (their message log lines).
+     *
+     * @return HasMany<MessageLog, $this>
+     */
+    public function attendanceAlerts(): HasMany
+    {
+        return $this->hasMany(MessageLog::class, 'recipient_id')->where('message_type', 'attendance_alert');
     }
 
     /**

@@ -38,8 +38,10 @@ final readonly class UpdateChurchSettingsDTO
             }
         }
 
-        if (isset($sent['receipt_on_cash'])) {
-            $settings['receipt_on_cash'] = $request->boolean('settings.receipt_on_cash');
+        foreach (['receipt_on_cash', 'absent_alert'] as $switch) {
+            if (isset($sent[$switch])) {
+                $settings[$switch] = $request->boolean("settings.{$switch}");
+            }
         }
 
         $actor = self::actorFrom($request);

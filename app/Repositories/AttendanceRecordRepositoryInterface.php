@@ -73,4 +73,12 @@ interface AttendanceRecordRepositoryInterface
      * @return LengthAwarePaginator<int, Member>
      */
     public function absentMembers(User $viewer, array $serviceTypes, int $consecutive, int $perPage): LengthAwarePaginator;
+
+    /**
+     * The absent members who are due the automatic text: they may be texted and have had none for this stretch of absence.
+     *
+     * @param  list<string>  $serviceTypes
+     * @return Collection<int, Member>
+     */
+    public function absentMembersToAlert(array $serviceTypes, int $consecutive): Collection;
 }

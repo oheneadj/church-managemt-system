@@ -1218,6 +1218,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-067 — The automatic text to absent members (story 3.13)
+**Date:** November 2026
+**Decided by:** Product Owner (off until switched on), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **Off until the church switches it on.** The church setting `absent_alert` (`true` or `false`) is `false` when the church has not chosen (`config/attendance.php`, `absent_alert_default`). A church admin changes it with `PUT /church/settings`, like the other settings.
+2. **Who is texted:** the people `GET /attendance/absent` lists (active members who missed each of the church's last `absence_threshold` held Sunday services, and who joined before the oldest of them), and only those who may be texted: SMS turned on and a phone number. One query builds both, so the text goes to the people the list shows.
+3. **Once for each stretch of absence.** A member is texted when they have no text of this kind since they were last checked in (or have never been checked in). They are texted again only after they have come back and then missed the same number again. A text that failed for good does not count, so the member is tried again the next day.
+4. **The church pays.** Each text is a church-paid SMS job (D-051) that takes one credit for each part. The daily job counts the church's credits as it queues, stops with the warning "Absence alerts stopped: insufficient credits" (church id only) when the next text could not be paid for, and the members left are tried the next day. It takes no credits itself.
+5. **How it runs.** `attendance:alert-absent` runs at 09:00 UTC every day (Ghana is on UTC, so 09:00 local) and queues one `SendAbsenceAlertsJob` on the `notifications` queue for each church that switched the text on and is active, not cancelled and not purged. Each text has a `queued` message log line of type `attendance_alert`.
+6. **The words** are in `config/attendance.php` (`absence_alert_message`, with `:name` and `:church`), in the plain alphabet so it costs the fewest credits. The name is the one the member likes to be called.
+
+**Rationale:** A pastor wants to reach someone who has gone quiet before the gap grows, but a text costs the church money and a member who is texted every day is annoyed, so it is off by default, goes once for each stretch, and never spends credits the church does not have.
+
+**Revisit when:** a church asks for its own wording, a different time of day, or a text for midweek services.
+
+---
+
 ---
 
 ## Deferred Decisions

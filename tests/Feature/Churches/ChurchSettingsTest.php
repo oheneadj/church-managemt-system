@@ -34,13 +34,13 @@ beforeEach(function (): void {
 
 describe('reading', function (): void {
     it('gives the defaults for a church that has chosen nothing', function (): void {
-        $this->getJson(CHURCH_SETTINGS)->assertOk()->assertExactJson(['data' => ['youth_age_limit' => 25, 'absence_threshold' => 3, 'receipt_on_cash' => true]]);
+        $this->getJson(CHURCH_SETTINGS)->assertOk()->assertExactJson(['data' => ['youth_age_limit' => 25, 'absence_threshold' => 3, 'receipt_on_cash' => true, 'absent_alert' => false]]);
     });
 
     it('gives the church\'s own choices over the defaults', function (): void {
         $this->church->update(['settings' => ['youth_age_limit' => 20, 'receipt_on_cash' => false]]);
 
-        $this->getJson(CHURCH_SETTINGS)->assertOk()->assertExactJson(['data' => ['youth_age_limit' => 20, 'absence_threshold' => 3, 'receipt_on_cash' => false]]);
+        $this->getJson(CHURCH_SETTINGS)->assertOk()->assertExactJson(['data' => ['youth_age_limit' => 20, 'absence_threshold' => 3, 'receipt_on_cash' => false, 'absent_alert' => false]]);
     });
 
     it('is the signed-in church\'s own, never another church\'s (isolation)', function (): void {
@@ -51,7 +51,7 @@ describe('reading', function (): void {
 describe('changing', function (): void {
     it('saves what is sent and answers with every setting', function (): void {
         $this->putJson(CHURCH_SETTINGS, ['settings' => ['youth_age_limit' => 30, 'absence_threshold' => 4, 'receipt_on_cash' => false]])->assertOk()
-            ->assertExactJson(['data' => ['youth_age_limit' => 30, 'absence_threshold' => 4, 'receipt_on_cash' => false]]);
+            ->assertExactJson(['data' => ['youth_age_limit' => 30, 'absence_threshold' => 4, 'receipt_on_cash' => false, 'absent_alert' => false]]);
 
         $church = $this->church->fresh();
         expect($church->youthAgeLimit())->toBe(30)->and($church->absenceThreshold())->toBe(4)->and($church->sendsCashReceipts())->toBeFalse();
@@ -81,6 +81,14 @@ describe('changing', function (): void {
         $line = AuditLog::query()->where('auditable_id', $this->church->id)->sole();
         expect($line->event)->toBe(AuditEvent::Updated)->and($line->actor_id)->toBe($this->admin->id)
             ->and($line->old_values)->toBe(['receipt_on_cash' => true])->and($line->new_values)->toBe(['receipt_on_cash' => false]);
+    });
+
+    it('switches the automatic absence text on and off, and it starts off', function (): void {
+        $this->putJson(CHURCH_SETTINGS, ['settings' => ['absent_alert' => true]])->assertOk()->assertJsonPath('data.absent_alert', true);
+        expect($this->church->fresh()->sendsAbsenceAlerts())->toBeTrue();
+
+        $this->putJson(CHURCH_SETTINGS, ['settings' => ['absent_alert' => false]])->assertOk()->assertJsonPath('data.absent_alert', false);
+        expect($this->church->fresh()->sendsAbsenceAlerts())->toBeFalse();
     });
 
     it('takes a setting back to the default by sending the default, which is saved like any other', function (): void {

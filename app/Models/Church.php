@@ -113,10 +113,18 @@ class Church extends Model
     }
 
     /**
+     * Whether members who miss several services in a row are texted automatically. Off unless the church switched it on (D-067).
+     */
+    public function sendsAbsenceAlerts(): bool
+    {
+        return (bool) data_get($this->settings, 'absent_alert', config('attendance.absent_alert_default'));
+    }
+
+    /**
      * Every church setting with the church's own choice or, where it has made none, the default. This is what the screens show
      * and what the history compares against.
      *
-     * @return array{youth_age_limit: int, absence_threshold: int, receipt_on_cash: bool}
+     * @return array{youth_age_limit: int, absence_threshold: int, receipt_on_cash: bool, absent_alert: bool}
      */
     public function settingsWithDefaults(): array
     {
@@ -124,6 +132,7 @@ class Church extends Model
             'youth_age_limit' => $this->youthAgeLimit(),
             'absence_threshold' => $this->absenceThreshold(),
             'receipt_on_cash' => $this->sendsCashReceipts(),
+            'absent_alert' => $this->sendsAbsenceAlerts(),
         ];
     }
 

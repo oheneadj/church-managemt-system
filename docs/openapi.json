@@ -4556,12 +4556,16 @@
                     },
                     "receipt_on_cash": {
                         "type": "boolean"
+                    },
+                    "absent_alert": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "youth_age_limit",
                     "absence_threshold",
-                    "receipt_on_cash"
+                    "receipt_on_cash",
+                    "absent_alert"
                 ],
                 "title": "ChurchSettingsResource"
             },
@@ -8360,6 +8364,9 @@
                                 "maximum": 12
                             },
                             "receipt_on_cash": {
+                                "type": "boolean"
+                            },
+                            "absent_alert": {
                                 "type": "boolean"
                             }
                         }
