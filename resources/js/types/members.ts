@@ -184,6 +184,12 @@ export interface FamilyMember {
     family_role_label: string | null;
 }
 
+/** What the department form sends. An emptied description is sent as null, which clears it. */
+export interface DepartmentInput {
+    name: string;
+    description: string | null;
+}
+
 export interface Department {
     id: string;
     name: string;

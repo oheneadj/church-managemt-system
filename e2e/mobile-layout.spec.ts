@@ -13,6 +13,7 @@ const PAGES = [
     '/pledges',
     '/settings',
     '/settings/funds',
+    '/departments',
     '/messages',
     '/messages/new',
     '/reports',

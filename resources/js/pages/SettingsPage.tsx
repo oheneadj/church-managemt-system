@@ -19,16 +19,24 @@ export function SettingsPage() {
     const profile = useChurchProfile();
     const settings = useChurchSettings();
     const canManageFunds = useCan(PERMISSIONS.FUND_TYPES_MANAGE);
+    const canManageDepartments = useCan(PERMISSIONS.MEMBERS_EDIT);
 
     return (
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
             <PageHeader title="Settings" description="Your church's details and preferences" />
 
-            {canManageFunds && (
+            {(canManageFunds || canManageDepartments) && (
                 <nav aria-label="Lists you can change" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                    <Link to={ROUTES.FUNDS} className="underline underline-offset-4">
-                        Giving funds
-                    </Link>
+                    {canManageFunds && (
+                        <Link to={ROUTES.FUNDS} className="underline underline-offset-4">
+                            Giving funds
+                        </Link>
+                    )}
+                    {canManageDepartments && (
+                        <Link to={ROUTES.DEPARTMENTS} className="underline underline-offset-4">
+                            Departments
+                        </Link>
+                    )}
                 </nav>
             )}
 

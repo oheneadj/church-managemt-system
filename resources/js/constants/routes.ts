@@ -28,6 +28,7 @@ export const ROUTES = {
     ABSENT_MEMBERS: '/attendance/absent',
     MESSAGES: '/messages',
     BROADCAST_NEW: '/messages/new',
+    DEPARTMENTS: '/departments',
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;

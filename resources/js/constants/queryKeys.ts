@@ -70,5 +70,6 @@ export const QUERY_KEYS = {
     },
     departments: {
         all: ['departments'] as const,
+        manage: ['departments', 'manage'] as const,
     },
 } as const;

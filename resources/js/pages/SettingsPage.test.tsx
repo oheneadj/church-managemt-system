@@ -167,4 +167,15 @@ describe('SettingsPage: lists you can change', () => {
         await screen.findByLabelText(/^Name of the church/);
         expect(screen.queryByRole('link', { name: 'Giving funds' })).not.toBeInTheDocument();
     });
+
+    it('offers the departments to someone who may edit members, even without the funds', async () => {
+        renderPage(<SettingsPage />, {
+            path: ROUTES.SETTINGS,
+            url: ROUTES.SETTINGS,
+            permissions: [PERMISSIONS.CHURCH_SETTINGS, PERMISSIONS.MEMBERS_EDIT],
+        });
+
+        expect(await screen.findByRole('link', { name: 'Departments' })).toHaveAttribute('href', '/departments');
+        expect(screen.queryByRole('link', { name: 'Giving funds' })).not.toBeInTheDocument();
+    });
 });

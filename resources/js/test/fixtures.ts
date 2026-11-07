@@ -3,7 +3,7 @@ import type { MessageLogLine } from '@/types/messages';
 import type { AbsentMember } from '@/types/services';
 import type { AttendanceReport, GivingReport, MemberGrowthReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
-import type { Family, Member, MemberSummary, Page } from '@/types/members';
+import type { Department, Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
 import type {
     AttendanceRecord,
@@ -423,4 +423,9 @@ export function absentMember(overrides: Partial<AbsentMember> = {}): AbsentMembe
         last_attended_at: '2026-10-11T10:05:00+00:00',
         ...overrides,
     };
+}
+
+/** A department, as `GET /departments` sends it. */
+export function department(overrides: Partial<Department> = {}): Department {
+    return { id: 'dept-1', name: 'Choir', description: null, head_user_id: null, is_active: true, members_count: 0, ...overrides };
 }

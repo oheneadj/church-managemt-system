@@ -42,6 +42,11 @@ export function MembersPage() {
                 actions={
                     canExport || addButton ? (
                         <>
+                            {canEdit && (
+                                <Button asChild variant="outline" size="lg">
+                                    <Link to={ROUTES.DEPARTMENTS}>Departments</Link>
+                                </Button>
+                            )}
                             {canExport && <MemberExportButton filters={filters} />}
                             {addButton}
                         </>

@@ -152,6 +152,17 @@ describe('MembersPage: export', () => {
         vi.mocked(exportsApi.members).mockResolvedValue({ export_id: 'e1', message: 'Export queued.' });
     });
 
+    it('offers the departments page to staff who may edit members, and to nobody else', async () => {
+        const first = open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EDIT]);
+        await screen.findByText('Emmanuel Mensah-Boateng');
+        expect(screen.getByRole('link', { name: 'Departments' })).toHaveAttribute('href', '/departments');
+        first.unmount();
+
+        open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EXPORT]);
+        await screen.findByText('Emmanuel Mensah-Boateng');
+        expect(screen.queryByRole('link', { name: 'Departments' })).not.toBeInTheDocument();
+    });
+
     it('shows the Export list button only to staff who may export', async () => {
         const first = open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EXPORT]);
         await screen.findByText('Emmanuel Mensah-Boateng');

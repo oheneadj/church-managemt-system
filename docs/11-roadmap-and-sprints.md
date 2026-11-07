@@ -66,7 +66,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 2.5 | `MemberResource` — full serialisation | Backend | 2 | Including conditional `giving_summary` |
 | 2.6 | `StoreMemberRequest` + `UpdateMemberRequest` | Backend | 1 | |
 | 2.7 | Family grouping endpoints (create family, link members) | Backend | 2 | |
-| 2.8 | Department endpoints (list, create, assign members) | Backend | 2 | |
+| 2.8 | Department endpoints (list, create, assign members) | Backend | 2 | The screen is built too: `/departments` for staff with `members.edit`, reached from the Members page and from Settings: add, change (name, what it does) and retire or bring back; retiring asks first and members already in it stay in it. Members are placed in departments on the member form. Setting a department's head is not on the screen (open item A10) |
 | 2.9 | Member milestone endpoints | Backend | 1 | |
 | 2.10 | Member directory page (React) — list with search + filters | Frontend | 4 | Phone-first layout |
 | 2.11 | Member profile page (React) — full record view | Frontend | 3 | Tabbed: Profile / Giving / Attendance |
