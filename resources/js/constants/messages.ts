@@ -20,3 +20,6 @@ export const MESSAGE_STATUS_TONES = {
     delivered: 'success',
     failed: 'danger',
 } as const satisfies Record<string, StatusTone>;
+
+/** How long after the last key press the cost of a broadcast is asked for again, in milliseconds, so typing is not one request a letter. */
+export const ESTIMATE_DELAY_MS = 500;

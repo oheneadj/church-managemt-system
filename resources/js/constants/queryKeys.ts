@@ -56,6 +56,7 @@ export const QUERY_KEYS = {
         all: ['messages'] as const,
         list: (filters: { channel: string; type: string; from: string; to: string; page: number }) =>
             ['messages', 'list', filters] as const,
+        estimate: (input: { message: string; status: string; department: string }) => ['messages', 'estimate', input] as const,
     },
     departments: {
         all: ['departments'] as const,

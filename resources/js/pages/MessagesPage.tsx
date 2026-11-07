@@ -1,12 +1,14 @@
 import { MessageSquare } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { MessageFilterBar } from '@/components/Messages/MessageFilterBar';
 import { MessageListItem } from '@/components/Messages/MessageListItem';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ROUTES } from '@/constants/routes';
 import { useMessageFilters } from '@/hooks/useMessageFilters';
 import { useMessages } from '@/hooks/useMessages';
 
@@ -28,6 +30,11 @@ export function MessagesPage() {
             <PageHeader
                 title="Messages"
                 description={messages.data ? `${messages.data.meta.total} messages found` : 'Everything sent to your members'}
+                actions={
+                    <Button asChild size="lg">
+                        <Link to={ROUTES.BROADCAST_NEW}>New broadcast</Link>
+                    </Button>
+                }
             />
             <MessageFilterBar filters={filters} onChange={setFilter} onClear={() => setParams({})} />
 

@@ -29,3 +29,34 @@ export interface MessageFilters {
     to: string;
     page: number;
 }
+
+/** Who a broadcast goes to: members of one status and, if given, one department. */
+export interface BroadcastAudience {
+    status: string;
+    department_id?: string;
+}
+
+/** What the estimate and the send both take (docs/08, Send Broadcast). Only text messages are open for now. */
+export interface BroadcastInput {
+    channel: 'sms';
+    message: string;
+    recipient_filter: BroadcastAudience;
+}
+
+/** What a broadcast would reach and cost (docs/08, Estimate a Broadcast). Nothing is sent or charged to get it. */
+export interface BroadcastEstimate {
+    recipients: number;
+    parts_per_message: number;
+    credits_needed: number;
+    credit_balance: number;
+    enough_credits: boolean;
+}
+
+/** The answer to a send: the broadcast is queued and a worker texts the members. */
+export interface BroadcastQueued {
+    queued: boolean;
+    broadcast_id: string;
+    estimated_recipients: number;
+    estimated_credit_cost: number;
+    current_credit_balance: number;
+}
