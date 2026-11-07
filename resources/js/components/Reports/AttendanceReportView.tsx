@@ -4,7 +4,7 @@ import { SelectField } from '@/components/form/SelectField';
 import { AttendanceTable } from '@/components/Reports/AttendanceTable';
 import { ATTENDANCE_SERIES, attendancePoints } from '@/components/Reports/attendancePoints';
 import { ColumnChart } from '@/components/Reports/ColumnChart';
-import { StatTile } from '@/components/Reports/StatTile';
+import { StatTile } from '@/components/ui/StatTile';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';

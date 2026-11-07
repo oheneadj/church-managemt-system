@@ -4,7 +4,7 @@ import { SelectField } from '@/components/form/SelectField';
 import { ColumnChart } from '@/components/Reports/ColumnChart';
 import { MEMBER_GROWTH_SERIES, memberGrowthPoints } from '@/components/Reports/memberGrowthPoints';
 import { MemberGrowthTable } from '@/components/Reports/MemberGrowthTable';
-import { StatTile } from '@/components/Reports/StatTile';
+import { StatTile } from '@/components/ui/StatTile';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
