@@ -428,5 +428,14 @@ export function absentMember(overrides: Partial<AbsentMember> = {}): AbsentMembe
 
 /** A department, as `GET /departments` sends it. */
 export function department(overrides: Partial<Department> = {}): Department {
-    return { id: 'dept-1', name: 'Choir', description: null, head_user_id: null, is_active: true, members_count: 0, ...overrides };
+    return {
+        id: 'dept-1',
+        name: 'Choir',
+        description: null,
+        head_user_id: null,
+        head: null,
+        is_active: true,
+        members_count: 0,
+        ...overrides,
+    };
 }

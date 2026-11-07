@@ -8,7 +8,7 @@ import { ApiError } from '@/services/ApiError';
 import { departmentsApi } from '@/services/api/departments';
 import { exportsApi } from '@/services/api/exports';
 import { membersApi } from '@/services/api/members';
-import { memberSummary, pageOf } from '@/test/fixtures';
+import { department, memberSummary, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 
 vi.mock('@/services/api/members');
@@ -21,9 +21,7 @@ function open(url: string = ROUTES.MEMBERS, permissions: Permission[] = []) {
 
 describe('MembersPage', () => {
     beforeEach(() => {
-        vi.mocked(departmentsApi.list).mockResolvedValue(
-            pageOf([{ id: 'dept-1', name: 'Choir', description: null, head_user_id: null, is_active: true }]),
-        );
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([department({ name: 'Choir' })]));
         vi.mocked(membersApi.list).mockResolvedValue(
             pageOf([
                 memberSummary(),

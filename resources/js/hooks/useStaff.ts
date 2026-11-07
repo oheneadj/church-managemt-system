@@ -40,3 +40,8 @@ export function useStaffMutations() {
         }),
     };
 }
+
+/** The church's active staff by name, for choosing one. They change rarely, so it is kept for a few minutes. */
+export function useStaffDirectory() {
+    return useQuery({ queryKey: QUERY_KEYS.staff.directory, queryFn: () => staffApi.directory(), staleTime: 5 * 60_000 });
+}

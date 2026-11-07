@@ -188,6 +188,8 @@ export interface FamilyMember {
 export interface DepartmentInput {
     name: string;
     description: string | null;
+    /** The staff member who heads it, or null for nobody. Left out when it is not being changed. */
+    head_user_id?: string | null;
 }
 
 export interface Department {
@@ -195,6 +197,8 @@ export interface Department {
     name: string;
     description: string | null;
     head_user_id: string | null;
+    /** Who heads it, by name, or null. */
+    head: { id: string; name: string } | null;
     is_active: boolean;
     members_count?: number;
 }

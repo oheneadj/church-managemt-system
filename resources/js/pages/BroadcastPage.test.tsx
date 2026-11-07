@@ -8,7 +8,7 @@ import { BroadcastPage } from '@/pages/BroadcastPage';
 import { departmentsApi } from '@/services/api/departments';
 import { messagesApi } from '@/services/api/messages';
 import { ApiError } from '@/services/ApiError';
-import { pageOf } from '@/test/fixtures';
+import { department, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 import type { BroadcastEstimate } from '@/types/messages';
 
@@ -32,9 +32,7 @@ async function write(user: ReturnType<typeof userEvent.setup>, text = 'Service i
 describe('BroadcastPage', () => {
     beforeEach(() => {
         vi.resetAllMocks();
-        vi.mocked(departmentsApi.list).mockResolvedValue(
-            pageOf([{ id: 'dept-1', name: 'Youth', description: null, head_user_id: null, is_active: true }]),
-        );
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([department({ name: 'Youth' })]));
         vi.mocked(messagesApi.estimate).mockResolvedValue(enough);
     });
 

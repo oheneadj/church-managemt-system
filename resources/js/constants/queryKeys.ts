@@ -47,6 +47,7 @@ export const QUERY_KEYS = {
     staff: {
         all: ['staff'] as const,
         list: (page: number) => ['staff', 'list', page] as const,
+        directory: ['staff', 'directory'] as const,
     },
     church: {
         credits: ['church', 'credits'] as const,

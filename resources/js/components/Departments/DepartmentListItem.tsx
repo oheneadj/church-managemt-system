@@ -21,6 +21,7 @@ export function DepartmentListItem({ department, onChange, onToggleActive }: Dep
             <span className="min-w-0 flex-1">
                 <span className="block font-medium">{department.name}</span>
                 {department.description && <span className="block text-sm text-muted-foreground">{department.description}</span>}
+                {department.head && <span className="block text-sm text-muted-foreground">Head: {department.head.name}</span>}
                 {department.members_count !== undefined && (
                     <span className="block text-sm text-muted-foreground">{membersText(department.members_count)}</span>
                 )}

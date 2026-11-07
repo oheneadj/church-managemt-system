@@ -1,7 +1,10 @@
 import { IDEMPOTENCY_HEADER } from '@/lib/idempotencyKey';
 import { api } from '@/services';
 import type { Page } from '@/types/members';
-import type { StaffChange, StaffInviteInput, StaffMember, StaffPermissionChange } from '@/types/staff';
+import type { StaffChange, StaffInviteInput, StaffMember, StaffName, StaffPermissionChange } from '@/types/staff';
+
+/** The largest page the API allows; a church has few staff, so one call loads them all. */
+const DIRECTORY_PAGE_SIZE = 100;
 
 export const staffApi = {
     list: (page: number): Promise<Page<StaffMember>> => api.get<Page<StaffMember>>('/staff', { params: { page } }).then((r) => r.data),
@@ -21,4 +24,8 @@ export const staffApi = {
     /** Gives or takes away extra permissions on top of the role. It applies on the person's next request. */
     setPermissions: (id: string, change: StaffPermissionChange): Promise<StaffMember> =>
         api.put<{ data: StaffMember }>(`/staff/${id}/permissions`, change).then((r) => r.data.data),
+
+    /** The church's active staff by name, for choosing one. Open to staff who may edit members; it holds no email or phone. */
+    directory: (): Promise<StaffName[]> =>
+        api.get<Page<StaffName>>('/staff/directory', { params: { per_page: DIRECTORY_PAGE_SIZE } }).then((r) => r.data.data),
 };

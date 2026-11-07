@@ -8,7 +8,7 @@ import { ApiError } from '@/services/ApiError';
 import { departmentsApi } from '@/services/api/departments';
 import { familiesApi } from '@/services/api/families';
 import { membersApi } from '@/services/api/members';
-import { family, member, pageOf } from '@/test/fixtures';
+import { department, family, member, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
 import { today } from '@/utils/today';
 
@@ -36,9 +36,7 @@ async function completeStepOne(user: ReturnType<typeof userEvent.setup>) {
 
 describe('MemberFormPage', () => {
     beforeEach(() => {
-        vi.mocked(departmentsApi.list).mockResolvedValue(
-            pageOf([{ id: 'dept-1', name: 'Choir', description: null, head_user_id: null, is_active: true }]),
-        );
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([department({ name: 'Choir' })]));
         vi.mocked(familiesApi.listAll).mockResolvedValue([family()]);
         vi.mocked(membersApi.create).mockResolvedValue(member({ id: 'new-member' }));
         vi.mocked(membersApi.get).mockResolvedValue(

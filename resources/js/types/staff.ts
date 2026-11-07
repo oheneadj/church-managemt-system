@@ -41,3 +41,9 @@ export interface StaffPermissionChange {
     grant?: string[];
     revoke?: string[];
 }
+
+/** A staff member as the directory shows them: just who they are, so one can be chosen (for example as a department head). */
+export interface StaffName {
+    id: string;
+    name: string;
+}
