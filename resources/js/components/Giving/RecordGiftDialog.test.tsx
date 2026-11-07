@@ -10,7 +10,6 @@ import { pledgesApi } from '@/services/api/pledges';
 import { servicesApi } from '@/services/api/services';
 import { ApiError } from '@/services/ApiError';
 import { contribution, fundType, memberSummary, pageOf, pledge, service } from '@/test/fixtures';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
 vi.mock('@/services/api/contributions');
@@ -94,7 +93,7 @@ describe('RecordGiftDialog', () => {
         await user.type(screen.getByLabelText(/Amount/), '10');
         const date = screen.getByLabelText(/Date given/);
         await user.clear(date);
-        await user.type(date, isoToDateText(past));
+        await user.type(date, past);
         await user.click(screen.getByRole('button', { name: 'Record gift' }));
 
         await waitFor(() => expect(contributionsApi.record).toHaveBeenCalled());
@@ -120,7 +119,7 @@ describe('RecordGiftDialog', () => {
         await user.type(screen.getByLabelText(/Amount/), '10');
         const date = screen.getByLabelText(/Date given/);
         await user.clear(date);
-        await user.type(date, isoToDateText(daysFromToday(2)));
+        await user.type(date, daysFromToday(2));
         await user.click(screen.getByRole('button', { name: 'Record gift' }));
 
         expect(await screen.findByText('A gift cannot be dated in the future')).toBeInTheDocument();

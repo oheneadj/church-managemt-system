@@ -19,6 +19,7 @@ import { useFundTypes } from '@/hooks/useFundTypes';
 import { usePledgeMutations } from '@/hooks/usePledges';
 import { newIdempotencyKey } from '@/lib/idempotencyKey';
 import { showFieldErrors } from '@/lib/showFieldErrors';
+import { today } from '@/utils/today';
 import type { Pledge } from '@/types/giving';
 import type { MemberSummary } from '@/types/members';
 
@@ -176,6 +177,7 @@ function PledgeForm({ pledge, onClose }: { pledge: Pledge | undefined; onClose: 
                     id="pledge-target-date"
                     label="Target date"
                     required
+                    min={pledge === undefined ? today() : undefined}
                     error={errors.target_date?.message}
                     {...form.register('target_date')}
                 />

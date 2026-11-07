@@ -17,7 +17,6 @@ import { useServicesOnDate } from '@/hooks/useServices';
 import { newIdempotencyKey } from '@/lib/idempotencyKey';
 import { showFieldErrors } from '@/lib/showFieldErrors';
 import type { MemberSummary } from '@/types/members';
-import { dateTextToIso, isoToDateText } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 interface RecordGiftDialogProps {
@@ -56,9 +55,9 @@ function RecordGiftForm({ onClose }: { onClose: () => void }) {
     const [member, setMember] = useState<MemberSummary | undefined>(undefined);
     // One key for one attempt: a double click or a retry after a failure records one gift.
     const [idempotencyKey] = useState(newIdempotencyKey);
-    const form = useForm<GiftFormValues>({ resolver: zodResolver(giftFormSchema), defaultValues: blankGiftValues(isoToDateText(today())) });
+    const form = useForm<GiftFormValues>({ resolver: zodResolver(giftFormSchema), defaultValues: blankGiftValues(today()) });
     const { errors } = form.formState;
-    const day = dateTextToIso(useWatch({ control: form.control, name: 'contributed_on' })) ?? '';
+    const day = useWatch({ control: form.control, name: 'contributed_on' });
     const services = useServicesOnDate(day);
     const fundId = useWatch({ control: form.control, name: 'fund_type_id' });
     const pledges = usePledgesForGift(member?.id ?? '', fundId);
@@ -122,6 +121,7 @@ function RecordGiftForm({ onClose }: { onClose: () => void }) {
                     id="record-gift-date"
                     label="Date given"
                     required
+                    max={today()}
                     error={errors.contributed_on?.message}
                     {...form.register('contributed_on')}
                 />

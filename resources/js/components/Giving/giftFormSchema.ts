@@ -3,7 +3,6 @@ import { amountField } from '@/components/Giving/amountField';
 import { GIFT_CASH_MAX, GIFT_PAST_DAY_TIME } from '@/constants/giving';
 import { dateBox } from '@/lib/dateBox';
 import type { ContributionInput } from '@/types/giving';
-import { dateTextToIso } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 /** The checks on the record-a-gift form. The member is chosen apart from the form (a search box cannot sit inside it). */
@@ -21,9 +20,9 @@ export const giftFormSchema = z.object({
 
 export type GiftFormValues = z.infer<typeof giftFormSchema>;
 
-/** A new gift starts dated today, with nothing chosen. `todayText` is today as the date box shows it. */
-export function blankGiftValues(todayText: string): GiftFormValues {
-    return { fund_type_id: '', amount: '', contributed_on: todayText, service_id: '', pledge_id: '', notes: '' };
+/** A new gift starts dated today, with nothing chosen. `day` is today as `YYYY-MM-DD`. */
+export function blankGiftValues(day: string): GiftFormValues {
+    return { fund_type_id: '', amount: '', contributed_on: day, service_id: '', pledge_id: '', notes: '' };
 }
 
 /**
@@ -38,7 +37,7 @@ export function toGiftInput(
     serviceId: string | undefined,
     pledgeId?: string,
 ): ContributionInput {
-    const day = dateTextToIso(values.contributed_on) ?? values.contributed_on;
+    const day = values.contributed_on;
 
     return {
         member_id: memberId,

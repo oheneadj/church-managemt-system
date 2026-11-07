@@ -8,12 +8,10 @@ import { ApiError } from '@/services/ApiError';
 import { servicesApi } from '@/services/api/services';
 import { pageOf, service } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
-/** A date a week from today, as the API writes it and as it is typed (day first). */
+/** A date a week from today, as the API writes it and as the date input takes it (year, month, day). */
 const NEXT_WEEK = daysFromToday(7);
-const NEXT_WEEK_TEXT = isoToDateText(NEXT_WEEK);
 
 vi.mock('@/services/api/services');
 
@@ -82,7 +80,7 @@ describe('ServicesPage', () => {
 
         await user.click(screen.getByRole('button', { name: 'New service' }));
         await user.type(screen.getByLabelText(/^Name/), 'Easter Service');
-        await user.type(screen.getByLabelText(/^Date/), NEXT_WEEK_TEXT);
+        await user.type(screen.getByLabelText(/^Date/), NEXT_WEEK);
         await user.click(screen.getByRole('button', { name: 'Create service' }));
 
         await waitFor(() =>
@@ -106,35 +104,36 @@ describe('ServicesPage', () => {
         expect(servicesApi.create).not.toHaveBeenCalled();
     });
 
-    it('shows the date box as day first and puts the slashes in while typing', async () => {
+    it("uses the browser's own date input, which cannot offer a date the server would refuse", async () => {
         const user = userEvent.setup();
         open(ROUTES.SERVICES, [PERMISSIONS.MEMBERS_EDIT]);
         await screen.findByRole('link', { name: /Sunday/ });
         await user.click(screen.getByRole('button', { name: 'New service' }));
 
         const box = screen.getByLabelText(/^Date/);
-        await user.type(box, '25122026');
+        await user.type(box, '2026-12-25');
 
-        expect(box).toHaveAttribute('placeholder', 'dd/mm/yyyy');
-        expect(box).toHaveValue('25/12/2026');
-        expect(box).not.toHaveAttribute('type', 'date');
+        expect(box).toHaveAttribute('type', 'date');
+        expect(box).toHaveValue('2026-12-25');
+        expect(box).toHaveAttribute('min', daysFromToday(-30));
+        expect(box).toHaveAttribute('max', daysFromToday(366));
     });
 
-    it('refuses a date that is too old, too far ahead or not a real day, before sending', async () => {
+    it('refuses a date that is too old or too far ahead, before sending', async () => {
         const user = userEvent.setup();
         open(ROUTES.SERVICES, [PERMISSIONS.MEMBERS_EDIT]);
         await screen.findByRole('link', { name: /Sunday/ });
         await user.click(screen.getByRole('button', { name: 'New service' }));
         await user.type(screen.getByLabelText(/^Name/), 'X');
 
-        await user.type(screen.getByLabelText(/^Date/), '01012020');
+        await user.type(screen.getByLabelText(/^Date/), '2020-01-01');
         await user.click(screen.getByRole('button', { name: 'Create service' }));
         expect(await screen.findByText('A service cannot be dated more than 30 days in the past')).toBeInTheDocument();
 
         await user.clear(screen.getByLabelText(/^Date/));
-        await user.type(screen.getByLabelText(/^Date/), '31022027');
+        await user.type(screen.getByLabelText(/^Date/), '2099-01-01');
         await user.click(screen.getByRole('button', { name: 'Create service' }));
-        expect(await screen.findByText('Enter a real date as dd/mm/yyyy')).toBeInTheDocument();
+        expect(await screen.findByText('A service cannot be dated more than 366 days ahead')).toBeInTheDocument();
         expect(servicesApi.create).not.toHaveBeenCalled();
     });
 
@@ -146,7 +145,7 @@ describe('ServicesPage', () => {
 
         await user.click(screen.getByRole('button', { name: 'New service' }));
         await user.type(screen.getByLabelText(/^Name/), 'X');
-        await user.type(screen.getByLabelText(/^Date/), NEXT_WEEK_TEXT);
+        await user.type(screen.getByLabelText(/^Date/), NEXT_WEEK);
         await user.click(screen.getByRole('button', { name: 'Create service' }));
 
         expect(await screen.findByText('The end must be after the start.')).toBeInTheDocument();

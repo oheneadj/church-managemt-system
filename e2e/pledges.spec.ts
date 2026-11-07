@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { CHURCH_URL } from './helpers/config';
 
-/** A date some days from now, typed the way the app asks for it: day first (dd/mm/yyyy). */
+/** A date some days from now, as the date input takes it (year, month, day: yyyy-mm-dd). */
 function inDays(days: number): string {
     const date = new Date();
     date.setDate(date.getDate() + days);
 
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 test.describe('pledges', () => {

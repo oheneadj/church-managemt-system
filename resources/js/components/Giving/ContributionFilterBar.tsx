@@ -13,7 +13,7 @@ interface ContributionFilterBarProps {
 
 /**
  * The gift list's filters: the dates the giving happened between, the fund, how it was given, and whether to show voided
- * gifts instead. The dates are typed day first.
+ * gifts instead. The dates are the browser's own date inputs.
  */
 export function ContributionFilterBar({ filters, onChange, onClear }: ContributionFilterBarProps) {
     const funds = useFundTypes();

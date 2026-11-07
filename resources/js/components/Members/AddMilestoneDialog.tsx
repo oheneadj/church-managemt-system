@@ -12,7 +12,6 @@ import { MILESTONE_TYPES, type MilestoneType } from '@/constants/enums';
 import { useMemberMutations } from '@/hooks/useMemberMutations';
 import { dateBox } from '@/lib/dateBox';
 import { showFieldErrors } from '@/lib/showFieldErrors';
-import { dateTextToIso } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 const schema = z.object({
@@ -53,7 +52,7 @@ export function AddMilestoneDialog({ memberId, open, onOpenChange }: AddMileston
                 id: memberId,
                 input: {
                     type: values.type as MilestoneType,
-                    occurred_at: dateTextToIso(values.occurred_at) ?? values.occurred_at,
+                    occurred_at: values.occurred_at,
                     officiant: orNull(values.officiant),
                     cohort: orNull(values.cohort),
                     notes: orNull(values.notes),
@@ -95,6 +94,7 @@ export function AddMilestoneDialog({ memberId, open, onOpenChange }: AddMileston
                         id="milestone-date"
                         label="Date"
                         required
+                        max={today()}
                         error={errors.occurred_at?.message}
                         {...form.register('occurred_at')}
                     />

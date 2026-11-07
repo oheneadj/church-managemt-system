@@ -9,7 +9,6 @@ import { membersApi } from '@/services/api/members';
 import { pledgesApi } from '@/services/api/pledges';
 import { fundType, memberSummary, pageOf, pledge } from '@/test/fixtures';
 import type { Pledge } from '@/types/giving';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
 vi.mock('@/services/api/pledges');
@@ -59,7 +58,7 @@ describe('PledgeDialog: making a pledge', () => {
         await user.selectOptions(await fundSelect(), 'fund-1');
         await user.type(screen.getByLabelText(/What it is for/), 'Building Fund 2026 pledge');
         await user.type(screen.getByLabelText(/Amount pledged/), '1000');
-        await user.type(screen.getByLabelText(/Target date/), isoToDateText(daysFromToday(60)));
+        await user.type(screen.getByLabelText(/Target date/), daysFromToday(60));
         await user.click(screen.getByRole('button', { name: 'Make pledge' }));
 
         await waitFor(() => expect(pledgesApi.create).toHaveBeenCalledTimes(1));
@@ -82,7 +81,7 @@ describe('PledgeDialog: making a pledge', () => {
         await user.selectOptions(await fundSelect(), 'fund-1');
         await user.type(screen.getByLabelText(/What it is for/), 'Building');
         await user.type(screen.getByLabelText(/Amount pledged/), '50');
-        await user.type(screen.getByLabelText(/Target date/), isoToDateText(daysFromToday(10)));
+        await user.type(screen.getByLabelText(/Target date/), daysFromToday(10));
         await user.click(screen.getByRole('button', { name: 'Make pledge' }));
 
         expect(await screen.findByText('Choose the member who made the pledge')).toBeInTheDocument();
@@ -111,7 +110,7 @@ describe('PledgeDialog: making a pledge', () => {
         await user.selectOptions(await fundSelect(), 'fund-1');
         await user.type(screen.getByLabelText(/What it is for/), 'Building');
         await user.type(screen.getByLabelText(/Amount pledged/), '50');
-        await user.type(screen.getByLabelText(/Target date/), isoToDateText(daysFromToday(-3)));
+        await user.type(screen.getByLabelText(/Target date/), daysFromToday(-3));
         await user.click(screen.getByRole('button', { name: 'Make pledge' }));
 
         expect(await screen.findByText('The target date must be today or later')).toBeInTheDocument();
@@ -131,7 +130,7 @@ describe('PledgeDialog: making a pledge', () => {
         await user.selectOptions(await fundSelect(), 'fund-1');
         await user.type(screen.getByLabelText(/What it is for/), 'Building');
         await user.type(screen.getByLabelText(/Amount pledged/), '50');
-        await user.type(screen.getByLabelText(/Target date/), isoToDateText(daysFromToday(10)));
+        await user.type(screen.getByLabelText(/Target date/), daysFromToday(10));
         await user.click(screen.getByRole('button', { name: 'Make pledge' }));
 
         expect(await screen.findByText('The amount pledged field must not be greater than 999999.99.')).toBeInTheDocument();
@@ -154,7 +153,7 @@ describe('PledgeDialog: changing a pledge', () => {
         expect(screen.queryByLabelText(/^Fund/)).not.toBeInTheDocument();
         expect(screen.getByLabelText(/What it is for/)).toHaveValue('Building Fund 2026 pledge');
         expect(screen.getByLabelText(/Amount pledged/)).toHaveValue(1000);
-        expect(screen.getByLabelText(/Target date/)).toHaveValue('31/12/2026');
+        expect(screen.getByLabelText(/Target date/)).toHaveValue('2026-12-31');
     });
 
     it('changes the amount and closes', async () => {

@@ -3,7 +3,6 @@ import { amountField } from '@/components/Giving/amountField';
 import { PLEDGE_DESCRIPTION_MAX, PLEDGE_MAX } from '@/constants/giving';
 import { dateBox } from '@/lib/dateBox';
 import type { Pledge, PledgeChange } from '@/types/giving';
-import { dateTextToIso, isoToDateText } from '@/utils/dateText';
 import { today } from '@/utils/today';
 
 /**
@@ -25,14 +24,14 @@ export function pledgeFormSchema({ unchangedDate, requireFund = false }: { uncha
             target_date: dateBox({ required: 'Enter the target date' }),
         })
         .superRefine((values, context) => {
-            const iso = dateTextToIso(values.target_date);
+            const iso = values.target_date;
 
             if (requireFund && values.fund_type_id === '') {
                 context.addIssue({ code: 'custom', path: ['fund_type_id'], message: 'Choose the fund' });
             }
 
-            // A text that is not a real date already has its message from the date box.
-            if (iso !== null && iso !== unchangedDate && iso < today()) {
+            // A box that is empty or not a real date already has its message from the date box.
+            if (iso !== '' && iso !== unchangedDate && iso < today()) {
                 context.addIssue({ code: 'custom', path: ['target_date'], message: 'The target date must be today or later' });
             }
         });
@@ -51,7 +50,7 @@ export function valuesFromPledge(pledge: Pledge): PledgeFormValues {
         fund_type_id: pledge.fund_type.id,
         description: pledge.description,
         amount_pledged: pledge.amount_pledged,
-        target_date: isoToDateText(pledge.target_date),
+        target_date: pledge.target_date,
     };
 }
 
@@ -60,6 +59,6 @@ export function toPledgeChange(values: PledgeFormValues): PledgeChange {
     return {
         description: values.description,
         amount_pledged: values.amount_pledged,
-        target_date: dateTextToIso(values.target_date) ?? values.target_date,
+        target_date: values.target_date,
     };
 }

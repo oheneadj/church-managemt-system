@@ -1,7 +1,5 @@
-import type { ChangeEvent, ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 import { TextField } from '@/components/form/TextField';
-import { DATE_BOX_HINT } from '@/constants/dates';
-import { maskDateText } from '@/utils/dateText';
 
 interface DateFieldProps extends Omit<ComponentProps<'input'>, 'type'> {
     id: string;
@@ -10,16 +8,11 @@ interface DateFieldProps extends Omit<ComponentProps<'input'>, 'type'> {
 }
 
 /**
- * A labelled date box that always reads day first (dd/mm/yyyy), whatever language the browser or phone uses. The
- * browser's own date picker is not used because it shows the month first on many devices. The slashes are put in
- * as the person types, and the value stays text: validate it with `dateBox` and turn it into the API's form with
- * `dateTextToIso`. Spread the result of `register('name')` onto it, as on any other field.
+ * A labelled date box: the browser's own date input (`type="date"`), so the person picks from a calendar or types in the
+ * order their phone or computer uses. Its value is always `YYYY-MM-DD`, which is what the API takes, so nothing needs
+ * converting. Pass `min` and `max` (as `YYYY-MM-DD`) to stop the calendar offering a date the server would refuse; validate
+ * the value with `dateBox`. Spread the result of `register('name')` onto it, as on any other field.
  */
-export function DateField({ onChange, ...props }: DateFieldProps) {
-    function mask(event: ChangeEvent<HTMLInputElement>) {
-        event.target.value = maskDateText(event.target.value);
-        onChange?.(event);
-    }
-
-    return <TextField inputMode="numeric" placeholder={DATE_BOX_HINT} maxLength={10} onChange={mask} {...props} />;
+export function DateField(props: DateFieldProps) {
+    return <TextField type="date" {...props} />;
 }

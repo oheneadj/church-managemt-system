@@ -12,6 +12,9 @@ test.describe('a church admin managing members', () => {
         await page.getByLabel(/First name/).fill('Abena');
         await page.getByLabel(/Last name/).fill(lastName);
         await page.getByLabel(/Gender/).selectOption('female');
+        // The date of birth is the browser's own date input, so it takes year-month-day.
+        await expect(page.getByLabel(/Date of birth/)).toHaveAttribute('type', 'date');
+        await page.getByLabel(/Date of birth/).fill('1985-07-12');
         await page.getByRole('button', { name: 'Next' }).click();
         await expect(page.getByText('Step 2 of 3')).toBeVisible();
         await page.getByLabel(/^Phone number/).fill(phone);
@@ -21,6 +24,10 @@ test.describe('a church admin managing members', () => {
 
         // The new member's page opens.
         await expect(page.getByRole('heading', { level: 1, name: new RegExp(lastName) })).toBeVisible();
+
+        // The date was saved: the edit form shows it again in the date input.
+        await page.getByRole('link', { name: 'Edit' }).click();
+        await expect(page.getByLabel(/Date of birth/)).toHaveValue('1985-07-12');
 
         // They can be found by name and by the phone typed in local form.
         await page.goto(`${CHURCH_URL}/members`);

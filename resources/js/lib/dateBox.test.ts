@@ -18,13 +18,16 @@ describe('dateBox', () => {
         expect(messageFor(dateBox({ required: 'Enter the date' }), '')).toBe('Enter the date');
     });
 
-    it('wants a real, complete date, day first', () => {
+    it('wants a real, complete date as the date input gives it (year, month, day)', () => {
         const schema = dateBox();
 
-        expect(messageFor(schema, '25/12/2026')).toBeUndefined();
-        expect(messageFor(schema, '25/12')).toBe('Enter a real date as dd/mm/yyyy');
-        expect(messageFor(schema, '31/02/2026')).toBe('Enter a real date as dd/mm/yyyy');
-        expect(messageFor(schema, '2026-12-25')).toBe('Enter a real date as dd/mm/yyyy');
+        expect(messageFor(schema, '2026-12-25')).toBeUndefined();
+        expect(messageFor(schema, '2024-02-29')).toBeUndefined();
+        expect(messageFor(schema, '2026-12')).toBe('Enter a real date');
+        expect(messageFor(schema, '2026-02-31')).toBe('Enter a real date');
+        expect(messageFor(schema, '2025-02-29')).toBe('Enter a real date');
+        expect(messageFor(schema, '2026-13-01')).toBe('Enter a real date');
+        expect(messageFor(schema, '25/12/2026')).toBe('Enter a real date');
     });
 
     it('keeps to the limits, which are themselves allowed', () => {
@@ -33,9 +36,9 @@ describe('dateBox', () => {
             notAfter: { date: '2026-01-20', message: 'Too late' },
         });
 
-        expect(messageFor(schema, '09/01/2026')).toBe('Too early');
-        expect(messageFor(schema, '10/01/2026')).toBeUndefined();
-        expect(messageFor(schema, '20/01/2026')).toBeUndefined();
-        expect(messageFor(schema, '21/01/2026')).toBe('Too late');
+        expect(messageFor(schema, '2026-01-09')).toBe('Too early');
+        expect(messageFor(schema, '2026-01-10')).toBeUndefined();
+        expect(messageFor(schema, '2026-01-20')).toBeUndefined();
+        expect(messageFor(schema, '2026-01-21')).toBe('Too late');
     });
 });

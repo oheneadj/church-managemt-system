@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { blankPledgeValues, pledgeFormSchema, toPledgeChange, valuesFromPledge } from '@/components/Giving/pledgeFormSchema';
 import { pledge } from '@/test/fixtures';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
 const valid = {
     fund_type_id: 'fund-1',
     description: 'Building Fund pledge',
     amount_pledged: '1000.00',
-    target_date: isoToDateText(daysFromToday(30)),
+    target_date: daysFromToday(30),
 };
 
 function problems(overrides: Record<string, string>, options: Parameters<typeof pledgeFormSchema>[0] = { requireFund: true }): string[] {
@@ -38,16 +37,16 @@ describe('pledgeFormSchema', () => {
     });
 
     it('refuses a target date in the past, and allows today', () => {
-        expect(problems({ target_date: isoToDateText(daysFromToday(-1)) })).toContain('target_date');
-        expect(problems({ target_date: isoToDateText(daysFromToday(0)) })).toEqual([]);
-        expect(problems({ target_date: '31/02/2027' })).toContain('target_date');
+        expect(problems({ target_date: daysFromToday(-1) })).toContain('target_date');
+        expect(problems({ target_date: daysFromToday(0) })).toEqual([]);
+        expect(problems({ target_date: '2027-02-31' })).toContain('target_date');
     });
 
     it('lets a pledge keep its own old date when it is changed, but not move to another date in the past', () => {
         const past = daysFromToday(-20);
 
-        expect(problems({ target_date: isoToDateText(past) }, { unchangedDate: past })).toEqual([]);
-        expect(problems({ target_date: isoToDateText(daysFromToday(-5)) }, { unchangedDate: past })).toContain('target_date');
+        expect(problems({ target_date: past }, { unchangedDate: past })).toEqual([]);
+        expect(problems({ target_date: daysFromToday(-5) }, { unchangedDate: past })).toContain('target_date');
     });
 
     it('refuses an amount over the most a pledge may promise', () => {
@@ -57,18 +56,18 @@ describe('pledgeFormSchema', () => {
 });
 
 describe('pledge form values', () => {
-    it('starts a new pledge blank and fills the change form from a saved pledge, the date day first', () => {
+    it('starts a new pledge blank and fills the change form from a saved pledge', () => {
         expect(blankPledgeValues()).toEqual({ fund_type_id: '', description: '', amount_pledged: '', target_date: '' });
         expect(valuesFromPledge(pledge())).toEqual({
             fund_type_id: 'fund-1',
             description: 'Building Fund 2026 pledge',
             amount_pledged: '1000.00',
-            target_date: '31/12/2026',
+            target_date: '2026-12-31',
         });
     });
 
-    it('sends the date the way the API writes it', () => {
-        expect(toPledgeChange({ ...valid, target_date: '31/12/2026' })).toEqual({
+    it('sends the date as it is, because the date input already writes it the way the API does', () => {
+        expect(toPledgeChange({ ...valid, target_date: '2026-12-31' })).toEqual({
             description: 'Building Fund pledge',
             amount_pledged: '1000.00',
             target_date: '2026-12-31',

@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { serviceFormSchema, toServiceInput } from '@/components/Services/serviceFormSchema';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
 const soon = daysFromToday(3);
-const valid = { name: 'Sunday Service', type: 'sunday', service_date: isoToDateText(soon), starts_at: '', ends_at: '', notes: '' };
+const valid = { name: 'Sunday Service', type: 'sunday', service_date: soon, starts_at: '', ends_at: '', notes: '' };
 
 function problems(overrides: Record<string, string>): string[] {
     const result = serviceFormSchema.safeParse({ ...valid, ...overrides });
@@ -44,15 +43,16 @@ describe('serviceFormSchema', () => {
     });
 
     it('keeps the date within 30 days back and 366 days ahead, and both ends are allowed', () => {
-        expect(problems({ service_date: isoToDateText(daysFromToday(-30)) })).toEqual([]);
-        expect(problems({ service_date: isoToDateText(daysFromToday(-31)) })).toContain('service_date');
-        expect(problems({ service_date: isoToDateText(daysFromToday(366)) })).toEqual([]);
-        expect(problems({ service_date: isoToDateText(daysFromToday(367)) })).toContain('service_date');
+        expect(problems({ service_date: daysFromToday(-30) })).toEqual([]);
+        expect(problems({ service_date: daysFromToday(-31) })).toContain('service_date');
+        expect(problems({ service_date: daysFromToday(366) })).toEqual([]);
+        expect(problems({ service_date: daysFromToday(367) })).toContain('service_date');
     });
 
-    it('wants a real date written day first', () => {
-        expect(problems({ service_date: '31/02/2027' })).toContain('service_date');
-        expect(problems({ service_date: soon })).toContain('service_date');
-        expect(problems({ service_date: '25/12' })).toContain('service_date');
+    it('wants a real date', () => {
+        expect(problems({ service_date: '2027-02-31' })).toContain('service_date');
+        expect(problems({ service_date: soon })).toEqual([]);
+        expect(problems({ service_date: '25/12/2026' })).toContain('service_date');
+        expect(problems({ service_date: '2027-12' })).toContain('service_date');
     });
 });

@@ -4,6 +4,8 @@ import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
 import type { MemberFormValues } from '@/components/Members/memberFormSchema';
 import { GENDERS, MARITAL_STATUSES } from '@/constants/enums';
+import { EARLIEST_BIRTH_DATE } from '@/constants/dates';
+import { today } from '@/utils/today';
 
 /**
  * Step 1 of the member form: name, gender, date of birth and marital status.
@@ -59,6 +61,8 @@ export function IdentityFields() {
                 id="date_of_birth"
                 label="Date of birth"
                 autoComplete="off"
+                min={EARLIEST_BIRTH_DATE}
+                max={today()}
                 error={errors.date_of_birth?.message}
                 {...register('date_of_birth')}
             />

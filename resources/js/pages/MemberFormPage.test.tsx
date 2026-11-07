@@ -10,6 +10,7 @@ import { familiesApi } from '@/services/api/families';
 import { membersApi } from '@/services/api/members';
 import { family, member, pageOf } from '@/test/fixtures';
 import { renderPage } from '@/test/render';
+import { today } from '@/utils/today';
 
 vi.mock('@/services/api/members');
 vi.mock('@/services/api/departments');
@@ -75,6 +76,45 @@ describe('MemberFormPage', () => {
                 }),
             );
             await waitFor(() => expect(router.state.location.pathname).toBe('/members/new-member'));
+        });
+
+        it('takes the date of birth in a date input and sends it as the API writes it', async () => {
+            const user = userEvent.setup();
+            openNew();
+            await user.type(await screen.findByLabelText(/First name/), 'Abena');
+            await user.type(screen.getByLabelText(/Last name/), 'Asante');
+            await user.selectOptions(screen.getByLabelText(/Gender/), 'female');
+
+            const born = screen.getByLabelText(/Date of birth/);
+            await user.type(born, '1985-07-12');
+            expect(born).toHaveValue('1985-07-12');
+            await user.click(screen.getByRole('button', { name: 'Next' }));
+            await user.type(await screen.findByLabelText(/^Phone number/), '0200987654');
+            await user.click(screen.getByRole('button', { name: 'Next' }));
+            await user.click(await screen.findByRole('button', { name: 'Add member' }));
+
+            await waitFor(() => expect(membersApi.create).toHaveBeenCalledWith(expect.objectContaining({ date_of_birth: '1985-07-12' })));
+        });
+
+        it('shows the date of birth and the date they joined as date inputs, limited to real, sensible days', async () => {
+            const user = userEvent.setup();
+            openNew();
+            await user.type(await screen.findByLabelText(/First name/), 'Abena');
+            await user.type(screen.getByLabelText(/Last name/), 'Asante');
+            await user.selectOptions(screen.getByLabelText(/Gender/), 'female');
+
+            const born = screen.getByLabelText(/Date of birth/);
+            expect(born).toHaveAttribute('type', 'date');
+            expect(born).toHaveAttribute('min', '1900-01-01');
+            expect(born).toHaveAttribute('max', today());
+
+            await user.click(screen.getByRole('button', { name: 'Next' }));
+            await user.type(await screen.findByLabelText(/^Phone number/), '0200987654');
+            await user.click(screen.getByRole('button', { name: 'Next' }));
+
+            const joined = await screen.findByLabelText(/Member since/);
+            expect(joined).toHaveAttribute('type', 'date');
+            expect(joined).toHaveAttribute('max', today());
         });
 
         it('will not leave a step until its boxes are right, and says what is wrong', async () => {

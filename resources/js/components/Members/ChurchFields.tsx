@@ -5,6 +5,7 @@ import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
 import type { MemberFormValues } from '@/components/Members/memberFormSchema';
 import { EDUCATIONAL_LEVELS, FAMILY_ROLES, MEMBERSHIP_TYPES, NEW_MEMBER_STATUSES } from '@/constants/enums';
+import { today } from '@/utils/today';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAllFamilies } from '@/hooks/useFamilies';
 
@@ -39,6 +40,7 @@ export function ChurchFields({ editing }: ChurchFieldsProps) {
                 <DateField
                     id="membership_date"
                     label="Member since"
+                    max={today()}
                     error={errors.membership_date?.message}
                     {...register('membership_date')}
                 />

@@ -9,6 +9,8 @@ import { serviceFormSchema, toServiceInput, type ServiceFormValues } from '@/com
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SERVICE_TYPES } from '@/constants/enums';
+import { SERVICE_DAYS_AHEAD, SERVICE_DAYS_BACK } from '@/constants/dates';
+import { daysFromToday } from '@/utils/today';
 import { useServiceMutations } from '@/hooks/useServices';
 import { showFieldErrors } from '@/lib/showFieldErrors';
 import type { Service } from '@/types/services';
@@ -74,6 +76,8 @@ export function ServiceFormDialog({ open, onOpenChange, onSaved }: ServiceFormDi
                         id="service-date"
                         label="Date"
                         required
+                        min={daysFromToday(-SERVICE_DAYS_BACK)}
+                        max={daysFromToday(SERVICE_DAYS_AHEAD)}
                         error={errors.service_date?.message}
                         {...form.register('service_date')}
                     />

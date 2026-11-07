@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { DATE_BOX_HINT } from '@/constants/dates';
-import { dateTextToIso } from '@/utils/dateText';
 
 interface DateLimit {
     /** The limit as YYYY-MM-DD, or a function that gives it, so "today" is worked out when the form is checked and not when the page loaded. */
@@ -18,14 +16,28 @@ interface DateBoxOptions {
     notAfter?: DateLimit;
 }
 
+/** Whether a text is a real day written as `YYYY-MM-DD` (31 February is not). */
+function isRealDate(text: string): boolean {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+
+    if (match === null) {
+        return false;
+    }
+
+    const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    const date = new Date(year, month - 1, day);
+
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
 /** The limit as a date. */
 function limitOf(limit: DateLimit): string {
     return typeof limit.date === 'function' ? limit.date() : limit.date;
 }
 
 /**
- * The check for a date box that holds day-first text ("25/12/2026"). An optional box may be empty; anything typed
- * must be a real date inside the limits. The value stays text; `dateTextToIso` turns it into the API's form on send.
+ * The check for a date box (the browser's date input, whose value is `YYYY-MM-DD`). An optional box may be empty;
+ * anything in it must be a real date inside the limits. The value is already in the API's form, so it is sent as it is.
  */
 export function dateBox({ required, notBefore, notAfter }: DateBoxOptions = {}) {
     return z
@@ -40,13 +52,11 @@ export function dateBox({ required, notBefore, notAfter }: DateBoxOptions = {}) 
                 return;
             }
 
-            const iso = dateTextToIso(text);
-
-            if (iso === null) {
-                context.addIssue({ code: 'custom', message: `Enter a real date as ${DATE_BOX_HINT}` });
-            } else if (notBefore !== undefined && iso < limitOf(notBefore)) {
+            if (!isRealDate(text)) {
+                context.addIssue({ code: 'custom', message: 'Enter a real date' });
+            } else if (notBefore !== undefined && text < limitOf(notBefore)) {
                 context.addIssue({ code: 'custom', message: notBefore.message });
-            } else if (notAfter !== undefined && iso > limitOf(notAfter)) {
+            } else if (notAfter !== undefined && text > limitOf(notAfter)) {
                 context.addIssue({ code: 'custom', message: notAfter.message });
             }
         });

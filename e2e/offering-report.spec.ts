@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { CHURCH_URL } from './helpers/config';
 
-/** Today, typed the way the app asks for it: day first (dd/mm/yyyy). */
+/** Today, as the date input takes it (year, month, day: yyyy-mm-dd). */
 function today(): string {
     const date = new Date();
 
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 test.describe('the Sunday offering report', () => {

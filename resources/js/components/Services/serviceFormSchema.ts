@@ -3,7 +3,6 @@ import { SERVICE_DAYS_AHEAD, SERVICE_DAYS_BACK } from '@/constants/dates';
 import { SERVICE_TYPES, type ServiceType } from '@/constants/enums';
 import { dateBox } from '@/lib/dateBox';
 import type { ServiceInput } from '@/types/services';
-import { dateTextToIso } from '@/utils/dateText';
 import { daysFromToday } from '@/utils/today';
 
 const TYPE_VALUES = SERVICE_TYPES.map((option) => option.value) as [ServiceType, ...ServiceType[]];
@@ -40,7 +39,7 @@ export function toServiceInput(values: ServiceFormValues): ServiceInput {
     return {
         name: values.name,
         type: values.type,
-        service_date: dateTextToIso(values.service_date) ?? values.service_date,
+        service_date: values.service_date,
         starts_at: values.starts_at || undefined,
         ends_at: values.ends_at || undefined,
         notes: values.notes || undefined,

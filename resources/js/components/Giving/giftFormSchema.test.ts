@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { blankGiftValues, giftFormSchema, toGiftInput } from '@/components/Giving/giftFormSchema';
-import { isoToDateText } from '@/utils/dateText';
 import { daysFromToday, today } from '@/utils/today';
 
-const valid = { ...blankGiftValues(isoToDateText(today())), fund_type_id: 'fund-1', amount: '150.00' };
+const valid = { ...blankGiftValues(today()), fund_type_id: 'fund-1', amount: '150.00' };
 
 function problems(overrides: Record<string, string>): string[] {
     const result = giftFormSchema.safeParse({ ...valid, ...overrides });
@@ -36,9 +35,9 @@ describe('giftFormSchema', () => {
     });
 
     it('does not let a gift be dated in the future, and allows any past day', () => {
-        expect(problems({ contributed_on: isoToDateText(daysFromToday(1)) })).toContain('contributed_on');
-        expect(problems({ contributed_on: isoToDateText(daysFromToday(-400)) })).toEqual([]);
-        expect(problems({ contributed_on: '31/02/2026' })).toContain('contributed_on');
+        expect(problems({ contributed_on: daysFromToday(1) })).toContain('contributed_on');
+        expect(problems({ contributed_on: daysFromToday(-400) })).toEqual([]);
+        expect(problems({ contributed_on: '2026-02-31' })).toContain('contributed_on');
     });
 
     it('keeps notes under 2000 characters', () => {
@@ -78,7 +77,7 @@ describe('toGiftInput', () => {
 
     it('sends an earlier day at noon UTC', () => {
         const past = daysFromToday(-7);
-        const input = toGiftInput(giftFormSchema.parse({ ...valid, contributed_on: isoToDateText(past) }), undefined, undefined);
+        const input = toGiftInput(giftFormSchema.parse({ ...valid, contributed_on: past }), undefined, undefined);
 
         expect(input.contributed_at).toBe(`${past}T12:00:00Z`);
     });

@@ -885,7 +885,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-049 — Dates: shown and typed day first, and where they are limited
 **Date:** October 2026
 **Decided by:** Product Owner (day first; the three limits), Lead Engineer (the rest)
-**Status:** Active
+**Status:** Active. **Point 1 (the typed day-first box) is superseded by D-066**; points 2 to 4 (the limits) still apply.
 
 **Decision:**
 1. **Day first everywhere a person types a date.** The browser's own date box shows the month first on many phones and computers and cannot be changed by the page, so the app uses its own `DateField`: a text box that shows `dd/mm/yyyy` as a hint, puts the slashes in as the person types, and refuses a date that is not real (31/02). The API and the stored values stay `YYYY-MM-DD`; `utils/dateText.ts` turns one into the other at the edge of the form. Dates shown on screen were already day first ("25 Oct 2026").
@@ -1198,6 +1198,23 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 8. **Left out on purpose:** a send-later time, a cancel button, per-plan recipient limits (Q4 is open), and a history screen of broadcasts (the message log shows every text).
 
 **Revisit when:** WhatsApp broadcasts open, plan limits on recipients are decided (Q4), a church needs to cancel a broadcast part-way, or the credits should be reserved up front.
+
+---
+
+### D-066 — Date fields use the browser's own date input (supersedes D-049 point 1)
+**Date:** November 2026
+**Decided by:** Product Owner
+**Status:** Active
+
+**Decision:**
+1. **Every field where a person picks a date is a native `<input type="date">`** (the date of birth on the add-member form is the example): member date of birth and "member since", a milestone's date, the date a gift was given, a pledge's target date, a service's date, and the From and To filters on the gift list. The person gets the calendar and the order of day, month and year that their phone or computer uses, the date is always real (the box will not hold 31 February), and the value is `YYYY-MM-DD`, which is exactly what the API takes, so nothing is converted or masked any more.
+2. **The limits are still ours (D-049 points 2 to 4).** They are checked by the same `dateBox` rule on the form, and the same numbers are given to the browser as `min` and `max` so its calendar does not offer a day the server would refuse: date of birth from 1900 to today, "member since", a milestone and a gift up to today, a new pledge from today, a service from 30 days back to 366 days ahead. A changed pledge keeps its own date whatever it is, so it has no `min`. The server remains the judge.
+3. **What went:** the text box that put slashes in as you typed, `utils/dateText.ts` and the `dd/mm/yyyy` hint. A hand-typed `25/12/2026` is no longer accepted, because the date input cannot produce it.
+4. **Known trade-off, accepted:** D-049 chose its own box because a native date input shows the month first on some devices (for example a phone set to US English). With this decision the order follows the device. Dates shown on screen as text stay day first ("25 Oct 2026").
+
+**Rationale:** The browser's date input is what people already know, works with a calendar and with the keyboard, is accessible, needs no code of ours to mask, and removes the conversion between text and the API's form, which was a place for mistakes.
+
+**Revisit when:** a church complains that dates appear month first on its phones (the date box is in one component, `DateField`).
 
 ---
 
