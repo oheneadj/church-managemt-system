@@ -16,6 +16,7 @@ use App\Models\PersonalAccessToken;
 use App\Models\Pledge;
 use App\Models\Service;
 use App\Models\ServiceSchedule;
+use App\Models\SmsPackage;
 use App\Models\User;
 use App\Services\HealthCheck;
 use App\Support\EnvironmentCheck;
@@ -66,6 +67,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('family', Family::class);
         Route::model('department', Department::class);
         Route::model('fund_type', FundType::class);
+        Route::model('sms_package', SmsPackage::class);
         Route::model('contribution', Contribution::class);
         Route::model('pledge', Pledge::class);
         Route::model('service_schedule', ServiceSchedule::class);

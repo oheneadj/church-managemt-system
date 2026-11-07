@@ -2272,6 +2272,101 @@
                 }
             }
         },
+        "/v1/platform/sms-packages": {
+            "get": {
+                "operationId": "platform.sms-packages.index",
+                "summary": "Runs ListSmsPackagesAction for this request and returns the SmsPackageCollection",
+                "tags": [
+                    "ListSmsPackages"
+                ],
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SmsPackageCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SmsPackageCollection"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "platform.sms-packages.store",
+                "summary": "Runs CreateSmsPackageAction for this request and returns the new package with 201",
+                "tags": [
+                    "StoreSmsPackage"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSmsPackageRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`SmsPackageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SmsPackageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/staff/directory": {
             "get": {
                 "operationId": "staff.directory",
@@ -4156,6 +4251,67 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/components/schemas/ServiceScheduleResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/platform/sms-packages/{sms_package}": {
+            "put": {
+                "operationId": "platform.sms-packages.update",
+                "summary": "Runs UpdateSmsPackageAction for this request and returns the package",
+                "tags": [
+                    "UpdateSmsPackage"
+                ],
+                "parameters": [
+                    {
+                        "name": "sms_package",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sms package ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSmsPackageRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SmsPackageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SmsPackageResource"
                                         }
                                     },
                                     "required": [
@@ -8202,6 +8358,49 @@
                 "additionalProperties": {},
                 "title": "SignInResource"
             },
+            "SmsPackageCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/SmsPackageResource"
+                },
+                "title": "SmsPackageCollection"
+            },
+            "SmsPackageResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "credits": {
+                        "type": "integer"
+                    },
+                    "price": {
+                        "type": "string"
+                    },
+                    "price_formatted": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "credits",
+                    "price",
+                    "price_formatted",
+                    "is_active",
+                    "sort_order"
+                ],
+                "title": "SmsPackageResource"
+            },
             "StaffCollection": {
                 "type": "array",
                 "items": {
@@ -8771,6 +8970,39 @@
                 ],
                 "title": "StoreServiceScheduleRequest"
             },
+            "StoreSmsPackageRequest": {
+                "type": "object",
+                "description": "Validates a new SMS credit package: a name, a number of credits and a price in GHS.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "credits": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                    },
+                    "price": {
+                        "type": "number",
+                        "maximum": 99999.99
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "credits",
+                    "price"
+                ],
+                "title": "StoreSmsPackageRequest"
+            },
             "UpdateChurchProfileRequest": {
                 "type": "object",
                 "description": "Validates a change to the church's own details: its name, denomination, address, city, region, phone and email. Any of them\nmay be sent, but at least one. The name cannot be emptied; the others can be cleared. The phone is put into international\nform and the email into lowercase. The web address, time zone, member number letters, plan and credits are not the church's\nto change here, and sending one is refused rather than silently ignored.",
@@ -9015,6 +9247,34 @@
                     }
                 },
                 "title": "UpdateServiceScheduleRequest"
+            },
+            "UpdateSmsPackageRequest": {
+                "type": "object",
+                "description": "Validates a change to an SMS credit package. Any subset of fields may be sent. Setting is_active to false switches the\npackage off, which is how it stops being sold.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "credits": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                    },
+                    "price": {
+                        "type": "number",
+                        "maximum": 99999.99
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateSmsPackageRequest"
             },
             "UploadMemberPhotoRequest": {
                 "type": "object",

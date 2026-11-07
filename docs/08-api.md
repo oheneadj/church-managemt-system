@@ -1081,6 +1081,16 @@ Sign-in is the same two steps as church staff (D-054): the right password emails
 
 There is no sign-up. An account is created on the server with `php artisan platform:create-admin {email} {name}`, which asks for the password (at least 12 characters, never given as an argument) and refuses an email already in use. An account is switched off, never deleted.
 
+### SMS Credit Packages
+```
+GET  /api/v1/platform/sms-packages                 paginated; every package, switched off ones too
+POST /api/v1/platform/sms-packages                 { "name", "credits", "price", "sort_order"?, "is_active"? }   -> 201
+PUT  /api/v1/platform/sms-packages/{id}            any subset of the same fields                                -> 200
+```
+The bundles of SMS credits a church can buy (D-069, story 5.4), set by the platform owner. Signed-in platform admins only (`401` for anyone else, a church's staff included). Listed by `sort_order` (lowest first), then name. Each package: `id`, `name`, `credits`, `price` (an exact decimal string in GHS, for example `"12.50"`) with `price_formatted` (`"GHS 12.50"`), `is_active`, `sort_order`.
+
+**Rules:** `name` is required, up to 100 characters, and unique **whatever its capitals** (`422`; the database holds it too). `credits` is a whole number from 1 to 1,000,000. `price` is above 0, with at most two decimals, up to 99,999.99: a free package, a fraction of a pesewa and an extra zero are refused (`config/credits.php`). `sort_order` is 0 to 1000 (default 0) and `is_active` defaults to true. An update changes only the fields sent. There is **no delete**: a package no longer sold is switched off with `is_active: false`, because purchases will point at it. A church sees only the active ones, when buying is built.
+
 ---
 
 ## Recent Activity

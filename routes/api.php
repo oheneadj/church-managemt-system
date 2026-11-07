@@ -54,10 +54,13 @@ use App\Http\Controllers\Api\V1\Messages\ListMessagesController;
 use App\Http\Controllers\Api\V1\Messages\SendBroadcastController;
 use App\Http\Controllers\Api\V1\Onboarding\RegisterChurchController;
 use App\Http\Controllers\Api\V1\Onboarding\RequestChurchOtpController;
+use App\Http\Controllers\Api\V1\Platform\ListSmsPackagesController;
 use App\Http\Controllers\Api\V1\Platform\PlatformLoginController;
 use App\Http\Controllers\Api\V1\Platform\PlatformLogoutController;
 use App\Http\Controllers\Api\V1\Platform\PlatformMeController;
 use App\Http\Controllers\Api\V1\Platform\PlatformVerifyLoginController;
+use App\Http\Controllers\Api\V1\Platform\StoreSmsPackageController;
+use App\Http\Controllers\Api\V1\Platform\UpdateSmsPackageController;
 use App\Http\Controllers\Api\V1\Pledges\ListPledgesController;
 use App\Http\Controllers\Api\V1\Pledges\ShowPledgeController;
 use App\Http\Controllers\Api\V1\Pledges\StorePledgeController;
@@ -103,6 +106,11 @@ Route::domain(config('tenancy.base_domain'))->prefix('platform')->name('platform
     Route::middleware('auth:platform')->group(function (): void {
         Route::get('auth/me', PlatformMeController::class)->name('auth.me');
         Route::post('auth/logout', PlatformLogoutController::class)->name('auth.logout');
+
+        // The SMS credit packages churches can buy. There is no delete: a package no longer sold is switched off.
+        Route::get('sms-packages', ListSmsPackagesController::class)->name('sms-packages.index');
+        Route::post('sms-packages', StoreSmsPackageController::class)->name('sms-packages.store');
+        Route::put('sms-packages/{sms_package}', UpdateSmsPackageController::class)->name('sms-packages.update');
     });
 });
 

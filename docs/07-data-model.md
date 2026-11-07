@@ -636,6 +636,22 @@ The platform owner's own accounts, apart from every church (D-069). There is no 
 | `last_login_at` | TIMESTAMP | Yes | |
 | `created_at`, `updated_at` | TIMESTAMP | No | |
 
+### `sms_packages`
+
+The SMS credit bundles a church can buy (D-069). They belong to the platform, so there is no `church_id`. A package is switched off with `is_active`, never deleted, because purchases will point at it.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `name` | VARCHAR(100) | No | Unique whatever its capitals (unique index on `lower(name)`) |
+| `credits` | INT UNSIGNED | No | How many credits one purchase adds. One credit is one part of a text (D-051) |
+| `price` | DECIMAL(12,2) | No | GHS, exact (D-017) |
+| `is_active` | BOOLEAN | No | Default true. A church sees only active packages |
+| `sort_order` | SMALLINT UNSIGNED | No | Default 0. Lowest first |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+**Index:** `(is_active, sort_order)`.
+
 ---
 
 ## Key Relationships Summary
