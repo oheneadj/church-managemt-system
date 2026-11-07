@@ -17,6 +17,7 @@ const NAV_ITEMS: readonly { label: string; to: string; permission?: Permission }
     { label: 'Giving', to: ROUTES.GIVING, permission: PERMISSIONS.GIVING_VIEW },
     { label: 'Pledges', to: ROUTES.PLEDGES, permission: PERMISSIONS.GIVING_VIEW },
     { label: 'Staff', to: ROUTES.STAFF, permission: PERMISSIONS.STAFF_MANAGE },
+    { label: 'Settings', to: ROUTES.SETTINGS, permission: PERMISSIONS.CHURCH_SETTINGS },
 ];
 
 /**

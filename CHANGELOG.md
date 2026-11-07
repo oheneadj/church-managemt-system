@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(settings): the settings page, story 5.14 (2026-11-09)
+- **What:** A Settings page at `/settings` for the church admin (menu link shown only with `church.settings`). Two forms, each with its own Save: **Church details** (name, denomination, address, town, region, phone, email; the web address is shown and cannot be changed) and **Preferences** (youth age, how many missed Sundays make a member absent, text a receipt for cash gifts, and the new switch for the automatic absence text, with a note that it uses SMS credits). Numbers are checked against the same ranges as the server, an emptied optional detail is sent as null to clear it, a server message appears beside its box, and a new church name shows in the menu at once. Also: the settings page is added to the 375px layout check.
+- **Why:** Story 5.14. The church profile and settings endpoints existed with no screen, and the absence text (D-067) is off until a church admin switches it on, so it needed somewhere to be switched on.
+- **Files:** resources/js/ (pages/SettingsPage and its test, components/Settings/ (ChurchProfileForm, ChurchSettingsForm, both schemas and their tests), hooks/useChurchSettings, services/api/church, types/church, constants/settings, constants/queryKeys, constants/routes, components/layout/AppLayout, router/index, test/fixtures), e2e/ (settings.spec, mobile-layout.spec), docs/ (11-roadmap-and-sprints, 19-open-items), CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### feat(attendance): the automatic text to absent members, story 3.13 (D-067) (2026-11-09)
 - **What:** A daily command `attendance:alert-absent` (09:00 UTC) queues one `SendAbsenceAlertsJob` for each church that switched the text on and is active, not cancelled and not purged. The job texts the members `GET /attendance/absent` lists who may be texted (SMS on, has a phone), once for each stretch of absence: a member is texted again only after they have been back and missed the same number again, and a text that failed for good is tried again. Each text is a church-paid SMS job (one credit per part) with a `queued` log line of type `attendance_alert`, in plain-alphabet wording from `config/attendance.php`. The job counts the church's credits as it queues and stops with the warning "Absence alerts stopped: insufficient credits" when the next text cannot be paid for; the rest are tried the next day. New church setting `absent_alert`, off by default, changed with `PUT /church/settings`.
 - **Why:** Story 3.13 and docs/02. A pastor wants to reach someone who has gone quiet, but a text costs the church money, so it is off until the church chooses, goes once for each stretch and never spends credits the church does not have. One query builds both the list and the texts, so they cannot disagree.
@@ -773,6 +779,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- Settings page (story 5.14): church details and preferences, including the switch for the automatic absence text; a Settings menu item shown only to staff with `church.settings`
 - Giving screen (story 4.13): the gift list with date, fund and method filters kept in the address, voided gifts, and a Void button with a required reason for staff who may correct giving; a Giving menu item shown only to staff with `giving.view`
 - Check-in can only be opened on the service's own day (D-052); the screen says why when it cannot
 - Gift receipts by SMS (story 4.7, D-051): recording a cash gift fires an event and a queued listener texts the member the amount, fund, date and the month's giving, paid for from the church's credits

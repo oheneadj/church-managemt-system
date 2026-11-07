@@ -22,6 +22,7 @@ export const ROUTES = {
     GIVING: '/giving',
     PLEDGES: '/pledges',
     STAFF: '/staff',
+    SETTINGS: '/settings',
     FAMILIES: '/families',
     FAMILY: (id: string) => `/families/${id}`,
 } as const;

@@ -49,6 +49,8 @@ export const QUERY_KEYS = {
     },
     church: {
         credits: ['church', 'credits'] as const,
+        profile: ['church', 'profile'] as const,
+        settings: ['church', 'settings'] as const,
     },
     departments: {
         all: ['departments'] as const,

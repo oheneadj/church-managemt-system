@@ -1,3 +1,4 @@
+import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Family, Member, MemberSummary, Page } from '@/types/members';
 import type { StaffMember } from '@/types/staff';
@@ -303,4 +304,26 @@ export function staffMember(overrides: Partial<StaffMember> = {}): StaffMember {
         last_login_at: '2026-11-05T14:30:00+00:00',
         ...overrides,
     };
+}
+
+/** A church's own details, as `GET /church` sends them. */
+export function churchProfile(overrides: Partial<ChurchProfile> = {}): ChurchProfile {
+    return {
+        id: 'church-1',
+        name: 'Grace Assembly',
+        slug: 'grace',
+        denomination: 'Pentecostal',
+        address: '12 Ring Road',
+        city: 'Kumasi',
+        region: 'Ashanti',
+        phone: '+233302000000',
+        email: 'office@grace.example',
+        timezone: 'Africa/Accra',
+        ...overrides,
+    };
+}
+
+/** The church's settings, as `GET /church/settings` sends them. */
+export function churchSettings(overrides: Partial<ChurchSettings> = {}): ChurchSettings {
+    return { youth_age_limit: 25, absence_threshold: 3, receipt_on_cash: true, absent_alert: false, ...overrides };
 }
