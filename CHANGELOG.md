@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(activity): the recent activity feed endpoint, open item A9 (backend) (2026-11-09)
+- **What:** `GET /activity` for staff with `reports.view` turns the change history into plain sentences, newest first and paged: a member added or moved to another status, a gift recorded or voided, a pledge made, staff invited, deactivated or reactivated, and church details or settings changed. Each line carries its kind, the sentence, who did it and when. Each kind is also guarded by the permission of what it is about (`members.view`, `giving.view` so **not the pastor**, `staff.manage`, `church.settings`), and the page and total count only what the person may see. A sentence holds only a name, an amount and a fund: never a void reason, a status note, an email, a phone number, a member's name beside a gift, or the old and new values; an erased member is "A member". Member edits, record views, exports and erasures are not shown. Built through the usual layers: a policy, a request, a DTO, an action, a repository method, a describer service, a resource, the kinds and their permissions in one enum (`ActivityKind`) and the words in `lang/en/activity.php`.
+- **Why:** Open item A9 and docs/02 Module 6 ("recent activity feed"). The change history already records who did what; the feed only chooses lines and says them plainly, so nothing new is stored. Decision D-068 records the choices.
+- **Files:** app/ (Enums/ActivityKind, Policies/AuditLogPolicy, Http/Requests/Activity/ListActivityRequest, DTOs/Activity/ (ListActivityDTO, ActivityItem), Actions/Activity/ListActivityAction, Services/ActivityDescriber, Repositories/ (AuditLogRepositoryInterface, EloquentAuditLogRepository), Http/Resources/ActivityResource, Http/Controllers/Api/V1/Activity/ListActivityController), lang/en/activity.php, routes/api.php, tests/Feature/Activity/ActivityFeedTest.php, docs/ (08-api, 13-decision-log D-068, 19-open-items, openapi.json), CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### feat(members): choosing a department's head, open item A10 (screen) (2026-11-09)
 - **What:** The department dialog has a **Head of the department** choice, from the church's active staff by name (the new `GET /staff/directory`, which the pastor may read), or "Nobody yet". The list shows "Head: Abena Pastor" under a department that has one. The head is handled carefully: until the list of staff has loaded the choice is off (and says so if it cannot be loaded), and the head is **only sent when it is changed**, so saving a new name never changes or clears the head, and a head who has since been deactivated is kept as a marked choice ("(not active)") and is not sent back (the server would refuse them). Taking the head away is sent as null. Checked against the real demo church: add a department with a head, see it on the list, take the head away.
 - **Why:** Open item A10, now closed. It completes the Departments screen and uses the directory added in the previous commit.
@@ -863,6 +869,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- `GET /activity`: the change history as plain sentences for the home page, each kind shown only to roles that may see what it is about
 - Choosing a department's head from the active staff, and the head's name on the Departments list
 - `GET /staff/directory` (names of active staff, for the church admin and pastor) and the department head's name on every department
 - Extra permissions screen (story 5.15): give a staff member a permission on top of their role, or take it away, from a Permissions button on the Staff page

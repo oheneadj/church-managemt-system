@@ -1067,6 +1067,33 @@ Only the church's own messages are listed (another church's, and the sign-up cod
 
 ---
 
+## Recent Activity
+
+### Get Recent Activity
+```
+GET /api/v1/activity?per_page=10
+Authorization: Bearer {token}
+Permission: reports.view
+```
+The change history as plain sentences for the home page, newest first, paged (D-068). Church admin, pastor and finance secretary may read it, but each kind of line is shown only to people who also hold the permission that guards what it is about, so the page and `meta.total` count only what the person may see.
+
+**Response `200`:** a page of
+```json
+{ "id": "ulid", "kind": "gift_recorded", "text": "A gift of GHS 1,250.50 to Building Fund was recorded.", "actor_name": "Kofi Admin", "occurred_at": "2026-11-09T09:00:00+00:00" }
+```
+| `kind` | Shown to | Sentence |
+|---|---|---|
+| `member_added` | `members.view` | "Kwame Boateng was added as a member." |
+| `member_status_changed` | `members.view` | "Kwame Boateng is now Inactive." |
+| `gift_recorded`, `gift_voided` | `giving.view` (not the pastor) | "A gift of GHS 1,250.50 to Building Fund was recorded." |
+| `pledge_made` | `giving.view` | "A pledge of GHS 3,000.00 to Building Fund was made." |
+| `staff_invited`, `staff_status_changed` | `staff.manage` | "Esi Owusu was invited as staff." / "was deactivated." / "was reactivated." |
+| `settings_changed` | `church.settings` | "The church details or settings were changed." |
+
+A sentence holds only a name, an amount and a fund: never a void reason, a note, an email, a phone number, a member's name beside a gift, or the old and new values. A member whose data was erased is "A member". Member edits, record views, exports and erasures are not shown. `422` for `per_page` outside 1 to the largest page; `401` without a token; `403` without `reports.view`.
+
+---
+
 ## Reports
 
 ### Attendance Trends

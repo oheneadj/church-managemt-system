@@ -9,9 +9,12 @@ use App\Enums\AuditEvent;
 use App\Enums\MemberStatus;
 use App\Models\AuditLog;
 use App\Models\Member;
+use App\Models\Pledge;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Eloquent implementation of the audit log writes.
@@ -57,6 +60,26 @@ class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         }
 
         return $changes;
+    }
+
+    /**
+     * One page of the current church's history, newest first, of only the given kinds of line, with the record each is about.
+     */
+    public function paginateActivity(array $kinds, int $perPage): LengthAwarePaginator
+    {
+        return AuditLog::query()
+            ->where(function (Builder $lines) use ($kinds): void {
+                // With no kinds nothing matches, so a person who may see none of them gets an empty page.
+                $lines->whereRaw('1 = 0');
+
+                foreach ($kinds as $kind) {
+                    $lines->orWhere(fn (Builder $line) => $line->where('auditable_type', (new ($kind->subject()))->getMorphClass())->where('event', $kind->event()->value));
+                }
+            })
+            ->with(['auditable' => fn (MorphTo $subject) => $subject->morphWith([Pledge::class => ['fundType']])->withTrashed()])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($perPage);
     }
 
     /**

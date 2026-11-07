@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Reports\MemberStatusChange;
+use App\Enums\ActivityKind;
 use App\Models\AuditLog;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * The append-only change history. There is deliberately no update or delete, except that the personal values
@@ -29,6 +31,15 @@ interface AuditLogRepositoryInterface
      * @return list<MemberStatusChange>
      */
     public function memberStatusChangesBetween(CarbonInterface $from, CarbonInterface $to): array;
+
+    /**
+     * One page of the current church's history, newest first, of only the given kinds of line, each with the record it is
+     * about loaded (a removed record included). With no kinds it is empty.
+     *
+     * @param  list<ActivityKind>  $kinds
+     * @return LengthAwarePaginator<int, AuditLog>
+     */
+    public function paginateActivity(array $kinds, int $perPage): LengthAwarePaginator;
 
     /**
      * Replaces the personal values in a record's history with a marker, keeping every line and the names of the fields. This is the one change ever made to history, required by the right to erasure.

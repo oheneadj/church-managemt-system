@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Activity\ListActivityController;
 use App\Http\Controllers\Api\V1\Attendance\CaptureVisitorController;
 use App\Http\Controllers\Api\V1\Attendance\IssueQrCodeController;
 use App\Http\Controllers\Api\V1\Attendance\ListAbsentMembersController;
@@ -173,6 +174,7 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('reports/giving', ShowGivingTrendController::class)->name('reports.giving');
         Route::get('reports/members', ShowMemberGrowthController::class)->name('reports.members');
 
+        Route::get('activity', ListActivityController::class)->name('activity.index');
         Route::get('staff', ListStaffController::class)->name('staff.index');
         Route::get('staff/directory', ListStaffDirectoryController::class)->name('staff.directory');
         Route::post('staff', InviteStaffController::class)->middleware(['idempotent', 'throttle:staff-invite'])->name('staff.store');

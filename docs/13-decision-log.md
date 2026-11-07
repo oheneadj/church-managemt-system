@@ -1239,6 +1239,26 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-068 — The recent activity feed (open item A9, docs/02 Module 6)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/02, D-030, D-046, D-055 and the privacy rules in docs/05. The choices of which events to show are mine and are one enum to change.
+**Status:** Active. Built: the endpoint; the home page feed follows.
+
+**Decision:**
+1. **`GET /activity` turns the change history (`audit_logs`) into plain sentences,** newest first, paged. It is worked out when asked and stores nothing new.
+2. **Who may read it:** `reports.view` (church admin, pastor, finance secretary). All three see every member (D-031), so no per-member filtering is needed.
+3. **Which lines, and who sees each.** Each kind of line is shown only to people who also hold the permission that guards what it is about, so the feed never tells anyone what they could not look up: a member added or moved to another status (`members.view`); a gift recorded or voided, and a pledge made (`giving.view`, so **not the pastor**, D-046); staff invited, deactivated or reactivated (`staff.manage`); church details or settings changed (`church.settings`). The page and its total count only what the person may see, so a total gives nothing away.
+4. **What a sentence holds:** a name, an amount and a fund, and who did it and when. Never the void reason, a status note, an email, a phone number, a member's name beside a gift, or the old and new values. A gift is "A gift of GHS 1,250.50 to Building Fund was recorded."; what the settings were changed to is not said.
+5. **Left out on purpose:** member edits, a record being viewed, exports, erasures, role changes and pledge edits. They are either too noisy for a home page or are security events that belong in the change history, not in a feed anyone with reports may read.
+6. **A person whose data was erased** is "A member", never the erased marker.
+7. **The words are in `lang/en/activity.php`** (DD-009), and the kinds, with their permissions, are one enum (`ActivityKind`), so adding a kind is one case and one sentence.
+
+**Rationale:** The change history already records who did what, with the right guard in each place; the feed only has to choose lines and say them plainly. Keeping the permission beside each kind in one enum means the privacy rule cannot drift from the list of lines.
+
+**Revisit when:** a church wants member edits or exports in the feed (they are in the history), a different set for the pastor, or the words in another language.
+
+---
+
 ---
 
 ## Deferred Decisions
