@@ -29,6 +29,7 @@ export const QUERY_KEYS = {
     fundTypes: {
         all: ['fund-types'] as const,
         active: ['fund-types', 'active'] as const,
+        manage: ['fund-types', 'manage'] as const,
     },
     serviceSchedules: {
         all: ['service-schedules'] as const,
@@ -62,6 +63,7 @@ export const QUERY_KEYS = {
         list: (filters: { consecutive: number | null; page: number }) => ['absent-members', 'list', filters] as const,
     },
     reports: {
+        all: ['reports'] as const,
         attendance: (filters: { weeks: number; groupBy: string }) => ['reports', 'attendance', filters] as const,
         giving: (filters: { months: number; fundId: string }) => ['reports', 'giving', filters] as const,
         memberGrowth: (months: number) => ['reports', 'member-growth', months] as const,

@@ -23,6 +23,7 @@ export const ROUTES = {
     PLEDGES: '/pledges',
     STAFF: '/staff',
     SETTINGS: '/settings',
+    FUNDS: '/settings/funds',
     REPORTS: '/reports',
     ABSENT_MEMBERS: '/attendance/absent',
     MESSAGES: '/messages',

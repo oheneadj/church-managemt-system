@@ -143,3 +143,28 @@ describe('SettingsPage: preferences', () => {
         expect(await screen.findByLabelText('Youth are younger than (years)')).toBeInTheDocument();
     });
 });
+
+describe('SettingsPage: lists you can change', () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+        vi.mocked(churchApi.profile).mockResolvedValue(churchProfile());
+        vi.mocked(churchApi.settings).mockResolvedValue(churchSettings());
+    });
+
+    it('offers the giving funds to someone who may manage them', async () => {
+        renderPage(<SettingsPage />, {
+            path: ROUTES.SETTINGS,
+            url: ROUTES.SETTINGS,
+            permissions: [PERMISSIONS.CHURCH_SETTINGS, PERMISSIONS.FUND_TYPES_MANAGE],
+        });
+
+        expect(await screen.findByRole('link', { name: 'Giving funds' })).toHaveAttribute('href', '/settings/funds');
+    });
+
+    it('does not offer them to someone who may not', async () => {
+        show();
+
+        await screen.findByLabelText(/^Name of the church/);
+        expect(screen.queryByRole('link', { name: 'Giving funds' })).not.toBeInTheDocument();
+    });
+});

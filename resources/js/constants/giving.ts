@@ -34,3 +34,8 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = Object.fromE
 
 /** What the API writes for an amount of nothing. Used only to leave out a payment method nobody used, never to add money. */
 export const ZERO_AMOUNT = '0.00';
+
+/** The limits on a fund type that the server also checks (config/giving.php and docs/08, Fund Types). */
+export const FUND_NAME_MAX = 100;
+export const FUND_DESCRIPTION_MAX = 2000;
+export const FUND_SORT_ORDER_MAX = 1000;

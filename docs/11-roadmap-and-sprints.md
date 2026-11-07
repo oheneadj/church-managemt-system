@@ -110,7 +110,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | # | Story | Owner | Points | Notes |
 |---|---|---|---|---|
 | 4.1 | Paystack subaccount creation during church onboarding | Backend | 3 | API call, store `subaccount_code` |
-| 4.2 | `FundType` CRUD endpoints | Backend | 1 | Seed default fund types |
+| 4.2 | `FundType` CRUD endpoints | Backend | 1 | Seed default fund types. The screen is built too: `/settings/funds` for the church admin (`fund-types.manage`), reached from Settings: add, change (name, what it is for, place in the list) and switch off or on; switching off asks first |
 | 4.3 | Cash contribution recording endpoint | Backend | 2 | |
 | 4.4 | MoMo / card payment initiation (Paystack charge) | Backend | 3 | |
 | 4.5 | Paystack webhook handler (`charge.success`, `charge.failed`) | Backend | 4 | Signature verify + idempotency + job |

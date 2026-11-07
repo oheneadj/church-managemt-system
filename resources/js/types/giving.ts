@@ -13,6 +13,13 @@ export interface FundType {
     sort_order: number;
 }
 
+/** What the fund form sends. An emptied description is sent as null, which clears it. */
+export interface FundTypeInput {
+    name: string;
+    description: string | null;
+    sort_order: number;
+}
+
 export interface Contribution {
     id: string;
     member: { id: string; full_name: string } | null;

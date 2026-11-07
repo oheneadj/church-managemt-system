@@ -1,8 +1,12 @@
+import { Link } from 'react-router';
 import { ChurchProfileForm } from '@/components/Settings/ChurchProfileForm';
 import { ChurchSettingsForm } from '@/components/Settings/ChurchSettingsForm';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PERMISSIONS } from '@/constants/permissions';
+import { ROUTES } from '@/constants/routes';
+import { useCan } from '@/hooks/useCan';
 import { useChurchProfile, useChurchSettings } from '@/hooks/useChurchSettings';
 
 /**
@@ -14,10 +18,19 @@ import { useChurchProfile, useChurchSettings } from '@/hooks/useChurchSettings';
 export function SettingsPage() {
     const profile = useChurchProfile();
     const settings = useChurchSettings();
+    const canManageFunds = useCan(PERMISSIONS.FUND_TYPES_MANAGE);
 
     return (
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
             <PageHeader title="Settings" description="Your church's details and preferences" />
+
+            {canManageFunds && (
+                <nav aria-label="Lists you can change" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                    <Link to={ROUTES.FUNDS} className="underline underline-offset-4">
+                        Giving funds
+                    </Link>
+                </nav>
+            )}
 
             {profile.isPending && <Skeleton aria-busy="true" className="h-[360px] w-full rounded-xl" />}
             {profile.isError && <ErrorNotice message={profile.error.message} onRetry={() => void profile.refetch()} />}
