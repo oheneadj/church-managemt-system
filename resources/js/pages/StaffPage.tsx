@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ChangeStaffDialog } from '@/components/Staff/ChangeStaffDialog';
 import { InviteStaffDialog } from '@/components/Staff/InviteStaffDialog';
+import { StaffPermissionsDialog } from '@/components/Staff/StaffPermissionsDialog';
 import { StaffListItem } from '@/components/Staff/StaffListItem';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -29,6 +30,7 @@ export function StaffPage() {
     const { setActive } = useStaffMutations();
     const [inviting, setInviting] = useState(false);
     const [changing, setChanging] = useState<StaffMember | undefined>(undefined);
+    const [permissions, setPermissions] = useState<StaffMember | undefined>(undefined);
     const [deactivating, setDeactivating] = useState<StaffMember | undefined>(undefined);
 
     const switchOnOrOff = (member: StaffMember, isActive: boolean, done: string) => {
@@ -82,7 +84,13 @@ export function StaffPage() {
                 <>
                     <ul className="flex flex-col gap-2" aria-live="polite">
                         {staff.data.data.map((member) => (
-                            <StaffListItem key={member.id} staff={member} onChange={setChanging} onToggleActive={toggle} />
+                            <StaffListItem
+                                key={member.id}
+                                staff={member}
+                                onChange={setChanging}
+                                onPermissions={setPermissions}
+                                onToggleActive={toggle}
+                            />
                         ))}
                     </ul>
                     <Pagination
@@ -97,6 +105,7 @@ export function StaffPage() {
             <InviteStaffDialog open={inviting} onOpenChange={setInviting} />
             {/* Mounted only while there is someone to change, so each opening starts from that person. */}
             {changing !== undefined && <ChangeStaffDialog staff={changing} onClose={() => setChanging(undefined)} />}
+            {permissions !== undefined && <StaffPermissionsDialog staff={permissions} onClose={() => setPermissions(undefined)} />}
             <ConfirmDialog
                 open={deactivating !== undefined}
                 onOpenChange={(open) => !open && setDeactivating(undefined)}

@@ -12,6 +12,8 @@ export interface StaffMember {
     phone: string;
     /** The one role they hold (the API sends a list). */
     roles: string[];
+    /** Permissions the role already gives. They cannot be taken away here: change the role instead. */
+    role_permissions: string[];
     /** Permissions granted on top of the role. */
     extra_permissions: string[];
     is_active: boolean;
@@ -32,4 +34,10 @@ export interface StaffChange {
     name: string;
     phone: string;
     role: StaffRole;
+}
+
+/** What the permissions call sends: the extras to add and the extras to take away. At least one list is needed. */
+export interface StaffPermissionChange {
+    grant?: string[];
+    revoke?: string[];
 }

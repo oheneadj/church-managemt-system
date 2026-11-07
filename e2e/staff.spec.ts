@@ -106,4 +106,45 @@ test.describe('staff', () => {
 
         await guest.close();
     });
+
+    test('the church admin gives someone an extra permission and takes it away again, and the role permissions cannot be changed', async ({
+        page,
+    }) => {
+        const stamp = Date.now().toString(36);
+        const name = `Aab Permissions ${stamp}`;
+
+        await page.goto(`${CHURCH_URL}/staff`);
+        await page.getByRole('button', { name: 'Invite staff' }).click();
+        const invite = page.getByRole('dialog');
+        await invite.getByLabel(/^Name/).fill(name);
+        await invite.getByLabel(/^Email/).fill(`perm-${stamp}@example.com`);
+        await invite.getByLabel(/^Phone/).fill(`0205${String(Date.now()).slice(-6)}`);
+        await invite.getByLabel(/^Role/).selectOption('pastor');
+        await invite.getByRole('button', { name: 'Send invitation' }).click();
+
+        // A toast that names the person is also a list item, so the row is the one with a Change button.
+        const row = page
+            .getByRole('listitem')
+            .filter({ hasText: name })
+            .filter({ has: page.getByRole('button', { name: 'Change' }) });
+        await expect(row).toBeVisible();
+
+        // What the role gives is ticked and fixed; the rest can be ticked.
+        await row.getByRole('button', { name: 'Permissions' }).click();
+        const permissions = page.getByRole('dialog');
+        await expect(permissions.getByLabel(/View members/)).toBeChecked();
+        await expect(permissions.getByLabel(/View members/)).toBeDisabled();
+        await expect(permissions.getByRole('button', { name: 'Save permissions' })).toBeDisabled();
+
+        await permissions.getByLabel('Export the member list').check();
+        await permissions.getByRole('button', { name: 'Save permissions' }).click();
+        await expect(row.getByText('Also allowed: Export the member list')).toBeVisible();
+
+        // It is still ticked when opened again, and can be taken away.
+        await row.getByRole('button', { name: 'Permissions' }).click();
+        await expect(page.getByRole('dialog').getByLabel('Export the member list')).toBeChecked();
+        await page.getByRole('dialog').getByLabel('Export the member list').uncheck();
+        await page.getByRole('dialog').getByRole('button', { name: 'Save permissions' }).click();
+        await expect(row.getByText(/Also allowed/)).toHaveCount(0);
+    });
 });

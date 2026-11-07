@@ -302,6 +302,7 @@ export function staffMember(overrides: Partial<StaffMember> = {}): StaffMember {
         email: 'akosua@example.com',
         phone: '+233244123456',
         roles: ['pastor'],
+        role_permissions: ['members.view', 'members.edit', 'milestones.view', 'giving.summary', 'reports.view', 'sms.send'],
         extra_permissions: [],
         is_active: true,
         last_login_at: '2026-11-05T14:30:00+00:00',

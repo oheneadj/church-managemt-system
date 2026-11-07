@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { staffApi } from '@/services/api/staff';
-import type { StaffChange, StaffInviteInput } from '@/types/staff';
+import type { StaffChange, StaffInviteInput, StaffPermissionChange } from '@/types/staff';
 
 /** One page of the church's staff. The previous page stays on screen while the next loads. */
 export function useStaff(page: number) {
@@ -26,6 +26,11 @@ export function useStaffMutations() {
 
         update: useMutation({
             mutationFn: ({ id, input }: { id: string; input: Partial<StaffChange> }) => staffApi.update(id, input),
+            onSuccess: refresh,
+        }),
+
+        setPermissions: useMutation({
+            mutationFn: ({ id, change }: { id: string; change: StaffPermissionChange }) => staffApi.setPermissions(id, change),
             onSuccess: refresh,
         }),
 

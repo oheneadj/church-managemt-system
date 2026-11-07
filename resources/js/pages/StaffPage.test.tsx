@@ -1,6 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { STAFF_PERMISSIONS } from '@/constants/enums';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { StaffPage } from '@/pages/StaffPage';
@@ -232,5 +234,105 @@ describe('StaffPage', () => {
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith('A church needs at least one active church admin.'));
         });
+    });
+});
+
+describe('StaffPage: permissions on top of the role', () => {
+    const pastor = staffMember({ id: 'staff-1', name: 'Abena Pastor', roles: ['pastor'], extra_permissions: ['giving.export'] });
+    const admin = staffMember({
+        id: 'staff-2',
+        name: 'Kofi Admin',
+        roles: ['church-admin'],
+        role_permissions: STAFF_PERMISSIONS.map((permission) => permission.value),
+        extra_permissions: [],
+    });
+
+    beforeEach(() => {
+        vi.resetAllMocks();
+        vi.mocked(staffApi.list).mockResolvedValue(pageOf([pastor, admin]));
+        vi.mocked(staffApi.setPermissions).mockResolvedValue(pastor);
+    });
+
+    async function openFor(name: string) {
+        const user = userEvent.setup();
+        show([pastor, admin]);
+        const row = (await screen.findByText(name)).closest('li') as HTMLElement;
+        await user.click(within(row).getByRole('button', { name: 'Permissions' }));
+
+        return { user, dialog: await screen.findByRole('dialog') };
+    }
+
+    it('ticks what the role gives (and cannot be changed), what was granted on top, and leaves the rest unticked', async () => {
+        const { dialog } = await openFor('Abena Pastor');
+
+        const fromRole = within(dialog).getByLabelText(/View members/);
+        expect(fromRole).toBeChecked();
+        expect(fromRole).toBeDisabled();
+        expect(fromRole.closest('div')).toHaveTextContent('View members (from their role)');
+        expect(within(dialog).getByLabelText('Export giving')).toBeChecked();
+        expect(within(dialog).getByLabelText('Export giving')).toBeEnabled();
+        expect(within(dialog).getByLabelText('Export the member list')).not.toBeChecked();
+    });
+
+    it('will not save until something is changed', async () => {
+        const { user, dialog } = await openFor('Abena Pastor');
+
+        expect(within(dialog).getByRole('button', { name: 'Save permissions' })).toBeDisabled();
+
+        await user.click(within(dialog).getByLabelText('Export the member list'));
+        expect(within(dialog).getByRole('button', { name: 'Save permissions' })).toBeEnabled();
+
+        await user.click(within(dialog).getByLabelText('Export the member list'));
+        expect(within(dialog).getByRole('button', { name: 'Save permissions' })).toBeDisabled();
+    });
+
+    it('grants a newly ticked permission and says it applies the next time they use the app', async () => {
+        const { user, dialog } = await openFor('Abena Pastor');
+
+        await user.click(within(dialog).getByLabelText('Export the member list'));
+        await user.click(within(dialog).getByRole('button', { name: 'Save permissions' }));
+
+        await waitFor(() => expect(staffApi.setPermissions).toHaveBeenCalledWith('staff-1', { grant: ['members.export'] }));
+        expect(toast.success).toHaveBeenCalledWith('Permissions saved. They apply the next time they use the app.');
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    });
+
+    it('takes away an extra that is unticked', async () => {
+        const { user, dialog } = await openFor('Abena Pastor');
+
+        await user.click(within(dialog).getByLabelText('Export giving'));
+        await user.click(within(dialog).getByRole('button', { name: 'Save permissions' }));
+
+        await waitFor(() => expect(staffApi.setPermissions).toHaveBeenCalledWith('staff-1', { revoke: ['giving.export'] }));
+    });
+
+    it('shows every permission as given by the role for a church admin, with nothing to change', async () => {
+        const { dialog } = await openFor('Kofi Admin');
+
+        for (const checkbox of within(dialog).getAllByRole('checkbox')) {
+            expect(checkbox).toBeChecked();
+            expect(checkbox).toBeDisabled();
+        }
+        expect(within(dialog).getByRole('button', { name: 'Save permissions' })).toBeDisabled();
+    });
+
+    it("shows the server's refusal and stays open", async () => {
+        vi.mocked(staffApi.setPermissions).mockRejectedValue(new ApiError('Something broke.', 500));
+        const { user, dialog } = await openFor('Abena Pastor');
+
+        await user.click(within(dialog).getByLabelText('Export the member list'));
+        await user.click(within(dialog).getByRole('button', { name: 'Save permissions' }));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Something broke.'));
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('sends nothing when the person cancels', async () => {
+        const { user, dialog } = await openFor('Abena Pastor');
+
+        await user.click(within(dialog).getByLabelText('Export the member list'));
+        await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+        expect(staffApi.setPermissions).not.toHaveBeenCalled();
     });
 });

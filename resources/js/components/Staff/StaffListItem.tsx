@@ -7,6 +7,8 @@ import { formatDateTime } from '@/utils/formatDateTime';
 interface StaffListItemProps {
     staff: StaffMember;
     onChange: (staff: StaffMember) => void;
+    /** Opens the permissions on top of the role. */
+    onPermissions: (staff: StaffMember) => void;
     /** Asks to deactivate (the page confirms first) or, for someone switched off, reactivates. */
     onToggleActive: (staff: StaffMember) => void;
 }
@@ -20,7 +22,7 @@ function labelOf(options: readonly { value: string; label: string }[], value: st
  * One staff member: who they are, their role, whether they can sign in, when they last did, any permissions given on top of
  * their role, and the buttons to change them or switch them off or on.
  */
-export function StaffListItem({ staff, onChange, onToggleActive }: StaffListItemProps) {
+export function StaffListItem({ staff, onChange, onPermissions, onToggleActive }: StaffListItemProps) {
     const extras = staff.extra_permissions.map((permission) => labelOf(STAFF_PERMISSIONS, permission));
 
     return (
@@ -45,6 +47,9 @@ export function StaffListItem({ staff, onChange, onToggleActive }: StaffListItem
             <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => onChange(staff)}>
                     Change
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => onPermissions(staff)}>
+                    Permissions
                 </Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => onToggleActive(staff)}>
                     {staff.is_active ? 'Deactivate' : 'Reactivate'}

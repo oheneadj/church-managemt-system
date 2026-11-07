@@ -1,7 +1,7 @@
 import { IDEMPOTENCY_HEADER } from '@/lib/idempotencyKey';
 import { api } from '@/services';
 import type { Page } from '@/types/members';
-import type { StaffChange, StaffInviteInput, StaffMember } from '@/types/staff';
+import type { StaffChange, StaffInviteInput, StaffMember, StaffPermissionChange } from '@/types/staff';
 
 export const staffApi = {
     list: (page: number): Promise<Page<StaffMember>> => api.get<Page<StaffMember>>('/staff', { params: { page } }).then((r) => r.data),
@@ -17,4 +17,8 @@ export const staffApi = {
     /** Deactivates or reactivates. Deactivating signs the person out at once. */
     setActive: (id: string, isActive: boolean): Promise<StaffMember> =>
         api.patch<{ data: StaffMember }>(`/staff/${id}/status`, { is_active: isActive }).then((r) => r.data.data),
+
+    /** Gives or takes away extra permissions on top of the role. It applies on the person's next request. */
+    setPermissions: (id: string, change: StaffPermissionChange): Promise<StaffMember> =>
+        api.put<{ data: StaffMember }>(`/staff/${id}/permissions`, change).then((r) => r.data.data),
 };

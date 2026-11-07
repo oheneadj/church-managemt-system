@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(staff): the extra permissions screen, story 5.15 (A5) (2026-11-09)
+- **What:** A **Permissions** button on each person on the Staff page opens a dialog that lists every permission by name. What the person's role already gives is ticked, greyed out and marked "(from their role)", because it cannot be taken away here (to do that, change their role, D-055); what was granted on top is ticked and can be unticked; everything else can be ticked to allow it. **Save permissions** is off until something changes, and only the change is sent (the extras to give and the extras to take away), so nothing is sent for a role permission. The staff list refreshes and its "Also allowed" line follows. A church admin's row shows every permission as given by the role, with nothing to change. The dialog says a change applies the next time the person uses the app. Checked against the real demo church: invite someone, give and take away an extra, and see the list follow.
+- **Why:** Open item A5 and D-055 point 7. The endpoint existed, but the church admin had no way to grant, for example, the export of the member list to a pastor, which D-055 point 1 says a church admin may do per person. It uses the new `role_permissions` field (previous commit).
+- **Files:** resources/js/ (components/Staff/ (StaffPermissionsDialog, permissionChange and its test, StaffListItem), pages/StaffPage and its test, hooks/useStaff, services/api/staff, types/staff, test/fixtures), e2e/staff.spec.ts, docs/ (11-roadmap-and-sprints, 19-open-items), CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### feat(staff): the staff list says which permissions each role already gives (2026-11-09)
 - **What:** Each staff member in `GET /staff` (and in the answers to the change and status calls) now also carries `role_permissions`: the permissions their role already gives, apart from `extra_permissions`, the ones granted on top. It is worked out in memory from the role enum (`StaffRole::permissionNames()`), so it adds no queries. A change of role changes it; the church admin carries every permission.
 - **Why:** The screen for granting extra permissions (A5) must show which permissions can be taken away. The server refuses to revoke one the role gives (`422`) and ignores a grant of one the role already gives, so without this the screen would either offer choices that do nothing or copy the role table into the frontend, where it could drift. This is an additive field, not a breaking change.
@@ -845,6 +851,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **Commit:** `beb44ae` (2026-10-28)
 
 ### Added
+- Extra permissions screen (story 5.15): give a staff member a permission on top of their role, or take it away, from a Permissions button on the Staff page
 - The staff list says which permissions each person's role already gives (`role_permissions`), apart from the extras granted to them
 - Departments screen (story 2.8): add, change and retire the groups members belong to, for staff who may edit members; reached from the Members page and Settings
 - Giving funds screen (story 4.2): add, change and switch off the funds gifts are given for, from Settings, for the church admin
