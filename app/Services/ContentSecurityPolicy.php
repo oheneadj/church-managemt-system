@@ -67,7 +67,8 @@ class ContentSecurityPolicy
     }
 
     /**
-     * Local development only: lets the page load scripts and styles from the dev server and talk to it over its socket.
+     * Local development only: lets the page load scripts, styles and fonts from the dev server and talk to it over its socket. Fonts matter
+     * because Vite serves the font files from its own address while it runs; without this the browser blocks them and the text falls back to a system font.
      *
      * @param  array<string, list<string>>  $directives
      * @return array<string, list<string>>
@@ -78,6 +79,7 @@ class ContentSecurityPolicy
 
         $directives['script-src'][] = $origin;
         $directives['style-src'][] = $origin;
+        $directives['font-src'][] = $origin;
         $directives['connect-src'] = [...$directives['connect-src'], $origin, (string) $socket];
 
         return $directives;

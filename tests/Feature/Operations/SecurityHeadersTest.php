@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Church;
+use Illuminate\Support\Facades\Vite;
 
 beforeEach(fn () => Church::factory()->create(['slug' => 'grace']));
 
@@ -74,6 +75,29 @@ describe('Content-Security-Policy (D-056)', function (): void {
         $images = cspSources($this->get('http://grace.localhost/members')->headers->get('Content-Security-Policy'), 'img-src');
 
         expect($images)->toContain('https://abc123.r2.cloudflarestorage.com')->toContain('https://*.abc123.r2.cloudflarestorage.com');
+    });
+
+    it('allows the dev server\'s scripts, styles, fonts and socket only while it is running', function (): void {
+        $hot = tempnam(sys_get_temp_dir(), 'hot');
+        file_put_contents($hot, "http://127.0.0.1:5173\n");
+        Vite::useHotFile($hot);
+
+        $policy = $this->get('http://grace.localhost/members')->headers->get('Content-Security-Policy');
+
+        expect(cspSources($policy, 'script-src'))->toContain('http://127.0.0.1:5173')
+            ->and(cspSources($policy, 'style-src'))->toContain('http://127.0.0.1:5173')
+            ->and(cspSources($policy, 'font-src'))->toContain('http://127.0.0.1:5173')->toContain("'self'")
+            ->and(cspSources($policy, 'connect-src'))->toContain('http://127.0.0.1:5173')->toContain('ws://127.0.0.1:5173');
+
+        unlink($hot);
+    });
+
+    it('allows fonts only from our own address and inline data when no dev server is running', function (): void {
+        Vite::useHotFile(sys_get_temp_dir().'/no-such-hot-file');
+
+        $policy = $this->get('http://grace.localhost/members')->headers->get('Content-Security-Policy');
+
+        expect(cspSources($policy, 'font-src'))->toBe(["'self'", 'data:']);
     });
 
     it('leaves the API documentation page without a policy, because it loads a third-party viewer', function (): void {
