@@ -1,14 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ChurchStarted } from '@/components/Onboarding/ChurchStarted';
 import { blankStartChurchValues, startChurchSchema, toStartChurchInput } from '@/components/Onboarding/startChurchSchema';
 import type { StartChurchValues } from '@/components/Onboarding/startChurchSchema';
+import { PasswordField } from '@/components/form/PasswordField';
+import { PasswordRequirements } from '@/components/form/PasswordRequirements';
 import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { OTP_LENGTH, PREFIX_MAX_LENGTH } from '@/constants/onboarding';
-import { PASSWORD_MIN_LENGTH } from '@/constants/password';
 import { useStartChurch } from '@/hooks/useStartChurch';
 import { showFieldErrors } from '@/lib/showFieldErrors';
 import type { StartedChurch } from '@/types/onboarding';
@@ -37,6 +38,7 @@ export function StartChurchForm() {
     const form = useForm<StartChurchValues>({ resolver: zodResolver(startChurchSchema), defaultValues: blankStartChurchValues });
     const { register, formState } = form;
     const { errors } = formState;
+    const password = useWatch({ control: form.control, name: 'password' });
 
     if (started !== null) {
         return <ChurchStarted started={started} />;
@@ -137,22 +139,18 @@ export function StartChurchForm() {
                 {...register('admin_email')}
             />
             <p className="-mt-1 mb-2 text-sm text-muted-foreground">You sign in with this email. We email you a code each time.</p>
-            <TextField
+            <PasswordField
                 id="password"
                 label="Choose a password"
-                type="password"
                 required
                 autoComplete="new-password"
                 error={errors.password?.message}
                 {...register('password')}
             />
-            <p className="-mt-1 mb-2 text-sm text-muted-foreground">
-                At least {PASSWORD_MIN_LENGTH} characters. A few ordinary words together make a strong one.
-            </p>
-            <TextField
+            <PasswordRequirements value={password} />
+            <PasswordField
                 id="password_confirmation"
                 label="Type the password again"
-                type="password"
                 required
                 autoComplete="new-password"
                 error={errors.password_confirmation?.message}

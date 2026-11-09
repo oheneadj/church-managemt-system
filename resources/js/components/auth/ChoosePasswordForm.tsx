@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
+import { PasswordField } from '@/components/form/PasswordField';
+import { PasswordRequirements } from '@/components/form/PasswordRequirements';
 import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
 import { OTP_LENGTH } from '@/constants/onboarding';
-import { PASSWORD_MIN_LENGTH } from '@/constants/password';
 import { usePasswordReset } from '@/hooks/usePasswordReset';
 import { newPasswordField } from '@/lib/newPasswordField';
 import { plainErrorMessage } from '@/lib/plainErrorMessage';
@@ -53,6 +54,7 @@ export function ChoosePasswordForm({ email, submitLabel, onDone, extra }: Choose
         defaultValues: { email: email ?? '', code: '', password: '', password_confirmation: '' },
     });
     const { errors } = form.formState;
+    const password = useWatch({ control: form.control, name: 'password' });
 
     const save = form.handleSubmit((values) => {
         resetPassword.mutate(values, {
@@ -92,22 +94,18 @@ export function ChoosePasswordForm({ email, submitLabel, onDone, extra }: Choose
                 error={errors.code?.message}
                 {...form.register('code')}
             />
-            <TextField
+            <PasswordField
                 id="password"
                 label="New password"
-                type="password"
                 autoComplete="new-password"
                 required
                 error={errors.password?.message}
                 {...form.register('password')}
             />
-            <p className="-mt-2 text-sm text-muted-foreground">
-                At least {PASSWORD_MIN_LENGTH} characters. A few ordinary words together make a strong one.
-            </p>
-            <TextField
+            <PasswordRequirements value={password} />
+            <PasswordField
                 id="password_confirmation"
                 label="Type the new password again"
-                type="password"
                 autoComplete="new-password"
                 required
                 error={errors.password_confirmation?.message}

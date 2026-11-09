@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { AuthCard } from '@/components/auth/AuthCard';
+import { PasswordField } from '@/components/form/PasswordField';
 import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
@@ -98,10 +99,9 @@ export function PlatformLoginPage() {
                         error={credentialsForm.formState.errors.email?.message}
                         {...credentialsForm.register('email')}
                     />
-                    <TextField
+                    <PasswordField
                         id="password"
                         label="Password"
-                        type="password"
                         autoComplete="current-password"
                         required
                         error={credentialsForm.formState.errors.password?.message}
