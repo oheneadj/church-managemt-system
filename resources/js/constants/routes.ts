@@ -22,6 +22,10 @@ export const ROUTES = {
     GIVING: '/giving',
     PLEDGES: '/pledges',
     STAFF: '/staff',
+    /** The platform owner's own side (D-069). Only on the platform host. */
+    PLATFORM_LOGIN: '/admin/login',
+    PLATFORM_HOME: '/admin',
+    PLATFORM_PACKAGES: '/admin/sms-packages',
     SETTINGS: '/settings',
     FUNDS: '/settings/funds',
     REPORTS: '/reports',

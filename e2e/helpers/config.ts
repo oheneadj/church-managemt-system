@@ -16,3 +16,7 @@ export const MAILPIT_URL = process.env.E2E_MAILPIT_URL ?? 'http://127.0.0.1:8025
 
 /** The application log the texted sign-up codes are read from (the "log" SMS driver writes them there). */
 export const LOG_FILE = process.env.E2E_LOG_FILE ?? path.resolve(here, '../../storage/logs/laravel.log');
+
+/** The seeded demo platform admin's sign-in (config/demo.php), for the local copy only. */
+export const DEMO_PLATFORM_EMAIL = process.env.DEMO_PLATFORM_ADMIN_EMAIL ?? 'owner@platform.church.test';
+export const DEMO_PLATFORM_PASSWORD = process.env.DEMO_PLATFORM_ADMIN_PASSWORD ?? 'demo platform local passphrase';

@@ -2,6 +2,7 @@ import type { ChurchProfile, ChurchSettings } from '@/types/church';
 import type { MessageLogLine } from '@/types/messages';
 import type { AbsentMember } from '@/types/services';
 import type { ActivityLine } from '@/types/activity';
+import type { PlatformAdmin, SmsPackage } from '@/types/platform';
 import type { AttendanceReport, GivingReport, MemberGrowthReport } from '@/types/reports';
 import type { Contribution, FundType, OfferingReport, OfferingSection, Pledge } from '@/types/giving';
 import type { Department, Family, Member, MemberSummary, Page } from '@/types/members';
@@ -451,4 +452,23 @@ export function activityLine(overrides: Partial<ActivityLine> = {}): ActivityLin
         occurred_at: '2026-11-09T10:00:00+00:00',
         ...overrides,
     };
+}
+
+/** An SMS credit package, as `GET /platform/sms-packages` sends it. */
+export function smsPackage(overrides: Partial<SmsPackage> = {}): SmsPackage {
+    return {
+        id: 'package-1',
+        name: 'Starter 100',
+        credits: 100,
+        price: '12.50',
+        price_formatted: 'GHS 12.50',
+        is_active: true,
+        sort_order: 0,
+        ...overrides,
+    };
+}
+
+/** The signed-in platform admin. */
+export function platformAdmin(overrides: Partial<PlatformAdmin> = {}): PlatformAdmin {
+    return { id: 'admin-1', name: 'Platform Owner', email: 'owner@platform.test', ...overrides };
 }

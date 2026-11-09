@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Enums\StaffRole;
 use App\Models\Church;
 use App\Models\FundType;
+use App\Models\PlatformAdmin;
 use App\Models\User;
 use App\Services\DefaultFundTypes;
 use Illuminate\Database\Seeder;
@@ -40,6 +41,11 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ])->save();
         $admin->assignRole(StaffRole::ChurchAdmin);
+
+        PlatformAdmin::query()->updateOrCreate(
+            ['email' => config('demo.platform_admin_email')],
+            ['name' => 'Demo Platform Owner', 'password' => config('demo.platform_admin_password'), 'is_active' => true],
+        );
 
         if (! FundType::query()->withoutGlobalScopes()->where('church_id', $church->id)->exists()) {
             app(DefaultFundTypes::class)->createFor($church);

@@ -1,4 +1,6 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
+import { PlatformGuard } from '@/components/Platform/PlatformGuard';
+import { PlatformHostOnly } from '@/components/Platform/PlatformHostOnly';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { HomeRedirect } from '@/components/layout/HomeRedirect';
@@ -30,6 +32,26 @@ export const router = createBrowserRouter([
             {
                 path: ROUTE_PATTERNS.CHECKIN,
                 lazy: async () => ({ Component: (await import('@/pages/QrCheckInPage')).QrCheckInPage }),
+            },
+            {
+                // The platform owner's side exists only on the platform host; on a church's address these are not found.
+                Component: PlatformHostOnly,
+                children: [
+                    {
+                        path: ROUTES.PLATFORM_LOGIN,
+                        lazy: async () => ({ Component: (await import('@/pages/PlatformLoginPage')).PlatformLoginPage }),
+                    },
+                    {
+                        Component: PlatformGuard,
+                        children: [
+                            { path: ROUTES.PLATFORM_HOME, element: <Navigate to={ROUTES.PLATFORM_PACKAGES} replace /> },
+                            {
+                                path: ROUTES.PLATFORM_PACKAGES,
+                                lazy: async () => ({ Component: (await import('@/pages/PlatformPackagesPage')).PlatformPackagesPage }),
+                            },
+                        ],
+                    },
+                ],
             },
             {
                 path: ROUTES.START,

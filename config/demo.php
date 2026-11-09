@@ -18,4 +18,8 @@ return [
 
     'admin_password' => env('DEMO_ADMIN_PASSWORD', 'demo admin local passphrase'),
 
+    // The demo platform admin (D-069), for the same local-only purpose: the end-to-end tests sign in to the platform side with it.
+    'platform_admin_email' => env('DEMO_PLATFORM_ADMIN_EMAIL', 'owner@platform.church.test'),
+    'platform_admin_password' => env('DEMO_PLATFORM_ADMIN_PASSWORD', 'demo platform local passphrase'),
+
 ];

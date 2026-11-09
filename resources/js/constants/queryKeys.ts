@@ -63,6 +63,10 @@ export const QUERY_KEYS = {
     activity: {
         recent: (count: number) => ['activity', 'recent', count] as const,
     },
+    platform: {
+        me: ['platform', 'me'] as const,
+        packages: ['platform', 'sms-packages'] as const,
+    },
     absentMembers: {
         list: (filters: { consecutive: number | null; page: number }) => ['absent-members', 'list', filters] as const,
     },
