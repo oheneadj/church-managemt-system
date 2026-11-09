@@ -96,7 +96,7 @@ final class SettleSmsCreditPurchaseAction
     private function fail(SmsCreditPurchase $purchase, SettleSmsCreditPurchaseDTO $dto): void
     {
         $purchase->status = SmsCreditPurchaseStatus::Failed;
-        $purchase->provider_reference = $dto->result->reference;
+        $purchase->provider_reference = $dto->result->reference !== '' ? $dto->result->reference : null;
         $purchase->failure_reason = self::FAILURE_REASON;
         $this->purchases->save($purchase);
     }

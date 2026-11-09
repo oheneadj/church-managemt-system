@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\SmsPackage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Every query on SMS credit packages lives behind this contract (D-069).
@@ -18,6 +19,18 @@ interface SmsPackageRepositoryInterface
      * @return LengthAwarePaginator<int, SmsPackage>
      */
     public function paginate(int $perPage): LengthAwarePaginator;
+
+    /**
+     * Every package a church may buy (the ones switched on), in the order churches see them: place in the list, then name.
+     *
+     * @return Collection<int, SmsPackage>
+     */
+    public function active(): Collection;
+
+    /**
+     * The package with this id, only if it is switched on.
+     */
+    public function findActive(string $id): ?SmsPackage;
 
     /**
      * Whether a package already has this name, whatever its capitals, apart from the one given.

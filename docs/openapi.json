@@ -2272,6 +2272,47 @@
                 }
             }
         },
+        "/v1/sms-credits/packages": {
+            "get": {
+                "operationId": "sms-credits.packages",
+                "summary": "Runs ListActiveSmsPackagesAction and returns the packages",
+                "tags": [
+                    "ListSmsCreditPackages"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SmsCreditPackageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SmsCreditPackageResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/platform/sms-packages": {
             "get": {
                 "operationId": "platform.sms-packages.index",
@@ -3950,6 +3991,106 @@
                     }
                 },
                 "security": []
+            }
+        },
+        "/v1/sms-credits/purchases/{sms_credit_purchase}": {
+            "get": {
+                "operationId": "sms-credits.purchases.show",
+                "summary": "Returns the purchase",
+                "tags": [
+                    "ShowSmsCreditPurchase"
+                ],
+                "parameters": [
+                    {
+                        "name": "sms_credit_purchase",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sms credit purchase ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SmsCreditPurchaseResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SmsCreditPurchaseResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/sms-credits/purchases": {
+            "post": {
+                "operationId": "sms-credits.purchases.store",
+                "summary": "Runs StartSmsCreditPurchaseAction for this request and returns the pending purchase",
+                "tags": [
+                    "StartSmsCreditPurchase"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartSmsCreditPurchaseRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`SmsCreditPurchaseResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SmsCreditPurchaseResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
             }
         },
         "/v1/members/{member}/milestones": {
@@ -7293,6 +7434,16 @@
                 ],
                 "title": "MilestoneType"
             },
+            "MomoNetwork": {
+                "type": "string",
+                "description": "The allowed momo network values, stored as a plain string column (D-017).\n",
+                "enum": [
+                    "mtn",
+                    "telecel",
+                    "at"
+                ],
+                "title": "MomoNetwork"
+            },
             "OfferingReportResource": {
                 "type": "object",
                 "properties": {
@@ -8392,6 +8543,101 @@
                 "additionalProperties": {},
                 "title": "SignInResource"
             },
+            "SmsCreditPackageResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "credits": {
+                        "type": "integer"
+                    },
+                    "price": {
+                        "type": "string"
+                    },
+                    "price_formatted": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "credits",
+                    "price",
+                    "price_formatted"
+                ],
+                "title": "SmsCreditPackageResource"
+            },
+            "SmsCreditPurchaseResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "sms_package_id": {
+                        "type": "string"
+                    },
+                    "credits": {
+                        "type": "integer"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "amount_formatted": {
+                        "type": "string"
+                    },
+                    "network": {
+                        "type": "string",
+                        "enum": [
+                            "mtn",
+                            "telecel",
+                            "at"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed",
+                            "failed"
+                        ]
+                    },
+                    "failure_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "sms_package_id",
+                    "credits",
+                    "amount",
+                    "amount_formatted",
+                    "network",
+                    "status",
+                    "failure_reason",
+                    "created_at",
+                    "completed_at"
+                ],
+                "title": "SmsCreditPurchaseResource"
+            },
             "SmsPackageCollection": {
                 "type": "array",
                 "items": {
@@ -8555,6 +8801,28 @@
                     "name"
                 ],
                 "title": "StaffSummaryResource"
+            },
+            "StartSmsCreditPurchaseRequest": {
+                "type": "object",
+                "description": "Validates the start of a purchase of SMS credits: a package that is on sale, the MoMo number to send the payment prompt to\n(written in international form, as every phone in the app is) and its network.",
+                "properties": {
+                    "sms_package_id": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "network": {
+                        "$ref": "#/components/schemas/MomoNetwork"
+                    }
+                },
+                "required": [
+                    "sms_package_id",
+                    "phone",
+                    "network"
+                ],
+                "title": "StartSmsCreditPurchaseRequest"
             },
             "StoreContributionRequest": {
                 "type": "object",

@@ -1093,6 +1093,34 @@ The bundles of SMS credits a church can buy (D-069, story 5.4), set by the platf
 
 ---
 
+## SMS Credits (buying credits, D-069, story 5.4)
+
+Permission for all three: `church.settings` (the church admin). Other roles get `403`; a purchase of another church is `404`.
+
+### List the Packages on Sale
+```
+GET /api/v1/sms-credits/packages
+```
+The packages the platform owner has switched on, in the owner's order. **Response `200`:** `{ "data": [ { "id", "name", "credits", "price": "12.50", "price_formatted": "GHS 12.50" } ] }` (empty when nothing is on sale).
+
+### Start a Purchase
+```
+POST /api/v1/sms-credits/purchases
+Idempotency-Key: <8 to 100 letters, digits, dashes or underscores>   (required: `400` without it)
+{ "sms_package_id": "ulid", "phone": "0244123456", "network": "mtn" }
+```
+`phone` is the MoMo number the payment prompt goes to (a local number is turned into `+233...`); `network` is `mtn`, `telecel` or `at`. `422` when the package is missing, not on sale, or the phone or network is wrong. **Response `202`:** `{ "data": { "id", "sms_package_id", "credits", "amount": "12.50", "amount_formatted", "network", "status": "pending", "failure_reason": null, "created_at", "completed_at": null } }`; the phone number is never sent back.
+
+**Side effects:** records the purchase as `pending` with the credits and price copied from the package (a later price change never changes it) and queues the call to PayPerlez (queue `payments`), which sends the prompt to the phone. Nothing is charged and no credits are added by this request. When PayPerlez confirms the exact amount (by the check that runs every minute), the church's credits go up and one `topup` line is written in the credit ledger, once; if the payment fails the purchase becomes `failed` and nothing is added. The same `Idempotency-Key` again returns the first answer and starts nothing more. The giver also pays PayPerlez's own fee on top of the package price.
+
+### Get a Purchase
+```
+GET /api/v1/sms-credits/purchases/{id}
+```
+**Response `200`:** the same shape as above, so a screen can follow `status` (`pending`, `completed`, `failed`) and read `failure_reason`. The new balance is in the signed-in staff's church (`sms_credits`).
+
+---
+
 ## Recent Activity
 
 ### Get Recent Activity
@@ -1443,6 +1471,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 | `POST /api/v1/onboarding/otp` | 1 per phone per minute, 3 per phone per hour, 10 per IP per hour |
 | `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
+| `POST /api/v1/sms-credits/purchases` | 10 per hour per church |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

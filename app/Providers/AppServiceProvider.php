@@ -16,6 +16,7 @@ use App\Models\PersonalAccessToken;
 use App\Models\Pledge;
 use App\Models\Service;
 use App\Models\ServiceSchedule;
+use App\Models\SmsCreditPurchase;
 use App\Models\SmsPackage;
 use App\Models\User;
 use App\Services\HealthCheck;
@@ -67,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         Route::model('family', Family::class);
         Route::model('department', Department::class);
         Route::model('fund_type', FundType::class);
+        Route::model('sms_credit_purchase', SmsCreditPurchase::class);
         Route::model('sms_package', SmsPackage::class);
         Route::model('contribution', Contribution::class);
         Route::model('pledge', Pledge::class);
@@ -128,6 +130,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('limits.api_per_minute'))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
         // A broadcast texts many people and costs credits, so a church may send a few an hour, however many staff send them.
+        RateLimiter::for('credit-purchase', fn (Request $request) => Limit::perHour(config('limits.credit_purchases_per_hour'))
+            ->by($this->tenantKey($request))
+            ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can start at most '.config('limits.credit_purchases_per_hour').' credit purchases per hour.'], 429, $headers)));
+
         RateLimiter::for('broadcast', fn (Request $request) => Limit::perHour(config('limits.broadcasts_per_hour'))
             ->by($this->tenantKey($request))
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can send at most '.config('limits.broadcasts_per_hour').' broadcasts per hour.'], 429, $headers)));

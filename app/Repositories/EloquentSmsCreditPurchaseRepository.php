@@ -15,6 +15,16 @@ use Illuminate\Support\Collection;
 class EloquentSmsCreditPurchaseRepository implements SmsCreditPurchaseRepositoryInterface
 {
     /**
+     * Records a new purchase.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): SmsCreditPurchase
+    {
+        return SmsCreditPurchase::query()->create($attributes)->refresh();
+    }
+
+    /**
      * The purchase with this id, if there is one.
      */
     public function find(string $id): ?SmsCreditPurchase

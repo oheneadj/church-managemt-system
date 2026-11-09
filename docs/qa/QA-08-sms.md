@@ -133,10 +133,13 @@
 - Admin notified via email
 - No error is shown to the end user triggering the contribution
 
-### TC-08-13 — SMS credit top-up via Paystack
-**Action:** Purchase a "Bundle 50" SMS top-up via the Paystack payment flow
+### TC-08-13 — SMS credit top-up via PayPerlez MoMo (D-069)
+**Action:** As the church admin, buy a "Bundle 50" package: `POST /sms-credits/purchases` with a MoMo number and network, then approve the prompt on the phone
 **Expected:**
-- Paystack payment completes
+- The call answers `202` with a `pending` purchase and no credits yet
+- PayPerlez confirms the payment (checked every minute) and the purchase becomes `completed`
+- Only the exact package price counts; a failed payment leaves the purchase `failed` and adds nothing
+- Calling again with the same Idempotency-Key starts no second purchase
 - `sms_credit_ledger` row created: `type: topup`, `credits: +50`
 - `churches.sms_credits` increases by 50
 - Admin sees updated balance in settings page

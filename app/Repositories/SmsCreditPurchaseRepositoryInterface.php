@@ -15,6 +15,13 @@ use Illuminate\Support\Collection;
 interface SmsCreditPurchaseRepositoryInterface
 {
     /**
+     * Records a new purchase.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): SmsCreditPurchase;
+
+    /**
      * The purchase with this id, if there is one.
      */
     public function find(string $id): ?SmsCreditPurchase;

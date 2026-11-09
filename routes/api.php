@@ -78,6 +78,9 @@ use App\Http\Controllers\Api\V1\Services\UpdateServiceController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\ListServiceSchedulesController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\StoreServiceScheduleController;
 use App\Http\Controllers\Api\V1\ServiceSchedules\UpdateServiceScheduleController;
+use App\Http\Controllers\Api\V1\SmsCredits\ListSmsCreditPackagesController;
+use App\Http\Controllers\Api\V1\SmsCredits\ShowSmsCreditPurchaseController;
+use App\Http\Controllers\Api\V1\SmsCredits\StartSmsCreditPurchaseController;
 use App\Http\Controllers\Api\V1\Staff\ChangeStaffPermissionsController;
 use App\Http\Controllers\Api\V1\Staff\ChangeStaffStatusController;
 use App\Http\Controllers\Api\V1\Staff\InviteStaffController;
@@ -192,6 +195,11 @@ Route::middleware('tenant')->group(function (): void {
         Route::get('messages', ListMessagesController::class)->name('messages.index');
         Route::post('messages/broadcast/estimate', EstimateBroadcastController::class)->name('messages.broadcast.estimate');
         Route::post('messages/broadcast', SendBroadcastController::class)->middleware(['idempotent', 'throttle:broadcast'])->name('messages.broadcast');
+
+        // Buying SMS credits (D-069, story 5.4): the packages on sale, starting a MoMo payment for one, and reading how it went.
+        Route::get('sms-credits/packages', ListSmsCreditPackagesController::class)->name('sms-credits.packages');
+        Route::post('sms-credits/purchases', StartSmsCreditPurchaseController::class)->middleware(['idempotent', 'throttle:credit-purchase'])->name('sms-credits.purchases.store');
+        Route::get('sms-credits/purchases/{sms_credit_purchase}', ShowSmsCreditPurchaseController::class)->name('sms-credits.purchases.show');
 
         Route::post('exports/members', QueueMemberExportController::class)->middleware('throttle:exports')->name('exports.members');
         Route::post('exports/contributions', QueueContributionExportController::class)->middleware('throttle:exports')->name('exports.contributions');
