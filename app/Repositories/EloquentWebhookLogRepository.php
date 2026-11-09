@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Enums\WebhookSource;
 use App\Models\WebhookLog;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
  * Eloquent implementation of the webhook log queries.
@@ -18,6 +19,20 @@ class EloquentWebhookLogRepository implements WebhookLogRepositoryInterface
     public function create(WebhookSource $source, string $event, string $payload): WebhookLog
     {
         return WebhookLog::query()->create(['source' => $source, 'event' => $event, 'payload' => $payload]);
+    }
+
+    /**
+     * Keeps one raw payload unless the provider's event id was already stored, in which case it returns null and keeps nothing.
+     */
+    public function createOnce(WebhookSource $source, string $event, string $eventId, string $payload): ?WebhookLog
+    {
+        try {
+            $log = WebhookLog::query()->firstOrCreate(['source' => $source, 'event_id' => $eventId], ['event' => $event, 'payload' => $payload]);
+
+            return $log->wasRecentlyCreated ? $log : null;
+        } catch (UniqueConstraintViolationException) {
+            return null;
+        }
     }
 
     /**

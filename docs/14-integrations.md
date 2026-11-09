@@ -1031,7 +1031,7 @@ if (Contribution::where('payperlez_reference', $reference)->exists()) {
 }
 ```
 
-> **Not yet confirmed:** the public docs do not list the event names (`payment.success` / `payment.failed` above are our placeholders) or the payload shape. Each event has an `id` (`event.id`); store it for idempotency. Webhook deliveries retry six times per cycle with a new timestamp and signature but the same event ID and body. Return `2xx` once the event is durably stored (and also for a duplicate you already accepted). Get the real event names from the workspace webhook settings or the API reference (`/docs/api/`) before Sprint 4.
+> **Built (D-069 b3):** the signature check, the raw encrypted log and the duplicate drop by event id are in place; the event-to-gift step comes with steps d and e. **Not yet confirmed:** the public docs do not list the event names (`payment.success` / `payment.failed` above are our placeholders) or the payload shape. Each event has an `id` (`event.id`); store it for idempotency. Webhook deliveries retry six times per cycle with a new timestamp and signature but the same event ID and body. Return `2xx` once the event is durably stored (and also for a duplicate you already accepted). Get the real event names from the workspace webhook settings or the API reference (`/docs/api/`) before Sprint 4.
 >
 > **Do not trust the webhook alone.** Collection status `unknown` and late webhooks are possible, so pair the webhook with a scheduled poll of `GET /api/v1/collections/{reference}` for anything still `pending`/`processing`/`unknown` after a short grace period.
 

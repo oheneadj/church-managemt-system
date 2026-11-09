@@ -2747,6 +2747,40 @@
                 }
             }
         },
+        "/v1/webhooks/payperlez": {
+            "post": {
+                "operationId": "webhooks.payperlez.receive",
+                "summary": "Hands the payload to ReceivePayperlezWebhookAction and answers 200 at once, a repeat included",
+                "tags": [
+                    "ReceivePayperlezWebhook"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "ok"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/webhooks/whatsapp": {
             "post": {
                 "operationId": "webhooks.whatsapp.receive",

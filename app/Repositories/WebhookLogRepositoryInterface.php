@@ -18,6 +18,12 @@ interface WebhookLogRepositoryInterface
     public function create(WebhookSource $source, string $event, string $payload): WebhookLog;
 
     /**
+     * Keeps one raw payload unless the provider's event id was already stored, in which case it returns null and keeps nothing.
+     * The unique index on (source, event id) is what holds when two deliveries race.
+     */
+    public function createOnce(WebhookSource $source, string $event, string $eventId, string $payload): ?WebhookLog;
+
+    /**
      * The logged payload with this id, if there is one.
      */
     public function find(string $id): ?WebhookLog;

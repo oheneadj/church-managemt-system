@@ -54,6 +54,9 @@ return [
         'sender_id' => env('PAYPERLEZ_SMS_SENDER_ID'),
         'base_url' => env('PAYPERLEZ_BASE_URL', 'https://api.payperlez.org/api/v1'),
         'timeout_seconds' => 10,
+        // Webhooks (docs/14, section 7): the signing secret including its whsec_ prefix, and how far the signed time may be from ours.
+        'webhook_secret' => env('PAYPERLEZ_WEBHOOK_SECRET'),
+        'webhook_tolerance_seconds' => 300,
     ],
 
     // Which WhatsAppGateway sends WhatsApp messages ('log' while Meta has not approved the account), and the Meta credentials (docs/14, section 3).

@@ -572,13 +572,14 @@ Raw incoming webhook payloads. Never lose a webhook event.
 | `id` | CHAR(26) | No | ULID PK |
 | `source` | VARCHAR(30) | No | `WebhookSource`: paystack, payperlez, meta_whatsapp. (Add `moolre` only if USSD is built, D-019.) |
 | `event` | VARCHAR(100) | No | e.g. `charge.success` |
+| `event_id` | VARCHAR(100) | Yes | The provider's own id for the event. Null when the provider sends none. Unique with `source`: a resent event is stored once (agreement section 11, layers 4 and 5). |
 | `payload` | TEXT | No | `[encrypted]` Raw JSON payload |
 | `processed` | BOOLEAN | No | Default: false |
 | `processed_at` | TIMESTAMP | Yes | |
 | `error` | TEXT | Yes | Set if processing failed |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(source, event, processed)`, `(created_at)` — for pruning
+**Index:** `(source, event, processed)`, `(created_at)` — for pruning. Unique `(source, event_id)`.
 
 **Retention:** 90 days (pruned by scheduled command)
 

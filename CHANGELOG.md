@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(payments): the PayPerlez webhook endpoint, D-069 step b3 (2026-11-09)
+- **What:** `POST /api/v1/webhooks/payperlez` on the platform host: signature middleware (`X-Payperlez-Signature`, HMAC-SHA256 of "t.body", 5-minute window, no secret means nothing passes, 401), the raw body kept encrypted in `webhook_logs`, a repeated event dropped by its id, `200` at once. New nullable `webhook_logs.event_id` with a unique `(source, event_id)` and `WebhookLogRepository::createOnce`. Config `PAYPERLEZ_WEBHOOK_SECRET`. Paystack's webhook and the event-to-gift processing are not in this commit: Paystack's docs could not be read (403) so cards wait, and gifts need `contributions.status` (step d).
+- **Why:** D-069 step b: PayPerlez must be able to tell us a payment finished without us trusting an unproved caller, and nothing may be lost or processed twice.
+- **Files:** app/ (Http/Middleware/VerifyPayperlezSignature, Http/Requests/Webhooks, Http/Controllers/Api/V1/Webhooks, Actions/Payments, Repositories, Models/WebhookLog), bootstrap/app.php, routes/api.php, config/services.php, .env.example, database/migrations (event_id), tests/Feature/Payments/PayperlezWebhookTest.php, docs/07, 08, 14, CHANGELOG.md
+- **Commit:** (hash added after commit)
+
 #### feat(payments): the PayPerlez payment provider driver, D-069 step b1 (2026-11-09)
 - **What:** `PaymentProvider` and `DisbursementProvider` interfaces, the `PayperlezPaymentProvider` driver (collect, collection status, disburse, disbursement status, balance, account-name check), result and payout DTOs, status and payout-method enums, two exceptions, config-chosen binding (`PAYMENT_MOMO_PROVIDER`). Money stays decimal strings; JSON amounts are written by hand, never through floats. Also fixed five PHPStan errors caused by the platform guard (`user()` narrowed to `User` in the church profile/settings requests and `EnsureStaffIsCurrent`).
 - **Why:** D-069 step b: the foundation every payment flow sits on, with the provider swappable in config (D-020).

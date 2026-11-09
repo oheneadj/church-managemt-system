@@ -1406,7 +1406,9 @@ POST /api/v1/webhooks/payperlez
 Header: X-Payperlez-Signature: t=<unix-seconds>,v1=<hmac_sha256 of "t.body">
 ```
 
-Rejected if the signature is invalid or the timestamp is more than 5 minutes old. Event names are still to be confirmed with PayPerlez; until then processing also relies on polling (see `14-integrations.md`).
+Served on the platform address, not a church's, because PayPerlez calls one URL for every church. Answers `401` unless the signature matches the raw body and the signed time is within 5 minutes of ours (`PAYPERLEZ_WEBHOOK_SECRET`, the full secret including `whsec_`; with none set nothing passes). A valid post is kept exactly as received in `webhook_logs` (encrypted) and answered `200 {"status":"ok"}` at once, even for a body we cannot read, because PayPerlez resends anything else. An event whose `id` was already stored is dropped (still `200`). Limited to 600 a minute per address.
+
+**Built so far (D-069 step b3):** receiving, proving and keeping. The event name is read from `type` or `event` and the id from `id`, only as labels; both are unconfirmed until PayPerlez gives the real shape (B2). Turning an event into a paid, failed or paid-out gift comes with the gift and payout flow (steps d and e), so the logs stay unprocessed until then and polling covers payments.
 
 ### Paystack Webhook (cards)
 ```

@@ -84,6 +84,7 @@ use App\Http\Controllers\Api\V1\Staff\InviteStaffController;
 use App\Http\Controllers\Api\V1\Staff\ListStaffController;
 use App\Http\Controllers\Api\V1\Staff\ListStaffDirectoryController;
 use App\Http\Controllers\Api\V1\Staff\UpdateStaffController;
+use App\Http\Controllers\Api\V1\Webhooks\ReceivePayperlezWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\ReceiveWhatsAppWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\VerifyWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -118,6 +119,8 @@ Route::domain(config('tenancy.base_domain'))->prefix('platform')->name('platform
 Route::domain(config('tenancy.base_domain'))->prefix('webhooks')->name('webhooks.')->group(function (): void {
     Route::get('whatsapp', VerifyWhatsAppWebhookController::class)->name('whatsapp.verify');
     Route::post('whatsapp', ReceiveWhatsAppWebhookController::class)->middleware(['throttle:webhooks', 'meta.signature'])->name('whatsapp.receive');
+    // PayPerlez's payment events, for every church, signed and stored before anything else (docs/08, Webhooks).
+    Route::post('payperlez', ReceivePayperlezWebhookController::class)->middleware(['throttle:webhooks', 'payperlez.signature'])->name('payperlez.receive');
 });
 
 Route::middleware('tenant')->group(function (): void {
