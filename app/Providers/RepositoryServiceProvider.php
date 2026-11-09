@@ -33,6 +33,7 @@ use App\Repositories\EloquentPledgeRepository;
 use App\Repositories\EloquentServiceRepository;
 use App\Repositories\EloquentServiceScheduleRepository;
 use App\Repositories\EloquentSmsCreditLedgerRepository;
+use App\Repositories\EloquentSmsCreditPurchaseRepository;
 use App\Repositories\EloquentSmsPackageRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentVisitorRecordRepository;
@@ -50,6 +51,7 @@ use App\Repositories\PledgeRepositoryInterface;
 use App\Repositories\ServiceRepositoryInterface;
 use App\Repositories\ServiceScheduleRepositoryInterface;
 use App\Repositories\SmsCreditLedgerRepositoryInterface;
+use App\Repositories\SmsCreditPurchaseRepositoryInterface;
 use App\Repositories\SmsPackageRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Repositories\VisitorRecordRepositoryInterface;
@@ -79,6 +81,7 @@ class RepositoryServiceProvider extends ServiceProvider
         UserRepositoryInterface::class => EloquentUserRepository::class,
         PlatformAdminRepositoryInterface::class => EloquentPlatformAdminRepository::class,
         SmsPackageRepositoryInterface::class => EloquentSmsPackageRepository::class,
+        SmsCreditPurchaseRepositoryInterface::class => EloquentSmsCreditPurchaseRepository::class,
         MessageLogRepositoryInterface::class => EloquentMessageLogRepository::class,
         ConsentRepositoryInterface::class => EloquentConsentRepository::class,
         ChurchPurgeRepositoryInterface::class => EloquentChurchPurgeRepository::class,

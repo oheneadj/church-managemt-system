@@ -559,7 +559,32 @@ Audit trail for every SMS credit movement (allocation, consumption, top-up).
 | `note` | VARCHAR(255) | Yes | |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, created_at)`. Unique `(reference_id)` where `type = 'consumption'`, and unique `(reference_id)` where `type = 'refund'`: a message is charged once and refunded at most once (D-051).
+**Index:** `(church_id, created_at)`. Unique `(reference_id)` where `type = 'consumption'`, and unique `(reference_id)` where `type = 'refund'`: a message is charged once and refunded at most once (D-051). Unique `(reference_id)` where `type = 'topup'`: a purchase adds its credits once (D-069); for a top-up line `reference_id` is the `sms_credit_purchases` row.
+
+---
+
+### `sms_credit_purchases`
+
+A church's purchase of an SMS credit package (D-069, story 5.4). Created `pending` when the payment starts; its `id` is the reference sent to the payment provider. The credits and the price are copied from the package when it is bought. Soft deleted, never removed.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK, also the provider's client reference |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `sms_package_id` | CHAR(26) | No | FK → sms_packages |
+| `user_id` | CHAR(26) | No | FK → users: who started it |
+| `credits` | INT | No | Copied from the package |
+| `amount` | DECIMAL(12,2) | No | Copied price in GHS. The provider's own fee is on top |
+| `network` | VARCHAR(30) | No | `MomoNetwork` |
+| `phone` | TEXT | No | `[encrypted]` The number the payment prompt goes to |
+| `status` | VARCHAR(30) | No | `SmsCreditPurchaseStatus`: pending, completed, failed. Default pending |
+| `provider_reference` | VARCHAR(100) | Yes | The provider's own id |
+| `provider_fee` | DECIMAL(12,2) | Yes | What the provider charged on top, once known |
+| `failure_reason` | VARCHAR(255) | Yes | |
+| `completed_at` | TIMESTAMP | Yes | |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, created_at)`, `(status, created_at)`. **Settling:** a pending purchase is asked about every minute (`credits:check-pending-purchases`, queue `payments`). It completes only when the provider says paid for this purchase's reference and exactly its amount; the credits are added and one `topup` ledger line written, once.
 
 ---
 

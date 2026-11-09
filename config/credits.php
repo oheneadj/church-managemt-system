@@ -14,4 +14,9 @@ return [
     'package_credits_max' => 1_000_000,
     'package_price_max' => '99999.99',
     'package_sort_order_max' => 1000,
+
+    // Settling a purchase (D-069 step c). A pending purchase is asked about once it is this old, every minute until the provider
+    // gives its final word, and one still pending after the second limit is reported so a person can look into it.
+    'purchase_check_after_seconds' => 60,
+    'purchase_stale_after_minutes' => 60,
 ];
