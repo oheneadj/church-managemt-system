@@ -25,7 +25,7 @@ describe('DesignSystemShowcasePage', () => {
         setup();
 
         expect(screen.getByRole('heading', { level: 1, name: 'Design system showcase' })).toBeInTheDocument();
-        for (const name of ['Buttons', 'Fields', 'Feedback', 'Loading', 'Tables', 'Dialogs and tabs', 'Motion']) {
+        for (const name of ['Buttons', 'Fields', 'Feedback', 'Loading', 'Tables', 'Stats and charts', 'Dialogs and tabs', 'Motion']) {
             expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
         }
     });
@@ -251,6 +251,55 @@ describe('DesignSystemShowcasePage', () => {
         }
 
         expect(screen.getByText('Every row was deleted')).toBeInTheDocument();
+    });
+
+    it('shows four different stat card designs, each readable by assistive technology', () => {
+        setup();
+
+        expect(Array.from(document.querySelectorAll('[data-slot="stat-card"]'), (card) => card.getAttribute('data-variant'))).toEqual([
+            'trend',
+            'icon',
+            'progress',
+            'featured',
+        ]);
+        expect(screen.getByRole('img', { name: /^Rising over the last 12 periods/ })).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: /^Monthly total rising/ })).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: /Visits in each of the last 7 weeks/ })).toBeInTheDocument();
+        expect(screen.getByRole('meter', { name: 'Monthly goal progress' })).toHaveAttribute('aria-valuetext', '720 of 1,000 units');
+        expect(screen.getByText('24,310')).toHaveClass('text-hero');
+    });
+
+    it('shows the change as an arrow and words, coloured by what it means, and plain on the filled card', () => {
+        setup();
+        const deltas = Array.from(document.querySelectorAll('[data-slot="stat-delta"]'));
+
+        expect(deltas).toHaveLength(3);
+        expect(deltas.map((delta) => delta.className.match(/text-(feedback-success|feedback-error|muted-foreground)/)?.[0])).toEqual([
+            'text-feedback-success',
+            'text-feedback-error',
+            undefined,
+        ]);
+        expect(deltas.every((delta) => delta.querySelector('svg')?.getAttribute('aria-hidden') === 'true')).toBe(true);
+    });
+
+    it('puts a table of the same figures behind every chart', async () => {
+        const user = setup();
+
+        for (const title of ['Weekly visits', 'Two series over six months', 'One whole in four parts']) {
+            const figure = screen.getByRole('heading', { name: title }).closest('figure') as HTMLElement;
+
+            await user.click(within(figure).getByRole('button', { name: 'Table' }));
+            expect(within(figure).getByRole('table', { name: title })).toBeInTheDocument();
+            await user.click(within(figure).getByRole('button', { name: 'Chart' }));
+        }
+    });
+
+    it('draws the column, line and segmented charts with a legend where there are several series', () => {
+        setup();
+
+        expect(screen.getByRole('slider', { name: /Two series over six months/ })).toBeInTheDocument();
+        expect(screen.getByRole('group', { name: 'One whole in four parts' })).toBeInTheDocument();
+        expect(screen.getAllByRole('list', { name: 'Legend' })).toHaveLength(2);
     });
 
     it('shows each motion token as a bar driven by that token', () => {

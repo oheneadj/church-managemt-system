@@ -95,6 +95,7 @@ DM Sans, self-hosted. The scale (size, line height, letter spacing, weight) live
 
 | Style | Size / line height | Weight | Letter spacing |
 |---|---|---|---|
+| Hero (one per view: the number a view leads with) | 48 / 52 | 600 | -0.03em |
 | Display | 36 / 44 | 600 | -0.02em |
 | Heading 1 | 30 / 38 | 600 | -0.015em |
 | Heading 2 | 24 / 32 | 600 | -0.01em |
@@ -138,6 +139,29 @@ A 4px base: Tailwind's spacing scale, unchanged, where one step is 0.25rem. The 
 
 The utility names are shadcn's; the sizes are the brief's. Anything rounder than 16px (except full) is not used.
 
+## 5a. Charts and stat cards
+
+Chart colours are not the brand's muted greens and golds: those fail the chart rule that every series must be told apart (chroma at least 0.10, and separable under colour blindness), so chart hues follow the brand families (forest, gold, berry, blue, terracotta) at chart strength. The set was validated with the data-visualisation checks (lightness band, chroma floor, colour-blind and normal-vision separation of neighbouring pairs, 3:1 contrast against the card); the hex values are pinned in `designTokens.test.ts`, so a change must be re-validated, not eyeballed.
+
+| Slot | Hue | Light | Dark | Ink on the fill (light / dark) |
+|---|---|---|---|---|
+| 1 | Forest | `#007D58` | `#249C74` | white / dark |
+| 2 | Gold | `#B78A2C` | `#AA7E1A` | dark / dark |
+| 3 | Berry | `#893365` | `#C15F95` | white / dark |
+| 4 | Blue | `#3275B4` | `#5497D9` | white / dark |
+| 5 | Terracotta | `#D15E49` | `#CC624E` | dark / dark |
+
+Worst neighbouring pair under colour blindness: 11.2 (light) and 9.9 (dark), against a target of 8; all five at 3:1 or more on the card, and every ink at 4.5:1 or more on its fill. Context and "Other" use neutral 500 (`--viz-other`), the grid and baseline are hairlines one step off the surface, and a series that means bad (a loss, an error) wears `--viz-negative`, the destructive colour, never a series colour.
+
+Rules (from the data-visualisation method):
+- **One hue for one series**, slots 1 to 5 in order for several, never cycled; a sixth folds into "Other" or becomes small charts. Colour follows the series, never its rank.
+- **Pick the form first:** a single number is a stat card, not a one-bar chart; a whole in a few parts is a segmented bar (six parts at most), not a pie; many parts, or close values, are ranked bars or a table.
+- **Thin marks:** columns at most 24px wide with a 4px rounded top on a square baseline; lines 2px; markers 8px with a 2px ring in the card's colour; a 2px gap of the card's colour between touching fills; areas at 10 percent. Never a border drawn around a mark.
+- **Labels:** a legend for two or more series (none for one: the title names it), values labelled only at the end or the extreme, text always in text colours (never the series colour), and a label printed on a fill only where it fits, in that fill's ink.
+- **Always readable another way:** every chart sits in a figure with a Chart / Table switch, hover and keyboard readouts repeat what the table says and never gate it, and a refresh keeps the old chart dimmed instead of blanking it.
+- **Stat card designs:** trend (the default), icon (with a mini column chart), progress (one number against its goal, as a real meter whose track is a lighter step of the fill) and featured (the deep filled card with the one 48px hero figure and a fine gold rule; exactly one per view). The icon only helps scanning and never carries meaning; on the filled card the arrow and the words carry the change.
+- **Stat card:** label in sentence case, the number in proportional figures, a change as an arrow plus signed words against a named period (never colour alone; the colour is what the change means, so an increase in something bad is red), and an optional 12-point trend. The card is its own container: the trend sits beside the number when the card is wide enough and drops under it when it is not.
+
 ## 6. Elevation
 
 | Level | Token | Use |
@@ -180,3 +204,4 @@ Light and dark are both complete and keep the same identity, hierarchy and behav
 - A second icon library; a decorative icon with no job
 - Text under 12px; a heading style that is not in the scale; body text that is not 14px or 16px
 - Inverting the light theme to make the dark one
+- A dual-axis chart, a rainbow of series, a number on every point, a pie or donut for close values, or a chart with no table behind it

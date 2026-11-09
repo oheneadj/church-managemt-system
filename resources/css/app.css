@@ -63,6 +63,11 @@
     --text-display--line-height: 2.75rem;
     --text-display--letter-spacing: -0.02em;
     --text-display--font-weight: 600;
+    /* The hero figure: the one number a view leads with, 48px, the same sans. Exactly one per view. */
+    --text-hero: 3rem;
+    --text-hero--line-height: 3.25rem;
+    --text-hero--letter-spacing: -0.03em;
+    --text-hero--font-weight: 600;
     --text-h1: 1.875rem;
     --text-h1--line-height: 2.375rem;
     --text-h1--letter-spacing: -0.015em;
@@ -206,11 +211,11 @@
     --accent-gold: var(--color-gold-400);
     --accent-gold-strong: var(--color-gold-700);
     --accent-gold-soft: var(--color-gold-100);
-    --chart-1: var(--color-forest-300);
-    --chart-2: var(--color-forest-500);
-    --chart-3: var(--color-forest-700);
-    --chart-4: var(--color-gold-500);
-    --chart-5: var(--color-gold-700);
+    --chart-1: var(--viz-series-1);
+    --chart-2: var(--viz-series-2);
+    --chart-3: var(--viz-series-3);
+    --chart-4: var(--viz-series-4);
+    --chart-5: var(--viz-series-5);
     --sidebar: var(--card);
     --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
@@ -268,16 +273,24 @@
     --feedback-info-solid: #2f577d;
     --feedback-solid-foreground: #ffffff;
 
-    /* Chart colours from the data-visualisation palette: series 1 is blue; the grid and baseline sit one step off the surface. */
-    --viz-series-1: #2a78d6;
-    --viz-series-2: #eb6834;
-    --viz-series-3: #1baf7a;
-    --viz-series-4: #eda100;
-    --viz-series-5: #e87ba4;
-    --viz-other: #898781;
-    --viz-negative: #e34948;
-    --viz-grid: #e1e0d9;
-    --viz-baseline: #c3c2b7;
+    /* Chart colours, validated with the data-visualisation checks (lightness band, chroma floor, colour-blind separation, normal-vision
+       floor, 3:1 contrast on the card): worst neighbouring pair 11.2 (colour-blind) in light. Hues follow the brand families (forest,
+       gold, berry, blue, terracotta) at chart strength, because the brand's own muted steps are too grey to tell apart as marks.
+       Assigned in this order, never cycled; a sixth series folds into "Other". Ink is the text colour printed on a fill. */
+    --viz-series-1: #007d58;
+    --viz-series-2: #b78a2c;
+    --viz-series-3: #893365;
+    --viz-series-4: #3275b4;
+    --viz-series-5: #d15e49;
+    --viz-ink-1: #ffffff;
+    --viz-ink-2: #0e1a17;
+    --viz-ink-3: #ffffff;
+    --viz-ink-4: #ffffff;
+    --viz-ink-5: #0e1a17;
+    --viz-other: var(--color-neutral-500);
+    --viz-negative: var(--destructive);
+    --viz-grid: var(--color-neutral-200);
+    --viz-baseline: var(--color-neutral-300);
 }
 
 .dark {
@@ -325,15 +338,18 @@
     --feedback-error-surface: #40312F;
     --feedback-error-border: #663938;
 
-    --viz-series-1: #3987e5;
-    --viz-series-2: #d95926;
-    --viz-series-3: #199e70;
-    --viz-series-4: #c98500;
-    --viz-series-5: #d55181;
-    --viz-other: #898781;
-    --viz-negative: #e66767;
-    --viz-grid: #2c2c2a;
-    --viz-baseline: #383835;
+    --viz-series-1: #249c74;
+    --viz-series-2: #aa7e1a;
+    --viz-series-3: #c15f95;
+    --viz-series-4: #5497d9;
+    --viz-series-5: #cc624e;
+    --viz-ink-1: #0e1a17;
+    --viz-ink-2: #0e1a17;
+    --viz-ink-3: #0e1a17;
+    --viz-ink-4: #0e1a17;
+    --viz-ink-5: #0e1a17;
+    --viz-grid: var(--color-neutral-800);
+    --viz-baseline: var(--color-neutral-700);
 }
 
 /* Display and heading 1 step down on phones, so a long heading does not crowd a 375 px screen. */

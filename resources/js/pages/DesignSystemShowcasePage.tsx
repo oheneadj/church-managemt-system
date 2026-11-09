@@ -1,4 +1,5 @@
 import { ButtonsSection } from '@/components/DesignSystem/ButtonsSection';
+import { ChartsSection } from '@/components/DesignSystem/ChartsSection';
 import { FeedbackSection } from '@/components/DesignSystem/FeedbackSection';
 import { FieldsSection } from '@/components/DesignSystem/FieldsSection';
 import { LoadingSection } from '@/components/DesignSystem/LoadingSection';
@@ -23,6 +24,7 @@ export function DesignSystemShowcasePage() {
             <FeedbackSection />
             <LoadingSection />
             <TablesSection />
+            <ChartsSection />
             <OverlaysSection />
             <MotionSection />
         </main>

@@ -198,8 +198,44 @@ describe('contrast, in both themes', () => {
     });
 });
 
+describe('the chart colours', () => {
+    // Validated with the data-visualisation checks (lightness band, chroma floor, colour-blind and normal-vision separation of
+    // neighbouring pairs, 3:1 contrast on the card). Pinned, so changing one forces a new validation, not a guess.
+    const VALIDATED = {
+        light: ['#007d58', '#b78a2c', '#893365', '#3275b4', '#d15e49'],
+        dark: ['#249c74', '#aa7e1a', '#c15f95', '#5497d9', '#cc624e'],
+    } as const;
+
+    describe.each(Object.entries(themes))('%s', (name, tokens) => {
+        const fills = [1, 2, 3, 4, 5].map((slot) => color(tokens, `--viz-series-${slot}`));
+
+        it('uses the validated set, in order', () => {
+            expect(fills).toEqual([...VALIDATED[name as 'light' | 'dark']]);
+        });
+
+        it('keeps every series at 3:1 or more against the card (marks)', () => {
+            for (const fill of fills) {
+                expect(contrast(fill, color(tokens, '--card'))).toBeGreaterThanOrEqual(3);
+            }
+        });
+
+        it('prints readable text on every fill: the ink for each is at 4.5:1 or more', () => {
+            fills.forEach((fill, index) => {
+                expect(contrast(color(tokens, `--viz-ink-${index + 1}`), fill)).toBeGreaterThanOrEqual(4.5);
+            });
+        });
+
+        it('has a quiet grey for context and furniture that stays recessive', () => {
+            expect(color(tokens, '--viz-other')).toMatch(/^#[0-9a-f]{6}$/);
+            expect(contrast(color(tokens, '--viz-grid'), color(tokens, '--card'))).toBeLessThan(2);
+            expect(contrast(color(tokens, '--viz-baseline'), color(tokens, '--card'))).toBeLessThan(2.6);
+        });
+    });
+});
+
 describe('the type scale', () => {
     const SCALE: Array<[string, number, number]> = [
+        ['hero', 48, 600],
         ['display', 36, 600],
         ['h1', 30, 600],
         ['h2', 24, 600],
@@ -216,7 +252,8 @@ describe('the type scale', () => {
 
         expect(pixels(primitives[`--text-${name}`] ?? '')).toBe(size);
         expect(Number(primitives[`--text-${name}--font-weight`])).toBe(weight);
-        expect(line / size).toBeGreaterThanOrEqual(1.2);
+        // The hero figure is a single large number, so its line is tighter than running text needs.
+        expect(line / size).toBeGreaterThanOrEqual(name === 'hero' ? 1.05 : 1.2);
         expect(line / size).toBeLessThanOrEqual(1.7);
         expect(primitives[`--text-${name}--letter-spacing`]).toBeDefined();
     });
