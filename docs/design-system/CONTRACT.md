@@ -51,9 +51,10 @@ Messages are short, human and respectful, and say what to do. No raw status code
 | Missing labels, roles, keyboard handlers | ESLint `jsx-a11y` in CI | Running |
 | Behaviour of each state, loading, double submit, errors | Vitest and Testing Library, one test per shared component | Running for existing components; required for every new one |
 | Real flows by keyboard and in a real browser | Playwright (`npm run e2e`) | Running |
-| Accessibility violations on the showcase and key flows | axe with Playwright | To build (step 3) |
-| Hard-coded colours and durations in feature code | An ESLint or Stylelint rule | To build (step 3) |
-| Look unchanged | Playwright screenshots of the showcase | To build (step 3) |
+| The showcase page exists, behaves, and stays out of production | `DesignSystemShowcasePage.test.tsx`, `check-showcase-excluded.sh` in CI | Running |
+| Accessibility violations on the showcase and key flows | axe with Playwright | To build (step 3b) |
+| Hard-coded colours and durations in feature code | An ESLint or Stylelint rule | To build (step 3b) |
+| Look unchanged | Playwright screenshots of the showcase | To build (step 3b) |
 | Merge blocked when a check fails | Required status checks on the protected branches | Repository setting, to be turned on by the owner |
 
 Checks cannot judge whether a message is kind or a loading state feels right. Those need a human reviewer, and the acceptance checklist in `acceptance-criteria.md` is what the reviewer works from.

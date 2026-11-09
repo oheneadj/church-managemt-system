@@ -127,6 +127,10 @@ jobs:
       - name: Production build
         run: npm run build
 
+      # The component showcase must not ship in a normal production build (docs/design-system/CONTRACT.md).
+      - name: Showcase left out of the production build
+        run: bash scripts/check-showcase-excluded.sh
+
       - name: Dependency audit (fails on high severity)
         run: npm audit --audit-level=high
 

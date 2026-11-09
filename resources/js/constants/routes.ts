@@ -7,6 +7,8 @@ export const ROUTES = {
     FORGOT_PASSWORD: '/forgot-password',
     CHOOSE_PASSWORD: '/choose-password',
     START: '/start',
+    /** The component showcase (docs/design-system). Only exists while developing or when a build sets VITE_DESIGN_SYSTEM_SHOWCASE=true: never in a normal production build. */
+    DESIGN_SYSTEM: '/design-system',
     DASHBOARD: '/dashboard',
     MEMBERS: '/members',
     MEMBER_NEW: '/members/new',

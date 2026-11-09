@@ -156,6 +156,16 @@ export const router = createBrowserRouter([
                     },
                 ],
             },
+            // The component showcase is for people building the app. The condition is written out here, not hidden in a function, so a
+            // production build can see it is false and leave the whole page out of the bundle (scripts/check-showcase-excluded.sh checks).
+            ...(import.meta.env.DEV || import.meta.env.VITE_DESIGN_SYSTEM_SHOWCASE === 'true'
+                ? [
+                      {
+                          path: ROUTES.DESIGN_SYSTEM,
+                          lazy: async () => ({ Component: (await import('@/pages/DesignSystemShowcasePage')).DesignSystemShowcasePage }),
+                      },
+                  ]
+                : []),
             { path: ROUTES.HOME, element: <HomeRedirect /> },
             {
                 path: '*',

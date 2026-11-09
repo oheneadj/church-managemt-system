@@ -26,7 +26,7 @@ This is honest on purpose, so the contract is never claimed to be enforced where
 | DM Sans as the primary font, self-hosted | **Built** (step 2a). Metric-matched fallback overrides are **not** applied: the real font metrics have not been measured, so the system stack is used and a small shift on first load is possible |
 | Focus ring contrast | **Fixed** (step 2a): `--ring` was 2.6:1 against white, now 4.8:1, and components use it solid |
 | Input border contrast (the border is the only outline of a field; today about 1.2:1 in light and 1.5:1 in dark, below the 3:1 WCAG asks) | **Known gap**, to be fixed in step 4 with the screens, because it changes how every field looks |
-| Component showcase page (states and transitions), with no business content | **To build** (step 3) |
-| Automated checks: axe in Playwright, a hard-coded colour check, required status on the main branch | **To build** (step 3). ESLint with `jsx-a11y`, TypeScript, Vitest and Playwright already run in CI |
+| Component showcase page at `/design-system` (buttons, fields, password, toasts, loading, dialogs, tabs, motion), with no business content | **Built** (step 3a). Present while developing (`npm run dev`) or in a build made with `VITE_DESIGN_SYSTEM_SHOWCASE=true`; a normal production build leaves it out, and CI fails if it does not (`scripts/check-showcase-excluded.sh`) |
+| Automated checks: axe in Playwright, a hard-coded colour and duration check, screenshots, required status on the main branch | **To build** (step 3b). ESLint with `jsx-a11y`, TypeScript, Vitest, the token contrast test and the showcase exclusion check already run in CI |
 
 Until a part is built, new work must still follow the spec using the closest existing component, and must not add a second pattern.
