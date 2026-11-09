@@ -2,6 +2,7 @@ import { ButtonsSection } from '@/components/DesignSystem/ButtonsSection';
 import { ChartsSection } from '@/components/DesignSystem/ChartsSection';
 import { FeedbackSection } from '@/components/DesignSystem/FeedbackSection';
 import { FieldsSection } from '@/components/DesignSystem/FieldsSection';
+import { ImagesSection } from '@/components/DesignSystem/ImagesSection';
 import { LoadingSection } from '@/components/DesignSystem/LoadingSection';
 import { MotionSection } from '@/components/DesignSystem/MotionSection';
 import { OverlaysSection } from '@/components/DesignSystem/OverlaysSection';
@@ -25,6 +26,7 @@ export function DesignSystemShowcasePage() {
             <LoadingSection />
             <TablesSection />
             <ChartsSection />
+            <ImagesSection />
             <OverlaysSection />
             <MotionSection />
         </main>

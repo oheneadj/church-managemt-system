@@ -1,21 +1,14 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { initialsOf } from '@/utils/initialsOf';
+import { ProfileImage, type ProfileImageSize } from '@/components/ui/ProfileImage';
 
 interface MemberAvatarProps {
     fullName: string;
     photoUrl: string | null;
-    className?: string;
+    size?: ProfileImageSize;
 }
 
 /**
- * A member's photo, or their initials when they have none. The name is always shown beside it,
- * so the image itself is decorative.
+ * A member's photo, or their initials when they have none. The name is always shown beside it, so the image is decorative.
  */
-export function MemberAvatar({ fullName, photoUrl, className }: MemberAvatarProps) {
-    return (
-        <Avatar className={className}>
-            {photoUrl && <AvatarImage src={photoUrl} alt="" />}
-            <AvatarFallback>{initialsOf(fullName)}</AvatarFallback>
-        </Avatar>
-    );
+export function MemberAvatar({ fullName, photoUrl, size = 'lg' }: MemberAvatarProps) {
+    return <ProfileImage name={fullName} src={photoUrl} size={size} decorative />;
 }

@@ -21,7 +21,7 @@ export function MemberHeader({ member, fullName, editable, onChangeStatus }: Mem
     return (
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex flex-col items-start gap-2">
-                <MemberAvatar fullName={fullName} photoUrl={member.photo_url} className="size-24" />
+                <MemberAvatar fullName={fullName} photoUrl={member.photo_url} size="2xl" />
                 {editable && <PhotoUploadButton memberId={member.id} />}
             </div>
             <div className="flex-1">

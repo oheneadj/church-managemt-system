@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,7 +25,17 @@ describe('DesignSystemShowcasePage', () => {
         setup();
 
         expect(screen.getByRole('heading', { level: 1, name: 'Design system showcase' })).toBeInTheDocument();
-        for (const name of ['Buttons', 'Fields', 'Feedback', 'Loading', 'Tables', 'Stats and charts', 'Dialogs and tabs', 'Motion']) {
+        for (const name of [
+            'Buttons',
+            'Fields',
+            'Feedback',
+            'Loading',
+            'Tables',
+            'Stats and charts',
+            'Images',
+            'Dialogs and tabs',
+            'Motion',
+        ]) {
             expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
         }
     });
@@ -300,6 +310,44 @@ describe('DesignSystemShowcasePage', () => {
         expect(screen.getByRole('slider', { name: /Two series over six months/ })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'One whole in four parts' })).toBeInTheDocument();
         expect(screen.getAllByRole('list', { name: 'Legend' })).toHaveLength(2);
+    });
+
+    it('shows pictures in their frames, one that cannot load, one with no image, and profile images in every size', () => {
+        setup();
+
+        expect(document.querySelectorAll('[data-slot="picture"]').length).toBeGreaterThanOrEqual(6);
+        expect(screen.getByRole('img', { name: 'No image yet' })).toBeInTheDocument();
+        expect(document.querySelectorAll('[data-slot="profile-image"]').length).toBeGreaterThanOrEqual(18);
+        expect(screen.getAllByRole('img', { name: 'Ama Mensah' }).length).toBeGreaterThanOrEqual(8);
+        expect(screen.getByRole('group', { name: 'Team: six people' })).toBeInTheDocument();
+        expect(screen.getByText('Online')).toBeInTheDocument();
+    });
+
+    it('checks a chosen image against the rules and shows a preview or a plain complaint, sending nothing', async () => {
+        const user = setup();
+        const input = document.querySelectorAll<HTMLInputElement>('input[type="file"]')[0] as HTMLInputElement;
+        URL.createObjectURL = () => 'blob:preview';
+        URL.revokeObjectURL = () => undefined;
+
+        await user.upload(input, new File(['x'], 'good.png', { type: 'image/png' }));
+        expect(screen.getByText('good.png')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Remove good.png' })).toBeInTheDocument();
+
+        fireEvent.change(input, { target: { files: [new File(['x'], 'bad.gif', { type: 'image/gif' })] } });
+        expect(screen.getByText('bad.gif is not an accepted image. Use JPEG or PNG.')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Remove good.png' }));
+        expect(screen.queryByText('good.png')).not.toBeInTheDocument();
+    });
+
+    it('shows every upload state: ready, sending with real progress, sending with none, done and failed', () => {
+        setup();
+
+        expect(screen.getByText('Ready to upload')).toBeInTheDocument();
+        expect(screen.getByText('62%')).toBeInTheDocument();
+        expect(screen.getByText('Uploading…')).toBeInTheDocument();
+        expect(screen.getByText('Uploaded')).toBeInTheDocument();
+        expect(screen.getByText('The connection dropped. Check it and try again.')).toBeInTheDocument();
     });
 
     it('shows each motion token as a bar driven by that token', () => {

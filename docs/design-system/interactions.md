@@ -198,7 +198,7 @@ Never a misleading default, a confusing "Cancel / OK" pair, or a pre-ticked box 
 
 ## 17. File upload
 
-Drag and drop, click to browse (a real button), type and size checked before upload with the limits shown up front, real progress from the upload (never a made-up percentage), success, failure with the reason, **Retry**, **Remove**, and **Cancel** while uploading. In a batch, files that are fine are kept when one fails. A drop zone has a visible focus and a text alternative.
+Drag and drop, click to browse (a real button), type and size checked before upload with the limits shown up front, real progress from the upload (never a made-up percentage), success, failure with the reason, **Retry**, **Remove**, and **Cancel** while uploading. In a batch, files that are fine are kept when one fails. A drop zone has a visible focus and a text alternative. **Built for images** as `ImageUpload` (see `foundations.md`, 5b); it does not send anything itself, so the parent's own request supplies the real progress.
 
 ## 18. Date and time
 
