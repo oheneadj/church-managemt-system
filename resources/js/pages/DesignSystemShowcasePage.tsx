@@ -4,6 +4,7 @@ import { FieldsSection } from '@/components/DesignSystem/FieldsSection';
 import { LoadingSection } from '@/components/DesignSystem/LoadingSection';
 import { MotionSection } from '@/components/DesignSystem/MotionSection';
 import { OverlaysSection } from '@/components/DesignSystem/OverlaysSection';
+import { TablesSection } from '@/components/DesignSystem/TablesSection';
 
 /**
  * The component showcase: every shared control in its states, with no page design and nothing about the business. It is where
@@ -21,6 +22,7 @@ export function DesignSystemShowcasePage() {
             <FieldsSection />
             <FeedbackSection />
             <LoadingSection />
+            <TablesSection />
             <OverlaysSection />
             <MotionSection />
         </main>

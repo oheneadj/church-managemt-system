@@ -25,7 +25,7 @@ describe('DesignSystemShowcasePage', () => {
         setup();
 
         expect(screen.getByRole('heading', { level: 1, name: 'Design system showcase' })).toBeInTheDocument();
-        for (const name of ['Buttons', 'Fields', 'Feedback', 'Loading', 'Dialogs and tabs', 'Motion']) {
+        for (const name of ['Buttons', 'Fields', 'Feedback', 'Loading', 'Tables', 'Dialogs and tabs', 'Motion']) {
             expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
         }
     });
@@ -151,6 +151,106 @@ describe('DesignSystemShowcasePage', () => {
 
         expect(screen.getByRole('tab', { name: 'Second' })).toHaveAttribute('aria-selected', 'true');
         expect(screen.getByRole('tab', { name: 'Disabled' })).toBeDisabled();
+    });
+
+    it('sorts the table when a heading is pressed, and reverses on a second press', async () => {
+        const user = setup();
+        const names = () =>
+            within(screen.getByRole('table', { name: /demonstration table/i }))
+                .getAllByRole('row')
+                .slice(1)
+                .map((row) => within(row).getAllByRole('cell')[1]?.textContent);
+
+        expect(names()).toEqual(['Alpha item', 'Bravo item', 'Charlie item', 'Delta item', 'Echo item']);
+        await user.click(screen.getByRole('button', { name: 'Name' }));
+        expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'descending');
+        expect(names()[0]).toBe('Echo item');
+        await user.click(screen.getByRole('button', { name: 'Quantity' }));
+        expect(screen.getByRole('columnheader', { name: 'Quantity' })).toHaveAttribute('aria-sort', 'ascending');
+        expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'none');
+        expect(names()[0]).toBe('Echo item');
+    });
+
+    it('selects rows, counts them, and ticks select-all only when every row is selected', async () => {
+        const user = setup();
+        const all = screen.getByRole('checkbox', { name: 'Select all items' });
+
+        expect(screen.getByText('1 selected')).toBeInTheDocument();
+        expect(all).not.toBeChecked();
+
+        await user.click(all);
+        expect(screen.getByText('5 selected')).toBeInTheDocument();
+        expect(all).toBeChecked();
+        expect(screen.getByRole('row', { name: /Alpha item/ })).toHaveAttribute('data-state', 'selected');
+
+        await user.click(screen.getByRole('checkbox', { name: 'Select Alpha item' }));
+        expect(screen.getByText('4 selected')).toBeInTheDocument();
+        expect(all).not.toBeChecked();
+        expect(screen.getByRole('row', { name: /Alpha item/ })).not.toHaveAttribute('data-state');
+    });
+
+    it('switches the table between data, first load, refreshing and empty', async () => {
+        const user = setup();
+        const table = () => screen.getByRole('table', { name: /demonstration table/i });
+
+        await user.click(screen.getByRole('button', { name: 'First load' }));
+        expect(within(table()).getByRole('status')).toHaveTextContent('Loading');
+        expect(within(table()).queryByText('Alpha item')).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Refreshing' }));
+        expect(table()).toHaveAttribute('aria-busy', 'true');
+        expect(within(table()).getByText('Alpha item')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Nothing to show' }));
+        expect(within(table()).getByText('When there are items, they appear here.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Nothing to show' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('gives every row view, edit and delete buttons named for that row', async () => {
+        const user = setup();
+        const info = vi.spyOn(toast, 'info').mockReturnValue(1);
+
+        for (const verb of ['View', 'Edit', 'Delete']) {
+            expect(screen.getByRole('button', { name: `${verb} Bravo item` })).toBeInTheDocument();
+        }
+        expect(screen.getAllByRole('button', { name: /^Edit / })).toHaveLength(5);
+
+        await user.click(screen.getByRole('button', { name: 'Edit Bravo item' }));
+        expect(info).toHaveBeenCalledWith('Editing Bravo item');
+    });
+
+    it('asks before deleting a row, names the row, deletes only when confirmed, and can restore the demonstration rows', async () => {
+        const user = setup();
+        const success = vi.spyOn(toast, 'success').mockReturnValue(1);
+
+        await user.click(screen.getByRole('button', { name: 'Delete Delta item' }));
+        const dialog = await screen.findByRole('alertdialog', { name: 'Delete Delta item?' });
+        expect(within(dialog).getByRole('button', { name: 'Delete item' })).toHaveAttribute('data-variant', 'danger');
+
+        await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+        expect(screen.getByText('Delta item')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Delete Delta item' }));
+        await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete item' }));
+
+        expect(screen.queryByText('Delta item')).not.toBeInTheDocument();
+        expect(success).toHaveBeenCalledWith('Delta item deleted.');
+
+        await user.click(screen.getByRole('button', { name: 'Restore the demonstration rows' }));
+        expect(screen.getByText('Delta item')).toBeInTheDocument();
+    });
+
+    it('says so when every row has been deleted', async () => {
+        const user = setup();
+        vi.spyOn(toast, 'success').mockReturnValue(1);
+
+        for (const name of ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo']) {
+            await user.click(screen.getByRole('button', { name: `Delete ${name} item` }));
+            await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete item' }));
+            await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        }
+
+        expect(screen.getByText('Every row was deleted')).toBeInTheDocument();
     });
 
     it('shows each motion token as a bar driven by that token', () => {
