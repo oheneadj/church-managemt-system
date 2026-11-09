@@ -92,7 +92,7 @@ Every cell is covered by a test or by the showcase page before a component is ca
 | Error | The button returns to idle and the error appears beside the cause (inline, toast or banner), never only as a red button |
 | Disabled | `--opacity-disabled`, no pointer events, and where the reason is not obvious it is stated in text next to it |
 
-API: `<Button loading={isPending} loadingLabel="Saving…">Save changes</Button>`. The component owns the spinner, the width lock, the busy state and the blocked second click; the screen supplies only the state. Under about 400 ms the spinner does not show. Icon-only buttons have an accessible name and a tooltip. Destructive buttons follow section 15.
+API: `<Button loading={isPending} loadingLabel="Saving…">Save changes</Button>`. The delay before the spinner is `LOADING_INDICATOR_DELAY_MS` (400) in `constants/interaction.ts`. The width held is the one the button had at rest, so a loading label should be no longer than the resting label plus the spinner. `loading` does nothing with `asChild`; a link is not a submit. The component owns the spinner, the width lock, the busy state and the blocked second click; the screen supplies only the state. Under about 400 ms the spinner does not show. Icon-only buttons have an accessible name and a tooltip. Destructive buttons follow section 15.
 
 ## 6. Page loading and navigation
 

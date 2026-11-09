@@ -13,8 +13,10 @@ function block(selector: string): Record<string, string> {
     const end = css.indexOf('\n}', start);
     const declarations: Record<string, string> = {};
 
-    for (const match of css.slice(start, end).matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
-        declarations[match[1]] = match[2].trim();
+    for (const [, name, value] of css.slice(start, end).matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+        if (name !== undefined && value !== undefined) {
+            declarations[name] = value.trim();
+        }
     }
 
     return declarations;
@@ -54,9 +56,20 @@ function luminance(value: string): number {
 
 /** The WCAG contrast ratio between two colours. */
 function contrast(foreground: string, background: string): number {
-    const [high, low] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
+    const [high = 0, low = 0] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
 
     return (high + 0.05) / (low + 0.05);
+}
+
+/** The value of a token, or a failure that names it when it is missing. */
+function token(tokens: Record<string, string>, name: string): string {
+    const value = tokens[name];
+
+    if (value === undefined) {
+        throw new Error(`The token ${name} is not defined.`);
+    }
+
+    return value;
 }
 
 const themes = { light, dark } as const;
@@ -64,16 +77,16 @@ const themes = { light, dark } as const;
 describe('contrast, in both themes', () => {
     describe.each(Object.entries(themes))('%s', (_name, tokens) => {
         it('keeps the focus ring at 3:1 or more against the page and the cards (WCAG 2.4.13)', () => {
-            expect(contrast(tokens['--ring'], tokens['--background'])).toBeGreaterThanOrEqual(3);
-            expect(contrast(tokens['--ring'], tokens['--card'])).toBeGreaterThanOrEqual(3);
+            expect(contrast(token(tokens, '--ring'), token(tokens, '--background'))).toBeGreaterThanOrEqual(3);
+            expect(contrast(token(tokens, '--ring'), token(tokens, '--card'))).toBeGreaterThanOrEqual(3);
         });
 
         it('keeps placeholder and helper text at 4.5:1 or more', () => {
-            expect(contrast(tokens['--muted-foreground'], tokens['--background'])).toBeGreaterThanOrEqual(4.5);
+            expect(contrast(token(tokens, '--muted-foreground'), token(tokens, '--background'))).toBeGreaterThanOrEqual(4.5);
         });
 
         it.each(['success', 'warning', 'info', 'error'])('keeps %s text at 4.5:1 or more on its own surface', (kind) => {
-            expect(contrast(tokens[`--feedback-${kind}`], tokens[`--feedback-${kind}-surface`])).toBeGreaterThanOrEqual(4.5);
+            expect(contrast(token(tokens, `--feedback-${kind}`), token(tokens, `--feedback-${kind}-surface`))).toBeGreaterThanOrEqual(4.5);
         });
     });
 });
@@ -103,7 +116,7 @@ describe('the interaction tokens', () => {
     });
 
     it('keeps the durations in the order the spec gives and under 300 ms', () => {
-        const ms = (token: string) => Number.parseFloat(light[token]);
+        const ms = (name: string) => Number.parseFloat(token(light, name));
         const ordered = ['instant', 'micro', 'component', 'overlay', 'content'].map((name) => ms(`--motion-duration-${name}`));
 
         expect(ordered).toEqual([...ordered].sort((x, y) => x - y));

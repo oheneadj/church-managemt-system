@@ -21,7 +21,7 @@ This is honest on purpose, so the contract is never claimed to be enforced where
 | Colour tokens, light and dark | Built (`resources/css/app.css`) |
 | Shared `Button`, `Input`, `Dialog`, `AlertDialog`, `Tabs`, `Skeleton`, `Toaster` (Sonner), `ConfirmDialog`, `EmptyState`, `ErrorNotice`, `SearchBox`, `useDebouncedValue` | Built, but not yet to this spec in every state |
 | Motion and interaction tokens, feedback colours, reduced-motion rules | **Built** (step 2a, `resources/css/app.css`), guarded by `resources/js/test/designTokens.test.ts` |
-| `Button` loading state with width kept and no double submit | **To build** (step 2) |
+| `Button` loading state: blocks a second press, keeps focus and width, spinner only after 400 ms | **Built** (step 2b). The optional "Saved" success flash is not built yet; screens still use `disabled={isPending}` and are moved to `loading` as they are touched (step 4) |
 | `PasswordInput` with the show and hide toggle | **To build** (step 2); today the password fields are plain inputs |
 | DM Sans as the primary font, self-hosted | **Built** (step 2a). Metric-matched fallback overrides are **not** applied: the real font metrics have not been measured, so the system stack is used and a small shift on first load is possible |
 | Focus ring contrast | **Fixed** (step 2a): `--ring` was 2.6:1 against white, now 4.8:1, and components use it solid |

@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from 'cn';
+import { Loader2Icon } from 'lucide-react';
 import { Slot } from 'radix-ui';
+import { LOADING_INDICATOR_DELAY_MS } from '@/constants/interaction';
+import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 
 const buttonVariants = cva(
     "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -37,26 +40,110 @@ const buttonVariants = cva(
     },
 );
 
+interface ButtonProps extends React.ComponentProps<'button'>, VariantProps<typeof buttonVariants> {
+    asChild?: boolean;
+    /** True while the action this button starts is running. It blocks a second press at once and, if the work is slow, shows a spinner. Not used with `asChild`. */
+    loading?: boolean;
+    /** What the label says while loading, for example "Saving…". Leave out to keep the label. */
+    loadingLabel?: string;
+}
+
+/**
+ * The one button (docs/design-system/interactions.md, section 5). While `loading` it ignores presses (so a form cannot be sent
+ * twice), says it is busy to assistive technology, keeps the keyboard focus, and keeps the width it had so nothing moves. The
+ * spinner and the loading label appear only if the work takes longer than a moment, so a quick save does not flash.
+ */
 function Button({
     className,
     variant = 'default',
     size = 'default',
     asChild = false,
+    loading = false,
+    loadingLabel,
+    onClick,
+    children,
+    ref,
     ...props
-}: React.ComponentProps<'button'> &
-    VariantProps<typeof buttonVariants> & {
-        asChild?: boolean;
-    }) {
-    const Comp = asChild ? Slot.Root : 'button';
+}: ButtonProps) {
+    const element = React.useRef<HTMLButtonElement | null>(null);
+    const restingWidth = React.useRef<number | null>(null);
+    const busy = loading && !asChild;
+    const showIndicator = useDelayedFlag(busy, LOADING_INDICATOR_DELAY_MS);
+
+    // The width the button has at rest is kept, and held as a minimum while the indicator shows, so the layout does not shift.
+    React.useLayoutEffect(() => {
+        const node = element.current;
+
+        if (node === null) {
+            return;
+        }
+
+        if (showIndicator) {
+            node.style.minWidth = restingWidth.current === null ? '' : `${restingWidth.current}px`;
+        } else {
+            node.style.minWidth = '';
+            restingWidth.current = node.getBoundingClientRect().width;
+        }
+    });
+
+    const setRefs = (node: HTMLButtonElement | null) => {
+        element.current = node;
+
+        if (typeof ref === 'function') {
+            ref(node);
+        } else if (ref) {
+            ref.current = node;
+        }
+    };
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (busy) {
+            event.preventDefault();
+
+            return;
+        }
+
+        onClick?.(event);
+    };
+
+    const classes = cn(buttonVariants({ variant, size, className }), busy && 'cursor-progress');
+
+    if (asChild) {
+        return (
+            <Slot.Root data-slot="button" data-variant={variant} data-size={size} className={classes} {...props}>
+                {children}
+            </Slot.Root>
+        );
+    }
 
     return (
-        <Comp
+        <button
+            ref={setRefs}
             data-slot="button"
             data-variant={variant}
             data-size={size}
-            className={cn(buttonVariants({ variant, size, className }))}
+            className={classes}
+            aria-busy={busy || undefined}
+            aria-disabled={busy || undefined}
+            onClick={handleClick}
             {...props}
-        />
+        >
+            {showIndicator ? (
+                <>
+                    <Loader2Icon
+                        aria-hidden="true"
+                        className="animate-spin"
+                        style={{ width: 'var(--size-spinner-md)', height: 'var(--size-spinner-md)' }}
+                    />
+                    {loadingLabel ?? children}
+                    <span role="status" className="sr-only">
+                        {loadingLabel ?? 'Working'}
+                    </span>
+                </>
+            ) : (
+                children
+            )}
+        </button>
     );
 }
 
