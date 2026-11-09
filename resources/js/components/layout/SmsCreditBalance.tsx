@@ -21,7 +21,7 @@ export function SmsCreditBalance() {
     const low = credits <= LOW_SMS_CREDITS;
 
     return (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body-sm">
             <span className="text-muted-foreground">SMS credits</span>
             <span className="font-medium tabular-nums">{formatCount(credits)}</span>
             {low && (
