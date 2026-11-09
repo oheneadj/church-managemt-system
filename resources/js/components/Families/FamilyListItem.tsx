@@ -16,7 +16,7 @@ export function FamilyListItem({ family }: FamilyListItemProps) {
         <li>
             <Link
                 to={ROUTES.FAMILY(family.id)}
-                className="flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
             >
                 <span className="min-w-0 truncate font-medium">{family.name}</span>
                 <span className="shrink-0 text-sm text-muted-foreground">

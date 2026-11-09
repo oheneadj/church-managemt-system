@@ -24,7 +24,7 @@ export function FamilyMemberList({ members }: FamilyMemberListProps) {
                 <li key={member.id}>
                     <Link
                         to={ROUTES.MEMBER(member.id)}
-                        className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
                     >
                         <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{member.full_name}</p>

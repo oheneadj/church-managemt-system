@@ -44,7 +44,7 @@ export function DashboardCard({ label, to, isPending, error, onRetry, value, not
     }
 
     return (
-        <Link to={to} className="rounded-xl outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50">
+        <Link to={to} className="rounded-xl outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring">
             <StatTile label={label} value={value} note={note} />
         </Link>
     );

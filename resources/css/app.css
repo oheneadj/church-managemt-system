@@ -1,13 +1,27 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/dm-sans";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'DM Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    /* Every transition in the app that does not name a duration uses the micro duration and the standard easing (docs/design-system/interactions.md section 2). */
+    --default-transition-duration: var(--motion-duration-micro);
+    --default-transition-timing-function: var(--motion-ease-standard);
+    --color-feedback-success: var(--feedback-success);
+    --color-feedback-success-surface: var(--feedback-success-surface);
+    --color-feedback-warning: var(--feedback-warning);
+    --color-feedback-warning-surface: var(--feedback-warning-surface);
+    --color-feedback-info: var(--feedback-info);
+    --color-feedback-info-surface: var(--feedback-info-surface);
+    --color-feedback-error: var(--feedback-error);
+    --color-feedback-error-surface: var(--feedback-error-surface);
+    --color-skeleton: var(--skeleton-base);
+    --color-surface-hover: var(--surface-hover);
+    --color-surface-pressed: var(--surface-pressed);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-viz-series-1: var(--viz-series-1);
     --color-viz-grid: var(--viz-grid);
@@ -69,12 +83,41 @@
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    /* The focus ring is solid and 4.8:1 against white, above the 3:1 WCAG asks of a focus indicator (the earlier value was 2.6:1). */
+    --ring: oklch(0.55 0 0);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
+    /* Interaction tokens (docs/design-system/interactions.md section 2). Components use these by name, never a raw value. */
+    --motion-duration-instant: 80ms;
+    --motion-duration-micro: 120ms;
+    --motion-duration-component: 180ms;
+    --motion-duration-overlay: 220ms;
+    --motion-duration-content: 280ms;
+    --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-ease-enter: cubic-bezier(0, 0, 0, 1);
+    --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --opacity-disabled: 0.5;
+    --opacity-overlay: 0.5;
+    --size-spinner-sm: 0.875rem;
+    --size-spinner-md: 1rem;
+    --size-spinner-lg: 1.25rem;
+    --space-toast-edge: 1rem;
+    --space-toast-gap: 0.5rem;
+    --surface-hover: color-mix(in oklch, var(--background), var(--foreground) 5%);
+    --surface-pressed: color-mix(in oklch, var(--background), var(--foreground) 9%);
+    --skeleton-base: var(--muted);
+    /* Feedback colours. Each text colour is at least 6.8:1 on its own surface (checked), so they pass AA with room. */
+    --feedback-success: oklch(0.42 0.12 150);
+    --feedback-success-surface: oklch(0.96 0.04 150);
+    --feedback-warning: oklch(0.44 0.1 75);
+    --feedback-warning-surface: oklch(0.97 0.05 85);
+    --feedback-info: oklch(0.43 0.12 250);
+    --feedback-info-surface: oklch(0.96 0.03 250);
+    --feedback-error: oklch(0.46 0.18 27);
+    --feedback-error-surface: oklch(0.96 0.03 25);
     /* Chart colours from the data-visualisation palette: series 1 is blue; the grid and baseline sit one step off the surface. */
     --viz-series-1: #2a78d6;
     --viz-series-2: #eb6834;
@@ -114,7 +157,17 @@
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --ring: oklch(0.65 0 0);
+    --opacity-overlay: 0.6;
+    --skeleton-base: var(--muted);
+    --feedback-success: oklch(0.85 0.13 150);
+    --feedback-success-surface: oklch(0.27 0.06 150);
+    --feedback-warning: oklch(0.88 0.12 85);
+    --feedback-warning-surface: oklch(0.28 0.06 80);
+    --feedback-info: oklch(0.85 0.09 250);
+    --feedback-info-surface: oklch(0.27 0.05 250);
+    --feedback-error: oklch(0.86 0.1 25);
+    --feedback-error-surface: oklch(0.28 0.07 25);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -148,5 +201,36 @@
     }
   html {
     @apply font-sans;
+    }
+}
+
+/* Reduced motion (docs/design-system/accessibility.md). Movement goes; feedback stays. Durations collapse in one place so no
+   component has to handle it, and the spinner and skeleton are slowed rather than stopped, because they carry meaning. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --motion-duration-instant: 0.01ms;
+        --motion-duration-micro: 0.01ms;
+        --motion-duration-component: 0.01ms;
+        --motion-duration-overlay: 0.01ms;
+        --motion-duration-content: 0.01ms;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .animate-spin {
+        animation-duration: 2s !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .animate-pulse {
+        animation-duration: 3s !important;
+        animation-iteration-count: infinite !important;
     }
 }

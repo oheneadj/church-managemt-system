@@ -17,7 +17,7 @@ export function MemberListItem({ member }: MemberListItemProps) {
         <li>
             <Link
                 to={ROUTES.MEMBER(member.id)}
-                className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
             >
                 <MemberAvatar fullName={member.full_name} photoUrl={member.photo_url} className="size-12" />
                 <div className="min-w-0 flex-1">

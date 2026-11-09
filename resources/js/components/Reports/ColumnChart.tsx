@@ -166,7 +166,7 @@ export function ColumnChart({ points, series, axisCaption, refreshing = false }:
                                         key={point.id}
                                         type="button"
                                         aria-label={`${point.title}: ${point.totalText}`}
-                                        className="relative h-full min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                        className="relative h-full min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring"
                                         onMouseEnter={() => setActive(index)}
                                         onFocus={() => setActive(index)}
                                         onBlur={() => setActive(undefined)}

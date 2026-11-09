@@ -20,11 +20,12 @@ This is honest on purpose, so the contract is never claimed to be enforced where
 |---|---|
 | Colour tokens, light and dark | Built (`resources/css/app.css`) |
 | Shared `Button`, `Input`, `Dialog`, `AlertDialog`, `Tabs`, `Skeleton`, `Toaster` (Sonner), `ConfirmDialog`, `EmptyState`, `ErrorNotice`, `SearchBox`, `useDebouncedValue` | Built, but not yet to this spec in every state |
-| Motion and interaction tokens | **To build** (step 2): specified in `interactions.md` section 2 |
+| Motion and interaction tokens, feedback colours, reduced-motion rules | **Built** (step 2a, `resources/css/app.css`), guarded by `resources/js/test/designTokens.test.ts` |
 | `Button` loading state with width kept and no double submit | **To build** (step 2) |
 | `PasswordInput` with the show and hide toggle | **To build** (step 2); today the password fields are plain inputs |
-| DM Sans as the primary font (the app uses Geist Variable today) | **To build** (step 2), D-070 |
-| Reduced motion rules in CSS | **To build** (step 2) |
+| DM Sans as the primary font, self-hosted | **Built** (step 2a). Metric-matched fallback overrides are **not** applied: the real font metrics have not been measured, so the system stack is used and a small shift on first load is possible |
+| Focus ring contrast | **Fixed** (step 2a): `--ring` was 2.6:1 against white, now 4.8:1, and components use it solid |
+| Input border contrast (the border is the only outline of a field; today about 1.2:1 in light and 1.5:1 in dark, below the 3:1 WCAG asks) | **Known gap**, to be fixed in step 4 with the screens, because it changes how every field looks |
 | Component showcase page (states and transitions), with no business content | **To build** (step 3) |
 | Automated checks: axe in Playwright, a hard-coded colour check, required status on the main branch | **To build** (step 3). ESLint with `jsx-a11y`, TypeScript, Vitest and Playwright already run in CI |
 

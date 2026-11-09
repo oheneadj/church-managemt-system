@@ -38,7 +38,7 @@ Defined once in `resources/css/app.css` and used by name. Components never write
 | `--motion-ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Most movement |
 | `--motion-ease-enter` | `cubic-bezier(0, 0, 0, 1)` | Things appearing |
 | `--motion-ease-exit` | `cubic-bezier(0.4, 0, 1, 1)` | Things leaving |
-| `--focus-ring` | 3px ring in `--ring` at 50%, 2px offset where needed | Every focusable control |
+| `--ring` (the focus ring colour) | Solid, at least 3:1 against the page and cards in both themes, used with a 3px ring | Every focusable control |
 | `--surface-hover`, `--surface-pressed` | One step off the surface, derived with `color-mix` | Hover and pressed backgrounds |
 | `--opacity-disabled` | 0.5 | Disabled controls |
 | `--opacity-overlay` | 0.5 light, 0.6 dark | Modal backdrop |
@@ -52,7 +52,7 @@ Under `prefers-reduced-motion: reduce` the duration tokens for movement collapse
 ## 3. Font loading and type
 
 - Primary font **DM Sans**, served from our own origin as a variable font (`@fontsource-variable/dm-sans`), never from a third-party CDN.
-- `font-display: swap` with a metric-matched system fallback stack (size-adjust, ascent and descent overrides) so swapping does not move text. Only the weights in use are shipped; weights are chosen on purpose (400, 500, 600).
+- `font-display: swap` with a system fallback stack. A metric-matched fallback (size-adjust, ascent and descent overrides) is the goal once the real metrics are measured from the font file; it is not applied yet, so do not copy numbers from memory. Only the weights in use are shipped; weights are chosen on purpose (400, 500, 600).
 - The page shell and theme tokens render before the font arrives: no invisible text, no flash of unstyled content, no blank white screen.
 - Consistent line heights and `text-wrap: balance` for headings and `pretty` for paragraphs.
 - **Placeholders:** muted but readable (contrast kept to AA), same size and line height as entered text, visibly different from a value, a realistic example (`name@example.com`), and never the only instruction. A visible label is always present.
