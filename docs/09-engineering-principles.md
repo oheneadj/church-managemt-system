@@ -247,7 +247,8 @@ interface DisbursementProvider
     /** Pay $budgetGhs (the most we will spend, provider fee included) to the church's payout account. */
     public function disburse(PayoutAccount $account, string $budgetGhs, string $clientReference): DisbursementResult;
 
-    public function disbursementStatus(string $clientReference): DisbursementResult;
+    /** Poll a payout by the provider's own reference (PayPerlez reads payouts at GET /disbursements/{reference}). */
+    public function disbursementStatus(string $providerReference): DisbursementResult;
 
     /** Available balance as a decimal string; the payout job checks it (minimum GHS 1.00 must remain). */
     public function availableBalance(): string;
@@ -256,6 +257,8 @@ interface DisbursementProvider
     public function verifyAccount(PayoutAccount $account): string;
 }
 ```
+
+Built in D-069 step b1: the webhook methods (`verifyWebhook`, `extractReference`) are left off the interface for now and arrive with the webhook endpoints (step b3). `PAYMENT_MOMO_PROVIDER` chooses the driver; a name with no driver throws rather than falling back.
 
 `CollectionResult` and `DisbursementResult` are immutable value objects: provider reference, a normalised status enum (`pending`, `succeeded`, `failed`, `unknown`; anything unrecognised maps to `unknown` and is polled, never assumed), the provider fee as a decimal string or null, and the amount delivered. Provider-specific response shapes and error codes never leave the adapter.
 

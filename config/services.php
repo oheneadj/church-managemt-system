@@ -42,6 +42,12 @@ return [
         'primary' => env('SMS_PRIMARY_PROVIDER', 'log'),
     ],
 
+    // Which provider collects each kind of payment and pays the churches out (docs/09, D-020). MoMo collections and church payouts
+    // go through PayPerlez. Cards will go through Paystack when that driver is built.
+    'payment' => [
+        'momo_provider' => env('PAYMENT_MOMO_PROVIDER', 'payperlez'),
+    ],
+
     // PayPerlez SMS (docs/14, section 7). The key and the approved sender id come from the PayPerlez workspace.
     'payperlez' => [
         'api_key' => env('PAYPERLEZ_API_KEY'),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Church;
 
 use App\Http\Requests\Concerns\DelegatesToPolicy;
+use App\Models\User;
 use App\ValueObjects\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -30,7 +31,8 @@ class UpdateChurchProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $church = $this->user()?->church;
+        $user = $this->user();
+        $church = $user instanceof User ? $user->church : null;
 
         return $church !== null && $this->allowed('update', $church);
     }

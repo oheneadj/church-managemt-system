@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\DisbursementProvider;
 use App\Contracts\PasswordBreachChecker;
+use App\Contracts\PaymentProvider;
 use App\Contracts\SmsProvider;
 use App\Contracts\WhatsAppGateway;
+use App\Exceptions\PaymentProviderUnavailableException;
 use App\Exceptions\SmsProviderUnavailableException;
 use App\Exceptions\WhatsAppUnavailableException;
+use App\Services\Payment\PayperlezPaymentProvider;
 use App\Services\PwnedPasswordsChecker;
 use App\Services\Sms\LogSmsProvider;
 use App\Services\Sms\PayperlezSmsProvider;
@@ -40,6 +44,10 @@ class ProviderServiceProvider extends ServiceProvider
                 default => throw new SmsProviderUnavailableException("SMS provider [{$driver}] is not implemented yet."),
             };
         });
+
+        // MoMo collections and church payouts (D-020): one driver does both, chosen in config like the SMS and WhatsApp drivers.
+        $this->app->bind(PaymentProvider::class, fn (): PaymentProvider => $this->momoDriver());
+        $this->app->bind(DisbursementProvider::class, fn (): DisbursementProvider => $this->momoDriver());
 
         // The one breach list we use; a second would be chosen here, like the SMS and WhatsApp drivers.
         $this->app->bind(PasswordBreachChecker::class, PwnedPasswordsChecker::class);
@@ -81,5 +89,18 @@ class ProviderServiceProvider extends ServiceProvider
         }
 
         return new PayperlezSmsProvider;
+    }
+
+    /**
+     * The driver that collects MoMo payments and pays churches out, as chosen by `services.payment.momo_provider`.
+     */
+    private function momoDriver(): PayperlezPaymentProvider
+    {
+        $driver = (string) config('services.payment.momo_provider');
+
+        return match ($driver) {
+            'payperlez' => new PayperlezPaymentProvider,
+            default => throw new PaymentProviderUnavailableException("Payment provider [{$driver}] is not implemented yet."),
+        };
     }
 }

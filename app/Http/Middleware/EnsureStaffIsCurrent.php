@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use App\Services\AuthSessionService;
 use Closure;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class EnsureStaffIsCurrent
         $user = $request->user();
         $session = $request->hasSession() ? $request->session() : null;
 
-        $revoked = $user === null
+        $revoked = ! $user instanceof User
             || ! $user->is_active
             || ($session !== null && $this->sessions->credentialsChangedSinceSignIn($user, $session));
 

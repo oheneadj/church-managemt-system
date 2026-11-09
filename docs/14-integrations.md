@@ -979,7 +979,7 @@ Headers: X-API-Key, Content-Type: application/json,
 // `fee` is the combined total fee and can be null until the collection settles.
 ```
 
-Read status with `GET /api/v1/collections/{reference}` (refreshes provider status) or `GET /api/v1/status?client_reference=...`. The API key needs the `payments:collect` scope. There are **no fee, commission or split parameters** on collections, which is why the platform fee is applied by us at disbursement time (D-018).
+Status reading is built against `GET /api/v1/status?client_reference=...` (the `collections/{reference}` form needs the provider's own reference, which we may not have yet); the exact shape of the status response is not yet verified against the live service, so the driver treats any unrecognised status as `unknown`. Read status with `GET /api/v1/collections/{reference}` (refreshes provider status) or `GET /api/v1/status?client_reference=...`. The API key needs the `payments:collect` scope. There are **no fee, commission or split parameters** on collections, which is why the platform fee is applied by us at disbursement time (D-018).
 
 **Workspace setting: use managed balance, not instant settlement.** Per PayPerlez's OpenAPI notes, managed balance keeps the GHS credit in our business balance, while instant settlement reserves and queues a payout to a single approved destination. We pay many different churches from our own code, so the workspace must be set to managed balance. Routing is captured when each collection is created, so set it before creating live collections.
 
