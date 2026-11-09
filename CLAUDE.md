@@ -267,6 +267,10 @@ Use these instead of recalling framework APIs from memory (Universal agreement �
 - **Context7** (`context7`, hosted at `https://mcp.context7.com/mcp`, added per developer with `claude mcp add --transport http --scope local context7 https://mcp.context7.com/mcp`). Use it for the React side that Boost does not cover: React Router 7, TanStack Query 5, Zod, React Hook Form, Vitest, shadcn/ui. State the version in the question. Send only generic library questions, never secrets or member data.
 - **Boost skills** live in `.claude/skills` (configured in `boost.json`, Claude Code only). Refresh them with `php artisan boost:update --no-discover` after upgrading Laravel packages.
 
+## UI Contract (mandatory)
+
+Before creating or changing anything a user sees, read `docs/design-system/CONTRACT.md` (D-070). In short: reuse the shared components in `resources/js/components/ui` and `components/form` and never build a one-off button, input, dialog, toast or skeleton; take colours, type and motion from the tokens in `resources/css/app.css`, never hard-coded values; build every state that applies (hover, focus-visible, active, disabled, loading, error, empty); every asynchronous action gives feedback within 100 ms, cannot run twice, and shows success only after the server confirms (money, permissions and deletions always wait); a failed form keeps what was typed; respect `prefers-reduced-motion`; meet WCAG 2.2 AA; write messages as in `docs/design-system/ux-writing.md`. Test loading, failure and keyboard use. When reporting UI work, name the components reused or made, the states built, the accessibility checks run, the tests and results, and any exception (written in the CHANGELOG entry). Never bypass the contract silently.
+
 ## What Not to Do
 
 - **Don't hardcode church IDs** in queries — use the global scope
@@ -293,4 +297,5 @@ Everything is documented. When in doubt, read the relevant doc:
 - Security controls → `docs/15-security.md`
 - Integrations → `docs/14-integrations.md`
 - Definition of Done → `docs/10-definition-of-done.md`
+- Interaction, motion and feedback rules for the UI → `docs/design-system/CONTRACT.md`
 - Open work, waiting items and standing deviations from the agreement → `docs/19-open-items.md`

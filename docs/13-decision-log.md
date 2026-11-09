@@ -1280,6 +1280,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-070 — The interaction and motion design system is a mandatory contract
+**Date:** November 2026
+**Decided by:** Product Owner (the brief and the wish that it be enforced), Lead Engineer (how it is adapted and checked)
+**Status:** Active. The specification is written; the tokens, components and automated checks are built in steps (docs/design-system/README.md).
+
+**Decision:**
+1. **`docs/design-system/` is the contract for how every control behaves:** the interaction lifecycle, motion and interaction tokens, button, form and password behaviour, loading patterns, feedback, empty and error states, overlays, tables, upload, optimistic updates, destructive actions, accessibility (WCAG 2.2 AA) and writing. `CONTRACT.md` holds the mandatory rules; a feature that breaks one is not ready to release.
+2. **It is written for our stack, React 19 with Tailwind v4 and shadcn, not Vue.** The brief assumed Vue; the rules are the same and the examples are React (`Button loading`, `PasswordInput`, the shared `ui/` and `form/` components, Sonner, React Hook Form with Zod, Vitest, Playwright).
+3. **The primary font becomes DM Sans** (self-hosted variable font, metric-matched fallback) in place of Geist Variable, as the brief says. This is a visible change and is made in the tokens step, not before.
+4. **Enforcement is layered and honest about what exists.** Today: TypeScript, ESLint with `jsx-a11y`, Vitest and Playwright in CI. To build: axe in Playwright, a check against hard-coded colours and durations, screenshot checks of a component showcase, and required status checks on the protected branches (a repository setting the owner turns on). Taste (does a message read kindly) stays with a human reviewer and the acceptance checklist.
+5. **The rules reach coding agents through `CLAUDE.md`,** which every session reads. `AGENTS.md` is left alone because Laravel Boost regenerates it.
+6. **Build order, each its own commit:** (1) this specification and the rules; (2) tokens, font, `Button` loading, `PasswordInput`, reduced motion and tests; (3) the showcase page and the automated checks; (4) bring existing screens up to the contract as they are next touched.
+
+**Rationale:** Guidelines get forgotten. Shared components that own the behaviour, tests that prove it and checks that block a merge make the good experience the easy one, for people and for agents.
+
+**Revisit when:** a rule here blocks work it should not, the stack changes, or the owner turns on branch protection.
+
+---
+
 ---
 
 ## Deferred Decisions
