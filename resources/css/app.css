@@ -5,97 +5,225 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Design tokens in three layers (docs/design-system/foundations.md, D-071).
+ *
+ *   1. Primitives: raw scales and values that never mean anything by themselves (colour scales, type sizes, radii, shadows,
+ *      durations). The brand hex values are fixed inside the scales: forest 900 #183C35, forest 800 #245247, forest 100 #EAF0EB,
+ *      gold 400 #C3A46B, gold 100 #F3EBDD, and the neutrals #F7F5F0 #F1F2EE #E7EBE6 #98A29C #718079 #26332F, with the dark theme's
+ *      #171D1C #222A28 #2B3531 #39423E.
+ *   2. Semantic tokens: what a colour is for (--background, --foreground, --primary, --muted-foreground, --border, --input,
+ *      --feedback-*). These are the only colours components use, and the only layer the dark theme changes.
+ *   3. Component tokens live with the component, built from the semantic ones.
+ *
+ * Not every brand hex can carry text: #718079 is 3.8:1 on the page and #98A29C is 2.6:1, so secondary text uses neutral 600 and muted
+ * grey is for decoration only; gold #C3A46B is 2.4:1, so gold never carries text and gold 700 is used where gold must be read.
+ * A test (resources/js/test/designTokens.test.ts) reads this file and fails if a pairing falls below its limit.
+ */
+
+@theme {
+    /* Primitives: the primary green ("forest"), the gold accent and the warm neutrals, 50 to 950 (neutral also has 850). */
+    --color-forest-50: #F4F8F5;
+    --color-forest-100: #EAF0EB;
+    --color-forest-200: #CDD8D0;
+    --color-forest-300: #B0C0B6;
+    --color-forest-400: #94A99D;
+    --color-forest-500: #789286;
+    --color-forest-600: #5C7C70;
+    --color-forest-700: #41675B;
+    --color-forest-800: #245247;
+    --color-forest-900: #183C35;
+    --color-forest-950: #082520;
+    --color-gold-50: #FAF6EF;
+    --color-gold-100: #F3EBDD;
+    --color-gold-200: #E3D3B7;
+    --color-gold-300: #D3BB91;
+    --color-gold-400: #C3A46B;
+    --color-gold-500: #A78A58;
+    --color-gold-600: #8C7145;
+    --color-gold-700: #715934;
+    --color-gold-800: #584322;
+    --color-gold-900: #3F2D12;
+    --color-gold-950: #33230A;
+    --color-neutral-50: #F7F5F0;
+    --color-neutral-100: #F1F2EE;
+    --color-neutral-200: #E7EBE6;
+    --color-neutral-300: #BFC6C0;
+    --color-neutral-400: #98A29C;
+    --color-neutral-500: #718079;
+    --color-neutral-600: #54605B;
+    --color-neutral-700: #39423E;
+    --color-neutral-800: #2B3531;
+    --color-neutral-850: #26332F;
+    --color-neutral-900: #222A28;
+    --color-neutral-950: #171D1C;
+
+    /* Type scale (DM Sans). Size, line height, letter spacing and weight travel together. Display and heading 1 get smaller on phones. */
+    --text-display: 2.25rem;
+    --text-display--line-height: 2.75rem;
+    --text-display--letter-spacing: -0.02em;
+    --text-display--font-weight: 600;
+    --text-h1: 1.875rem;
+    --text-h1--line-height: 2.375rem;
+    --text-h1--letter-spacing: -0.015em;
+    --text-h1--font-weight: 600;
+    --text-h2: 1.5rem;
+    --text-h2--line-height: 2rem;
+    --text-h2--letter-spacing: -0.01em;
+    --text-h2--font-weight: 600;
+    --text-h3: 1.25rem;
+    --text-h3--line-height: 1.75rem;
+    --text-h3--letter-spacing: -0.005em;
+    --text-h3--font-weight: 600;
+    --text-h4: 1.125rem;
+    --text-h4--line-height: 1.625rem;
+    --text-h4--letter-spacing: 0;
+    --text-h4--font-weight: 600;
+    --text-body-lg: 1rem;
+    --text-body-lg--line-height: 1.5rem;
+    --text-body-lg--letter-spacing: 0;
+    --text-body-lg--font-weight: 400;
+    --text-body: 0.875rem;
+    --text-body--line-height: 1.375rem;
+    --text-body--letter-spacing: 0;
+    --text-body--font-weight: 400;
+    --text-body-sm: 0.8125rem;
+    --text-body-sm--line-height: 1.25rem;
+    --text-body-sm--letter-spacing: 0;
+    --text-body-sm--font-weight: 400;
+    --text-caption: 0.75rem;
+    --text-caption--line-height: 1.125rem;
+    --text-caption--letter-spacing: 0.01em;
+    --text-caption--font-weight: 400;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'DM Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    /* Every transition in the app that does not name a duration uses the micro duration and the standard easing (docs/design-system/interactions.md section 2). */
+    /* Every transition that does not name a duration uses the fast duration and the standard easing. */
     --default-transition-duration: var(--motion-duration-micro);
     --default-transition-timing-function: var(--motion-ease-standard);
-    --color-feedback-success: var(--feedback-success);
-    --color-feedback-success-surface: var(--feedback-success-surface);
-    --color-feedback-warning: var(--feedback-warning);
-    --color-feedback-warning-surface: var(--feedback-warning-surface);
-    --color-feedback-info: var(--feedback-info);
-    --color-feedback-info-surface: var(--feedback-info-surface);
-    --color-feedback-error: var(--feedback-error);
-    --color-feedback-error-surface: var(--feedback-error-surface);
-    --color-skeleton: var(--skeleton-base);
-    --color-surface-hover: var(--surface-hover);
-    --color-surface-pressed: var(--surface-pressed);
-    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Semantic colours as Tailwind utilities (bg-primary, text-muted-foreground, border-border ...). */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-gold: var(--accent-gold);
+    --color-gold-strong: var(--accent-gold-strong);
+    --color-gold-soft: var(--accent-gold-soft);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
     --color-viz-series-1: var(--viz-series-1);
     --color-viz-grid: var(--viz-grid);
     --color-viz-baseline: var(--viz-baseline);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-feedback-success: var(--feedback-success);
+    --color-feedback-success-surface: var(--feedback-success-surface);
+    --color-feedback-success-border: var(--feedback-success-border);
+    --color-feedback-warning: var(--feedback-warning);
+    --color-feedback-warning-surface: var(--feedback-warning-surface);
+    --color-feedback-warning-border: var(--feedback-warning-border);
+    --color-feedback-info: var(--feedback-info);
+    --color-feedback-info-surface: var(--feedback-info-surface);
+    --color-feedback-info-border: var(--feedback-info-border);
+    --color-feedback-error: var(--feedback-error);
+    --color-feedback-error-surface: var(--feedback-error-surface);
+    --color-feedback-error-border: var(--feedback-error-border);
+    --color-skeleton: var(--skeleton-base);
+    --color-surface-hover: var(--surface-hover);
+    --color-surface-pressed: var(--surface-pressed);
+
+    /* Corner radii: 4, 6, 8, 12 and 16 px, then full. Controls (buttons, fields) use rounded-lg = 8px; surfaces (cards, dialogs, toasts) use rounded-xl = 12px. */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-3xl: 16px;
+    --radius-4xl: 9999px;
+
+    /* Elevation: five levels (0 flat, 1 very subtle, 2 floating, 3 overlay, 4 high priority). */
+    --shadow-xs: var(--elevation-1);
+    --shadow-sm: var(--elevation-1);
+    --shadow-md: var(--elevation-2);
+    --shadow-lg: var(--elevation-3);
+    --shadow-xl: var(--elevation-4);
+    --shadow-2xl: var(--elevation-4);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    /* The focus ring is solid and 4.8:1 against white, above the 3:1 WCAG asks of a focus indicator (the earlier value was 2.6:1). */
-    --ring: oklch(0.55 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    /* Interaction tokens (docs/design-system/interactions.md section 2). Components use these by name, never a raw value. */
+    color-scheme: light;
+    --radius: 0.5rem;
+
+    /* Semantic colours, light. Contrast pairings are checked by the token test. */
+    --background: var(--color-neutral-50);
+    --foreground: var(--color-neutral-850);
+    --card: #ffffff;
+    --card-foreground: var(--color-neutral-850);
+    --popover: #ffffff;
+    --popover-foreground: var(--color-neutral-850);
+    --primary: var(--color-forest-900);
+    --primary-foreground: #ffffff;
+    --secondary: var(--color-forest-100);
+    --secondary-foreground: var(--color-forest-900);
+    --muted: var(--color-neutral-100);
+    --muted-foreground: var(--color-neutral-600);
+    --accent: var(--color-forest-100);
+    --accent-foreground: var(--color-forest-900);
+    --destructive: #B14545;
+    /* The quiet divider, and the field outline: a field's edge is how it is found, so it is darker (4.2:1) than a divider (1.2:1). */
+    --border: var(--color-neutral-200);
+    --input: var(--color-neutral-500);
+    --ring: var(--color-forest-700);
+    /* Gold: decoration (rules, ornaments, fills) is gold 400 and gold soft; anything that must be read or seen is gold strong. */
+    --accent-gold: var(--color-gold-400);
+    --accent-gold-strong: var(--color-gold-700);
+    --accent-gold-soft: var(--color-gold-100);
+    --chart-1: var(--color-forest-300);
+    --chart-2: var(--color-forest-500);
+    --chart-3: var(--color-forest-700);
+    --chart-4: var(--color-gold-500);
+    --chart-5: var(--color-gold-700);
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+
+    /* Interaction and motion (docs/design-system/interactions.md section 2): fast 100, standard 150, moderate 200, slow 300 ms, with 80 ms for a press. */
     --motion-duration-instant: 80ms;
-    --motion-duration-micro: 120ms;
-    --motion-duration-component: 180ms;
-    --motion-duration-overlay: 220ms;
-    --motion-duration-content: 280ms;
+    --motion-duration-micro: 100ms;
+    --motion-duration-component: 150ms;
+    --motion-duration-overlay: 200ms;
+    --motion-duration-content: 300ms;
     --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
     --motion-ease-enter: cubic-bezier(0, 0, 0, 1);
     --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -108,16 +236,29 @@
     --space-toast-gap: 0.5rem;
     --surface-hover: color-mix(in oklch, var(--background), var(--foreground) 5%);
     --surface-pressed: color-mix(in oklch, var(--background), var(--foreground) 9%);
-    --skeleton-base: var(--muted);
-    /* Feedback colours. Each text colour is at least 6.8:1 on its own surface (checked), so they pass AA with room. */
-    --feedback-success: oklch(0.42 0.12 150);
-    --feedback-success-surface: oklch(0.96 0.04 150);
-    --feedback-warning: oklch(0.44 0.1 75);
-    --feedback-warning-surface: oklch(0.97 0.05 85);
-    --feedback-info: oklch(0.43 0.12 250);
-    --feedback-info-surface: oklch(0.96 0.03 250);
-    --feedback-error: oklch(0.46 0.18 27);
-    --feedback-error-surface: oklch(0.96 0.03 25);
+    --skeleton-base: var(--color-neutral-200);
+
+    /* Elevation. Low-opacity, neutral shadows; a border does most of the work. */
+    --elevation-0: none;
+    --elevation-1: 0 1px 2px 0 rgb(23 29 28 / 0.06);
+    --elevation-2: 0 2px 4px -1px rgb(23 29 28 / 0.06), 0 6px 14px -4px rgb(23 29 28 / 0.1);
+    --elevation-3: 0 4px 8px -2px rgb(23 29 28 / 0.08), 0 16px 32px -8px rgb(23 29 28 / 0.16);
+    --elevation-4: 0 8px 16px -4px rgb(23 29 28 / 0.1), 0 28px 56px -12px rgb(23 29 28 / 0.24);
+
+    /* Status colours: the text colour, a tinted surface and a border for each. The text colour is at least 4.8:1 on its own surface. */
+    --feedback-success: #287454;
+    --feedback-success-surface: #EAF1EE;
+    --feedback-success-border: #B4CEC3;
+    --feedback-warning: #985C00;
+    --feedback-warning-surface: #F8F2EA;
+    --feedback-warning-border: #E6D0B4;
+    --feedback-info: #426B92;
+    --feedback-info-surface: #ECF0F4;
+    --feedback-info-border: #BDCBD9;
+    --feedback-error: #B14545;
+    --feedback-error-surface: #F8EDED;
+    --feedback-error-border: #E6C0C0;
+
     /* Chart colours from the data-visualisation palette: series 1 is blue; the grid and baseline sit one step off the surface. */
     --viz-series-1: #2a78d6;
     --viz-series-2: #eb6834;
@@ -128,51 +269,52 @@
     --viz-negative: #e34948;
     --viz-grid: #e1e0d9;
     --viz-baseline: #c3c2b7;
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.65 0 0);
+    color-scheme: dark;
+
+    /* Semantic colours, dark. Not an inversion: its own surfaces, a lighter green for the primary, and status colours lightened to be read on dark. */
+    --background: var(--color-neutral-950);
+    --foreground: #f1f2ee;
+    --card: var(--color-neutral-900);
+    --card-foreground: #f1f2ee;
+    --popover: var(--color-neutral-800);
+    --popover-foreground: #f1f2ee;
+    --primary: var(--color-forest-300);
+    --primary-foreground: var(--color-neutral-950);
+    --secondary: var(--color-neutral-800);
+    --secondary-foreground: #f1f2ee;
+    --muted: var(--color-neutral-800);
+    --muted-foreground: #a6b0aa;
+    --accent: var(--color-neutral-800);
+    --accent-foreground: #f1f2ee;
+    --destructive: #F3807D;
+    --border: var(--color-neutral-700);
+    --input: var(--color-neutral-500);
+    --ring: var(--color-forest-300);
+    --accent-gold: var(--color-gold-400);
+    --accent-gold-strong: var(--color-gold-300);
+    --accent-gold-soft: #3F4034;
     --opacity-overlay: 0.6;
-    --skeleton-base: var(--muted);
-    --feedback-success: oklch(0.85 0.13 150);
-    --feedback-success-surface: oklch(0.27 0.06 150);
-    --feedback-warning: oklch(0.88 0.12 85);
-    --feedback-warning-surface: oklch(0.28 0.06 80);
-    --feedback-info: oklch(0.85 0.09 250);
-    --feedback-info-surface: oklch(0.27 0.05 250);
-    --feedback-error: oklch(0.86 0.1 25);
-    --feedback-error-surface: oklch(0.28 0.07 25);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --skeleton-base: var(--color-neutral-700);
+    --elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --elevation-2: 0 2px 4px -1px rgb(0 0 0 / 0.3), 0 6px 14px -4px rgb(0 0 0 / 0.4);
+    --elevation-3: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 16px 32px -8px rgb(0 0 0 / 0.5);
+    --elevation-4: 0 8px 16px -4px rgb(0 0 0 / 0.4), 0 28px 56px -12px rgb(0 0 0 / 0.6);
+    --feedback-success: #68B18E;
+    --feedback-success-surface: #233931;
+    --feedback-success-border: #254B3C;
+    --feedback-warning: #DD9D50;
+    --feedback-warning-surface: #403A28;
+    --feedback-warning-border: #654E28;
+    --feedback-info: #7BA6D0;
+    --feedback-info-surface: #28373D;
+    --feedback-info-border: #304758;
+    --feedback-error: #F3807D;
+    --feedback-error-surface: #40312F;
+    --feedback-error-border: #663938;
+
     --viz-series-1: #3987e5;
     --viz-series-2: #d95926;
     --viz-series-3: #199e70;
@@ -182,14 +324,16 @@
     --viz-negative: #e66767;
     --viz-grid: #2c2c2a;
     --viz-baseline: #383835;
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Display and heading 1 step down on phones, so a long heading does not crowd a 375 px screen. */
+@media (max-width: 40rem) {
+    :root {
+        --text-display: 1.875rem;
+        --text-display--line-height: 2.375rem;
+        --text-h1: 1.625rem;
+        --text-h1--line-height: 2.125rem;
+    }
 }
 
 @layer base {
@@ -197,10 +341,14 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-body antialiased;
     }
   html {
     @apply font-sans;
+    }
+  /* Numbers in tables line up (docs/design-system/foundations.md, typography). */
+  table, [data-numeric] {
+    font-variant-numeric: tabular-nums;
     }
 }
 

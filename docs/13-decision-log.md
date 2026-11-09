@@ -1299,6 +1299,25 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-071 — The visual identity is Heritage Green & Gold
+**Date:** November 2026
+**Decided by:** Product Owner (the palette, type, spacing, radius, elevation, motion and theme brief), Lead Engineer (how the brief is made to meet WCAG AA, and how it maps to the components)
+**Status:** Active. The tokens are built; the component-by-component visual standards and the showcase's foundations section follow.
+
+**Decision:**
+1. **The look is deep forest green `#183C35`, a muted champagne gold `#C3A46B` used sparingly, and warm neutrals** (page `#F7F5F0`, surface white, text `#26332F`), in DM Sans, with 8px controls, 12px surfaces, subtle borders instead of heavy shadows, and a matching dark theme (`#171D1C` page, `#222A28` surface, `#2B3531` elevated). It replaces the plain grey theme that came with the component library.
+2. **Three token layers** (primitive scales, semantic roles, component values), built as CSS custom properties and Tailwind theme values in `resources/css/app.css`. Components use the semantic layer only. Names follow shadcn's (`--background`, `--primary`...) so the existing components pick the new look up without being rewritten.
+3. **Where a brief colour cannot carry text, a darker or lighter step of the same scale does, and the brief's hex is kept for what it can do.** Measured: secondary text `#718079` is 3.8:1 (needs 4.5), muted `#98A29C` is 2.6:1, gold `#C3A46B` is 2.4:1, warning `#B77928` is 3.6:1 as text, and the success, error and information colours are 2.6 to 2.9:1 on the dark surface. So secondary text is neutral 600, muted grey and gold 400 are decoration only, readable gold is gold 700, the warning and error text colours are slightly darker (`#985C00`, `#B14545`), and dark-theme status colours are lightened. `#718079` is used as the field outline, where 3:1 is enough. **A field outline darker than the quiet divider is a change from the brief's "subtle borders", made because a field is found by its edge (WCAG 1.4.11).**
+4. **Motion values follow the brief:** fast 100, standard 150, moderate 200, slow 300 ms (and 80 ms for a press), replacing the first draft's 120, 180, 220 and 280.
+5. **Guarded by a test.** `designTokens.test.ts` reads the stylesheet and fails if a pinned brand hex moves, a text, ring, field-outline or status pairing falls below its limit in either theme, a scale is incomplete, or the type, radius, elevation, motion or reduced-motion tokens change.
+6. **Not changed yet:** the chart colours in reports keep their own palette (not brand-matched), icon sizes are tidied as screens are touched, and a per-person theme choice is not built.
+
+**Rationale:** The brief is the identity; the measurements make sure it is also readable by everyone. Stating each adjustment keeps the brand colours from being quietly bent or quietly broken.
+
+**Revisit when:** the brand colours change, a pairing in the test needs a different step, the reports' palette is matched to the brand, or a theme switch is added.
+
+---
+
 ---
 
 ## Deferred Decisions

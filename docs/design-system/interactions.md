@@ -26,15 +26,15 @@ Every action moves through: **Idle → Interaction → Processing → Success or
 
 ## 2. Tokens
 
-Defined once in `resources/css/app.css` and used by name. Components never write a raw duration, easing or colour.
+Defined once in `resources/css/app.css` and used by name. Components never write a raw duration, easing or colour. The colours, type, radii and elevation are in `foundations.md` (Heritage Green & Gold, D-071); the values here are fast 100, standard 150, moderate 200 and slow 300 ms from that brief, plus 80 ms for a press.
 
 | Token | Value | Used for |
 |---|---|---|
 | `--motion-duration-instant` | 80ms | Pressed feedback |
-| `--motion-duration-micro` | 120ms | Hover, focus, checkbox, switch, tooltip |
-| `--motion-duration-component` | 180ms | Dropdown, popover, accordion, tabs indicator, loading swap |
-| `--motion-duration-overlay` | 220ms | Dialog, drawer, toast |
-| `--motion-duration-content` | 280ms | Larger content change |
+| `--motion-duration-micro` | 100ms (fast) | Hover, focus, checkbox, switch, tooltip |
+| `--motion-duration-component` | 150ms (standard) | Dropdown, popover, accordion, tabs indicator, loading swap |
+| `--motion-duration-overlay` | 200ms (moderate) | Dialog, drawer, toast |
+| `--motion-duration-content` | 300ms (slow) | Larger content change |
 | `--motion-ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Most movement |
 | `--motion-ease-enter` | `cubic-bezier(0, 0, 0, 1)` | Things appearing |
 | `--motion-ease-exit` | `cubic-bezier(0.4, 0, 1, 1)` | Things leaving |
@@ -44,7 +44,7 @@ Defined once in `resources/css/app.css` and used by name. Components never write
 | `--opacity-overlay` | 0.5 light, 0.6 dark | Modal backdrop |
 | `--size-spinner-sm`, `-md`, `-lg` | 14, 16, 20 px | Loading indicators |
 | `--skeleton-base`, `--skeleton-shine` | Soft neutrals off `--muted` | Skeletons |
-| `--feedback-success`, `-warning`, `-info`, `-error` and their `-foreground`, `-surface` | Semantic, light and dark, each checked for contrast | Toasts, banners, inline messages, validation |
+| `--feedback-success`, `-warning`, `-info`, `-error` and their `-surface` and `-border` | Semantic, light and dark, text at least 4.8:1 on its own surface (values in `foundations.md`) | Toasts, banners, inline messages, validation |
 | `--space-toast` | 16px from the edge, 8px between toasts | Toast stack |
 
 Under `prefers-reduced-motion: reduce` the duration tokens for movement collapse to 0.01ms and spinners slow down; colour and text feedback stay (section 19).
@@ -155,10 +155,10 @@ One shared pattern for: no data, no search results, no matching filters, network
 
 | Layer | Duration |
 |---|---|
-| Micro (hover, press, focus, check, switch) | 80 to 120 ms |
-| Component (menu, popover, accordion, tab indicator) | 150 to 180 ms |
-| Overlay (dialog, drawer, toast) | 180 to 250 ms |
-| Content (a larger region swapping) | 200 to 280 ms |
+| Micro (hover, press, focus, check, switch) | 80 to 100 ms |
+| Component (menu, popover, accordion, tab indicator) | 150 ms |
+| Overlay (dialog, drawer, toast) | 200 ms |
+| Content (a larger region swapping) | 300 ms |
 
 Opacity, a small translate (up to 8 px) and a gentle scale (0.96 to 1) only. No big slides, no zoom, nothing that delays the next action; an interaction is never blocked waiting for an animation to end. Exits are quicker than entrances. Elements animate together as one unit, not one by one.
 

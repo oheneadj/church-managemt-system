@@ -1,0 +1,168 @@
+# Foundations: Heritage Green & Gold
+
+The visual identity. Mature, restrained, warm and timeless: deep forest green, a muted champagne gold used sparingly, and soft warm neutrals; DM Sans; subtle borders in place of heavy shadows. Think Linear's precision, Stripe's professionalism and Notion's simplicity, with a warmer, calmer character. No glass effects, gradients, neon, oversized rounding or harsh shadows. Decision D-071; the tokens are in `resources/css/app.css`; `resources/js/test/designTokens.test.ts` guards every number on this page.
+
+## 1. Three layers of tokens
+
+| Layer | What it is | Examples | Who may use it |
+|---|---|---|---|
+| Primitive | Raw scales and values | `--color-forest-900`, `--text-h2`, `--radius-lg`, `--elevation-2`, `--motion-duration-micro` | Only to build the semantic layer, and the showcase |
+| Semantic | What a value is *for* | `--background`, `--foreground`, `--primary`, `--muted-foreground`, `--border`, `--input`, `--ring`, `--feedback-success` | Every component, through Tailwind utilities (`bg-primary`, `text-muted-foreground`, `border-border`) |
+| Component | A value that belongs to one component, built from semantic tokens | a button's pressed surface, a card's radius | That component |
+
+The dark theme changes only the semantic layer. Names follow the shadcn convention the components already use (`--background`, `--card`, `--primary`...), because renaming would touch every component for no gain. The spec's dotted names map as: `background.default` is `--background`, `text.primary` is `--foreground`, `text.secondary` is `--muted-foreground`, `border.subtle` is `--border`, `action.primary` is `--primary`, `status.success` is `--feedback-success`.
+
+## 2. Colour
+
+### Brand and neutral colours (as given)
+
+| Token | Hex | Where it sits |
+|---|---|---|
+| Primary | `#183C35` | forest 900 |
+| Primary hover | `#245247` | forest 800 |
+| Primary soft | `#EAF0EB` | forest 100 |
+| Accent gold | `#C3A46B` | gold 400 |
+| Accent soft | `#F3EBDD` | gold 100 |
+| Background | `#F7F5F0` | neutral 50 |
+| Surface | `#FFFFFF` | |
+| Surface muted | `#F1F2EE` | neutral 100 |
+| Border | `#E7EBE6` | neutral 200 |
+| Text primary | `#26332F` | neutral 850 |
+| Text secondary | `#718079` | neutral 500 |
+| Text muted | `#98A29C` | neutral 400 |
+| Dark background / surface / elevated / border | `#171D1C` `#222A28` `#2B3531` `#39423E` | neutral 950 / 900 / 800 / 700 |
+| Dark text primary / secondary | `#F1F2EE` `#A6B0AA` | |
+| Success, Warning, Error, Information | `#287454` `#B77928` `#B94C4C` `#426B92` | base colours |
+
+### The scales
+
+Generated in OKLCH so the steps look evenly spaced, with the brand hex values pinned exactly at their steps (the test checks each one).
+
+| Step | Forest (primary) | Gold (accent) | Neutral |
+|---|---|---|---|
+| 50 | `#F4F8F5` | `#FAF6EF` | `#F7F5F0` |
+| 100 | `#EAF0EB` | `#F3EBDD` | `#F1F2EE` |
+| 200 | `#CDD8D0` | `#E3D3B7` | `#E7EBE6` |
+| 300 | `#B0C0B6` | `#D3BB91` | `#BFC6C0` |
+| 400 | `#94A99D` | `#C3A46B` | `#98A29C` |
+| 500 | `#789286` | `#A78A58` | `#718079` |
+| 600 | `#5C7C70` | `#8C7145` | `#54605B` |
+| 700 | `#41675B` | `#715934` | `#39423E` |
+| 800 | `#245247` | `#584322` | `#2B3531` |
+| 850 | | | `#26332F` |
+| 900 | `#183C35` | `#3F2D12` | `#222A28` |
+| 950 | `#082520` | `#33230A` | `#171D1C` |
+
+(Step 850 exists only in the neutral scale, where the brief's text colour falls between 800 and 900.)
+
+### Where the brief's colours cannot carry text
+
+Not every brand colour works for every use, and the brief asked for that to be respected. These were measured, not assumed:
+
+| Brief colour | Measured | Decision |
+|---|---|---|
+| Text secondary `#718079` | 3.80:1 on the page, 4.15:1 on white | Fails the 4.5:1 text rule. **Secondary text uses neutral 600 `#54605B` (6.0:1).** `#718079` is kept for the **field outline** (3:1 needed, 3.8 to 4.2 given) and large text |
+| Text muted `#98A29C` | 2.63:1 | Never text. Decoration and disabled marks only |
+| Accent gold `#C3A46B` | 2.37:1 on white | Never text or an essential icon. Gold that must be read is **gold 700 `#715934` (6.1:1)**; gold 400 is for rules, ornaments and fills |
+| Warning `#B77928` | 3.63:1 on white | The warning **text** colour is `#985C00` (5.4:1); the base hex remains the brand warning colour for fills and icons beside text |
+| Error `#B94C4C` | 5.00:1 on white, 4.5 on its tint | Text and the destructive colour use `#B14545` for margin on tinted surfaces |
+| Success, Information | 5.65 and 5.60:1 | Used as given |
+| In dark, success, error, information, warning | 2.6 to 4.0:1 on the dark surface | Lightened for dark (`#68B18E` `#F3807D` `#7BA6D0` `#DD9D50`), not inverted |
+
+### Semantic tokens
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `--background` | `#F7F5F0` | `#171D1C` | The page |
+| `--card`, `--popover` | `#FFFFFF` | `#222A28`, `#2B3531` | Surfaces; popovers and menus sit one step higher in dark |
+| `--muted` | `#F1F2EE` | `#2B3531` | Quiet fills, skeletons, disabled fields |
+| `--foreground` | `#26332F` (12.1:1) | `#F1F2EE` (15.2:1) | Text |
+| `--muted-foreground` | `#54605B` (6.0:1) | `#A6B0AA` (7.7:1) | Secondary text, placeholders, helper text |
+| `--primary` / `--primary-foreground` | `#183C35` / white (12.1:1) | `#B0C0B6` / `#171D1C` (9.0:1) | The main action |
+| `--secondary`, `--accent` | `#EAF0EB` | `#2B3531` | Soft fills and hover surfaces. (shadcn's "accent" is a hover surface, not the gold) |
+| `--accent-gold`, `-strong`, `-soft` | `#C3A46B`, `#715934`, `#F3EBDD` | `#C3A46B`, `#D3BB91`, a dark tint | Gold: decoration, readable gold, fill |
+| `--border` | `#E7EBE6` | `#39423E` | Quiet dividers and card edges (decorative) |
+| `--input` | `#718079` (3.8 to 4.2:1) | `#718079` (3.5 to 4.1:1) | The outline of a field, because a field is found by its edge |
+| `--ring` | `#41675B` (5.8:1) | `#B0C0B6` (7.7:1) | The focus ring, 3px, solid |
+| `--destructive` | `#B14545` (5.5:1) | `#F3807D` (5.7:1) | Destructive text and tints |
+| `--feedback-{success,warning,info,error}` and `-surface`, `-border` | Each text colour is at least 4.8:1 on its own surface | Same | Toasts, banners, badges, validation |
+
+Rules: gold is a supporting accent, used sparingly (a rule under a heading, a small ornament, a highlight), never a large fill, never a button, never text in light mode. Status is never shown by colour alone: it always has an icon or words as well. Use semantic tokens in components, never a primitive and never a hex.
+
+## 3. Typography
+
+DM Sans, self-hosted. The scale (size, line height, letter spacing, weight) lives in the tokens and is used as `text-display`, `text-h1` and so on; one utility sets all four.
+
+| Style | Size / line height | Weight | Letter spacing |
+|---|---|---|---|
+| Display | 36 / 44 | 600 | -0.02em |
+| Heading 1 | 30 / 38 | 600 | -0.015em |
+| Heading 2 | 24 / 32 | 600 | -0.01em |
+| Heading 3 | 20 / 28 | 600 | -0.005em |
+| Heading 4 | 18 / 26 | 600 | 0 |
+| Body large | 16 / 24 | 400 | 0 |
+| Body (the page default) | 14 / 22 | 400 | 0 |
+| Body small | 13 / 20 | 400 | 0 |
+| Caption | 12 / 18 | 400 | +0.01em |
+
+On screens under 40rem (about 640px) Display steps down to 30px and Heading 1 to 26px. Numbers in tables and in `data-numeric` elements use tabular figures so columns line up (money already does). Inputs stay 16px on phones so a browser does not zoom the page when one is focused. Placeholder, helper and error text follow `interactions.md`.
+
+## 4. Spacing
+
+A 4px base: Tailwind's spacing scale, unchanged, where one step is 0.25rem. The brief's tokens map to utilities as 0 (`0`), 2 (`0.5`), 4 (`1`), 6 (`1.5`), 8 (`2`), 12 (`3`), 16 (`4`), 20 (`5`), 24 (`6`), 32 (`8`), 40 (`10`), 48 (`12`), 64 (`16`), 80 (`20`), 96 (`24`). Comfortable density: control padding 8 to 12px, gaps inside a component 4 to 8px, between related groups 16 to 24px, between sections 32 to 48px.
+
+## 5. Radius
+
+| Token | Size | Utility | Use |
+|---|---|---|---|
+| Extra small | 4px | `rounded-sm` | Tags, small marks |
+| Small | 6px | `rounded-md` | Tabs, small controls |
+| Medium | 8px | `rounded-lg` | **Controls: buttons, fields, menus' items** |
+| Large | 12px | `rounded-xl` | **Surfaces: cards, dialogs, toasts, popovers** |
+| Extra large | 16px | `rounded-2xl` | Large feature surfaces, sparingly |
+| Full | 9999px | `rounded-4xl` or `rounded-full` | Badges, avatars, switches |
+
+The utility names are shadcn's; the sizes are the brief's. Anything rounder than 16px (except full) is not used.
+
+## 6. Elevation
+
+| Level | Token | Use |
+|---|---|---|
+| 0 | `--elevation-0` (none) | Flat surface, the page |
+| 1 | `--elevation-1` | Cards, inputs at rest: a hairline of shadow |
+| 2 | `--elevation-2` (`shadow-md`) | Floating: menus, popovers, tooltips |
+| 3 | `--elevation-3` (`shadow-lg`) | Overlays: dialogs, drawers |
+| 4 | `--elevation-4` (`shadow-xl`) | High priority: confirmations, toasts that need attention |
+
+Shadows are low-opacity and neutral (the dark green-black `rgb(23 29 28)` in light, black in dark) with the same shape in both themes; a 1px border does most of the work, so a surface is never defined by shadow alone.
+
+## 7. Motion
+
+Fast 100ms, standard 150ms, moderate 200ms, slow 300ms, and 80ms for a press. Natural easing (`--motion-ease-standard`, `-enter`, `-exit`). The rules, reduced motion and per-component behaviour are in `interactions.md` sections 2 and 11 and `accessibility.md`.
+
+| Brief | Token | Value |
+|---|---|---|
+| (press) | `--motion-duration-instant` | 80ms |
+| Fast | `--motion-duration-micro` | 100ms |
+| Standard | `--motion-duration-component` | 150ms |
+| Moderate | `--motion-duration-overlay` | 200ms |
+| Slow | `--motion-duration-content` | 300ms |
+
+## 8. Iconography
+
+**Lucide** only, as outline icons, never mixed with another library and never decorative for its own sake. Default 20px, small 16px, large 24px; stroke 1.75 to 2px (Lucide's default 2 is used). Icons beside text align to the text's centre with an 8px gap (6px in small buttons) and carry `aria-hidden="true"` unless they stand alone, in which case the control has an accessible name. Many existing buttons use 16px icons, which is the small size; icon sizes are tidied as screens are touched (D-070 step 4).
+
+## 9. Themes
+
+Light and dark are both complete and keep the same identity, hierarchy and behaviour. Dark is not an inversion: its surfaces are the given dark greens, the primary becomes a lighter sage so it can be read, status colours are lightened for contrast, and shadows are stronger because a dark page hides weak ones. The `dark` class on the root element turns it on (the showcase has a switch). Choosing the theme per person is not built yet.
+
+## 10. Usage rules and anti-patterns
+
+- Gold as a button, a large fill, or text in light mode
+- A hex, an `rgb()`, a raw Tailwind palette colour (`bg-red-100`) or a primitive in a component: use a semantic token
+- `#718079` or `#98A29C` for body text, helper text or placeholders; use `--muted-foreground`
+- A status shown only by colour
+- A heavy or coloured shadow; a gradient; glass; a corner rounder than 16px (except full)
+- A second icon library; a decorative icon with no job
+- Text under 12px; a heading style that is not in the scale; body text that is not 14px or 16px
+- Inverting the light theme to make the dark one

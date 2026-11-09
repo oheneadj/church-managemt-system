@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-// The design tokens are a contract (docs/design-system/CONTRACT.md section 2): the colours that carry meaning must stay readable,
-// the motion tokens must exist, and reduced motion must collapse them. This reads the real stylesheet, so a change that breaks the
-// contrast limits or removes a token fails here instead of being noticed by a person.
+// The design tokens are a contract (docs/design-system/CONTRACT.md section 2, foundations.md, D-071): the brand colours stay exactly
+// as given, the colours that carry meaning stay readable in both themes, and the scales exist. This reads the real stylesheet, so a
+// change that breaks a contrast limit, moves a brand colour or removes a token fails here instead of being noticed by a person.
 
 const css = readFileSync('resources/css/app.css', 'utf8');
 
@@ -22,72 +22,240 @@ function block(selector: string): Record<string, string> {
     return declarations;
 }
 
-const light = block(':root');
-const dark = block('.dark');
+const primitives = block('@theme');
+const roles = block('@theme inline');
+const light = { ...primitives, ...block(':root') };
+const dark = { ...light, ...block('.dark') };
+const themes = { light, dark } as const;
 
-/** Linear sRGB from an `oklch(L C h)` value, clamped to the screen's range. */
-function toLinearRgb(value: string): [number, number, number] {
-    const parts = /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/.exec(value);
-
-    if (parts === null) {
-        throw new Error(`Not an oklch colour: ${value}`);
-    }
-
-    const [lightness, chroma, hue] = [Number(parts[1]), Number(parts[2]), (Number(parts[3]) * Math.PI) / 180];
-    const a = chroma * Math.cos(hue);
-    const b = chroma * Math.sin(hue);
-    const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-    const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-    const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
-    const clamp = (x: number) => Math.max(0, Math.min(1, x));
-
-    return [
-        clamp(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-        clamp(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-        clamp(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-    ];
-}
-
-function luminance(value: string): number {
-    const [r, g, b] = toLinearRgb(value);
-
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** The WCAG contrast ratio between two colours. */
-function contrast(foreground: string, background: string): number {
-    const [high = 0, low = 0] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
-
-    return (high + 0.05) / (low + 0.05);
-}
-
-/** The value of a token, or a failure that names it when it is missing. */
-function token(tokens: Record<string, string>, name: string): string {
+/** The value of a token with any `var(--other)` followed to its end, or a failure that names the token. */
+function resolve(tokens: Record<string, string>, name: string): string {
     const value = tokens[name];
 
     if (value === undefined) {
         throw new Error(`The token ${name} is not defined.`);
     }
 
-    return value;
+    const reference = /^var\((--[\w-]+)\)$/.exec(value);
+
+    return reference?.[1] === undefined ? value : resolve(tokens, reference[1]);
 }
 
-const themes = { light, dark } as const;
+function channel(hex: string, from: number): number {
+    const value = Number.parseInt(hex.slice(from, from + 2), 16) / 255;
+
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function luminance(hex: string): number {
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) {
+        throw new Error(`Not a six-digit hex colour: ${hex}`);
+    }
+
+    return 0.2126 * channel(hex, 1) + 0.7152 * channel(hex, 3) + 0.0722 * channel(hex, 5);
+}
+
+/** The WCAG contrast ratio between two hex colours. */
+function contrast(foreground: string, background: string): number {
+    const [high = 0, low = 0] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
+
+    return (high + 0.05) / (low + 0.05);
+}
+
+/** Mixes the colour `over` into `base` by `share` (0 to 1), as a six-digit hex. */
+function mix(base: string, over: string, share: number): string {
+    const part = (hex: string, at: number) => Number.parseInt(hex.slice(at, at + 2), 16);
+    const blended = [1, 3, 5].map((at) => Math.round(part(base, at) * (1 - share) + part(over, at) * share));
+
+    return `#${blended.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function color(tokens: Record<string, string>, name: string): string {
+    return resolve(tokens, name).toLowerCase();
+}
+
+const pixels = (value: string, base = 16) => (value.endsWith('rem') ? Number.parseFloat(value) * base : Number.parseFloat(value));
+
+describe('the brand colours are exactly as given', () => {
+    it.each([
+        ['--color-forest-900', '#183c35'],
+        ['--color-forest-800', '#245247'],
+        ['--color-forest-100', '#eaf0eb'],
+        ['--color-gold-400', '#c3a46b'],
+        ['--color-gold-100', '#f3ebdd'],
+        ['--color-neutral-50', '#f7f5f0'],
+        ['--color-neutral-100', '#f1f2ee'],
+        ['--color-neutral-200', '#e7ebe6'],
+        ['--color-neutral-400', '#98a29c'],
+        ['--color-neutral-500', '#718079'],
+        ['--color-neutral-850', '#26332f'],
+        ['--color-neutral-950', '#171d1c'],
+        ['--color-neutral-900', '#222a28'],
+        ['--color-neutral-800', '#2b3531'],
+        ['--color-neutral-700', '#39423e'],
+    ])('keeps %s at %s', (name, hex) => {
+        expect(primitives[name]?.toLowerCase()).toBe(hex);
+    });
+
+    it.each(['forest', 'gold', 'neutral'])('has the full %s scale from 50 to 950', (family) => {
+        for (const step of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]) {
+            expect(primitives[`--color-${family}-${step}`]).toMatch(/^#[0-9a-f]{6}$/i);
+        }
+    });
+
+    it('goes from light to dark in every scale', () => {
+        for (const family of ['forest', 'gold', 'neutral']) {
+            const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((step) =>
+                luminance(color(primitives, `--color-${family}-${step}`)),
+            );
+
+            expect(steps).toEqual([...steps].sort((x, y) => y - x));
+        }
+    });
+});
 
 describe('contrast, in both themes', () => {
     describe.each(Object.entries(themes))('%s', (_name, tokens) => {
-        it('keeps the focus ring at 3:1 or more against the page and the cards (WCAG 2.4.13)', () => {
-            expect(contrast(token(tokens, '--ring'), token(tokens, '--background'))).toBeGreaterThanOrEqual(3);
-            expect(contrast(token(tokens, '--ring'), token(tokens, '--card'))).toBeGreaterThanOrEqual(3);
+        const text = (foreground: string, background: string) => contrast(color(tokens, foreground), color(tokens, background));
+
+        it.each([
+            ['--foreground', '--background'],
+            ['--foreground', '--card'],
+            ['--foreground', '--muted'],
+            ['--card-foreground', '--card'],
+            ['--popover-foreground', '--popover'],
+            ['--muted-foreground', '--background'],
+            ['--muted-foreground', '--card'],
+            ['--muted-foreground', '--muted'],
+            ['--muted-foreground', '--popover'],
+            ['--primary-foreground', '--primary'],
+            ['--secondary-foreground', '--secondary'],
+            ['--accent-foreground', '--accent'],
+            ['--primary', '--background'],
+            ['--primary', '--card'],
+            ['--destructive', '--background'],
+            ['--destructive', '--card'],
+            ['--accent-gold-strong', '--background'],
+            ['--accent-gold-strong', '--card'],
+        ])('keeps %s on %s at 4.5:1 or more', (foreground, background) => {
+            expect(text(foreground, background)).toBeGreaterThanOrEqual(4.5);
         });
 
-        it('keeps placeholder and helper text at 4.5:1 or more', () => {
-            expect(contrast(token(tokens, '--muted-foreground'), token(tokens, '--background'))).toBeGreaterThanOrEqual(4.5);
+        it('keeps the focus ring and the field outline at 3:1 or more against the page and cards (WCAG 1.4.11, 2.4.13)', () => {
+            for (const edge of ['--ring', '--input']) {
+                for (const surface of ['--background', '--card']) {
+                    expect(text(edge, surface)).toBeGreaterThanOrEqual(3);
+                }
+            }
         });
 
-        it.each(['success', 'warning', 'info', 'error'])('keeps %s text at 4.5:1 or more on its own surface', (kind) => {
-            expect(contrast(token(tokens, `--feedback-${kind}`), token(tokens, `--feedback-${kind}-surface`))).toBeGreaterThanOrEqual(4.5);
+        it.each(['success', 'warning', 'info', 'error'])(
+            'keeps %s text at 4.5:1 or more on its own surface and on the page and cards',
+            (kind) => {
+                expect(text(`--feedback-${kind}`, `--feedback-${kind}-surface`)).toBeGreaterThanOrEqual(4.5);
+                expect(text(`--feedback-${kind}`, '--background')).toBeGreaterThanOrEqual(4.5);
+                expect(text(`--feedback-${kind}`, '--card')).toBeGreaterThanOrEqual(4.5);
+            },
+        );
+
+        it('keeps the destructive colour readable on its own tint, as the destructive button shows it', () => {
+            const tint = mix(color(tokens, '--card'), color(tokens, '--destructive'), 0.1);
+
+            expect(contrast(color(tokens, '--destructive'), tint)).toBeGreaterThanOrEqual(4.5);
         });
+    });
+
+    it("keeps the dark theme's own surfaces and text as given", () => {
+        expect(color(dark, '--background')).toBe('#171d1c');
+        expect(color(dark, '--card')).toBe('#222a28');
+        expect(color(dark, '--popover')).toBe('#2b3531');
+        expect(color(dark, '--border')).toBe('#39423e');
+        expect(color(dark, '--foreground')).toBe('#f1f2ee');
+        expect(color(dark, '--muted-foreground')).toBe('#a6b0aa');
+    });
+
+    it("keeps the light theme's page, surface and text as given", () => {
+        expect(color(light, '--background')).toBe('#f7f5f0');
+        expect(color(light, '--card')).toBe('#ffffff');
+        expect(color(light, '--border')).toBe('#e7ebe6');
+        expect(color(light, '--foreground')).toBe('#26332f');
+        expect(color(light, '--primary')).toBe('#183c35');
+    });
+
+    it('does not use the brand greys and the soft gold where they cannot be read', () => {
+        // #718079 (3.8:1) and #98A29C (2.6:1) are for large text, outlines and decoration; #C3A46B (2.4:1) is for decoration.
+        expect(color(light, '--muted-foreground')).not.toBe('#718079');
+        expect(color(light, '--muted-foreground')).not.toBe('#98a29c');
+        expect(color(light, '--accent-gold-strong')).not.toBe('#c3a46b');
+    });
+});
+
+describe('the type scale', () => {
+    const SCALE: Array<[string, number, number]> = [
+        ['display', 36, 600],
+        ['h1', 30, 600],
+        ['h2', 24, 600],
+        ['h3', 20, 600],
+        ['h4', 18, 600],
+        ['body-lg', 16, 400],
+        ['body', 14, 400],
+        ['body-sm', 13, 400],
+        ['caption', 12, 400],
+    ];
+
+    it.each(SCALE)('sets %s at %dpx and weight %d, with a comfortable line height', (name, size, weight) => {
+        const line = pixels(primitives[`--text-${name}--line-height`] ?? '');
+
+        expect(pixels(primitives[`--text-${name}`] ?? '')).toBe(size);
+        expect(Number(primitives[`--text-${name}--font-weight`])).toBe(weight);
+        expect(line / size).toBeGreaterThanOrEqual(1.2);
+        expect(line / size).toBeLessThanOrEqual(1.7);
+        expect(primitives[`--text-${name}--letter-spacing`]).toBeDefined();
+    });
+
+    it('steps display and heading 1 down on phones', () => {
+        const phones = css.slice(css.indexOf('@media (max-width: 40rem)'));
+
+        expect(phones).toMatch(/--text-display:\s*1\.875rem/);
+        expect(phones).toMatch(/--text-h1:\s*1\.625rem/);
+    });
+
+    it('is DM Sans, served from our own build, with system fallbacks', () => {
+        expect(css).toContain('@import "@fontsource-variable/dm-sans"');
+        expect(roles['--font-sans']).toMatch(/^'DM Sans Variable',[^;]*system-ui/);
+        expect(css).not.toMatch(/geist/i);
+    });
+
+    it('sets the page text to the body size and lines numbers up in tables', () => {
+        expect(css).toMatch(/body\s*{[^}]*text-body/);
+        expect(css).toMatch(/table,\s*\[data-numeric\]\s*{[^}]*tabular-nums/);
+    });
+});
+
+describe('radius and elevation', () => {
+    it.each([
+        ['--radius-sm', 4],
+        ['--radius-md', 6],
+        ['--radius-lg', 8],
+        ['--radius-xl', 12],
+        ['--radius-2xl', 16],
+    ])('sets %s at %dpx, so controls (rounded-lg) are 8px and surfaces (rounded-xl) 12px', (name, size) => {
+        expect(pixels(roles[name] ?? '')).toBe(size);
+    });
+
+    it('has a full radius for pills', () => {
+        expect(roles['--radius-4xl']).toBe('9999px');
+    });
+
+    it('has five elevation levels in both themes, each a little stronger than the last', () => {
+        expect(light['--elevation-0']).toBe('none');
+
+        for (const tokens of [light, dark]) {
+            const strength = [1, 2, 3, 4].map((level) => (tokens[`--elevation-${level}`] ?? '').length);
+
+            expect(strength.every((length) => length > 0)).toBe(true);
+            expect(strength).toEqual([...strength].sort((x, y) => x - y));
+        }
     });
 });
 
@@ -111,21 +279,25 @@ describe('the interaction tokens', () => {
         '--surface-hover',
         '--surface-pressed',
         '--skeleton-base',
-    ])('defines %s', (token) => {
-        expect(light[token]).toBeDefined();
+    ])('defines %s', (name) => {
+        expect(light[name]).toBeDefined();
     });
 
-    it('keeps the durations in the order the spec gives and under 300 ms', () => {
-        const ms = (name: string) => Number.parseFloat(token(light, name));
-        const ordered = ['instant', 'micro', 'component', 'overlay', 'content'].map((name) => ms(`--motion-duration-${name}`));
+    it('sets fast 100, standard 150, moderate 200 and slow 300 ms, with 80 ms for a press', () => {
+        const ms = (name: string) => Number.parseFloat(resolve(light, name));
 
-        expect(ordered).toEqual([...ordered].sort((x, y) => x - y));
-        expect(Math.max(...ordered)).toBeLessThanOrEqual(300);
+        expect([
+            ms('--motion-duration-instant'),
+            ms('--motion-duration-micro'),
+            ms('--motion-duration-component'),
+            ms('--motion-duration-overlay'),
+            ms('--motion-duration-content'),
+        ]).toEqual([80, 100, 150, 200, 300]);
     });
 
-    it('makes every transition without its own duration use the micro duration and the standard easing', () => {
-        expect(css).toContain('--default-transition-duration: var(--motion-duration-micro)');
-        expect(css).toContain('--default-transition-timing-function: var(--motion-ease-standard)');
+    it('makes every transition without its own duration use the fast duration and the standard easing', () => {
+        expect(roles['--default-transition-duration']).toBe('var(--motion-duration-micro)');
+        expect(roles['--default-transition-timing-function']).toBe('var(--motion-ease-standard)');
     });
 });
 
@@ -143,13 +315,5 @@ describe('reduced motion', () => {
         expect(reduced).toMatch(/transition-duration:\s*0\.01ms\s*!important/);
         expect(reduced).toMatch(/\.animate-spin\s*{[^}]*animation-iteration-count:\s*infinite/);
         expect(reduced).toMatch(/\.animate-pulse\s*{[^}]*animation-iteration-count:\s*infinite/);
-    });
-});
-
-describe('the font', () => {
-    it('is DM Sans, served from our own build, with system fallbacks', () => {
-        expect(css).toContain('@import "@fontsource-variable/dm-sans"');
-        expect(css).toMatch(/--font-sans:\s*'DM Sans Variable',[^;]*system-ui/);
-        expect(css).not.toMatch(/geist/i);
     });
 });

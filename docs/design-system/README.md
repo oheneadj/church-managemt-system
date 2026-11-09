@@ -6,6 +6,7 @@ Stack these rules are written for: React 19, TypeScript, Tailwind CSS v4, shadcn
 
 | File | What it holds |
 |---|---|
+| [`foundations.md`](./foundations.md) | The visual identity, Heritage Green & Gold: colour scales and semantic tokens (light and dark, with measured contrast), type, spacing, radius, elevation, motion, icons, themes, and the rules and anti-patterns |
 | [`CONTRACT.md`](./CONTRACT.md) | The mandatory rules, how each is checked, and the exception process |
 | [`interactions.md`](./interactions.md) | The interaction lifecycle, the motion and interaction tokens, and the behaviour of every component family |
 | [`accessibility.md`](./accessibility.md) | WCAG 2.2 AA requirements and reduced motion |
@@ -18,14 +19,14 @@ This is honest on purpose, so the contract is never claimed to be enforced where
 
 | Part | State |
 |---|---|
-| Colour tokens, light and dark | Built (`resources/css/app.css`) |
+| Heritage Green & Gold: colour scales 50 to 950, semantic tokens in light and dark, type scale, radius, elevation, motion values | **Built** (D-071, `resources/css/app.css`), guarded by `designTokens.test.ts`. Component-by-component visual standards and a foundations section in the showcase are the next step |
 | Shared `Button`, `Input`, `Dialog`, `AlertDialog`, `Tabs`, `Skeleton`, `Toaster` (Sonner), `ConfirmDialog`, `EmptyState`, `ErrorNotice`, `SearchBox`, `useDebouncedValue` | Built, but not yet to this spec in every state |
 | Motion and interaction tokens, feedback colours, reduced-motion rules | **Built** (step 2a, `resources/css/app.css`), guarded by `resources/js/test/designTokens.test.ts` |
 | `Button` loading state: blocks a second press, keeps focus and width, spinner only after 400 ms | **Built** (step 2b). The optional "Saved" success flash is not built yet; screens still use `disabled={isPending}` and are moved to `loading` as they are touched (step 4) |
 | `PasswordInput` and `PasswordField` (show and hide, focus and caret kept, 44 px eye) and `PasswordRequirements` (length, ticked as typed) | **Built** (step 2c) and used by sign-in, platform sign-in, choose a password, and start a church. No strength meter and no "passwords match" line yet; matching is still checked on submit |
 | DM Sans as the primary font, self-hosted | **Built** (step 2a). Metric-matched fallback overrides are **not** applied: the real font metrics have not been measured, so the system stack is used and a small shift on first load is possible |
 | Focus ring contrast | **Fixed** (step 2a): `--ring` was 2.6:1 against white, now 4.8:1, and components use it solid |
-| Input border contrast (the border is the only outline of a field; today about 1.2:1 in light and 1.5:1 in dark, below the 3:1 WCAG asks) | **Known gap**, to be fixed in step 4 with the screens, because it changes how every field looks |
+| Field outline contrast | **Fixed** (D-071): `--input` is `#718079`, 3.8 to 4.2:1 in light and 3.5 to 4.1:1 in dark |
 | Component showcase page at `/design-system` (buttons, fields, password, toasts, loading, dialogs, tabs, motion), with no business content | **Built** (step 3a). Present while developing (`npm run dev`) or in a build made with `VITE_DESIGN_SYSTEM_SHOWCASE=true`; a normal production build leaves it out, and CI fails if it does not (`scripts/check-showcase-excluded.sh`) |
 | Automated checks: axe in Playwright, a hard-coded colour and duration check, screenshots, required status on the main branch | **To build** (step 3b). ESLint with `jsx-a11y`, TypeScript, Vitest, the token contrast test and the showcase exclusion check already run in CI |
 
