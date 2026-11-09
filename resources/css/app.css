@@ -120,6 +120,7 @@
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
@@ -196,6 +197,7 @@
     --accent: var(--color-forest-100);
     --accent-foreground: var(--color-forest-900);
     --destructive: #B14545;
+    --destructive-foreground: #ffffff;
     /* The quiet divider, and the field outline: a field's edge is how it is found, so it is darker (4.2:1) than a divider (1.2:1). */
     --border: var(--color-neutral-200);
     --input: var(--color-neutral-500);
@@ -259,6 +261,13 @@
     --feedback-error-surface: #F8EDED;
     --feedback-error-border: #E6C0C0;
 
+    /* Toasts are deep and solid with light text: the same four colours in both themes, each at least 7.4:1 against white. */
+    --feedback-success-solid: #0e6143;
+    --feedback-warning-solid: #814600;
+    --feedback-error-solid: #9a2f33;
+    --feedback-info-solid: #2f577d;
+    --feedback-solid-foreground: #ffffff;
+
     /* Chart colours from the data-visualisation palette: series 1 is blue; the grid and baseline sit one step off the surface. */
     --viz-series-1: #2a78d6;
     --viz-series-2: #eb6834;
@@ -290,6 +299,7 @@
     --accent: var(--color-neutral-800);
     --accent-foreground: #f1f2ee;
     --destructive: #F3807D;
+    --destructive-foreground: var(--color-neutral-950);
     --border: var(--color-neutral-700);
     --input: var(--color-neutral-500);
     --ring: var(--color-forest-300);

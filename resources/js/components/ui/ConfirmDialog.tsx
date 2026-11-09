@@ -18,12 +18,23 @@ interface ConfirmDialogProps {
     onConfirm: () => void;
     /** True while the action runs, so it cannot be confirmed twice. */
     pending?: boolean;
+    /** True for an action that is hard to undo (delete, switch off, deactivate): the confirm button is then the solid danger button. */
+    destructive?: boolean;
 }
 
 /**
  * "Are you sure?" for actions that are hard to undo, such as moving a member out of active life.
  */
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel, onConfirm, pending = false }: ConfirmDialogProps) {
+export function ConfirmDialog({
+    open,
+    onOpenChange,
+    title,
+    description,
+    confirmLabel,
+    onConfirm,
+    pending = false,
+    destructive = false,
+}: ConfirmDialogProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
@@ -33,7 +44,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction disabled={pending} onClick={onConfirm}>
+                    <AlertDialogAction variant={destructive ? 'danger' : 'default'} disabled={pending} onClick={onConfirm}>
                         {confirmLabel}
                     </AlertDialogAction>
                 </AlertDialogFooter>

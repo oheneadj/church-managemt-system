@@ -27,11 +27,9 @@ export function SearchBox({ id, label, placeholder, value, onSearch }: SearchBox
         <form onSubmit={submit} role="search" className="flex items-end gap-2">
             <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor={id}>{label}</Label>
-                <Input key={value} id={id} name="search" type="search" className="h-10" placeholder={placeholder} defaultValue={value} />
+                <Input key={value} id={id} name="search" type="search" placeholder={placeholder} defaultValue={value} />
             </div>
-            <Button type="submit" size="lg" className="h-10">
-                Search
-            </Button>
+            <Button type="submit">Search</Button>
         </form>
     );
 }

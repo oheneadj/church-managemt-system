@@ -158,6 +158,14 @@ describe('contrast, in both themes', () => {
             },
         );
 
+        it.each(['success', 'warning', 'info', 'error'])('keeps light text on the deep %s toast at 7:1 or more', (kind) => {
+            expect(text('--feedback-solid-foreground', `--feedback-${kind}-solid`)).toBeGreaterThanOrEqual(7);
+        });
+
+        it('keeps the solid danger button readable: its text on its fill at 4.5:1 or more', () => {
+            expect(text('--destructive-foreground', '--destructive')).toBeGreaterThanOrEqual(4.5);
+        });
+
         it('keeps the destructive colour readable on its own tint, as the destructive button shows it', () => {
             const tint = mix(color(tokens, '--card'), color(tokens, '--destructive'), 0.1);
 

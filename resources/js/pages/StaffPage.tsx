@@ -112,6 +112,7 @@ export function StaffPage() {
                 title={`Deactivate ${deactivating?.name ?? ''}?`}
                 description="They are signed out at once and cannot sign in until you reactivate them. Nothing they recorded is removed."
                 confirmLabel="Deactivate"
+                destructive
                 pending={setActive.isPending}
                 onConfirm={() => deactivating !== undefined && switchOnOrOff(deactivating, false, `${deactivating.name} is deactivated.`)}
             />

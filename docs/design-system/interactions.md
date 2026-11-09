@@ -136,7 +136,7 @@ States: empty, hover, focus, filled, disabled, read-only, valid, invalid, loadin
 
 | Kind | Use | Time on screen |
 |---|---|---|
-| Toast: success | A confirmed result that needs no follow-up | 3 to 4 s |
+| Toast: success | A confirmed result that needs no follow-up. **Every kind is a deep, solid colour with light text** (success `#0E6143`, warning `#814600`, error `#9A2F33`, information `#2F577D`, each at least 7.4:1 with white) and always carries its icon; progress and plain toasts use the neutral surface | 3 to 4 s |
 | Toast: info | Background work started, or something worth knowing | 4 to 5 s |
 | Toast: warning | A risk the user can act on | Until dismissed or long enough to read |
 | Toast: error | An action failed | Stays until dismissed when it matters, with a retry action when retrying can help |
@@ -173,7 +173,7 @@ Open with a fade (backdrop to `--opacity-overlay`) and a small rise or slide. In
 ## 14. Tables and data
 
 - Initial load uses row skeletons that keep the table's size. Filtering and paging keep the old rows visible, dimmed slightly, with a small refreshing cue; the table is never replaced by a spinner.
-- Row hover and a clear selected-row look (not colour alone: a check or an outline). Sort controls are buttons with `aria-sort`. Pagination stays in place. Bulk selection shows how many are selected and what can be done. Row actions are reachable by keyboard.
+- Row hover and a clear selected-row look (not colour alone: a tick in the row's checkbox). Sort controls are buttons inside the heading, which carries `aria-sort`. Pagination stays in place. Bulk selection shows how many are selected and what can be done. **Row actions are icon buttons at the end of the row (view, edit, delete), always visible, each named for its row ("Edit Alpha item"), and delete asks first.** Figures are right-aligned with tabular numerals. The shared `Table` scrolls sideways on a narrow screen instead of squeezing.
 - Filters stay in the URL and survive navigation. When data refreshes, the user's place, selection and filters are kept, and it is clear when the data was last updated.
 
 ## 15. Search, filters and destructive actions
@@ -186,7 +186,7 @@ Open with a fade (backdrop to `--opacity-overlay`) and a small rise or slide. In
 |---|---|
 | Low risk (dismiss a notice, change a view) | Do it at once, with feedback |
 | Reversible (archive, deactivate, move) | Do it and offer **Undo** for about 8 s, or a clear way back |
-| High risk or irreversible (delete, void a gift, erase personal data) | Confirmation dialog with a specific action label ("Delete member"), the consequence in plain words, the least destructive button focused first, and where the damage is large a typed confirmation. Money and permissions wait for the server before success is shown |
+| High risk or irreversible (delete, void a gift, erase personal data, switch off, deactivate) | Confirmation dialog whose confirm button is the **solid danger button** (`destructive` on `ConfirmDialog`; an action that is not risky, such as sending a message, keeps the ordinary button), with a specific action label ("Delete member"), the consequence in plain words, the least destructive button focused first, and where the damage is large a typed confirmation. Money and permissions wait for the server before success is shown |
 
 Never a misleading default, a confusing "Cancel / OK" pair, or a pre-ticked box that does the harmful thing.
 

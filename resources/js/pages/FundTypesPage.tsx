@@ -96,6 +96,7 @@ export function FundTypesPage() {
                 title={`Switch off ${switchingOff?.name ?? ''}?`}
                 description="It will no longer be offered when a gift or a pledge is recorded. Gifts already given to it stay on record and in the reports. You can switch it on again."
                 confirmLabel="Switch off"
+                destructive
                 pending={setActive.isPending}
                 onConfirm={() => switchingOff !== undefined && switchTo(switchingOff, false, `${switchingOff.name} is switched off.`)}
             />

@@ -17,7 +17,6 @@ export function PasswordField({ id, label, error, required, ...inputProps }: Pas
         <FormField id={id} label={label} error={error} required={required}>
             <PasswordInput
                 id={id}
-                className="h-10"
                 required={required}
                 aria-required={required ? 'true' : undefined}
                 aria-invalid={error ? true : undefined}

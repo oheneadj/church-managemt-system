@@ -51,6 +51,7 @@ export function ButtonsSection() {
                 <Button variant="outline">Outline</Button>
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="destructive">Delete item</Button>
+                <Button variant="danger">Delete item (final step)</Button>
                 <Button variant="link">Link</Button>
                 <Button disabled>Disabled</Button>
             </div>

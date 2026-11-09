@@ -26,7 +26,7 @@ export function SelectField({ id, label, options, emptyLabel, error, required, .
                     aria-required={required ? 'true' : undefined}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? `${id}-error` : undefined}
-                    className="h-10 w-full appearance-none rounded-lg border border-input bg-transparent pr-9 pl-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring aria-invalid:border-destructive md:text-sm"
+                    className="h-11 w-full appearance-none md:h-10 rounded-lg border border-input bg-transparent pr-9 pl-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring aria-invalid:border-destructive md:text-sm"
                     {...selectProps}
                 >
                     {emptyLabel !== undefined && <option value="">{emptyLabel}</option>}

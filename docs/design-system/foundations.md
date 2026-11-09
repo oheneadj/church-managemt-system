@@ -107,6 +107,20 @@ DM Sans, self-hosted. The scale (size, line height, letter spacing, weight) live
 
 On screens under 40rem (about 640px) Display steps down to 30px and Heading 1 to 26px. Numbers in tables and in `data-numeric` elements use tabular figures so columns line up (money already does). Inputs stay 16px on phones so a browser does not zoom the page when one is focused. Placeholder, helper and error text follow `interactions.md`.
 
+## 3a. Control sizes
+
+Buttons and fields share one scale, so a button beside a field lines up. Phones get the 44px touch target; larger screens get the denser size. (The first build used a 32px default; it was too small and below our own 44px rule.)
+
+| Size | Phone | Desktop | Padding | Icon | Use |
+|---|---|---|---|---|---|
+| Extra small | 32px | 28px | 10px | 14px | Dense toolbars, inline chips |
+| Small | 40px | 36px | 12px | 16px | Secondary actions in a row, table toolbars |
+| **Default** | **44px** | **40px** | 16px | 20px | Most buttons and every field |
+| Large | 44px | 44px | 20px | 20px | The main action on a form or card |
+| Icon (default / small / extra small) | 44 / 40 / 32 | 40 / 36 / 28 | | 20 / 20 / 14 | Icon-only buttons; always with an accessible name |
+
+Variants: **primary** (the main action, one per view), secondary, outline, ghost, link, **destructive** (quiet tinted red, for starting a risky action) and **danger** (solid red with light text, for the last step of a hard-to-undo action such as the confirm button in a delete dialog). Fields (`Input`, `SelectField`, `SearchBox`) are 44px on a phone and 40px on desktop, with a 16px text size on phones so a browser does not zoom.
+
 ## 4. Spacing
 
 A 4px base: Tailwind's spacing scale, unchanged, where one step is 0.25rem. The brief's tokens map to utilities as 0 (`0`), 2 (`0.5`), 4 (`1`), 6 (`1.5`), 8 (`2`), 12 (`3`), 16 (`4`), 20 (`5`), 24 (`6`), 32 (`8`), 40 (`10`), 48 (`12`), 64 (`16`), 80 (`20`), 96 (`24`). Comfortable density: control padding 8 to 12px, gaps inside a component 4 to 8px, between related groups 16 to 24px, between sections 32 to 48px.

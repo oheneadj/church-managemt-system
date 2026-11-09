@@ -16,7 +16,6 @@ export function TextField({ id, label, error, required, ...inputProps }: TextFie
         <FormField id={id} label={label} error={error} required={required}>
             <Input
                 id={id}
-                className="h-10"
                 required={required}
                 aria-required={required ? 'true' : undefined}
                 aria-invalid={error ? true : undefined}

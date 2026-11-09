@@ -100,6 +100,7 @@ export function DepartmentsPage() {
                 title={`Retire ${retiring?.name ?? ''}?`}
                 description="It will no longer be offered as a choice when members are added or filtered. Members already in it stay in it. You can bring it back."
                 confirmLabel="Retire"
+                destructive
                 pending={setActive.isPending}
                 onConfirm={() => retiring !== undefined && switchTo(retiring, false, `${retiring.name} is retired.`)}
             />

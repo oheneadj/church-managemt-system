@@ -122,4 +122,36 @@ describe('ConfirmDialog', () => {
         expect(screen.getByRole('button', { name: 'Yes' })).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
     });
+
+    it('shows the confirm button as the solid danger button for an action that is hard to undo', () => {
+        render(
+            <ConfirmDialog
+                open
+                onOpenChange={vi.fn()}
+                title="Delete this item?"
+                description="It cannot be undone."
+                confirmLabel="Delete item"
+                onConfirm={vi.fn()}
+                destructive
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: 'Delete item' })).toHaveAttribute('data-variant', 'danger');
+        expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveAttribute('data-variant', 'danger');
+    });
+
+    it('keeps the ordinary button for an action that is not destructive', () => {
+        render(
+            <ConfirmDialog
+                open
+                onOpenChange={vi.fn()}
+                title="Send message?"
+                description="It goes to everyone."
+                confirmLabel="Send message"
+                onConfirm={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: 'Send message' })).toHaveAttribute('data-variant', 'default');
+    });
 });

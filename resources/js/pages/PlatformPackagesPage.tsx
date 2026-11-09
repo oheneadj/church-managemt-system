@@ -85,6 +85,7 @@ export function PlatformPackagesPage() {
                 title={`Switch off ${switchingOff?.name ?? ''}?`}
                 description="Churches will no longer be able to buy it. Credits already bought stay with the church. You can switch it on again."
                 confirmLabel="Switch off"
+                destructive
                 pending={setActive.isPending}
                 onConfirm={() => switchingOff !== undefined && switchTo(switchingOff, false, `${switchingOff.name} is switched off.`)}
             />

@@ -204,6 +204,7 @@ export function ServiceDetailPage() {
                 title="Cancel this service?"
                 description="It is taken off the calendar and will not be made again by a weekly schedule. You can still create a service for this day by hand."
                 confirmLabel="Cancel service"
+                destructive
                 onConfirm={cancelService}
                 pending={cancel.isPending}
             />

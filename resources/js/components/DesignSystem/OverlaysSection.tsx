@@ -71,6 +71,7 @@ export function OverlaysSection() {
                 title="Delete this item?"
                 description="This removes the item and cannot be undone."
                 confirmLabel="Delete item"
+                destructive
                 onConfirm={() => setConfirming(false)}
             />
             <Tabs defaultValue="one">
