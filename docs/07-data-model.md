@@ -358,8 +358,10 @@ Every giving transaction — MoMo, card, or cash.
 | `voided_at` | TIMESTAMP | Yes | |
 | `voided_by` | CHAR(26) | Yes | FK → users |
 | `void_reason` | TEXT | Yes | |
-| `recorded_by` | CHAR(26) | No | FK → users |
+| `recorded_by` | CHAR(26) | Yes | FK → users. Empty for a gift given on the public giving page (D-073): there is no staff member. |
 | `notes` | TEXT | Yes | |
+| `giver_name` | TEXT | Yes | `[encrypted]` The name a giver typed on the public giving page (D-073). Optional. |
+| `payer_phone_hash` | CHAR(64) | Yes | A keyed (HMAC) hash of the phone paid from, never the number (D-073). Lets a repeated attempt be recognised and a member matched. Indexed with `church_id` and `status`. |
 | `contributed_at` | TIMESTAMP | No | When the giving occurred |
 | `receipt_queued_at` | TIMESTAMP | Yes | When the receipt text was queued. Set in one statement that finds it empty, so a gift gets one receipt even if the work runs twice (D-051). Null if no receipt was queued. |
 | `created_at` | TIMESTAMP | No | When the record was created |

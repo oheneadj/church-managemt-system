@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\DTOs\Contributions\ListContributionsDTO;
 use App\Enums\ContributionStatus;
+use App\Enums\PaymentMethod;
 use App\Models\Contribution;
 use App\Models\FundType;
 use App\Models\User;
@@ -236,6 +237,22 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     public function find(string $id): ?Contribution
     {
         return Contribution::query()->find($id);
+    }
+
+    /**
+     * The newest mobile money gift still waiting for payment from this phone, for this fund and amount, started since a moment.
+     */
+    public function findWaitingFor(string $phoneHash, string $fundTypeId, string $amount, DateTimeInterface $since): ?Contribution
+    {
+        return Contribution::query()
+            ->where('payer_phone_hash', $phoneHash)
+            ->where('fund_type_id', $fundTypeId)
+            ->where('amount', $amount)
+            ->where('payment_method', PaymentMethod::Momo->value)
+            ->where('status', ContributionStatus::Pending->value)
+            ->where('created_at', '>=', $since)
+            ->latest('created_at')
+            ->first();
     }
 
     /**

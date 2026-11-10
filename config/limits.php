@@ -45,6 +45,11 @@ return [
     // can share one address after a service (D-073).
     'public_give_page_per_minute' => 120,
 
+    // Starting a gift on the public page (D-073): one prompt to a phone every this many seconds (a rate, not a total, so a poor
+    // network can keep trying), and this many an hour from one internet address (high, because a congregation shares one address).
+    'public_give_phone_seconds' => 60,
+    'public_give_address_per_hour' => 100,
+
     // Exports read a lot of personal data and use a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
     'exports_per_hour' => 5,
 

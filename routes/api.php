@@ -44,6 +44,7 @@ use App\Http\Controllers\Api\V1\FundTypes\ListFundTypesController;
 use App\Http\Controllers\Api\V1\FundTypes\StoreFundTypeController;
 use App\Http\Controllers\Api\V1\FundTypes\UpdateFundTypeController;
 use App\Http\Controllers\Api\V1\Giving\ShowGivingPageController;
+use App\Http\Controllers\Api\V1\Giving\StartPublicGiftController;
 use App\Http\Controllers\Api\V1\Members\EraseMemberController;
 use App\Http\Controllers\Api\V1\Members\ExportMemberDataController;
 use App\Http\Controllers\Api\V1\Members\ListMembersController;
@@ -145,6 +146,7 @@ Route::middleware('tenant')->group(function (): void {
 
     // Public: the giving page anyone can open to give with no staff involved (D-073). The church is the one the address names.
     Route::get('give', ShowGivingPageController::class)->middleware('throttle:public-give-page')->name('give.show');
+    Route::post('give', StartPublicGiftController::class)->middleware(['idempotent', 'throttle:public-give-address', 'throttle:public-give-phone'])->name('give.store');
 
     Route::middleware(['auth:sanctum', 'staff.current', 'monitor.context'])->group(function (): void {
         Route::post('auth/logout', LogoutController::class)->name('auth.logout');

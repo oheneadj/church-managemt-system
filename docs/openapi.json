@@ -3714,6 +3714,47 @@
                     }
                 },
                 "security": []
+            },
+            "post": {
+                "operationId": "give.store",
+                "summary": "Runs StartPublicGiftAction for this request and returns the started gift",
+                "tags": [
+                    "StartPublicGift"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartPublicGiftRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`PublicGiftResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PublicGiftResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
             }
         },
         "/v1/reports/giving": {
@@ -5593,7 +5634,10 @@
                         ]
                     },
                     "recorded_by": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "notes": {
                         "type": [
@@ -8405,6 +8449,61 @@
                 ],
                 "title": "PledgeStatus"
             },
+            "PublicGiftResource": {
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed",
+                            "failed"
+                        ]
+                    },
+                    "already_waiting": {
+                        "type": "boolean"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "amount_formatted": {
+                        "type": "string"
+                    },
+                    "processing_fee": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "processing_fee_formatted": {
+                        "type": "string"
+                    },
+                    "total_paid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "total_paid_formatted": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reference",
+                    "status",
+                    "already_waiting",
+                    "amount",
+                    "amount_formatted",
+                    "processing_fee",
+                    "processing_fee_formatted",
+                    "total_paid",
+                    "total_paid_formatted"
+                ],
+                "title": "PublicGiftResource"
+            },
             "QrCheckInRequest": {
                 "type": "object",
                 "description": "Validates confirming a QR check-in: the scanned code, the phone number and the texted code.",
@@ -9249,6 +9348,47 @@
                     "name"
                 ],
                 "title": "StaffSummaryResource"
+            },
+            "StartPublicGiftRequest": {
+                "type": "object",
+                "description": "Validates a gift started on the public giving page (D-073). Open to everyone: anyone may give, and the limits protect the page.\nThe church is the one the address names, never anything sent in the body, so the fund must belong to that church. The giver\nmay leave a name. The hidden trap field is not checked here: a bot that fills it in is turned away quietly by the Action.",
+                "properties": {
+                    "fund_type_id": {
+                        "type": "string"
+                    },
+                    "giver_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "amount": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 30000
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "description": "The allowed payment method values, stored as a plain string column (D-017).\n",
+                        "const": "momo"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "network": {
+                        "$ref": "#/components/schemas/MomoNetwork"
+                    }
+                },
+                "required": [
+                    "fund_type_id",
+                    "amount",
+                    "payment_method",
+                    "phone",
+                    "network"
+                ],
+                "title": "StartPublicGiftRequest"
             },
             "StartSmsCreditPurchaseRequest": {
                 "type": "object",

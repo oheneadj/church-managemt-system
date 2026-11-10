@@ -38,13 +38,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $voided_at
  * @property string|null $voided_by
  * @property string|null $void_reason
- * @property string $recorded_by
+ * @property string|null $recorded_by the staff member who recorded it; empty for a gift given on the public giving page (D-073)
+ * @property string|null $giver_name the name a giver typed on the public page, kept encrypted
+ * @property string|null $payer_phone_hash a keyed hash of the phone paid from, never the number
  * @property string|null $notes
  * @property CarbonImmutable $contributed_at
  * @property CarbonImmutable|null $receipt_queued_at
  * @property CarbonImmutable|null $created_at
  * @property-read FundType $fundType
- * @property-read User $recordedBy
+ * @property-read User|null $recordedBy
  */
 class Contribution extends Model
 {
@@ -76,6 +78,8 @@ class Contribution extends Model
         'void_reason',
         'recorded_by',
         'notes',
+        'giver_name',
+        'payer_phone_hash',
         'contributed_at',
         'receipt_queued_at',
     ];
@@ -93,6 +97,7 @@ class Contribution extends Model
             'total_paid' => 'decimal:2',
             'payment_method' => PaymentMethod::class,
             'status' => ContributionStatus::class,
+            'giver_name' => 'encrypted',
             'is_voided' => 'boolean',
             'voided_at' => 'immutable_datetime',
             'contributed_at' => 'immutable_datetime',

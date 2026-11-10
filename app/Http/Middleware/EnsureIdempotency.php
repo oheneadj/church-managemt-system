@@ -41,7 +41,7 @@ class EnsureIdempotency
             return response()->json(['message' => 'An Idempotency-Key header of 8 to 100 letters, digits, dashes or underscores is required.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $cacheKey = $this->cacheKey($request, $key);
+        $cacheKey = self::cacheKey($request, $key);
         $fingerprint = hash('sha256', $request->method().$request->path().$request->getContent());
 
         // The lock makes a second request with the same key wait for the first, instead of racing it.
@@ -90,9 +90,20 @@ class EnsureIdempotency
     }
 
     /**
+     * Whether this request repeats one that was already answered, so it would only be replayed. A rate limiter asks, so a retry of the
+     * same attempt is never counted as a new one.
+     */
+    public static function isReplay(Request $request): bool
+    {
+        $key = (string) $request->header(self::HEADER);
+
+        return preg_match(self::KEY_PATTERN, $key) === 1 && Cache::has(self::cacheKey($request, $key));
+    }
+
+    /**
      * The cache key: the church, the person and the route keep one caller's keys apart from another's.
      */
-    private function cacheKey(Request $request, string $key): string
+    private static function cacheKey(Request $request, string $key): string
     {
         return 'idempotency:'.app('current.church')->getKey().':'.$request->user()?->getAuthIdentifier().':'.$request->route()?->getName().':'.$key;
     }

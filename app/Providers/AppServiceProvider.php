@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Enums\StaffPermission;
 use App\Exceptions\MisconfiguredEnvironmentException;
+use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\ResolveTenant;
 use App\Models\Contribution;
 use App\Models\Department;
@@ -142,6 +143,26 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public-give-page', fn (Request $request) => Limit::perMinute(config('limits.public_give_page_per_minute'))
             ->by($request->ip())
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'Too many people are opening this page from here right now. Please wait a moment and try again.'], 429, $headers)));
+
+        // One payment prompt to a phone every so many seconds, whoever asks: a rate and not a total, so a person on a poor network can
+        // keep trying a minute apart. The key is the church and a hash of the number, so the limiter never holds the number itself.
+        RateLimiter::for('public-give-phone', function (Request $request): Limit {
+            // A retry of an attempt that was already answered only gets that answer again, so it is never counted as a new prompt.
+            if (EnsureIdempotency::isReplay($request)) {
+                return Limit::none();
+            }
+
+            $phone = PhoneNumber::tryFrom((string) $request->input('phone'))->e164 ?? (string) $request->input('phone');
+
+            return Limit::perSecond(1, config('limits.public_give_phone_seconds'))
+                ->by('give-phone:'.app('current.church')->getKey().':'.hash('sha256', $phone))
+                ->response(fn (Request $request, array $headers) => response()->json(['message' => 'A payment prompt was just sent to this number. Please wait a minute before asking for another.'], 429, $headers));
+        });
+
+        // Starting a gift from the public page is limited by internet address, and high, because a whole congregation shares one.
+        RateLimiter::for('public-give-address', fn (Request $request) => EnsureIdempotency::isReplay($request) ? Limit::none() : Limit::perHour(config('limits.public_give_address_per_hour'))
+            ->by('give-address:'.$request->ip())
+            ->response(fn (Request $request, array $headers) => response()->json(['message' => 'Too many gifts are being started from here right now. Please wait a few minutes and try again.'], 429, $headers)));
 
         RateLimiter::for('broadcast', fn (Request $request) => Limit::perHour(config('limits.broadcasts_per_hour'))
             ->by($this->tenantKey($request))

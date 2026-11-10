@@ -63,7 +63,7 @@ class ContributionCsvBuilder implements ExportFileBuilder
             $gift->payment_method->value,
             $this->csv->safe($this->reference($gift)),
             $gift->is_voided ? 'true' : 'false',
-            $this->csv->safe($gift->recordedBy->name ?? config('privacy.erased_marker')),
+            $this->csv->safe($gift->recorded_by === null ? config('giving.public_source_label') : ($gift->recordedBy->name ?? config('privacy.erased_marker'))),
         ];
     }
 

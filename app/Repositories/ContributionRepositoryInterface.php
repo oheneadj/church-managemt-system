@@ -105,6 +105,12 @@ interface ContributionRepositoryInterface
     public function find(string $id): ?Contribution;
 
     /**
+     * The newest mobile money gift of this church that is still waiting for payment, from the phone with this hash, for this fund
+     * and amount, started since the given moment. A person who taps Pay again, or whose prompt never arrived, gets this one back.
+     */
+    public function findWaitingFor(string $phoneHash, string $fundTypeId, string $amount, DateTimeInterface $since): ?Contribution;
+
+    /**
      * Saves a change to a gift.
      */
     public function save(Contribution $contribution): Contribution;

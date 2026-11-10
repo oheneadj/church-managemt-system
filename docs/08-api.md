@@ -1465,6 +1465,29 @@ The church is the one the address names (`grace.yourapp.com`), never anything th
 ```
 `available` is `false`, and `funds` is empty, while the church has no payout account the provider has named (Payout Account above); the page then says "Giving is not available here yet". Only active funds are listed, in the church's own order. Nothing about the church's people, money or account is ever sent. `processing_fee_percent` is what the giver pays on top of the gift. **Rate limit:** 120 a minute per internet address (high, because a congregation shares one address after a service); past it `429` with a plain sentence.
 
+### Start a gift from the giving page
+```
+POST /api/v1/give          (public, no sign-in)
+Idempotency-Key: required (one new value for each attempt the giver means to make)
+```
+> **Built (D-073 step g2):** mobile money. A card is refused with `422` until card giving is built (A4). The gift is linked to the right service and to a matching member in step g3; until then it has neither.
+
+**Body:**
+```json
+{ "fund_type_id": "ulid", "amount": "50.00", "payment_method": "momo", "phone": "0244123456", "network": "mtn", "giver_name": "Ama Mensah" }
+```
+`giver_name` is optional (at most 100 letters). `amount` is the gift, GHS 1.00 to 30,000.00. The fund must be an active fund of the church the address names; the church can never be chosen by the body. The hidden trap field (`website`, `giving.trap_field`) must stay empty: a bot that fills it in gets the same `202` answer, but nothing is saved or sent to any provider.
+
+**Response `202`** (a worker asks the provider to send the prompt; the request never waits on the provider):
+```json
+{ "data": { "reference": "01j8...", "status": "pending", "already_waiting": false, "amount": "50.00", "amount_formatted": "GHS 50.00", "processing_fee": "1.00", "processing_fee_formatted": "GHS 1.00", "total_paid": "51.00", "total_paid_formatted": "GHS 51.00" } }
+```
+The gift is saved `pending`, linked to **no staff member** (`recorded_by` is empty and lists and exports say "Giving page"), and is left out of every total, list, pledge sum and receipt until the provider confirms. The giver pays the processing fee on top. **A repeated attempt:** if the same phone already has a payment waiting for the same fund and amount, started in the last 5 minutes (`giving.reuse_window_minutes`), that gift is returned with `already_waiting: true` and nothing new is started, so a poor network never makes a duplicate. The phone number is never stored: only a keyed hash of it, so a repeated attempt can be recognised; it travels to the provider in an encrypted queued job. The name a giver types is stored encrypted. No change-history line is written (there is no staff member to credit).
+
+**Errors:** `400` without an `Idempotency-Key`; `422` per field in plain words (the same sentences as the staff form), and `422` "Giving is not available here yet." while the church has no payout account the provider has named; `404` on an address that belongs to no church; `429` past a limit, with a plain sentence.
+
+**Rate limits (D-073):** one prompt to a phone every 60 seconds (`limits.public_give_phone_seconds`; a rate, not a total, so a person on a poor network can keep trying a minute apart; the same phone written two ways counts once), and 100 an hour per internet address (`limits.public_give_address_per_hour`; high because a whole congregation shares one address after a service). A retry of an attempt that was already answered (same `Idempotency-Key`) gets the same answer and is never counted.
+
 ---
 
 ## Staff
@@ -1533,6 +1556,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 | `POST /api/v1/sms-credits/purchases` | 10 per hour per church |
 | `POST /api/v1/contributions/initiate` | 10 per minute per staff member (a prompt goes to a phone) |
 | `GET /api/v1/give` (D-073) | 120 per minute per internet address |
+| `POST /api/v1/give` (D-073) | 1 per phone every 60 seconds; 100 per hour per internet address |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

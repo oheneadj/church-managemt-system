@@ -47,6 +47,13 @@ return [
     'collection_fee_rate' => env('GIVING_COLLECTION_FEE_RATE', '0.0199'),
     'settlement_fee_rate' => env('GIVING_SETTLEMENT_FEE_RATE', '0.0159'),
 
+    // The public giving page (D-073). A gift given there has no staff member, so lists and exports say it came from the page. The
+    // trap field is hidden from people, so only a bot fills it in. An unpaid prompt is reused for the same phone, amount and fund
+    // for this many minutes.
+    'public_source_label' => 'Giving page',
+    'trap_field' => 'website',
+    'reuse_window_minutes' => 5,
+
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
     'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
 

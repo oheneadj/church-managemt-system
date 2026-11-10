@@ -8,16 +8,11 @@ use App\DTOs\Contributions\InitiateContributionDTO;
 use App\Enums\AuditEvent;
 use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
-use App\Enums\QueueName;
-use App\Jobs\StartContributionPaymentJob;
 use App\Models\Contribution;
-use App\Repositories\ContributionRepositoryInterface;
-use App\Repositories\FundTypeRepositoryInterface;
 use App\Services\AuditLogger;
-use App\Services\GivingFeeCalculator;
+use App\Services\DigitalGiftStarter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use LogicException;
 
 /**
  * Starts a mobile money gift (D-053, D-069 step d3). It saves the gift as pending, with the processing fee the giver pays on top
@@ -29,12 +24,10 @@ use LogicException;
 final class InitiateContributionAction
 {
     /**
-     * Takes the repositories, the fee calculator and the change-history writer.
+     * Takes the gift starter and the change-history writer.
      */
     public function __construct(
-        private readonly ContributionRepositoryInterface $contributions,
-        private readonly FundTypeRepositoryInterface $fundTypes,
-        private readonly GivingFeeCalculator $fees,
+        private readonly DigitalGiftStarter $starter,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -45,26 +38,14 @@ final class InitiateContributionAction
      */
     public function execute(InitiateContributionDTO $dto): Contribution
     {
-        if ($dto->church->payoutStatus() !== 'verified') {
-            throw ValidationException::withMessages(['payment_method' => 'Mobile money giving is not switched on yet. Add the church\'s payout account in Settings and wait until it is checked.']);
-        }
+        $this->starter->assertReady($dto->church, 'Mobile money giving is not switched on yet. Add the church\'s payout account in Settings and wait until it is checked.');
 
         $gift = DB::transaction(function () use ($dto): Contribution {
-            $gift = $this->contributions->create([
-                'church_id' => $dto->church->id,
+            $gift = $this->starter->save($dto->church, $dto->fundTypeId, $dto->amount, $dto->phone, [
                 'member_id' => $dto->memberId,
                 'service_id' => $dto->serviceId,
                 'pledge_id' => $dto->pledgeId,
-                'fund_type_id' => $dto->fundTypeId,
-                'fund_name' => $this->fundName($dto->fundTypeId),
-                'amount' => $dto->amount->amount,
-                'processing_fee' => $this->fees->collectionFee($dto->amount)->amount,
-                'total_paid' => $this->fees->totalToPay($dto->amount)->amount,
-                'payment_method' => PaymentMethod::Momo,
-                'status' => ContributionStatus::Pending,
-                'is_voided' => false,
                 'recorded_by' => $dto->actor->getKey(),
-                'contributed_at' => now(),
             ]);
 
             $this->audit->record($gift, AuditEvent::Created, $dto->actor, [], [
@@ -78,16 +59,8 @@ final class InitiateContributionAction
             return $gift;
         });
 
-        StartContributionPaymentJob::dispatch($gift->id, $dto->phone, $dto->network->value)->onQueue(QueueName::Payments->value);
+        $this->starter->queue($gift, $dto->phone, $dto->network);
 
         return $gift;
-    }
-
-    /**
-     * The fund's name as it is right now, kept on the gift so a later rename does not change what the gift was given to.
-     */
-    private function fundName(string $fundTypeId): string
-    {
-        return $this->fundTypes->find($fundTypeId)->name ?? throw new LogicException('A gift needs a fund that exists; the request checks this.');
     }
 }

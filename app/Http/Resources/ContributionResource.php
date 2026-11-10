@@ -41,7 +41,7 @@ class ContributionResource extends JsonResource
             'voided_at' => $this->voided_at?->toIso8601String(),
             'void_reason' => $this->void_reason,
             'voided_by' => $this->voidedBy?->name,
-            'recorded_by' => $this->recordedBy->name,
+            'recorded_by' => $this->recordedBy?->name,
             'notes' => $this->notes,
             'contributed_at' => $this->contributed_at->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
