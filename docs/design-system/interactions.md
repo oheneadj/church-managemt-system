@@ -120,7 +120,7 @@ States: empty, hover, focus, filled, disabled, read-only, valid, invalid, loadin
 - **When to validate:** on blur, and on submit. Not on every keystroke. A field already marked invalid re-checks as the user types so the error clears the moment it is fixed.
 - **Message:** one sentence next to the field, linked with `aria-describedby`, `aria-invalid="true"` on the field, saying how to fix it ("Enter a date in the past").
 - **Submit:** validate, focus the first invalid field, show loading, block repeat submits, keep all data, show a result, restore interaction. Server field errors are mapped back to their fields.
-- **Long forms:** warn before leaving with unsaved changes; keep a draft where losing the work would hurt. Multi-step forms keep the step in the URL.
+- **Long forms:** warn before leaving with unsaved changes; keep a draft where losing the work would hurt. Multi-step forms keep the step in the URL. **Built for the member form:** going to another page with changes opens a "Leave without saving?" confirmation with the danger button, closing or reloading the tab asks through the browser, moving between steps never asks, and a saved form goes straight to the member's page. A draft is not kept.
 - Browser autofill and password managers are supported (`autoComplete` set on every field that has a standard value). Autofilled fields look filled.
 
 ## 8. Password field

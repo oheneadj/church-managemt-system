@@ -108,6 +108,19 @@ describe('Button', () => {
             expect(screen.getByRole('button').querySelector('svg.animate-spin')).toHaveAttribute('aria-hidden', 'true');
         });
 
+        it("keeps the button's own name clean: the announcement is outside it, so it is not read twice", () => {
+            render(
+                <Button loading loadingLabel="Saving…">
+                    Save changes
+                </Button>,
+            );
+
+            act(() => vi.advanceTimersByTime(LOADING_INDICATOR_DELAY_MS));
+
+            expect(screen.getByRole('button', { name: 'Saving…' })).toBeInTheDocument();
+            expect(screen.getByRole('button')).not.toContainElement(screen.getByRole('status'));
+        });
+
         it('keeps its own label when no loading label is given', () => {
             render(<Button loading>Save changes</Button>);
 

@@ -120,33 +120,38 @@ function Button({
     }
 
     return (
-        <button
-            ref={setRefs}
-            data-slot="button"
-            data-variant={variant}
-            data-size={size}
-            className={classes}
-            aria-busy={busy || undefined}
-            aria-disabled={busy || undefined}
-            onClick={handleClick}
-            {...props}
-        >
-            {showIndicator ? (
-                <>
-                    <Loader2Icon
-                        aria-hidden="true"
-                        className="animate-spin"
-                        style={{ width: 'var(--size-spinner-md)', height: 'var(--size-spinner-md)' }}
-                    />
-                    {loadingLabel ?? children}
-                    <span role="status" className="sr-only">
-                        {loadingLabel ?? 'Working'}
-                    </span>
-                </>
-            ) : (
-                children
+        <>
+            <button
+                ref={setRefs}
+                data-slot="button"
+                data-variant={variant}
+                data-size={size}
+                className={classes}
+                aria-busy={busy || undefined}
+                aria-disabled={busy || undefined}
+                onClick={handleClick}
+                {...props}
+            >
+                {showIndicator ? (
+                    <>
+                        <Loader2Icon
+                            aria-hidden="true"
+                            className="animate-spin"
+                            style={{ width: 'var(--size-spinner-md)', height: 'var(--size-spinner-md)' }}
+                        />
+                        {loadingLabel ?? children}
+                    </>
+                ) : (
+                    children
+                )}
+            </button>
+            {/* Said once, outside the button so it does not become part of the button's name (which would read "Saving… Saving…"). */}
+            {showIndicator && (
+                <span role="status" className="sr-only">
+                    {loadingLabel ?? 'Working'}
+                </span>
             )}
-        </button>
+        </>
     );
 }
 

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
@@ -205,7 +205,7 @@ describe('MemberFormPage', () => {
             await user.click(screen.getByRole('button', { name: 'Next' }));
             await user.click(await screen.findByRole('button', { name: 'Add member' }));
 
-            expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
+            expect(await screen.findByRole('button', { name: 'Saving…' })).toHaveAttribute('aria-busy', 'true');
             expect(membersApi.create).toHaveBeenCalledOnce();
         });
     });
@@ -267,5 +267,91 @@ describe('MemberFormPage', () => {
         openNew(ROUTES.MEMBER_NEW, [PERMISSIONS.MEMBERS_VIEW]);
 
         expect(screen.getByRole('alert')).toHaveTextContent('Your role cannot add or change members.');
+    });
+});
+
+describe('MemberFormPage: leaving with changes not saved', () => {
+    beforeEach(() => {
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([department({ name: 'Choir' })]));
+        vi.mocked(familiesApi.listAll).mockResolvedValue([family()]);
+    });
+
+    function warnsOnUnload(): boolean {
+        const event = new Event('beforeunload', { cancelable: true });
+        window.dispatchEvent(event);
+
+        return event.defaultPrevented;
+    }
+
+    it('lets the person go at once when nothing has been changed', async () => {
+        const { router } = openNew();
+        await screen.findByLabelText(/First name/);
+
+        await act(() => router.navigate(ROUTES.MEMBERS));
+
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(await screen.findByText('Navigated elsewhere')).toBeInTheDocument();
+        expect(warnsOnUnload()).toBe(false);
+    });
+
+    it('asks first when something has been typed, naming the loss, and stays on the form if told to stay', async () => {
+        const user = userEvent.setup();
+        const { router } = openNew();
+        await user.type(await screen.findByLabelText(/First name/), 'Abena');
+
+        await act(() => router.navigate(ROUTES.MEMBERS));
+
+        const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
+        expect(within(dialog).getByText('You have changes that are not saved. If you leave now, they are lost.')).toBeInTheDocument();
+        expect(within(dialog).getByRole('button', { name: 'Leave without saving' })).toHaveAttribute('data-variant', 'danger');
+
+        await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        expect(screen.getByLabelText(/First name/)).toHaveValue('Abena');
+        expect(router.state.location.pathname).toBe(ROUTES.MEMBER_NEW);
+    });
+
+    it('leaves, and loses the changes, only when told to leave', async () => {
+        const user = userEvent.setup();
+        const { router } = openNew();
+        await user.type(await screen.findByLabelText(/First name/), 'Abena');
+        await act(() => router.navigate(ROUTES.MEMBERS));
+
+        await user.click(await screen.findByRole('button', { name: 'Leave without saving' }));
+
+        expect(await screen.findByText('Navigated elsewhere')).toBeInTheDocument();
+    });
+
+    it('does not ask when moving between the steps of the same form', async () => {
+        const user = userEvent.setup();
+        openNew();
+        await completeStepOne(user);
+
+        expect(await screen.findByLabelText(/^Phone number/)).toBeInTheDocument();
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
+
+    it('also asks the browser to confirm when the tab is closed or reloaded with changes not saved', async () => {
+        const user = userEvent.setup();
+        openNew();
+        expect(warnsOnUnload()).toBe(false);
+
+        await user.type(await screen.findByLabelText(/First name/), 'Abena');
+
+        expect(warnsOnUnload()).toBe(true);
+    });
+
+    it('never asks once the member is saved, going straight to their page', async () => {
+        vi.mocked(membersApi.create).mockResolvedValue(member({ id: 'new-member' }));
+        const user = userEvent.setup();
+        const { router } = openNew();
+        await completeStepOne(user);
+        await user.type(await screen.findByLabelText(/^Phone number/), '0200987654');
+        await user.click(screen.getByRole('button', { name: 'Next' }));
+        await user.click(await screen.findByRole('button', { name: 'Add member' }));
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/members/new-member'));
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
 });

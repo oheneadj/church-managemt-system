@@ -25,16 +25,16 @@ export function MemberFormPage() {
     }
 
     if (editing && member.isPending) {
-        return <Skeleton aria-busy="true" className="mx-auto h-64 max-w-2xl rounded-xl" />;
+        return <Skeleton aria-busy="true" className="h-64 w-full max-w-3xl rounded-xl" />;
     }
 
     if (editing && member.isError) {
         const refused = member.error instanceof ApiError && (member.error.status === 404 || member.error.status === 403);
 
         return (
-            <div className="mx-auto flex max-w-2xl flex-col gap-3">
+            <div className="flex max-w-3xl flex-col gap-3">
                 <ErrorNotice message={refused ? 'This member was not found, or you do not have access to them.' : member.error.message} />
-                <Link to={ROUTES.MEMBERS} className="text-sm underline underline-offset-4">
+                <Link to={ROUTES.MEMBERS} className="text-body-sm underline underline-offset-4">
                     Back to members
                 </Link>
             </div>
@@ -46,8 +46,15 @@ export function MemberFormPage() {
     }
 
     return (
-        <div className="mx-auto flex max-w-2xl flex-col gap-4">
-            <PageHeader title={editing && member.data ? `Edit ${fullNameOf(member.data)}` : 'Add member'} />
+        <div className="flex max-w-3xl flex-col gap-6">
+            <PageHeader
+                title={editing && member.data ? `Edit ${fullNameOf(member.data)}` : 'Add member'}
+                description={
+                    editing
+                        ? 'Change what the church holds about them. Nothing is saved until the last step.'
+                        : 'Three short steps. Nothing is saved until the last step.'
+                }
+            />
             <MemberForm key={member.data?.id ?? 'new'} member={editing ? member.data : undefined} />
         </div>
     );
