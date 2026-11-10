@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\V1\Families\UpdateFamilyController;
 use App\Http\Controllers\Api\V1\FundTypes\ListFundTypesController;
 use App\Http\Controllers\Api\V1\FundTypes\StoreFundTypeController;
 use App\Http\Controllers\Api\V1\FundTypes\UpdateFundTypeController;
+use App\Http\Controllers\Api\V1\Giving\ShowGivingPageController;
 use App\Http\Controllers\Api\V1\Members\EraseMemberController;
 use App\Http\Controllers\Api\V1\Members\ExportMemberDataController;
 use App\Http\Controllers\Api\V1\Members\ListMembersController;
@@ -141,6 +142,9 @@ Route::middleware('tenant')->group(function (): void {
     Route::get('checkin/qr/{token}', ShowQrServiceController::class)->middleware('throttle:checkin-verify')->name('checkin.qr.show');
     Route::post('checkin/qr/otp', RequestQrCheckinOtpController::class)->middleware('throttle:checkin-otp')->name('checkin.qr.otp');
     Route::post('checkin/qr', QrCheckInController::class)->middleware('throttle:checkin-verify')->name('checkin.qr.store');
+
+    // Public: the giving page anyone can open to give with no staff involved (D-073). The church is the one the address names.
+    Route::get('give', ShowGivingPageController::class)->middleware('throttle:public-give-page')->name('give.show');
 
     Route::middleware(['auth:sanctum', 'staff.current', 'monitor.context'])->group(function (): void {
         Route::post('auth/logout', LogoutController::class)->name('auth.logout');

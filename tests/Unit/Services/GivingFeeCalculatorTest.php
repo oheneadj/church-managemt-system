@@ -80,3 +80,12 @@ it('stops on a setting that is not a number instead of charging a wrong fee', fu
 
     expect(fn () => $this->fees->platformFee(Money::ghs('100.00')))->toThrow(InvalidArgumentException::class, 'giving.platform_fee_rate');
 });
+
+it('gives the limits and the fee as a percentage for the page to show', function (): void {
+    expect($this->fees->minimumGift()->amount)->toBe('1.00')
+        ->and($this->fees->maximumGift()->amount)->toBe('30000.00')
+        ->and($this->fees->collectionFeePercent())->toBe('1.99');
+
+    config(['giving.collection_fee_rate' => '0.015']);
+    expect($this->fees->collectionFeePercent())->toBe('1.50');
+});

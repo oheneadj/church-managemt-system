@@ -1442,6 +1442,31 @@ PUT /api/v1/church/payout-account
 
 ---
 
+## The Public Giving Page
+
+> **D-073.** Anyone can give with no staff involved: the church prints a QR code or shares a link to its own giving page. **Built (step g1):** what the page shows. Starting a gift from it comes next (g2).
+
+### Get the giving page
+```
+GET /api/v1/give          (public, no sign-in)
+```
+The church is the one the address names (`grace.yourapp.com`), never anything the visitor sends. An address that belongs to no church is `404`.
+
+**Response `200`:**
+```json
+{ "data": {
+  "church_name": "Grace Assembly",
+  "available": true,
+  "funds": [ { "id": "ulid", "name": "Tithe", "description": "One tenth of income" } ],
+  "min_gift": "1.00", "min_gift_formatted": "GHS 1.00",
+  "max_gift": "30000.00", "max_gift_formatted": "GHS 30,000.00",
+  "processing_fee_percent": "1.99"
+} }
+```
+`available` is `false`, and `funds` is empty, while the church has no payout account the provider has named (Payout Account above); the page then says "Giving is not available here yet". Only active funds are listed, in the church's own order. Nothing about the church's people, money or account is ever sent. `processing_fee_percent` is what the giver pays on top of the gift. **Rate limit:** 120 a minute per internet address (high, because a congregation shares one address after a service); past it `429` with a plain sentence.
+
+---
+
 ## Staff
 
 > **D-055.** All need `staff.manage` (church admin). A staff member of another church is `404`. **Built:** list, invite, change name, phone and role, deactivate or reactivate, and extra permissions.
@@ -1507,6 +1532,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | `POST /api/v1/sms-credits/purchases` | 10 per hour per church |
 | `POST /api/v1/contributions/initiate` | 10 per minute per staff member (a prompt goes to a phone) |
+| `GET /api/v1/give` (D-073) | 120 per minute per internet address |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

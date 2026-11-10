@@ -139,6 +139,10 @@ class AppServiceProvider extends ServiceProvider
             ->by($request->user()?->getAuthIdentifier() ?? $request->ip())
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can start at most '.config('limits.gift_initiations_per_minute').' gift payments per minute.'], 429, $headers)));
 
+        RateLimiter::for('public-give-page', fn (Request $request) => Limit::perMinute(config('limits.public_give_page_per_minute'))
+            ->by($request->ip())
+            ->response(fn (Request $request, array $headers) => response()->json(['message' => 'Too many people are opening this page from here right now. Please wait a moment and try again.'], 429, $headers)));
+
         RateLimiter::for('broadcast', fn (Request $request) => Limit::perHour(config('limits.broadcasts_per_hour'))
             ->by($this->tenantKey($request))
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can send at most '.config('limits.broadcasts_per_hour').' broadcasts per hour.'], 429, $headers)));

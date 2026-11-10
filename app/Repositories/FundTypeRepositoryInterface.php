@@ -22,6 +22,13 @@ interface FundTypeRepositoryInterface
     public function paginate(ListFundTypesDTO $filters): LengthAwarePaginator;
 
     /**
+     * Every fund type that is switched on, in the church's own order, for a public page that has no staff member to ask.
+     *
+     * @return Collection<int, FundType>
+     */
+    public function active(): Collection;
+
+    /**
      * Adds a fund type.
      *
      * @param  array<string, mixed>  $attributes

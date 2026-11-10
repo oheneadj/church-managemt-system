@@ -31,6 +31,16 @@ class EloquentFundTypeRepository implements FundTypeRepositoryInterface
     }
 
     /**
+     * Every fund type that is switched on, in the church's own order.
+     *
+     * @return Collection<int, FundType>
+     */
+    public function active(): Collection
+    {
+        return FundType::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->orderBy('id')->get();
+    }
+
+    /**
      * Adds a fund type.
      *
      * @param  array<string, mixed>  $attributes

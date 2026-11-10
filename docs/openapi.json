@@ -3683,6 +3683,39 @@
                 }
             }
         },
+        "/v1/give": {
+            "get": {
+                "operationId": "give.show",
+                "summary": "Runs ShowGivingPageAction and returns the GivingPageResource",
+                "tags": [
+                    "ShowGivingPage"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`GivingPageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GivingPageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/reports/giving": {
             "get": {
                 "operationId": "reports.giving",
@@ -6077,6 +6110,68 @@
                     "female"
                 ],
                 "title": "Gender"
+            },
+            "GivingPageResource": {
+                "type": "object",
+                "properties": {
+                    "church_name": {
+                        "type": "string"
+                    },
+                    "available": {
+                        "type": "boolean"
+                    },
+                    "funds": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "description"
+                            ]
+                        }
+                    },
+                    "min_gift": {
+                        "type": "string"
+                    },
+                    "min_gift_formatted": {
+                        "type": "string"
+                    },
+                    "max_gift": {
+                        "type": "string"
+                    },
+                    "max_gift_formatted": {
+                        "type": "string"
+                    },
+                    "processing_fee_percent": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "church_name",
+                    "available",
+                    "funds",
+                    "min_gift",
+                    "min_gift_formatted",
+                    "max_gift",
+                    "max_gift_formatted",
+                    "processing_fee_percent"
+                ],
+                "title": "GivingPageResource"
             },
             "GivingSummaryResource": {
                 "type": "object",

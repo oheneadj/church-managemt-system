@@ -49,12 +49,38 @@ final class GivingFeeCalculator
     }
 
     /**
+     * The smallest gift a digital gift may be.
+     */
+    public function minimumGift(): Money
+    {
+        return Money::ghs($this->setting('giving.min_digital_gift'));
+    }
+
+    /**
+     * The largest gift a digital gift may be.
+     */
+    public function maximumGift(): Money
+    {
+        return Money::ghs($this->setting('giving.max_digital_gift'));
+    }
+
+    /**
+     * The collection fee as a percentage for the giver to read, for example "1.99" for 1.99%.
+     *
+     * @return numeric-string
+     */
+    public function collectionFeePercent(): string
+    {
+        return bcmul($this->setting('giving.collection_fee_rate'), '100', 2);
+    }
+
+    /**
      * Whether a gift is within the limits for a digital gift. The limits apply to the gift, not to the total with the fee.
      */
     public function isWithinLimits(Money $gift): bool
     {
-        return bccomp($gift->amount, $this->setting('giving.min_digital_gift'), 2) >= 0
-            && bccomp($gift->amount, $this->setting('giving.max_digital_gift'), 2) <= 0;
+        return bccomp($gift->amount, $this->minimumGift()->amount, 2) >= 0
+            && bccomp($gift->amount, $this->maximumGift()->amount, 2) <= 0;
     }
 
     /**

@@ -41,6 +41,10 @@ return [
     // Starting a gift payment sends a prompt to a phone, so each staff member may start only so many a minute (docs/08, Rate Limits).
     'gift_initiations_per_minute' => 10,
 
+    // The public giving page is open to anyone, so reading it is limited by internet address. High, because a whole congregation
+    // can share one address after a service (D-073).
+    'public_give_page_per_minute' => 120,
+
     // Exports read a lot of personal data and use a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
     'exports_per_hour' => 5,
 
