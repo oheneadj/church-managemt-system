@@ -27,6 +27,29 @@ return [
     // The most a single cash gift may be, in GHS (QA-06 TC-06-05). A digital gift has its own, lower, limit (D-018).
     'cash_max' => '999999.99',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Digital giving: limits and fees (D-018, D-072, docs/04 Platform Fee)
+    |--------------------------------------------------------------------------
+    | Amounts are GHS as decimal strings; rates are fractions as decimal strings (0.01 is 1%). They can be changed in the
+    | environment without a deploy, and each payout record keeps the fee actually charged, so a change never alters the past.
+    | The limits apply to the gift amount, not to the total with the processing fee.
+    */
+    'min_digital_gift' => env('GIVING_MIN_DIGITAL_GIFT', '1.00'),
+    'max_digital_gift' => env('GIVING_MAX_DIGITAL_GIFT', '30000.00'),
+
+    // The platform's fee on each digital gift: the rate, kept between the floor and the cap.
+    'platform_fee_rate' => env('GIVING_PLATFORM_FEE_RATE', '0.01'),
+    'platform_fee_cap' => env('GIVING_PLATFORM_FEE_CAP', '10.00'),
+    'platform_fee_floor' => env('GIVING_PLATFORM_FEE_FLOOR', '0.10'),
+
+    // PayPerlez's published charges (docs/14): collection is paid by the giver on top of the gift; settlement is taken from the payout.
+    'collection_fee_rate' => env('GIVING_COLLECTION_FEE_RATE', '0.0199'),
+    'settlement_fee_rate' => env('GIVING_SETTLEMENT_FEE_RATE', '0.0159'),
+
+    // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
+    'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
+
     // How many gifts the fund name backfill command handles in one batch.
     'backfill_chunk' => 500,
 
