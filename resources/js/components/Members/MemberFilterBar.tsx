@@ -21,11 +21,11 @@ export function MemberFilterBar({ filters, onChange, onClear }: MemberFilterBarP
     const hasFilters = filters.search !== '' || filters.status !== '' || filters.gender !== '' || filters.department_id !== '';
 
     return (
-        <section aria-label="Find members" className="flex flex-col gap-3">
+        <section aria-label="Find members" className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs">
             <SearchBox
                 id="member-search"
                 label="Search members"
-                placeholder="Name, phone or member number"
+                placeholder="Name, phone or number"
                 value={filters.search}
                 onSearch={(text) => onChange('search', text)}
             />

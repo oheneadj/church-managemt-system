@@ -33,11 +33,12 @@ test.describe('a church admin managing members', () => {
         await page.goto(`${CHURCH_URL}/members`);
         await page.getByLabel('Search members').fill(lastName);
         await page.getByRole('button', { name: 'Search' }).click();
-        await expect(page.getByRole('link', { name: new RegExp(lastName) })).toBeVisible();
+        // The directory is a table on a wide screen, where View and Edit buttons are links too, so find the member by the name link itself.
+        await expect(page.getByRole('link', { name: `Abena ${lastName}`, exact: true })).toBeVisible();
 
         await page.getByLabel('Search members').fill(phone);
         await page.getByRole('button', { name: 'Search' }).click();
-        await expect(page.getByRole('link', { name: new RegExp(lastName) })).toBeVisible();
+        await expect(page.getByRole('link', { name: `Abena ${lastName}`, exact: true })).toBeVisible();
     });
 });
 

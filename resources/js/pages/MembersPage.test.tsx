@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { MembersPage } from '@/pages/MembersPage';
@@ -187,5 +187,87 @@ describe('MembersPage: export', () => {
             gender: '',
             department_id: '',
         });
+    });
+});
+
+describe('MembersPage on a wide screen', () => {
+    const original = window.matchMedia;
+
+    beforeEach(() => {
+        window.matchMedia = ((query: string) =>
+            ({
+                matches: true,
+                media: query,
+                addEventListener: () => undefined,
+                removeEventListener: () => undefined,
+            }) as unknown as MediaQueryList) as typeof window.matchMedia;
+        vi.mocked(departmentsApi.list).mockResolvedValue(pageOf([department({ name: 'Choir' })]));
+        vi.mocked(membersApi.list).mockResolvedValue(
+            pageOf([memberSummary(), memberSummary({ id: 'member-2', full_name: 'Abena Asante', member_number: 'GRC-0002' })], {
+                total: 2,
+            }),
+        );
+    });
+
+    afterEach(() => {
+        window.matchMedia = original;
+    });
+
+    it('draws the members as a table, not as a list of cards', async () => {
+        open();
+
+        const table = await screen.findByRole('table', { name: 'Members' });
+        expect(within(table).getByRole('link', { name: 'Abena Asante' })).toHaveAttribute('href', '/members/member-2');
+        expect(screen.queryByRole('list')).toBeNull();
+        expect(screen.getByText('2 found')).toBeInTheDocument();
+    });
+
+    it('shows a table of placeholder rows while the first page loads, and says it is loading once', () => {
+        vi.mocked(membersApi.list).mockReturnValue(new Promise(() => undefined));
+        open();
+
+        const table = screen.getByRole('table');
+        expect(table).toHaveAttribute('aria-busy', 'true');
+        expect(within(table).getByRole('status')).toHaveTextContent('Loading');
+        expect(within(table).queryAllByRole('link')).toHaveLength(0);
+    });
+
+    it('keeps the filters in the address and asks for the same page', async () => {
+        open('/members?status=inactive&page=2');
+
+        await screen.findByRole('table', { name: 'Members' });
+        expect(membersApi.list).toHaveBeenCalledWith({ search: '', status: 'inactive', gender: '', department_id: '', page: 2 });
+        expect(screen.getByLabelText('Status')).toHaveValue('inactive');
+    });
+
+    it('offers View to everyone and Edit only to those who may edit members', async () => {
+        const first = open(ROUTES.MEMBERS, []);
+        await screen.findByRole('table', { name: 'Members' });
+        expect(screen.getAllByRole('link', { name: /^View / })).toHaveLength(2);
+        expect(screen.queryByRole('link', { name: /^Edit / })).toBeNull();
+        first.unmount();
+
+        open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EDIT]);
+        expect(await screen.findAllByRole('link', { name: /^Edit / })).toHaveLength(2);
+    });
+
+    it('still says plainly when nobody is found, with the way to add a member for those who may', async () => {
+        vi.mocked(membersApi.list).mockResolvedValue(pageOf([], { total: 0 }));
+        open(ROUTES.MEMBERS, [PERMISSIONS.MEMBERS_EDIT]);
+
+        expect(await screen.findByText('No members found')).toBeInTheDocument();
+        expect(screen.queryByRole('table')).toBeNull();
+        expect(screen.getAllByRole('link', { name: 'Add member' }).length).toBeGreaterThan(0);
+    });
+
+    it('still pages through the members', async () => {
+        vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()], { total: 60, current_page: 1, last_page: 3 }));
+        const user = userEvent.setup();
+        open();
+
+        await screen.findByRole('table', { name: 'Members' });
+        await user.click(screen.getByRole('button', { name: 'Next' }));
+
+        await waitFor(() => expect(membersApi.list).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })));
     });
 });

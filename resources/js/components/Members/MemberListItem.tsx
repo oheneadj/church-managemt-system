@@ -17,16 +17,16 @@ export function MemberListItem({ member }: MemberListItemProps) {
         <li>
             <Link
                 to={ROUTES.MEMBER(member.id)}
-                className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-xs transition-colors hover:bg-surface-hover focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
             >
                 <MemberAvatar fullName={member.full_name} photoUrl={member.photo_url} size="lg" />
                 <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{member.full_name}</p>
-                    <p className="truncate text-sm text-muted-foreground">
+                    <p className="truncate text-body-sm text-muted-foreground">
                         {member.member_number} · {member.phone}
                     </p>
                     {member.departments.length > 0 && (
-                        <p className="truncate text-xs text-muted-foreground">{member.departments.join(', ')}</p>
+                        <p className="truncate text-caption text-muted-foreground">{member.departments.join(', ')}</p>
                     )}
                 </div>
                 <MemberStatusBadge status={member.status} label={member.status_label} />
