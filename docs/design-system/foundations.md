@@ -95,7 +95,7 @@ DM Sans, self-hosted. The scale (size, line height, letter spacing, weight) live
 
 | Style | Size / line height | Weight | Letter spacing |
 |---|---|---|---|
-| Hero (one per view: the number a view leads with) | 48 / 52 | 600 | -0.03em |
+| Hero (one per view: the number a view leads with; steps down to Display on phones so an amount stays on one line) | 48 / 52 | 600 | -0.03em |
 | Display | 36 / 44 | 600 | -0.02em |
 | Heading 1 | 30 / 38 | 600 | -0.015em |
 | Heading 2 | 24 / 32 | 600 | -0.01em |

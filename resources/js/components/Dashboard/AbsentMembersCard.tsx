@@ -1,3 +1,5 @@
+import { UserXIcon } from 'lucide-react';
+import { IconStatCard } from '@/components/Charts/StatCardVariants';
 import { DashboardCard } from '@/components/Dashboard/DashboardCard';
 import { ROUTES } from '@/constants/routes';
 import { useAbsentMembers } from '@/hooks/useAbsentMembers';
@@ -18,8 +20,13 @@ export function AbsentMembersCard() {
             isPending={absent.isPending}
             error={absent.error}
             onRetry={() => void absent.refetch()}
-            value={formatCount(absent.data?.meta.total ?? 0)}
-            note="Missed the last services in a row"
-        />
+        >
+            <IconStatCard
+                icon={UserXIcon}
+                label="Absent members"
+                value={formatCount(absent.data?.meta.total ?? 0)}
+                note="Missed the last services in a row"
+            />
+        </DashboardCard>
     );
 }

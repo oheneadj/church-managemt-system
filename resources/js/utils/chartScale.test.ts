@@ -12,6 +12,13 @@ describe('chartScale', () => {
         expect(chartScale(100, 4)).toEqual({ max: 100, ticks: [0, 50, 100] });
     });
 
+    it('never counts in fractions: a chart of one or two people has a whole-number axis', () => {
+        expect(chartScale(1, 4)).toEqual({ max: 1, ticks: [0, 1] });
+        expect(chartScale(2, 4)).toEqual({ max: 2, ticks: [0, 1, 2] });
+        expect(chartScale(3, 4)).toEqual({ max: 3, ticks: [0, 1, 2, 3] });
+        expect(chartScale(0, 4).ticks).toEqual([0, 1]);
+    });
+
     it('still gives a small axis for an empty chart', () => {
         const scale = chartScale(0, 4);
 

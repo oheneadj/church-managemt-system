@@ -38,6 +38,13 @@ function card(label: string): HTMLElement {
     return screen.getByText(label).closest('a') as HTMLElement;
 }
 
+/** The same, once it has been drawn. */
+async function findCard(label: string): Promise<HTMLElement> {
+    await screen.findByText(label);
+
+    return card(label);
+}
+
 describe('DashboardPage', () => {
     beforeEach(() => {
         vi.resetAllMocks();
@@ -120,13 +127,14 @@ describe('DashboardPage', () => {
 
     it('shows attendance without giving to someone who may read reports but not giving totals, and the reverse', async () => {
         const first = open([PERMISSIONS.MEMBERS_VIEW, PERMISSIONS.REPORTS_VIEW]);
-        await screen.findByText('118');
+        await within(await screen.findByText('Last service').then(() => card('Last service'))).findByText('118');
         expect(screen.queryByText('Given this month')).not.toBeInTheDocument();
         first.unmount();
 
         open([PERMISSIONS.MEMBERS_VIEW, PERMISSIONS.GIVING_SUMMARY]);
-        await screen.findByText('GHS 15,450.00');
+        await within(await screen.findByText('Given this month').then(() => card('Given this month'))).findByText('GHS 15,450.00');
         expect(screen.queryByText('Last service')).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Attendance at recent services' })).not.toBeInTheDocument();
     });
 
     it('says plainly when no attendance has been recorded yet, and leads to the services', async () => {
@@ -137,8 +145,11 @@ describe('DashboardPage', () => {
         });
         open();
 
-        expect(await screen.findByText('No attendance recorded yet')).toBeInTheDocument();
+        expect(
+            await within(await screen.findByText('Last service').then(() => card('Last service'))).findByText('No attendance recorded yet'),
+        ).toBeInTheDocument();
         expect(card('Last service')).toHaveAttribute('href', '/services');
+        expect(screen.getAllByText('No attendance recorded yet')).toHaveLength(2);
     });
 
     it('keeps the other cards when one cannot be read, and offers to try that one again', async () => {
@@ -149,7 +160,7 @@ describe('DashboardPage', () => {
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Given this month: The server is busy.');
         expect(await screen.findByText('212')).toBeInTheDocument();
-        expect(screen.getByText('118')).toBeInTheDocument();
+        expect(within(card('Last service')).getByText('118')).toBeInTheDocument();
         expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
 
         screen.getByRole('button', { name: 'Try again' }).click();
@@ -162,6 +173,125 @@ describe('DashboardPage', () => {
 
         expect(await screen.findByLabelText('Given this month is loading')).toBeInTheDocument();
         expect(await screen.findByText('212')).toBeInTheDocument();
+    });
+});
+
+describe('DashboardPage: the card designs and charts', () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+        vi.mocked(membersApi.list).mockResolvedValue(pageOf([memberSummary()], { total: 212 }));
+        vi.mocked(reportsApi.attendance).mockResolvedValue(byService);
+        vi.mocked(attendanceApi.absent).mockResolvedValue(pageOf([absentMember()], { total: 7 }));
+        vi.mocked(activityApi.recent).mockResolvedValue(pageOf([activityLine()]));
+        vi.mocked(reportsApi.giving).mockResolvedValue(givingByMonth());
+    });
+
+    it("leads with this month's giving as the one featured card, with the server's change against last month", async () => {
+        open();
+
+        const giving = await findCard('Given this month');
+        expect(await within(giving).findByText('GHS 15,450.00')).toHaveClass('text-hero');
+        expect(giving.querySelector('[data-variant="featured"]')).not.toBeNull();
+        expect(within(giving).getByText('vs last month')).toBeInTheDocument();
+        expect(giving.querySelector('[data-slot="stat-delta"]')).toHaveTextContent(/^(Up|Down) /);
+        expect(document.querySelectorAll('[data-variant="featured"]')).toHaveLength(1);
+    });
+
+    it('shows the members and the absent members as icon cards, and the last service as a trend card', async () => {
+        open();
+
+        await screen.findByText('Active members');
+        expect(card('Active members').querySelector('[data-variant="icon"]')).not.toBeNull();
+        expect(card('Absent members').querySelector('[data-variant="icon"]')).not.toBeNull();
+        expect(card('Last service').querySelector('[data-variant="trend"]')).not.toBeNull();
+    });
+
+    it('shows how the last service compares with the one before it, in people, and a trend over the recent services', async () => {
+        open();
+
+        const service = await findCard('Last service');
+        expect(await within(service).findByText('+14')).toBeInTheDocument();
+        expect(within(service).getByText('vs the service before')).toBeInTheDocument();
+        expect(service.querySelector('[data-slot="stat-delta"]')).toHaveClass('text-feedback-success');
+        expect(service.querySelector('[data-slot="stat-delta"]')).toHaveTextContent('Up +14');
+        expect(within(service).getByRole('img', { name: 'Attendance at the last 2 services, from 104 to 118' })).toBeInTheDocument();
+    });
+
+    it('shows no change or trend where there is nothing to compare with', async () => {
+        vi.mocked(reportsApi.attendance).mockResolvedValue({ group_by: 'service', data: [byService.data[0]!], summary: byService.summary });
+        open();
+
+        const service = await findCard('Last service');
+        await within(service).findByText('118');
+        expect(service.querySelector('[data-slot="stat-delta"]')).toBeNull();
+        expect(within(service).queryByRole('img')).toBeNull();
+    });
+
+    it('charts the recent attendance and the giving by month, each with a table of the same figures', async () => {
+        open();
+
+        const attendance = (await screen.findByRole('heading', { name: 'Attendance at recent services' })).closest('figure') as HTMLElement;
+        expect(within(attendance).getByText('People at each of the last 2 services, oldest on the left.')).toBeInTheDocument();
+        const giving = (await screen.findByRole('heading', { name: 'Giving by month' })).closest('figure') as HTMLElement;
+        expect(within(attendance).getByRole('button', { name: 'Table' })).toBeInTheDocument();
+        expect(within(giving).getByRole('button', { name: 'Table' })).toBeInTheDocument();
+
+        within(attendance).getByRole('button', { name: 'Table' }).click();
+        expect(await within(attendance).findByRole('table')).toBeInTheDocument();
+    });
+
+    it('says "the last service", not "the last 1 services", when there is only one', async () => {
+        vi.mocked(reportsApi.attendance).mockResolvedValue({ group_by: 'service', data: [byService.data[0]!], summary: byService.summary });
+        open();
+
+        expect(await screen.findByText('People at the last service.')).toBeInTheDocument();
+        expect(screen.queryByText(/last 1 services/)).not.toBeInTheDocument();
+    });
+
+    it('asks for the attendance report once for both the card and the chart, and for the giving trend', async () => {
+        open();
+        await screen.findByRole('heading', { name: 'Attendance at recent services' });
+
+        expect(reportsApi.attendance).toHaveBeenCalledTimes(1);
+        expect(reportsApi.giving).toHaveBeenCalledWith({ months: 6, fundId: '' });
+    });
+
+    it('says plainly in the chart place when nothing has been recorded or given', async () => {
+        vi.mocked(reportsApi.attendance).mockResolvedValue({
+            group_by: 'service',
+            data: [],
+            summary: { average: 0, highest: 0, lowest: 0 },
+        });
+        vi.mocked(reportsApi.giving).mockResolvedValue(
+            givingByMonth({ data: [{ ...givingByMonth().data[0]!, by_fund: [], total: '0.00', total_formatted: 'GHS 0.00' }] }),
+        );
+        open();
+
+        expect(await screen.findByText('No giving recorded')).toBeInTheDocument();
+        expect(screen.getAllByText('No attendance recorded yet')).toHaveLength(2);
+    });
+
+    it('draws the giving card without its trend when the six months cannot be had', async () => {
+        vi.mocked(reportsApi.giving).mockImplementation(async (filters) => {
+            if (filters.months === 6) {
+                throw new ApiError('The server is busy.', 500);
+            }
+
+            return givingByMonth({ data: [givingByMonth().data[0]!] });
+        });
+        open();
+
+        const giving = await findCard('Given this month');
+        expect(await within(giving).findByText('GHS 15,450.00')).toBeInTheDocument();
+        expect(within(giving).queryByRole('img')).toBeNull();
+    });
+
+    it('shows the chart cards only to those who may read what they hold', async () => {
+        open([PERMISSIONS.MEMBERS_VIEW]);
+
+        await screen.findByText('212');
+        expect(screen.queryByRole('heading', { name: 'Attendance at recent services' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Giving by month' })).not.toBeInTheDocument();
     });
 });
 
@@ -198,7 +328,7 @@ describe('DashboardPage: recent activity', () => {
         open();
 
         const second = (await screen.findByText('A gift of GHS 1,250.50 to Building Fund was recorded.')).closest('li') as HTMLElement;
-        expect(second.querySelectorAll('span')).toHaveLength(2);
+        expect(second.querySelectorAll('span.block')).toHaveLength(2);
         expect(within(second).queryByText(/·/)).not.toBeInTheDocument();
     });
 

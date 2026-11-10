@@ -17,7 +17,8 @@ export function chartScale(largest: number, aimForTicks: number): ChartScale {
     const target = Math.max(largest, 1);
     const rough = target / aimForTicks;
     const power = 10 ** Math.floor(Math.log10(rough));
-    const step = (NICE_STEPS.find((nice) => nice * power >= rough) ?? 10) * power;
+    // Never a step smaller than one: people and whole units are not counted in halves, so a short axis reads 0, 1, 2 and not 0, 0.5, 1.
+    const step = Math.max((NICE_STEPS.find((nice) => nice * power >= rough) ?? 10) * power, 1);
     const count = Math.ceil(target / step);
 
     return { max: step * count, ticks: Array.from({ length: count + 1 }, (_, index) => index * step) };

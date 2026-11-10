@@ -17,6 +17,8 @@ interface IconStatCardProps {
     icon: LucideIcon;
     label: string;
     value: string;
+    /** A small line under the number. */
+    note?: string;
     delta?: StatDelta;
     /** The values for the mini column chart, in time order. */
     columns?: { values: readonly number[]; label: string };
@@ -26,7 +28,7 @@ interface IconStatCardProps {
  * The icon card: a tinted icon beside the label, the number, a change, and a small column chart on the right. The icon helps
  * a person scan a row of cards; it never carries the meaning on its own.
  */
-export function IconStatCard({ icon, label, value, delta, columns }: IconStatCardProps) {
+export function IconStatCard({ icon, label, value, note, delta, columns }: IconStatCardProps) {
     return (
         <div data-slot="stat-card" data-variant="icon" className="@container rounded-xl border bg-card shadow-xs">
             <div className="flex flex-col gap-4 p-6">
@@ -38,6 +40,7 @@ export function IconStatCard({ icon, label, value, delta, columns }: IconStatCar
                     <span className="text-h2 font-semibold">{value}</span>
                     {columns && <MiniColumns values={columns.values} label={columns.label} />}
                 </div>
+                {note && <p className="-mt-2 text-body-sm text-muted-foreground">{note}</p>}
                 {delta && <StatDeltaLine delta={delta} />}
             </div>
         </div>
@@ -75,15 +78,17 @@ interface FeaturedStatCardProps {
     label: string;
     /** The one number a view leads with. Use at most one featured card in a view. */
     value: string;
+    /** A small line under the number, in the card's own light text. */
+    note?: string;
     delta?: StatDelta;
     trend?: { values: readonly number[]; label: string };
 }
 
 /**
- * The featured card: a deep, filled card with light text and the hero figure (48px, the same sans, proportional figures), a fine gold
+ * The featured card: a deep, filled card with light text and the hero figure (48px, the same sans, proportional figures, kept on one line and stepping down to the 36px Display size on a phone), a fine gold
  * rule along the top, and a trend in light ink. Exactly one per view: it is the number the view is about.
  */
-export function FeaturedStatCard({ label, value, delta, trend }: FeaturedStatCardProps) {
+export function FeaturedStatCard({ label, value, note, delta, trend }: FeaturedStatCardProps) {
     return (
         <div
             data-slot="stat-card"
@@ -94,9 +99,10 @@ export function FeaturedStatCard({ label, value, delta, trend }: FeaturedStatCar
             <div className="flex flex-col gap-4 p-6">
                 <span className="text-body-sm opacity-80">{label}</span>
                 <div className="flex flex-col gap-4 @xs:flex-row @xs:items-end @xs:justify-between">
-                    <span className="text-hero font-semibold">{value}</span>
+                    <span className="text-hero font-semibold whitespace-nowrap max-sm:text-display">{value}</span>
                     {trend && <Sparkline values={trend.values} label={trend.label} inverse />}
                 </div>
+                {note && <p className="-mt-2 text-body-sm opacity-80">{note}</p>}
                 {delta && <StatDeltaLine delta={delta} onFilled />}
             </div>
         </div>

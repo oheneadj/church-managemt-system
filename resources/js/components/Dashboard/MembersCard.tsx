@@ -1,3 +1,5 @@
+import { UsersIcon } from 'lucide-react';
+import { IconStatCard } from '@/components/Charts/StatCardVariants';
 import { DashboardCard } from '@/components/Dashboard/DashboardCard';
 import { ROUTES } from '@/constants/routes';
 import { useMembers } from '@/hooks/useMembers';
@@ -21,8 +23,13 @@ export function MembersCard() {
             isPending={members.isPending}
             error={members.error}
             onRetry={() => void members.refetch()}
-            value={formatCount(members.data?.meta.total ?? 0)}
-            note="Members who are active now"
-        />
+        >
+            <IconStatCard
+                icon={UsersIcon}
+                label="Active members"
+                value={formatCount(members.data?.meta.total ?? 0)}
+                note="Members who are active now"
+            />
+        </DashboardCard>
     );
 }

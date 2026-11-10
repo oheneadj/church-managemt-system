@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatTile } from '@/components/ui/StatTile';
+import { cn } from 'cn';
 
 interface DashboardCardProps {
-    /** What the number is, in plain words. */
+    /** What the number is, in plain words. Used for the loading and failure messages. */
     label: string;
     /** The page the card leads to, so a number is one tap from the detail behind it. */
     to: string;
@@ -13,25 +14,26 @@ interface DashboardCardProps {
     /** Set when the figure could not be had: the card then says so and offers to try again. */
     error?: Error | null;
     onRetry: () => void;
-    /** The number, already formatted, and the small line under it. Only read when there is neither a wait nor an error. */
-    value: string;
-    note?: string;
+    /** How tall the placeholder is while loading, so the page does not jump when the card arrives. */
+    placeholderClassName?: string;
+    /** The stat card itself. Only drawn when there is neither a wait nor an error. */
+    children: ReactNode;
 }
 
 /**
  * One summary card on the home page. It is a link, so the number leads to the page that explains it, and it has its own
  * loading and failure states, so a slow or broken report never holds back the other cards.
  */
-export function DashboardCard({ label, to, isPending, error, onRetry, value, note }: DashboardCardProps) {
+export function DashboardCard({ label, to, isPending, error, onRetry, placeholderClassName = 'h-40', children }: DashboardCardProps) {
     if (isPending) {
-        return <Skeleton aria-busy="true" aria-label={`${label} is loading`} className="h-[96px] w-full rounded-xl" />;
+        return <Skeleton aria-busy="true" aria-label={`${label} is loading`} className={cn('w-full rounded-xl', placeholderClassName)} />;
     }
 
     if (error) {
         return (
             <div
                 role="alert"
-                className="flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+                className="flex flex-col gap-3 rounded-xl border border-feedback-error-border bg-feedback-error-surface p-6 text-body-sm text-feedback-error"
             >
                 <span>
                     {label}: {error.message}
@@ -44,8 +46,11 @@ export function DashboardCard({ label, to, isPending, error, onRetry, value, not
     }
 
     return (
-        <Link to={to} className="rounded-xl outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring">
-            <StatTile label={label} value={value} note={note} />
+        <Link
+            to={to}
+            className="block rounded-xl outline-none transition-shadow hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring"
+        >
+            {children}
         </Link>
     );
 }
