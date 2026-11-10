@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** Following the owner's note that the UI looked rigid and old, and the `ui/` reference picture: corner radii up one step (controls 12px, cards and tables 16px, extra large 20px); cards, the table and the filter bar are flat with a visible 1px border (neutral 300) instead of a shadow; table headings are bold and in the full text colour; the giving filters sit in one row of four on wide screens. Brand colour values are unchanged.
 - **Why:** The owner asked to remove shadows and add contrast, as in the reference. Tokens, docs (foundations.md radii) and the radius test were updated together; all 1147 tests pass.
 - **Files:** resources/css/app.css, resources/js/components/ui/ (card, table), resources/js/components/Giving/ContributionFilterBar.tsx, resources/js/test/designTokens.test.ts, docs/design-system/foundations.md, CHANGELOG.md
-- **Commit:** pending
+- **Commit:** `05afb34` (2026-11-10)
 
 #### feat(ui): the giving page on the design system, D-070 step 4f (2026-11-10)
 - **What:** On a wide screen the gifts list is now the shared table (`GiftTable`: Date, Given by, Fund, How, Amount, Status, and a Void button per row with a full name such as "Void the gift of GHS 50.00 to Tithe"); phones keep the card list. Voided gifts are struck through with the reason shown. Loading shows skeleton rows, refreshing dims the table. Filter bar and cards restyled with the design tokens and larger controls.
