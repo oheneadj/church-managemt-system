@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { GivingPage } from '@/pages/GivingPage';
@@ -167,5 +167,92 @@ describe('GivingPage: export', () => {
             fund: 'fund-1',
             method: 'cash',
         });
+    });
+});
+
+describe('GivingPage on a wide screen', () => {
+    const original = window.matchMedia;
+
+    beforeEach(() => {
+        window.matchMedia = ((query: string) =>
+            ({
+                matches: true,
+                media: query,
+                addEventListener: () => undefined,
+                removeEventListener: () => undefined,
+            }) as unknown as MediaQueryList) as typeof window.matchMedia;
+        vi.mocked(fundTypesApi.active).mockResolvedValue([fundType()]);
+        vi.mocked(contributionsApi.list).mockResolvedValue(
+            pageOf(
+                [
+                    contribution(),
+                    contribution({
+                        id: 'gift-3',
+                        amount_formatted: 'GHS 75.00',
+                        is_voided: true,
+                        void_reason: 'Entered twice',
+                        voided_by: 'Ama Boateng',
+                    }),
+                ],
+                { total: 2 },
+            ),
+        );
+        vi.mocked(contributionsApi.void).mockResolvedValue(contribution({ is_voided: true }));
+    });
+
+    afterEach(() => {
+        window.matchMedia = original;
+    });
+
+    it("draws the gifts as a table, not a list of cards, with the server's amounts", async () => {
+        open();
+
+        const table = await screen.findByRole('table', { name: 'Gifts, newest first' });
+        expect(within(table).getByText('GHS 200.00')).toBeInTheDocument();
+        expect(screen.queryByRole('list')).toBeNull();
+        expect(screen.getByText('2 gifts found')).toBeInTheDocument();
+    });
+
+    it('shows a table of placeholder rows while the first page loads', () => {
+        vi.mocked(contributionsApi.list).mockReturnValue(new Promise(() => undefined));
+        open();
+
+        expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+        expect(within(screen.getByRole('table')).getByRole('status')).toHaveTextContent('Loading');
+    });
+
+    it('still asks the server for the filters in the address', async () => {
+        open(FINANCE, `${ROUTES.GIVING}?from=2026-10-01&fund=fund-1&page=2`);
+
+        await screen.findByRole('table', { name: 'Gifts, newest first' });
+        expect(contributionsApi.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-01', fund: 'fund-1', page: 2 }));
+    });
+
+    it('lets staff who may void a gift do so from the table, after the usual confirmation, and never a voided one', async () => {
+        const user = userEvent.setup();
+        open();
+        await screen.findByRole('table', { name: 'Gifts, newest first' });
+
+        expect(screen.getAllByRole('button', { name: /^Void the gift of/ })).toHaveLength(1);
+        await user.click(screen.getByRole('button', { name: 'Void the gift of GHS 200.00 to Tithe' }));
+
+        expect(await screen.findByRole('dialog')).toBeInTheDocument();
+        expect(contributionsApi.void).not.toHaveBeenCalled();
+    });
+
+    it('offers no Void button to staff who may not correct giving', async () => {
+        open([PERMISSIONS.GIVING_VIEW]);
+
+        await screen.findByRole('table', { name: 'Gifts, newest first' });
+        expect(screen.queryByRole('button', { name: /^Void/ })).toBeNull();
+        expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull();
+    });
+
+    it('still says plainly when no gifts were found', async () => {
+        vi.mocked(contributionsApi.list).mockResolvedValue(pageOf([], { total: 0 }));
+        open();
+
+        expect(await screen.findByText('No gifts found')).toBeInTheDocument();
+        expect(screen.queryByRole('table')).toBeNull();
     });
 });

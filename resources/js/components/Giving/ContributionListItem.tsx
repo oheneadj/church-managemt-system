@@ -16,18 +16,18 @@ interface ContributionListItemProps {
  */
 export function ContributionListItem({ gift, onVoid }: ContributionListItemProps) {
     return (
-        <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+        <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-xs">
             <span>
                 <span className={`block font-medium ${gift.is_voided ? 'line-through' : ''}`}>
                     <MoneyDisplay formatted={gift.amount_formatted} /> · {gift.fund_type.name}
                 </span>
-                <span className="block text-sm text-muted-foreground">
+                <span className="block text-body-sm text-muted-foreground">
                     {gift.member?.full_name ?? 'Anonymous'} · {formatDate(gift.contributed_at)} · {gift.payment_method_label}
                     {gift.service ? ` · ${gift.service.name}` : ''}
                     {gift.pledge ? ` · Pledge: ${gift.pledge.description}` : ''}
                 </span>
                 {gift.is_voided && (
-                    <span className="block text-sm text-muted-foreground">
+                    <span className="block text-body-sm text-muted-foreground">
                         Voided{gift.voided_by ? ` by ${gift.voided_by}` : ''}: {gift.void_reason}
                     </span>
                 )}

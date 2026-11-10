@@ -19,7 +19,7 @@ test.describe('recording giving', () => {
         // The gift is on the list at once, as an anonymous cash gift.
         await expect(page.getByText('Gift recorded.')).toBeVisible();
         const gift = page
-            .getByRole('listitem')
+            .getByRole('row')
             .filter({ hasText: `GHS ${cedis}.37` })
             .first();
         await expect(gift).toContainText('Tithe');
