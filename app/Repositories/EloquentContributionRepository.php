@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Contributions\ListContributionsDTO;
+use App\Enums\ContributionStatus;
 use App\Models\Contribution;
 use App\Models\FundType;
 use App\Models\User;
@@ -31,7 +32,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     {
         $sum = Contribution::query()
             ->where('member_id', $memberId)
-            ->where('is_voided', false)
+            ->counted()
             ->when($since !== null, fn (Builder $q) => $q->where('contributed_at', '>=', $since))
             ->sum('amount');
 
@@ -45,7 +46,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
      */
     public function totalForMemberBetween(string $memberId, CarbonInterface $from, CarbonInterface $to): string
     {
-        return Money::ghs((string) Contribution::query()->where('member_id', $memberId)->where('is_voided', false)->whereBetween('contributed_at', [$from, $to])->sum('amount'))->amount;
+        return Money::ghs((string) Contribution::query()->where('member_id', $memberId)->counted()->whereBetween('contributed_at', [$from, $to])->sum('amount'))->amount;
     }
 
     /**
@@ -63,7 +64,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
      */
     public function totalForPledge(string $pledgeId): string
     {
-        return bcadd((string) Contribution::query()->where('pledge_id', $pledgeId)->where('is_voided', false)->sum('amount'), '0', 2);
+        return bcadd((string) Contribution::query()->where('pledge_id', $pledgeId)->counted()->sum('amount'), '0', 2);
     }
 
     /**
@@ -92,7 +93,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     public function totalsByFundBetween(CarbonInterface $from, CarbonInterface $to, ?string $fundTypeId = null): array
     {
         $rows = Contribution::query()
-            ->where('is_voided', false)
+            ->counted()
             ->whereBetween('contributed_at', [$from, $to])
             ->when($fundTypeId !== null, fn (Builder $query) => $query->where('fund_type_id', $fundTypeId))
             ->groupBy('fund_type_id')
@@ -113,7 +114,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
      */
     public function anonymousCountForService(string $serviceId): int
     {
-        return Contribution::query()->where('service_id', $serviceId)->where('is_voided', false)->whereNull('member_id')->count();
+        return Contribution::query()->where('service_id', $serviceId)->counted()->whereNull('member_id')->count();
     }
 
     /**
@@ -121,7 +122,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
      */
     public function anonymousCountWithoutService(CarbonInterface $from, CarbonInterface $to): int
     {
-        return $this->withoutServiceBetween($from, $to)->where('is_voided', false)->whereNull('member_id')->count();
+        return $this->withoutServiceBetween($from, $to)->counted()->whereNull('member_id')->count();
     }
 
     /**
@@ -143,7 +144,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     private function offeringTotals(Builder $gifts): array
     {
         $rows = $gifts
-            ->where('is_voided', false)
+            ->counted()
             ->groupBy('fund_type_id', 'fund_name', 'payment_method')
             ->selectRaw('fund_type_id, fund_name, payment_method, SUM(amount) AS total, COUNT(*) AS gifts')
             ->get();
@@ -210,6 +211,7 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     private function matching(ListContributionsDTO $filters): Builder
     {
         return Contribution::query()
+            ->where('status', ContributionStatus::Completed->value)
             ->when($filters->memberId !== null, fn (Builder $q) => $q->where('member_id', $filters->memberId))
             ->when($filters->serviceId !== null, fn (Builder $q) => $q->where('service_id', $filters->serviceId))
             ->when($filters->fundTypeId !== null, fn (Builder $q) => $q->where('fund_type_id', $filters->fundTypeId))

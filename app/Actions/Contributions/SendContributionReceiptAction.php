@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Contributions;
 
 use App\DTOs\OutboundSms;
+use App\Enums\ContributionStatus;
 use App\Enums\MemberStatus;
 use App\Enums\MessageChannel;
 use App\Enums\MessageStatus;
@@ -75,7 +76,7 @@ final class SendContributionReceiptAction
      */
     private function shouldReceive(Church $church, Contribution $contribution, ?Member $member): bool
     {
-        if ($contribution->is_voided || ($contribution->payment_method === PaymentMethod::Cash && ! $church->sendsCashReceipts())) {
+        if ($contribution->is_voided || $contribution->status !== ContributionStatus::Completed || ($contribution->payment_method === PaymentMethod::Cash && ! $church->sendsCashReceipts())) {
             return false;
         }
 

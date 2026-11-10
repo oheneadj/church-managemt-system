@@ -6,6 +6,7 @@ namespace App\Actions\Contributions;
 
 use App\DTOs\Contributions\RecordCashContributionDTO;
 use App\Enums\AuditEvent;
+use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Events\ContributionReceived;
 use App\Models\Contribution;
@@ -55,6 +56,7 @@ final class RecordCashContributionAction
                 'fund_name' => $this->fundName($dto->fundTypeId),
                 'amount' => $dto->amount->amount,
                 'payment_method' => PaymentMethod::Cash,
+                'status' => ContributionStatus::Completed,
                 'is_voided' => false,
                 'recorded_by' => $dto->actor->getKey(),
                 'notes' => $dto->notes,

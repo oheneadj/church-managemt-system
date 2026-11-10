@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Traits\BelongsToChurch;
 use Carbon\CarbonImmutable;
 use Database\Factories\ContributionFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $fund_name the fund's name when the gift was recorded; a later rename does not change it
  * @property string $amount
  * @property PaymentMethod $payment_method
+ * @property ContributionStatus $status
  * @property bool $is_voided
  * @property CarbonImmutable|null $voided_at
  * @property string|null $voided_by
@@ -58,6 +62,7 @@ class Contribution extends Model
         'processing_fee',
         'total_paid',
         'payment_method',
+        'status',
         'paystack_reference',
         'paystack_status',
         'payperlez_reference',
@@ -84,11 +89,24 @@ class Contribution extends Model
             'processing_fee' => 'decimal:2',
             'total_paid' => 'decimal:2',
             'payment_method' => PaymentMethod::class,
+            'status' => ContributionStatus::class,
             'is_voided' => 'boolean',
             'voided_at' => 'immutable_datetime',
             'contributed_at' => 'immutable_datetime',
             'receipt_queued_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Only the gifts that count: paid and not voided. Every total, list, pledge sum, receipt and payout uses this, so a pending or
+     * failed digital gift is never added up (D-053).
+     *
+     * @param  Builder<Contribution>  $query
+     */
+    #[Scope]
+    protected function counted(Builder $query): void
+    {
+        $query->where('status', ContributionStatus::Completed->value)->where('is_voided', false);
     }
 
     /**

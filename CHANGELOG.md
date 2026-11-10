@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(giving): a gift has a status, and only completed gifts are counted, D-069 step d1 (2026-11-10)
+- **What:** `contributions.status` (pending, completed, failed; default completed, so every existing gift stays counted) with an index for the polling job, a `ContributionStatus` enum, factory states `pending()` and `failed()`, and a `counted` scope (completed and not voided) on the model. Every total (member, month, pledge, offering report, giving trend and report), the gift list, the export and a pledge's gift list use it, and a gift that is not completed gets no receipt. Cash is saved as completed.
+- **Why:** The first piece of A3 (D-053): digital gifts will exist as pending rows while the provider has not confirmed, and must never be added up, listed, paid against a pledge, receipted or paid out until they complete. 6 new tests; mutation-checked (turning the filter off fails them).
+- **Files:** app/Enums/ContributionStatus.php, database/migrations/2026_11_10_100000_add_status_to_contributions_table.php, app/Models/Contribution.php, app/Repositories/ (EloquentContributionRepository, EloquentPledgeRepository), app/Actions/Contributions/ (RecordCashContributionAction, SendContributionReceiptAction), database/factories/ContributionFactory.php, tests/Feature/Contributions/ContributionStatusTest.php, docs/19-open-items.md, CHANGELOG.md
+- **Commit:** pending
+
 #### style(ui): a crisper, flatter look, softer corners, no shadows on surfaces (2026-11-10)
 - **What:** Following the owner's note that the UI looked rigid and old, and the `ui/` reference picture: corner radii up one step (controls 12px, cards and tables 16px, extra large 20px); cards, the table and the filter bar are flat with a visible 1px border (neutral 300) instead of a shadow; table headings are bold and in the full text colour; the giving filters sit in one row of four on wide screens. Brand colour values are unchanged.
 - **Why:** The owner asked to remove shadows and add contrast, as in the reference. Tokens, docs (foundations.md radii) and the radius test were updated together; all 1147 tests pass.

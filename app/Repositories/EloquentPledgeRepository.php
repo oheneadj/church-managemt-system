@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Pledges\ListPledgesDTO;
+use App\Enums\ContributionStatus;
 use App\Enums\PledgeStatus;
 use App\Models\Contribution;
 use App\Models\Pledge;
@@ -77,7 +78,7 @@ class EloquentPledgeRepository implements PledgeRepositoryInterface
         if ($withContributions) {
             $pledge->load(['contributions' => function (HasMany $gifts): void {
                 /** @var HasMany<Contribution, Pledge> $gifts */
-                $gifts->with(['member', 'service', 'recordedBy', 'voidedBy'])->orderByDesc('contributed_at')->orderByDesc('id');
+                $gifts->where('status', ContributionStatus::Completed->value)->with(['member', 'service', 'recordedBy', 'voidedBy'])->orderByDesc('contributed_at')->orderByDesc('id');
             }]);
         }
 
