@@ -78,8 +78,8 @@ class InitiateContributionRequest extends FormRequest
         $max = Money::ghs((string) config('giving.max_digital_gift'))->formatted();
 
         return [
-            'amount.min' => "The smallest mobile money gift is {$min}.",
-            'amount.max' => "The largest mobile money gift is {$max}.",
+            'amount.min' => "The smallest mobile money gift is {$min}. Enter {$min} or more.",
+            'amount.max' => "The largest mobile money gift is {$max}. Enter {$max} or less.",
             'amount.decimal' => 'Enter the amount in cedis and pesewas, for example 50.00.',
             'payment_method.enum' => 'Only mobile money can be taken for now. Record cash gifts as cash.',
             'phone.regex' => 'Enter the mobile money number of the person giving, for example 0244123456.',
