@@ -726,6 +726,54 @@
                 "security": []
             }
         },
+        "/v1/contributions/initiate": {
+            "post": {
+                "operationId": "contributions.initiate",
+                "summary": "Runs InitiateContributionAction for this request and returns the pending gift",
+                "tags": [
+                    "InitiateContribution"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InitiateContributionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`InitiatedContributionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/InitiatedContributionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/staff": {
             "post": {
                 "operationId": "staff.store",
@@ -6136,6 +6184,113 @@
                     "timestamp"
                 ],
                 "title": "HealthReportResource"
+            },
+            "InitiateContributionRequest": {
+                "type": "object",
+                "description": "Validates a mobile money gift that starts a payment (docs/08, Initiate MoMo / Card Payment). Everything it points at must\nbelong to this church. The gift keeps to the digital limits (D-018); the limits are checked on the gift, not on the total with\nthe processing fee. Cards are not taken yet.",
+                "properties": {
+                    "member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "service_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "pledge_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "fund_type_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 30000
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "description": "The allowed payment method values, stored as a plain string column (D-017).\n",
+                        "const": "momo"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{7,14}$"
+                    },
+                    "network": {
+                        "$ref": "#/components/schemas/MomoNetwork"
+                    }
+                },
+                "required": [
+                    "fund_type_id",
+                    "amount",
+                    "payment_method",
+                    "phone",
+                    "network"
+                ],
+                "title": "InitiateContributionRequest"
+            },
+            "InitiatedContributionResource": {
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string"
+                    },
+                    "authorization_url": {
+                        "type": "null"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed",
+                            "failed"
+                        ]
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "amount_formatted": {
+                        "type": "string"
+                    },
+                    "processing_fee": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "processing_fee_formatted": {
+                        "type": "string"
+                    },
+                    "total_paid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "total_paid_formatted": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reference",
+                    "authorization_url",
+                    "status",
+                    "amount",
+                    "amount_formatted",
+                    "processing_fee",
+                    "processing_fee_formatted",
+                    "total_paid",
+                    "total_paid_formatted"
+                ],
+                "title": "InitiatedContributionResource"
             },
             "InviteStaffRequest": {
                 "type": "object",

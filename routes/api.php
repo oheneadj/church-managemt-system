@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Church\ShowChurchSettingsController;
 use App\Http\Controllers\Api\V1\Church\ShowPayoutAccountController;
 use App\Http\Controllers\Api\V1\Church\UpdateChurchProfileController;
 use App\Http\Controllers\Api\V1\Church\UpdateChurchSettingsController;
+use App\Http\Controllers\Api\V1\Contributions\InitiateContributionController;
 use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
 use App\Http\Controllers\Api\V1\Contributions\ShowContributionController;
 use App\Http\Controllers\Api\V1\Contributions\StoreContributionController;
@@ -181,6 +182,7 @@ Route::middleware('tenant')->group(function (): void {
 
         Route::get('contributions', ListContributionsController::class)->name('contributions.index');
         Route::post('contributions', StoreContributionController::class)->middleware('idempotent')->name('contributions.store');
+        Route::post('contributions/initiate', InitiateContributionController::class)->middleware(['idempotent', 'throttle:gift-initiate'])->name('contributions.initiate');
         Route::get('contributions/{contribution}', ShowContributionController::class)->name('contributions.show');
         Route::patch('contributions/{contribution}/void', VoidContributionController::class)->name('contributions.void');
 

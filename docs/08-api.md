@@ -842,29 +842,39 @@ Permission: giving.record
 POST /api/v1/contributions/initiate
 Authorization: Bearer {token}
 Permission: giving.record
+Idempotency-Key: required
 ```
+> **Built (D-069 step d3):** mobile money. A card payment (`payment_method: card`) is refused with `422` until card giving is built (A4).
 
 **Body:**
 ```json
 {
   "member_id": "ulid",
   "fund_type_id": "ulid",
-  "amount": 200.00,
+  "service_id": "ulid",
+  "pledge_id": "ulid",
+  "amount": "200.00",
   "payment_method": "momo",
-  "phone": "+233244123456"
+  "phone": "0244123456",
+  "network": "mtn"
 }
 ```
+`member_id`, `service_id` and `pledge_id` are optional and must belong to the church (a member who has died is refused). `amount` is the **gift**, from GHS 1.00 to GHS 30,000.00 (`giving.min_digital_gift`, `giving.max_digital_gift`); the limits are on the gift, not on the total with the fee. `network` is `mtn`, `telecel` or `at`. `phone` may be local or international.
 
-**Response `200`:**
+**Response `202`** (a worker asks the provider to send the prompt; the request never waits on the provider):
 ```json
-{
-  "reference": "01j8k2m4n5p6q7r8s9t0u1v2w3",   // our ULID for this attempt; also sent to the provider as its client reference / idempotency key
-  "authorization_url": null,                    // only set for card payments (Paystack hosted checkout)
-  "status": "pending"
-}
+{ "data": {
+  "reference": "01j8k2m4n5p6q7r8s9t0u1v2w3",
+  "authorization_url": null,
+  "status": "pending",
+  "amount": "200.00", "amount_formatted": "GHS 200.00",
+  "processing_fee": "3.98", "processing_fee_formatted": "GHS 3.98",
+  "total_paid": "203.98", "total_paid_formatted": "GHS 203.98"
+} }
 ```
+`reference` is the gift's own `id`, which is also what the provider is given as its client reference, so a retry never charges twice. `authorization_url` is only for cards. The giver pays the collection fee (1.99%, `giving.collection_fee_rate`) **on top of** the gift: the church is credited the full `amount`. The gift is saved `pending` and is left out of every total, list, pledge sum and receipt until the provider confirms, when it becomes `completed` or `failed` (D-053). A retry with the same `Idempotency-Key` returns the same answer and starts one payment. The phone number is never stored on the gift; it travels in an encrypted queued job.
 
-The contribution row is created now with `status: pending`, and `reference` is its `id` (D-053). When the provider confirms, by webhook or by our polling fallback, it becomes `completed` (the receipt and payout follow) or `failed` (nothing follows, and the finance secretary can record the gift as cash instead). Only `completed` gifts count in totals, reports and pledges. Do not create a duplicate record manually; a retry with the same `Idempotency-Key` returns the same `reference`.
+**Errors:** `400` without an `Idempotency-Key`; `422` per field, and `422` on `payment_method` while the church has no payout account the provider has named (Payout Account above); `401`; `403` without `giving.record`; `429` past the limit.
 
 ---
 
@@ -1496,6 +1506,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 | `POST /api/v1/onboarding/churches` | 10 per IP per hour; 5 wrong codes per phone, then a 15-minute lockout |
 | `POST /api/v1/messages/broadcast` | 10 per hour per church |
 | `POST /api/v1/sms-credits/purchases` | 10 per hour per church |
+| `POST /api/v1/contributions/initiate` | 10 per minute per staff member (a prompt goes to a phone) |
 | All other authenticated endpoints | 300 per minute per token |
 
 Rate limit headers returned on every response:

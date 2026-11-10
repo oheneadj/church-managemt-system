@@ -99,6 +99,17 @@ interface ContributionRepositoryInterface
     public function create(array $attributes): Contribution;
 
     /**
+     * The gift with this id, if there is one. The queued payment jobs use it: no church is bound there, so it finds the gift
+     * wherever it is.
+     */
+    public function find(string $id): ?Contribution;
+
+    /**
+     * Saves a change to a gift.
+     */
+    public function save(Contribution $contribution): Contribution;
+
+    /**
      * Fills the fund name on gifts that have none, from the fund's current name, a batch at a time, in every church
      * (a data migration, D-048). Returns how many gifts were filled. This deliberately looks past the church scope.
      */

@@ -29,6 +29,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $fund_type_id
  * @property string $fund_name the fund's name when the gift was recorded; a later rename does not change it
  * @property string $amount
+ * @property string|null $processing_fee what the giver paid on top of the gift for the collection (null for cash)
+ * @property string|null $total_paid the gift and the processing fee together (null for cash)
+ * @property string|null $payperlez_reference the provider's reference for the collection, once it has one
  * @property PaymentMethod $payment_method
  * @property ContributionStatus $status
  * @property bool $is_voided

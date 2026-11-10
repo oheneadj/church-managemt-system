@@ -231,6 +231,24 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     }
 
     /**
+     * The gift with this id, if there is one.
+     */
+    public function find(string $id): ?Contribution
+    {
+        return Contribution::query()->find($id);
+    }
+
+    /**
+     * Saves a change to a gift.
+     */
+    public function save(Contribution $contribution): Contribution
+    {
+        $contribution->save();
+
+        return $contribution;
+    }
+
+    /**
      * Fills the fund name on gifts that have none, from the fund's current name, a batch at a time, in every church.
      */
     public function backfillFundNames(int $chunk): int

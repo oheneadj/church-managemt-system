@@ -134,6 +134,11 @@ class AppServiceProvider extends ServiceProvider
             ->by($this->tenantKey($request))
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can start at most '.config('limits.credit_purchases_per_hour').' credit purchases per hour.'], 429, $headers)));
 
+        // A payment prompt goes to someone's phone, so one staff member may start only a few a minute.
+        RateLimiter::for('gift-initiate', fn (Request $request) => Limit::perMinute(config('limits.gift_initiations_per_minute'))
+            ->by($request->user()?->getAuthIdentifier() ?? $request->ip())
+            ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can start at most '.config('limits.gift_initiations_per_minute').' gift payments per minute.'], 429, $headers)));
+
         RateLimiter::for('broadcast', fn (Request $request) => Limit::perHour(config('limits.broadcasts_per_hour'))
             ->by($this->tenantKey($request))
             ->response(fn (Request $request, array $headers) => response()->json(['message' => 'You can send at most '.config('limits.broadcasts_per_hour').' broadcasts per hour.'], 429, $headers)));

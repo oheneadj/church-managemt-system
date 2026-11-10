@@ -38,6 +38,9 @@ return [
     // Starting a payment for SMS credits sends a prompt to a phone, so a church may start a few an hour (docs/08, Rate Limits).
     'credit_purchases_per_hour' => 10,
 
+    // Starting a gift payment sends a prompt to a phone, so each staff member may start only so many a minute (docs/08, Rate Limits).
+    'gift_initiations_per_minute' => 10,
+
     // Exports read a lot of personal data and use a worker, so each staff member may start a few an hour (QA-11 TC-11-12).
     'exports_per_hour' => 5,
 
