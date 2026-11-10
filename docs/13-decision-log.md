@@ -1336,6 +1336,27 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-073 — Anyone can give from a public page, with no staff involved
+**Date:** November 2026
+**Decided by:** Product Owner (how giving works in a church; the channels, the service link, the giver and the limits, 10 Nov 2026), Lead Engineer (how it is built)
+**Status:** Active. Recorded now; built in steps after D-069 d3.
+
+**Decision:**
+1. **How giving really works in a church:** the offering is taken together and recorded by staff (cash); or people scan a QR code, dial USSD, or open a link to a page where they enter their own amount and pay. **Anyone at all can give, and they need nobody to enter it for them.** After each service the money that came in both ways is recorded together (the Sunday offering report, D-049). The staff-entered mobile money gift built in D-069 d3 (`POST /contributions/initiate`) stays for a staff member helping someone, but it is not the main way.
+2. **Channels, first the link and QR page.** Each church has a public giving page on its own address (`grace.yourapp.com/give`), with no sign-in; the church prints the QR code or shares the link. **USSD comes later** (D-019, its provider is unverified).
+3. **The church comes only from the page's address,** never from anything the giver types. The fund and the service must belong to that church, and the money goes only to that church's verified payout account. A church with no verified payout account has no giving page ("Giving is not available here yet"). A gift can never be sent to a different church from this page.
+4. **The service is linked automatically,** by the day and time: a gift given while a service is open, or on the day of a service, is attached to it, so the offering report adds cash and electronic together. Staff can move a gift to another service afterwards.
+5. **The giver:** if the phone number matches a member of that church the gift is linked to them (they approve the payment on that phone, which shows they control it) and they get the receipt; otherwise it is anonymous, with an optional name. The page never says whether a number matched a member.
+6. **Protection from abuse** (the page can send a payment prompt to any phone, so it must not be usable to pester someone): one prompt per phone every 60 seconds (a rate limit, not a total, so a person on a bad network can keep trying); 100 prompts an hour per internet address (high, because a whole congregation shares the church wifi or one mobile network after a service); the same phone asking for the same amount to the same church while an earlier prompt is unpaid, within about 5 minutes, gets that gift sent again and not a new one; an unpaid prompt expires after 30 minutes and becomes failed; receipt texts go only for paid gifts, so nobody can drain a church's SMS credits; a hidden trap field catches bots; **no bot check for now**, added later if abuse is seen. Every number is in `config/limits.php`.
+7. **Order of building, each its own commit:** (g1) what the page needs to show (the church, its funds, whether giving is available); (g2) starting a public gift, with the limits, the trap field and the reuse of a repeated attempt; (g3) the automatic service link and the member match; (g4) expiring unpaid gifts, with settling and polling (D-069 d3c); (g5) the public React page and the QR code on the church's screens.
+
+**Rationale:** It is how giving is done in a church, and it is the only way a congregation can give without a staff member typing each gift. Making the limits a rate and not a total keeps it usable on a poor network.
+
+**Revisit when:** abuse is seen (add a bot check), the USSD provider is verified, or a church asks to take gifts for more than one church from one page.
+
+---
+
+
 
 ---
 

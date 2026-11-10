@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### docs(giving): D-073, anyone can give from a public page (2026-11-10)
+- **What:** Decision D-073 in the decision log: how giving works in a church (cash recorded together by staff; the QR code, the link and USSD for people to give themselves), the public giving page on each church's own address, the rule that the church comes only from the address, the automatic link to the service, the member match by phone, the limits that protect the page (one prompt per phone a minute, 100 an hour per address, a repeated attempt reused, unpaid gifts expire after 30 minutes, a hidden trap field, no bot check for now) and the order of building (g1 to g5).
+- **Why:** The Product Owner explained that anyone can give without help, which the staff-only gift of D-069 d3 does not cover. The agreement says to document a decision that changes the plan before building it.
+- **Files:** docs/13-decision-log.md, CHANGELOG.md
+- **Commit:** pending
+
 #### feat(ui): an amount field that takes only numbers and opens the number keypad (2026-11-10)
 - **What:** A shared `AmountField` (`components/form`) for amounts of cedis: only digits and one decimal point can be typed or pasted, with at most two decimals, so a letter, a sign, a space or a second point never appears; it is a text input with `inputmode="decimal"`, so a phone opens the numeric keypad (a number input still let letters such as "e" through on a computer). `sanitizeAmountInput` in `utils/money.ts` does the cleaning, and the form gets the cleaned value. It replaces the number input on the cash gift form and the pledge form. A pledge's amount now shows as stored (1000.00).
 - **Why:** The owner asked that the amount take only numbers and bring up the numeric keyboard on a phone. The server still checks every amount, so this is only a help to the person typing. 21 new tests (the cleaning rules, the keypad, typing letters, pasting, the cleaned value reaching the form, the error); the cleaning step was broken on purpose and 11 of them failed. The existing browser tests for giving, pledges and the offering report pass in real Chrome.
