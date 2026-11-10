@@ -17,7 +17,10 @@ interface TableProps extends ComponentProps<'table'> {
  */
 function Table({ className, refreshing = false, ...props }: TableProps) {
     return (
-        <div data-slot="table-container" className="relative w-full overflow-x-auto rounded-xl border bg-card">
+        <div
+            data-slot="table-container"
+            className="relative w-full overflow-x-auto rounded-xl bg-card border border-neutral-300 dark:border-border"
+        >
             <table
                 data-slot="table"
                 aria-busy={refreshing || undefined}
@@ -39,7 +42,7 @@ function TableCaption({ className, ...props }: ComponentProps<'caption'>) {
 }
 
 function TableHeader({ className, ...props }: ComponentProps<'thead'>) {
-    return <thead data-slot="table-header" className={cn('bg-muted [&_tr]:border-b', className)} {...props} />;
+    return <thead data-slot="table-header" className={cn('[&_tr]:border-b', className)} {...props} />;
 }
 
 function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
@@ -69,7 +72,7 @@ function TableHead({ className, numeric = false, ...props }: ComponentProps<'th'
             data-numeric={numeric || undefined}
             scope="col"
             className={cn(
-                'h-11 px-4 align-middle text-caption font-medium whitespace-nowrap text-muted-foreground',
+                'h-11 px-4 align-middle text-caption font-semibold whitespace-nowrap text-foreground',
                 numeric && 'text-right',
                 className,
             )}

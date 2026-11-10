@@ -281,10 +281,10 @@ describe('radius and elevation', () => {
     it.each([
         ['--radius-sm', 4],
         ['--radius-md', 6],
-        ['--radius-lg', 8],
-        ['--radius-xl', 12],
-        ['--radius-2xl', 16],
-    ])('sets %s at %dpx, so controls (rounded-lg) are 8px and surfaces (rounded-xl) 12px', (name, size) => {
+        ['--radius-lg', 12],
+        ['--radius-xl', 16],
+        ['--radius-2xl', 20],
+    ])('sets %s at %dpx, so controls (rounded-lg) are 12px and surfaces (rounded-xl) 16px', (name, size) => {
         expect(pixels(roles[name] ?? '')).toBe(size);
     });
 

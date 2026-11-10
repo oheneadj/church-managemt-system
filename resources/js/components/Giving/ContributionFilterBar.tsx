@@ -21,7 +21,10 @@ export function ContributionFilterBar({ filters, onChange, onClear }: Contributi
     const active = filters.from !== '' || filters.to !== '' || filters.fund !== '' || filters.method !== '' || filters.voided;
 
     return (
-        <section aria-label="Filters" className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl border bg-card p-4 shadow-xs sm:grid-cols-2">
+        <section
+            aria-label="Filters"
+            className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl bg-card p-4 border border-neutral-300 dark:border-border sm:grid-cols-2 lg:grid-cols-4"
+        >
             <DateFilter id="gift-from" label="From" value={filters.from} onChange={(iso) => onChange('from', iso)} />
             <DateFilter id="gift-to" label="To" value={filters.to} onChange={(iso) => onChange('to', iso)} />
             <SelectField
@@ -40,7 +43,7 @@ export function ContributionFilterBar({ filters, onChange, onClear }: Contributi
                 value={filters.method}
                 onChange={(event) => onChange('method', event.target.value)}
             />
-            <div className="flex items-center gap-4 sm:col-span-2">
+            <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-4">
                 <label className="flex items-center gap-2 text-body-sm">
                     <input
                         type="checkbox"

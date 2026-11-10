@@ -132,12 +132,12 @@ A 4px base: Tailwind's spacing scale, unchanged, where one step is 0.25rem. The 
 |---|---|---|---|
 | Extra small | 4px | `rounded-sm` | Tags, small marks |
 | Small | 6px | `rounded-md` | Tabs, small controls |
-| Medium | 8px | `rounded-lg` | **Controls: buttons, fields, menus' items** |
-| Large | 12px | `rounded-xl` | **Surfaces: cards, dialogs, toasts, popovers** |
-| Extra large | 16px | `rounded-2xl` | Large feature surfaces, sparingly |
+| Medium | 12px | `rounded-lg` | **Controls: buttons, fields, menus' items** |
+| Large | 16px | `rounded-xl` | **Surfaces: cards, dialogs, toasts, popovers** |
+| Extra large | 20px | `rounded-2xl` | Large feature surfaces, sparingly |
 | Full | 9999px | `rounded-4xl` or `rounded-full` | Badges, avatars, switches |
 
-The utility names are shadcn's; the sizes are the brief's. Anything rounder than 16px (except full) is not used.
+The utility names are shadcn's; the sizes are the brief's. Anything rounder than 20px (except full) is not used.
 
 ## 5a. Charts and stat cards
 
