@@ -27,7 +27,17 @@ export function useMemberMutations() {
         }),
 
         uploadPhoto: useMutation({
-            mutationFn: ({ id, photo }: { id: string; photo: File }) => membersApi.uploadPhoto(id, photo),
+            mutationFn: ({
+                id,
+                photo,
+                onProgress,
+                signal,
+            }: {
+                id: string;
+                photo: File;
+                onProgress?: (percent: number) => void;
+                signal?: AbortSignal;
+            }) => membersApi.uploadPhoto(id, photo, { onProgress, signal }),
             onSuccess: refresh,
         }),
 

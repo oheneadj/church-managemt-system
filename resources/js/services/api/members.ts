@@ -22,12 +22,28 @@ export const membersApi = {
     changeStatus: (id: string, status: MemberStatus, note: string | null): Promise<Member> =>
         api.patch<{ data: Member }>(`/members/${id}/status`, { status, note }).then((r) => r.data.data),
 
-    /** Sends the photo as a file upload and returns the new signed link. */
-    uploadPhoto: (id: string, photo: File): Promise<string> => {
+    /**
+     * Sends the photo as a file upload and returns the new signed link. `onProgress` is called with how far the upload really is, 0 to
+     * 100, as the browser sends it; `signal` lets the caller cancel it. Neither is needed.
+     */
+    uploadPhoto: (
+        id: string,
+        photo: File,
+        options: { onProgress?: (percent: number) => void; signal?: AbortSignal } = {},
+    ): Promise<string> => {
         const body = new FormData();
         body.append('photo', photo);
 
-        return api.post<{ photo_url: string }>(`/members/${id}/photo`, body).then((r) => r.data.photo_url);
+        return api
+            .post<{ photo_url: string }>(`/members/${id}/photo`, body, {
+                signal: options.signal,
+                onUploadProgress: (event) => {
+                    if (event.progress !== undefined) {
+                        options.onProgress?.(Math.round(event.progress * 100));
+                    }
+                },
+            })
+            .then((r) => r.data.photo_url);
     },
 
     /** Everything held about the member, for a subject access request. The shape is the JSON the server sends. */

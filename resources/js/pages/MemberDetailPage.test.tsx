@@ -202,37 +202,62 @@ describe('MemberDetailPage', () => {
     });
 
     describe('photo', () => {
-        function pickFile(file: File) {
-            fireEvent.change(screen.getByLabelText('Member photo file'), { target: { files: [file] } });
+        async function openDialog() {
+            const user = userEvent.setup();
+            await user.click(await screen.findByRole('button', { name: 'Change photo' }));
+
+            return { user, dialog: await screen.findByRole('dialog', { name: 'Change photo' }) };
         }
 
-        it('uploads a JPG', async () => {
+        function pickFile(file: File) {
+            fireEvent.change(screen.getByLabelText('Member photo'), { target: { files: [file] } });
+        }
+
+        it('opens a dialog that says the rules before anything is chosen', async () => {
+            open(EDITOR);
+
+            const { dialog } = await openDialog();
+
+            expect(within(dialog).getByText('JPEG or PNG, up to 5 MB.')).toBeInTheDocument();
+        });
+
+        it('uploads a JPG, sending the file with a way to follow and to stop it', async () => {
+            URL.createObjectURL = () => 'blob:preview';
+            URL.revokeObjectURL = () => undefined;
             vi.mocked(membersApi.uploadPhoto).mockResolvedValue('https://signed.example/photo.jpg');
             open(EDITOR);
-            await screen.findByRole('button', { name: 'Change photo' });
+            await openDialog();
 
             pickFile(new File(['x'], 'me.jpg', { type: 'image/jpeg' }));
 
-            await waitFor(() => expect(membersApi.uploadPhoto).toHaveBeenCalledWith('member-1', expect.any(File)));
+            await waitFor(() =>
+                expect(membersApi.uploadPhoto).toHaveBeenCalledWith(
+                    'member-1',
+                    expect.any(File),
+                    expect.objectContaining({ signal: expect.any(AbortSignal), onProgress: expect.any(Function) }),
+                ),
+            );
         });
 
-        it('refuses a file that is not a JPG or PNG, without calling the server', async () => {
+        it('refuses a file that is not a JPG or PNG, in words inside the dialog, without calling the server', async () => {
             open(EDITOR);
-            await screen.findByRole('button', { name: 'Change photo' });
+            const { dialog } = await openDialog();
 
             pickFile(new File(['x'], 'cv.pdf', { type: 'application/pdf' }));
 
+            expect(await within(dialog).findByRole('alert')).toHaveTextContent('cv.pdf is not an accepted image. Use JPEG or PNG.');
             expect(membersApi.uploadPhoto).not.toHaveBeenCalled();
         });
 
-        it('refuses a photo over 5 MB, without calling the server', async () => {
+        it('refuses a photo over 5 MB, saying how big it is, without calling the server', async () => {
             open(EDITOR);
-            await screen.findByRole('button', { name: 'Change photo' });
+            const { dialog } = await openDialog();
             const big = new File(['x'], 'big.jpg', { type: 'image/jpeg' });
             Object.defineProperty(big, 'size', { value: 6 * 1024 * 1024 });
 
             pickFile(big);
 
+            expect(await within(dialog).findByRole('alert')).toHaveTextContent('big.jpg is 6 MB. The most allowed is 5 MB.');
             expect(membersApi.uploadPhoto).not.toHaveBeenCalled();
         });
     });

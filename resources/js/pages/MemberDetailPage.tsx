@@ -31,14 +31,14 @@ export function MemberDetailPage() {
     const [changingStatus, setChangingStatus] = useState(false);
 
     if (member.isPending) {
-        return <Skeleton aria-busy="true" className="mx-auto h-64 max-w-3xl rounded-xl" />;
+        return <Skeleton aria-busy="true" className="h-64 w-full rounded-xl" />;
     }
 
     if (member.isError) {
         const refused = member.error instanceof ApiError && (member.error.status === 404 || member.error.status === 403);
 
         return (
-            <div className="mx-auto flex max-w-3xl flex-col gap-3">
+            <div className="flex flex-col gap-3">
                 <ErrorNotice
                     message={refused ? 'This member was not found, or you do not have access to them.' : member.error.message}
                     onRetry={refused ? undefined : () => void member.refetch()}
@@ -55,8 +55,11 @@ export function MemberDetailPage() {
     const editable = canEdit && record.status !== 'deceased';
 
     return (
-        <div className="mx-auto flex max-w-3xl flex-col gap-4">
-            <Link to={ROUTES.MEMBERS} className="text-sm underline underline-offset-4">
+        <div className="flex flex-col gap-6">
+            <Link
+                to={ROUTES.MEMBERS}
+                className="w-fit text-body-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
                 ← All members
             </Link>
             <MemberHeader member={record} fullName={fullName} editable={editable} onChangeStatus={() => setChangingStatus(true)} />

@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MoneyDisplay } from '@/components/ui/MoneyDisplay';
+import { StatCard } from '@/components/Charts/StatCard';
 import type { GivingSummary } from '@/types/members';
 
 interface MemberGivingTabProps {
@@ -8,12 +7,12 @@ interface MemberGivingTabProps {
 }
 
 /**
- * What the member has given this year, this month and in total. Roles without giving access see a plain
- * message instead; the amounts are never calculated in the browser.
+ * What the member has given this month, this year and in total, as stat cards. Roles without giving access see a plain
+ * message instead; the amounts are the texts the server formatted and are never calculated in the browser.
  */
 export function MemberGivingTab({ summary }: MemberGivingTabProps) {
     if (summary === undefined) {
-        return <p className="text-sm text-muted-foreground">Your role does not include giving details.</p>;
+        return <p className="text-body text-muted-foreground">Your role does not include giving details.</p>;
     }
 
     const totals = [
@@ -23,16 +22,9 @@ export function MemberGivingTab({ summary }: MemberGivingTabProps) {
     ];
 
     return (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {totals.map((total) => (
-                <Card key={total.label} size="sm">
-                    <CardHeader>
-                        <CardTitle>{total.label}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-lg font-semibold">
-                        <MoneyDisplay formatted={total.formatted} />
-                    </CardContent>
-                </Card>
+                <StatCard key={total.label} label={total.label} value={total.formatted} />
             ))}
         </div>
     );

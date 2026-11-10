@@ -60,6 +60,26 @@ describe('membersApi', () => {
         expect((body as FormData).get('photo')).toBe(file);
     });
 
+    it("reports the upload's real progress as a whole percentage, and lets the caller cancel it", async () => {
+        vi.mocked(api.post).mockImplementation((_path, _body, config) => {
+            config?.onUploadProgress?.({ loaded: 1, bytes: 1, lengthComputable: true, progress: 0.256 });
+            config?.onUploadProgress?.({ loaded: 2, bytes: 1, lengthComputable: false });
+
+            return respond({ photo_url: 'https://signed.example/p.jpg' });
+        });
+        const onProgress = vi.fn();
+        const controller = new AbortController();
+
+        await membersApi.uploadPhoto('member-1', new File(['x'], 'me.jpg', { type: 'image/jpeg' }), {
+            onProgress,
+            signal: controller.signal,
+        });
+
+        expect(onProgress).toHaveBeenCalledOnce();
+        expect(onProgress).toHaveBeenCalledWith(26);
+        expect(vi.mocked(api.post).mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    });
+
     it('adds a milestone to the member', async () => {
         vi.mocked(api.post).mockReturnValue(respond({ data: { id: 'ms1' } }));
 

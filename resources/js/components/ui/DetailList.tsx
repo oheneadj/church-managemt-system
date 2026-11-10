@@ -15,11 +15,11 @@ interface DetailListProps {
  */
 export function DetailList({ items }: DetailListProps) {
     return (
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
             {items.map((item) => (
                 <div key={item.label}>
-                    <dt className="text-xs text-muted-foreground">{item.label}</dt>
-                    <dd className="text-sm">{item.value === null || item.value === '' ? '—' : item.value}</dd>
+                    <dt className="text-body-sm text-muted-foreground">{item.label}</dt>
+                    <dd className="text-body">{item.value === null || item.value === '' ? '—' : item.value}</dd>
                 </div>
             ))}
         </dl>
