@@ -1318,6 +1318,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-072 — Payout rates, and a church that settles to a bank waits for GHS 100
+**Date:** November 2026
+**Decided by:** Product Owner (the rates and the minimum, 10 Nov 2026; the choice of option 3), Lead Engineer (how it is built)
+**Status:** Active. Recorded now; built with D-069 steps d3 and e.
+
+**Decision:**
+1. **PayPerlez's charges are 1.99% on a collection and 1.59% on settlement** (the payout to the church); SMS is GHS 0.028 a message. The giver pays the collection charge on top of the gift (D-018); the church bears the settlement charge, taken from what we send. Both rates live in `config/giving.php`, not in code.
+2. **A bank settlement has a minimum of GHS 100.** A mobile money payout has no minimum stated.
+3. **The church chooses where it is paid, and knows the cost of each.** A church that settles to **mobile money** is paid for every gift at once (D-018, D-069 point 4). A church that settles to a **bank account** is paid when its settled gifts reach GHS 100, so small gifts wait in the provider account until then. This is a known, accepted exception to D-069 point 4 for bank churches only, and the church is told so when it picks a bank (the screen says "paid once your gifts reach GHS 100").
+4. **Held gifts are never lost or mixed:** each gift keeps its own `disbursements` row, so what is waiting for a church is always the sum of its unpaid rows, shown to the admin, and one bank payout covers several rows. The minimum is a setting (`giving.bank_payout_minimum`), not hard-coded.
+
+**Rationale:** Most gifts are under GHS 100, so paying a bank per gift is impossible; mobile money-only would leave banks out. Letting the church choose keeps both with the cost stated. The Product Owner chose this over the other two options.
+
+**Revisit when:** PayPerlez changes the bank minimum or its rates, or the legal opinion (B1) objects to holding a bank church's gifts.
+
+---
+
+
 ---
 
 ## Deferred Decisions

@@ -1116,3 +1116,12 @@ All integration credentials are environment variables managed by Coolify. They a
 - Stored encrypted at rest by Coolify
 
 **Rotation procedure:** See [`16-deployment-and-ops.md`](./16-deployment-and-ops.md).
+
+
+---
+
+## PayPerlez published rates (10 November 2026)
+
+From PayPerlez's public pricing, given by the Product Owner: **collections 1.99%** (mobile money, cards and USDT), **disbursements 1.59%**, **SMS GHS 0.028 per message**. Not yet in code: the fee estimate shown to a giver (D-018) and the church's payout fee (the 1.59% is taken from what we send, so the church bears it) will read these from `config/giving.php` when the initiate-a-gift step (D-069 d3) is built. The Product Owner confirmed that 1.99% is what is charged on a collection and 1.59% on settlement (the payout to the church). No minimum fee is stated, and the SMS price is the published one, which may change with volume.
+
+**Bank settlement minimum (Product Owner, 10 Nov 2026):** a payout to a bank account must be at least **GHS 100**. A mobile money payout has no minimum stated. Decided in **D-072**: the church chooses. A mobile money church is paid per gift; a bank church is paid when its settled gifts reach GHS 100 (`giving.bank_payout_minimum`), so small gifts wait, and the church is told when it picks a bank.
