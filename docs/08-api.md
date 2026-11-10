@@ -1408,6 +1408,30 @@ Permission: church.settings (church admin)
 
 ---
 
+## Payout Account
+
+> **D-069 step d2, story 4.1.** Where the church's digital gifts are paid out. Both need `church.settings` (church admin); anyone else is `403`. It is always the signed-in church's own account.
+
+### Get the payout account
+```
+GET /api/v1/church/payout-account
+```
+**Response `200`:**
+```json
+{ "data": { "status": "verified", "method": "momo", "network": "mtn", "bank_code": null, "account_number_hint": "***456", "account_name": "GRACE ASSEMBLY CHURCH", "verified_at": "2026-11-10T09:30:00+00:00", "error": null } }
+```
+`status` is `not_set`, `checking` (saved, waiting for the provider), `verified` (the provider named the account) or `failed` (it could not; `error` says why). Digital giving needs `verified`. The number is never sent in full, only `account_number_hint` (the last three digits).
+
+### Set the payout account
+```
+PUT /api/v1/church/payout-account
+```
+**Body:** a wallet `{ "method": "momo", "network": "mtn|telecel|at", "account_number": "0244123456" }` (a Ghana number, local or international) or a bank account `{ "method": "bank", "bank_code": "058", "account_number": "0123456789" }` (6 to 20 digits). `network` is refused on a bank and `bank_code` on a wallet.
+
+**Response `202`:** the same shape as Get, with `status: checking`. The check is queued on the `payments` queue (a request never waits on the provider): a worker asks the provider to name the account (`POST /account-name`) and keeps the name and `verified_at`, or the reason in `error`. Changing the account clears the earlier name and check, so giving stays off until the new account is named; saving the same account again changes nothing. A check that finishes after the account was changed again is thrown away. The history records that the account changed, with the number hidden. `422` for anything missing or wrong.
+
+---
+
 ## Staff
 
 > **D-055.** All need `staff.manage` (church admin). A staff member of another church is `404`. **Built:** list, invite, change name, phone and role, deactivate or reactivate, and extra permissions.

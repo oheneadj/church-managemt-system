@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\DTOs\Payments\PayoutAccount;
 use App\Enums\ChurchPlan;
 use App\Enums\MomoNetwork;
 use App\Enums\PayoutMethod;
@@ -22,6 +23,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $slug
  * @property array<string, mixed>|null $settings the church's own choices; a setting it never chose is not in it (see settingsWithDefaults)
  * @property ChurchPlan $plan
+ * @property PayoutMethod|null $payout_method
+ * @property MomoNetwork|null $payout_network
+ * @property string|null $payout_bank_code
+ * @property string|null $payout_account_number
+ * @property string|null $payout_account_name the holder's name as the provider named the account
+ * @property CarbonImmutable|null $payout_verified_at
+ * @property string|null $payout_check_error why the provider could not name the account
  * @property CarbonImmutable|null $cancelled_at
  * @property CarbonImmutable|null $purged_at
  */
@@ -49,9 +57,11 @@ class Church extends Model
         'paystack_subaccount_code',
         'payout_method',
         'payout_network',
+        'payout_bank_code',
         'payout_account_number',
         'payout_account_name',
         'payout_verified_at',
+        'payout_check_error',
         'sms_credits',
         'whatsapp_opted_in',
         'ussd_code',
@@ -118,6 +128,35 @@ class Church extends Model
     public function sendsAbsenceAlerts(): bool
     {
         return (bool) data_get($this->settings, 'absent_alert', config('attendance.absent_alert_default'));
+    }
+
+    /**
+     * The payout account as the provider takes it, or null when none is set.
+     */
+    public function payoutAccount(): ?PayoutAccount
+    {
+        if ($this->payout_method === null || $this->payout_account_number === null) {
+            return null;
+        }
+
+        return match ($this->payout_method) {
+            PayoutMethod::Momo => $this->payout_network === null ? null : PayoutAccount::momo($this->payout_account_name ?? '', $this->payout_account_number, $this->payout_network),
+            PayoutMethod::Bank => $this->payout_bank_code === null ? null : PayoutAccount::bank($this->payout_account_name ?? '', $this->payout_account_number, $this->payout_bank_code),
+        };
+    }
+
+    /**
+     * Where the payout account stands: not_set, checking (waiting for the provider), verified, or failed (the provider could
+     * not name it). Digital giving needs verified.
+     */
+    public function payoutStatus(): string
+    {
+        return match (true) {
+            $this->payout_method === null => 'not_set',
+            $this->payout_verified_at !== null => 'verified',
+            $this->payout_check_error !== null => 'failed',
+            default => 'checking',
+        };
     }
 
     /**

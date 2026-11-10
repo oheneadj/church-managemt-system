@@ -3111,6 +3111,90 @@
                 }
             }
         },
+        "/v1/church/payout-account": {
+            "put": {
+                "operationId": "church.payout-account.update",
+                "summary": "Runs SetPayoutAccountAction for this request and returns the PayoutAccountResource, `202` because the check is still to come",
+                "tags": [
+                    "SetPayoutAccount"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetPayoutAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`PayoutAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PayoutAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "get": {
+                "operationId": "church.payout-account.show",
+                "summary": "Returns the payout account of the church the signed-in admin belongs to",
+                "tags": [
+                    "ShowPayoutAccount"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PayoutAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PayoutAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/v1/services/{service}/checkin": {
             "patch": {
                 "operationId": "services.checkin",
@@ -7798,6 +7882,87 @@
                 ],
                 "title": "PaymentMethod"
             },
+            "PayoutAccountResource": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "momo",
+                            "bank",
+                            null
+                        ]
+                    },
+                    "network": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "mtn",
+                            "telecel",
+                            "at",
+                            null
+                        ]
+                    },
+                    "bank_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "account_number_hint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "account_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "verified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "status",
+                    "method",
+                    "network",
+                    "bank_code",
+                    "account_number_hint",
+                    "account_name",
+                    "verified_at",
+                    "error"
+                ],
+                "title": "PayoutAccountResource"
+            },
+            "PayoutMethod": {
+                "type": "string",
+                "description": "Where a church's automatic payouts are sent (D-018, `churches.payout_method`): a mobile money wallet or a bank account.\n",
+                "enum": [
+                    "momo",
+                    "bank"
+                ],
+                "title": "PayoutMethod"
+            },
             "PlatformAdminResource": {
                 "type": "object",
                 "properties": {
@@ -8512,6 +8677,39 @@
                     "children"
                 ],
                 "title": "ServiceType"
+            },
+            "SetPayoutAccountRequest": {
+                "type": "object",
+                "description": "Validates where the church's digital gifts are to be paid out (docs/08, Payout Account). A mobile money wallet needs its\nnetwork and a Ghana number; a bank account needs the bank's code and an account number.",
+                "properties": {
+                    "method": {
+                        "$ref": "#/components/schemas/PayoutMethod"
+                    },
+                    "network": {
+                        "$ref": "#/components/schemas/MomoNetwork"
+                    },
+                    "bank_code": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9]{2,20}$"
+                    },
+                    "account_number": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\+[1-9]\\d{7,14}$"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "^[0-9]{6,20}$"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "method",
+                    "account_number"
+                ],
+                "title": "SetPayoutAccountRequest"
             },
             "SetServiceCheckinRequest": {
                 "type": "object",

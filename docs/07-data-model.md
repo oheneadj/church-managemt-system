@@ -75,9 +75,11 @@ The root tenant record. Every other table references this.
 | `paystack_subaccount_code` | VARCHAR(100) | Yes | Set during onboarding. Used for card payments only (Paystack split). |
 | `payout_method` | VARCHAR(30) | Yes | `PayoutMethod`: momo, bank. Where automatic disbursements are sent. Null = digital giving not yet enabled. |
 | `payout_network` | VARCHAR(30) | Yes | `MomoNetwork`: mtn, telecel, at (PayPerlez's code for AirtelTigo). Set when `payout_method` = momo. |
+| `payout_bank_code` | VARCHAR(20) | Yes | The bank's code. Set when `payout_method` = bank. |
 | `payout_account_number` | VARCHAR(50) | Yes | `[encrypted]` MoMo number or bank account number |
 | `payout_account_name` | VARCHAR(255) | Yes | Account holder name as verified by the provider |
 | `payout_verified_at` | TIMESTAMP | Yes | Set when the provider confirms the account. Digital giving stays disabled until set. |
+| `payout_check_error` | VARCHAR(255) | Yes | Why the provider could not name the account. Cleared when the account changes or is named. |
 | `sms_credits` | INT(11) | No | Current credit balance. Default: 0 |
 | `whatsapp_opted_in` | BOOLEAN | No | Default: false. Set when Meta account connected. |
 | `ussd_code` | VARCHAR(10) | Yes | Unique 4-digit church code for USSD giving (e.g. `1042` → dial `*713*1042#`). Auto-generated on onboarding. |

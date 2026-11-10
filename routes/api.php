@@ -18,8 +18,10 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\VerifyLoginController;
+use App\Http\Controllers\Api\V1\Church\SetPayoutAccountController;
 use App\Http\Controllers\Api\V1\Church\ShowChurchProfileController;
 use App\Http\Controllers\Api\V1\Church\ShowChurchSettingsController;
+use App\Http\Controllers\Api\V1\Church\ShowPayoutAccountController;
 use App\Http\Controllers\Api\V1\Church\UpdateChurchProfileController;
 use App\Http\Controllers\Api\V1\Church\UpdateChurchSettingsController;
 use App\Http\Controllers\Api\V1\Contributions\ListContributionsController;
@@ -191,6 +193,8 @@ Route::middleware('tenant')->group(function (): void {
         Route::put('church', UpdateChurchProfileController::class)->name('church.update');
         Route::get('church/settings', ShowChurchSettingsController::class)->name('church.settings.show');
         Route::put('church/settings', UpdateChurchSettingsController::class)->name('church.settings.update');
+        Route::get('church/payout-account', ShowPayoutAccountController::class)->name('church.payout-account.show');
+        Route::put('church/payout-account', SetPayoutAccountController::class)->name('church.payout-account.update');
 
         Route::get('messages', ListMessagesController::class)->name('messages.index');
         Route::post('messages/broadcast/estimate', EstimateBroadcastController::class)->name('messages.broadcast.estimate');
