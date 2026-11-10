@@ -80,6 +80,8 @@ class InitiateContributionRequest extends FormRequest
         return [
             'amount.min' => "The smallest mobile money gift is {$min}. Enter {$min} or more.",
             'amount.max' => "The largest mobile money gift is {$max}. Enter {$max} or less.",
+            'amount.numeric' => 'Enter the amount as a number, for example 50.00.',
+            'amount.required' => 'Enter the amount to give.',
             'amount.decimal' => 'Enter the amount in cedis and pesewas, for example 50.00.',
             'payment_method.enum' => 'Only mobile money can be taken for now. Record cash gifts as cash.',
             'phone.regex' => 'Enter the mobile money number of the person giving, for example 0244123456.',

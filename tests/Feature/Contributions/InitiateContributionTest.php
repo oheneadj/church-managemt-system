@@ -125,6 +125,8 @@ describe('what the refusals say', function (): void {
         initiateGift(['amount' => '0.50'])->assertJsonPath('errors.amount.0', 'The smallest mobile money gift is GHS 1.00. Enter GHS 1.00 or more.');
         initiateGift(['amount' => '40000'])->assertJsonPath('errors.amount.0', 'The largest mobile money gift is GHS 30,000.00. Enter GHS 30,000.00 or less.');
         initiateGift(['amount' => '10.555'])->assertJsonPath('errors.amount.0', 'Enter the amount in cedis and pesewas, for example 50.00.');
+        initiateGift(['amount' => 'abc'])->assertJsonPath('errors.amount.0', 'Enter the amount as a number, for example 50.00.');
+        initiateGift(['amount' => null])->assertJsonPath('errors.amount.0', 'Enter the amount to give.');
         initiateGift(['payment_method' => 'card'])->assertJsonPath('errors.payment_method.0', 'Only mobile money can be taken for now. Record cash gifts as cash.');
         initiateGift(['phone' => 'abc'])->assertJsonPath('errors.phone.0', 'Enter the mobile money number of the person giving, for example 0244123456.');
         initiateGift(['network' => 'vodafone'])->assertJsonPath('errors.network.0', 'Choose MTN, Telecel or AirtelTigo.');
