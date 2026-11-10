@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextAreaField } from '@/components/form/TextAreaField';
-import { TextField } from '@/components/form/TextField';
+import { AmountField } from '@/components/form/AmountField';
 import { blankGiftValues, giftFormSchema, toGiftInput, type GiftFormValues } from '@/components/Giving/giftFormSchema';
 import { MemberPicker } from '@/components/Members/MemberPicker';
 import { Button } from '@/components/ui/button';
@@ -105,15 +105,10 @@ function RecordGiftForm({ onClose }: { onClose: () => void }) {
                     error={errors.fund_type_id?.message}
                     {...form.register('fund_type_id')}
                 />
-                <TextField
+                <AmountField
                     id="record-gift-amount"
                     label="Amount (GHS)"
                     required
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="0.00"
                     error={errors.amount?.message}
                     {...form.register('amount')}
                 />

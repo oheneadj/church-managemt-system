@@ -152,7 +152,7 @@ describe('PledgeDialog: changing a pledge', () => {
         expect(screen.queryByLabelText('Member')).not.toBeInTheDocument();
         expect(screen.queryByLabelText(/^Fund/)).not.toBeInTheDocument();
         expect(screen.getByLabelText(/What it is for/)).toHaveValue('Building Fund 2026 pledge');
-        expect(screen.getByLabelText(/Amount pledged/)).toHaveValue(1000);
+        expect(screen.getByLabelText(/Amount pledged/)).toHaveValue('1000.00');
         expect(screen.getByLabelText(/Target date/)).toHaveValue('2026-12-31');
     });
 

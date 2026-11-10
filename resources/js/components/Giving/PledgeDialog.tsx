@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
+import { AmountField } from '@/components/form/AmountField';
 import { TextField } from '@/components/form/TextField';
 import {
     blankPledgeValues,
@@ -161,15 +162,10 @@ function PledgeForm({ pledge, onClose }: { pledge: Pledge | undefined; onClose: 
                     error={errors.description?.message}
                     {...form.register('description')}
                 />
-                <TextField
+                <AmountField
                     id="pledge-amount"
                     label="Amount pledged (GHS)"
                     required
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="0.00"
                     error={errors.amount_pledged?.message}
                     {...form.register('amount_pledged')}
                 />

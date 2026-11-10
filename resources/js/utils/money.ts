@@ -15,3 +15,21 @@ export function moneyToPesewas(text: string): bigint | null {
 
     return BigInt(match[1] ?? '0') * 100n + BigInt((match[2] ?? '').padEnd(2, '0'));
 }
+
+/**
+ * What is left of typed or pasted text once it can only be an amount of cedis: digits and at most one decimal point, with at most
+ * two digits after it. Letters, signs, spaces and a second point are dropped, so nothing but an amount can be typed.
+ */
+export function sanitizeAmountInput(text: string): string {
+    const cleaned = text.replace(/[^\d.]/g, '');
+    const point = cleaned.indexOf('.');
+
+    if (point === -1) {
+        return cleaned;
+    }
+
+    return `${cleaned.slice(0, point)}.${cleaned
+        .slice(point + 1)
+        .replace(/\./g, '')
+        .slice(0, 2)}`;
+}
