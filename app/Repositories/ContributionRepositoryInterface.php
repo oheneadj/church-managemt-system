@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 
 /**
@@ -109,6 +110,19 @@ interface ContributionRepositoryInterface
      * and amount, started since the given moment. A person who taps Pay again, or whose prompt never arrived, gets this one back.
      */
     public function findWaitingFor(string $phoneHash, string $fundTypeId, string $amount, DateTimeInterface $since): ?Contribution;
+
+    /**
+     * The gift with this id, locked until the transaction ends, or null when there is none. Settling uses it, so a webhook and a
+     * check that arrive together take turns.
+     */
+    public function lockById(string $id): ?Contribution;
+
+    /**
+     * The ids of the mobile money gifts still waiting for payment that were started at or before this moment, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function pendingDigitalIdsStartedBefore(CarbonInterface $cutoff): Collection;
 
     /**
      * Saves a change to a gift.

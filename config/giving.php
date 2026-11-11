@@ -54,6 +54,11 @@ return [
     'trap_field' => 'website',
     'reuse_window_minutes' => 5,
 
+    // Settling a gift (D-069 step d3c). A mobile money gift still pending is asked about every minute once it is this old, so the
+    // provider has had time to hear of it, and one still pending after the stale limit is reported in the log for a person to look at.
+    'check_after_seconds' => 30,
+    'stale_after_minutes' => 60,
+
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
     'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
 

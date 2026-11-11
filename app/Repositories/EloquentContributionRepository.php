@@ -16,6 +16,7 @@ use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 
 /**
@@ -253,6 +254,30 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
             ->where('created_at', '>=', $since)
             ->latest('created_at')
             ->first();
+    }
+
+    /**
+     * The gift with this id, locked until the transaction ends.
+     */
+    public function lockById(string $id): ?Contribution
+    {
+        return Contribution::query()->lockForUpdate()->find($id);
+    }
+
+    /**
+     * The ids of the mobile money gifts still waiting for payment that were started at or before this moment, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function pendingDigitalIdsStartedBefore(CarbonInterface $cutoff): Collection
+    {
+        return Contribution::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->where('payment_method', PaymentMethod::Momo->value)
+            ->where('status', ContributionStatus::Pending->value)
+            ->where('created_at', '<=', $cutoff)
+            ->orderBy('created_at')
+            ->pluck('id');
     }
 
     /**

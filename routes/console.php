@@ -36,3 +36,4 @@ Schedule::command('services:close-stale')->hourly()->timezone('UTC')->onOneServe
 
 // Asks the payment provider about SMS credit purchases that are still pending, every minute (D-069 step c): the polling fallback for a payment that confirms late.
 Schedule::command('credits:check-pending-purchases')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
+Schedule::command('giving:check-pending-gifts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
