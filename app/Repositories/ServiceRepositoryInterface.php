@@ -67,6 +67,14 @@ interface ServiceRepositoryInterface
     public function firstOnDate(CarbonInterface $date): ?Service;
 
     /**
+     * The service a gift given at this moment belongs to, the moment being in the church's own time. The service open for check-in
+     * today wins (the one opened first, as WhatsApp check-in chooses); otherwise, of today's services with a start time that has
+     * already passed, the one that started last. A service with no start time that is not open is never chosen, and nothing is
+     * chosen when no service has started yet today.
+     */
+    public function servingAt(CarbonInterface $localMoment): ?Service;
+
+    /**
      * The dates (YYYY-MM-DD) on which this schedule already has a service from the first date to the last, cancelled
      * services included, so a cancelled date is never made again.
      *

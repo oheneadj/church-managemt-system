@@ -182,6 +182,14 @@ class EloquentMemberRepository implements MemberRepositoryInterface
     }
 
     /**
+     * The living member of the current church with this phone number, if there is one.
+     */
+    public function findLivingByPhone(string $e164): ?Member
+    {
+        return Member::query()->where('phone', $e164)->where('status', '!=', MemberStatus::Deceased)->first();
+    }
+
+    /**
      * Every living member, in any active church, who has this phone number.
      *
      * @return Collection<int, Member>

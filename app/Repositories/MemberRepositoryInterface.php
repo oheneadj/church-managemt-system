@@ -68,6 +68,11 @@ interface MemberRepositoryInterface
     public function findByPhone(string $e164): ?Member;
 
     /**
+     * The living member of the current church with this phone number, if there is one. A member who has died is never matched.
+     */
+    public function findLivingByPhone(string $e164): ?Member;
+
+    /**
      * Every living member, in any active church, who has this phone number. A WhatsApp message arrives on one shared
      * number with no church attached, so this is the one query that deliberately looks past the church scope. The caller
      * must put each result's church in context before it touches anything else (agreement section 34).

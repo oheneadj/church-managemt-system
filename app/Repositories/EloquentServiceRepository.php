@@ -107,6 +107,17 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     }
 
     /**
+     * The service a gift given at this moment (in the church's own time) belongs to.
+     */
+    public function servingAt(CarbonInterface $localMoment): ?Service
+    {
+        $today = Service::query()->whereDate('service_date', $localMoment->toDateString());
+
+        return (clone $today)->where('is_open', true)->orderBy('checkin_opened_at')->orderBy('id')->first()
+            ?? $today->whereNotNull('starts_at')->where('starts_at', '<=', $localMoment->format('H:i:s'))->orderByDesc('starts_at')->orderBy('id')->first();
+    }
+
+    /**
      * The dates on which this schedule already has a service, cancelled ones included.
      *
      * @return array<int, string>
