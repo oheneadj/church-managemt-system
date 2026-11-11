@@ -38,3 +38,4 @@ Schedule::command('services:close-stale')->hourly()->timezone('UTC')->onOneServe
 Schedule::command('credits:check-pending-purchases')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:check-pending-gifts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:expire-unpaid-gifts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
+Schedule::command('giving:send-due-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();

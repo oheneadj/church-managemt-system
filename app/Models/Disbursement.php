@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\DisbursementStatus;
 use App\Enums\PaymentProviderName;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\DisbursementFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The automatic payout of one digital contribution to the church (D-018). Append-only financial record.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string $contribution_id
+ * @property string $gross_amount
+ * @property string $platform_fee
+ * @property string $requested_amount
+ * @property string|null $provider_fee
+ * @property string|null $net_amount
+ * @property DisbursementStatus $status
+ * @property PaymentProviderName $provider
+ * @property string|null $provider_reference
+ * @property int $attempts
+ * @property string|null $failure_reason
+ * @property CarbonImmutable|null $paid_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 class Disbursement extends Model
 {

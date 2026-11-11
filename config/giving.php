@@ -64,6 +64,14 @@ return [
     'late_payment_grace_hours' => 24,
     'stale_after_minutes' => 60,
 
+    // Sending a church its money (D-018, D-069 step e2). The provider must keep this much in its account, so a payout is sent only when
+    // the balance less the payout leaves it. A failed payout is tried again after this many minutes, up to this many attempts in all,
+    // and then raised as an alert; a payout that was started but never got a provider reference is picked up again after the stuck limit.
+    'payout_minimum_balance' => '1.00',
+    'payout_max_attempts' => 5,
+    'payout_retry_after_minutes' => 5,
+    'payout_stuck_after_minutes' => 2,
+
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
     'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
 

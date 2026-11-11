@@ -12,7 +12,9 @@ use App\Enums\DisbursementStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentProviderName;
 use App\Enums\ProviderPaymentStatus;
+use App\Enums\QueueName;
 use App\Events\ContributionReceived;
+use App\Jobs\SendDisbursementJob;
 use App\Models\Contribution;
 use App\Models\User;
 use App\Repositories\ContributionRepositoryInterface;
@@ -126,13 +128,13 @@ final class SettleContributionAction
     /**
      * Records the payout the church is owed for this gift (D-018): the gift less the platform's fee, with the fee actually charged kept
      * on the row, so a later change to the rate never alters it. The giver paid the collection fee on top, so the church is owed the
-     * whole gift less only our fee. Sending it is the payout job's work; a bank church's payout waits for its minimum (D-072).
+     * whole gift less only our fee. The payout job is queued to send it at once (SendDisbursementAction); a bank church's payout waits for its minimum (D-072).
      */
     private function owePayout(Contribution $gift): void
     {
         $amount = Money::ghs($gift->amount);
 
-        $this->disbursements->createForGift([
+        $disbursement = $this->disbursements->createForGift([
             'church_id' => $gift->church_id,
             'contribution_id' => $gift->id,
             'gross_amount' => $amount->amount,
@@ -142,6 +144,8 @@ final class SettleContributionAction
             'provider' => PaymentProviderName::Payperlez,
             'attempts' => 0,
         ]);
+
+        SendDisbursementJob::dispatch($disbursement->id)->onQueue(QueueName::Payments->value)->afterCommit();
     }
 
     /**
