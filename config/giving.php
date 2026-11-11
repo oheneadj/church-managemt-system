@@ -57,6 +57,11 @@ return [
     // Settling a gift (D-069 step d3c). A mobile money gift still pending is asked about every minute once it is this old, so the
     // provider has had time to hear of it, and one still pending after the stale limit is reported in the log for a person to look at.
     'check_after_seconds' => 30,
+
+    // A prompt nobody approves within this many minutes expires and the gift becomes failed (D-073). An expired gift is still asked
+    // about for this many hours, because a giver may approve late, and is counted if the provider then says it was paid.
+    'unpaid_expiry_minutes' => 30,
+    'late_payment_grace_hours' => 24,
     'stale_after_minutes' => 60,
 
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).

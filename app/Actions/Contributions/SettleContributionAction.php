@@ -6,6 +6,7 @@ namespace App\Actions\Contributions;
 
 use App\DTOs\Contributions\SettleContributionDTO;
 use App\Enums\AuditEvent;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\ProviderPaymentStatus;
@@ -23,7 +24,8 @@ use Illuminate\Support\Facades\Log;
  * Turns the provider's final word on a mobile money gift into its outcome (D-053, D-069 step d3c). A paid gift becomes completed, so
  * it is counted everywhere, pays its pledge and gets its receipt, once however many times this runs: the gift row is locked and only
  * a pending gift is acted on. A failed payment makes it failed and nothing follows. Anything the provider has not finished with is
- * left pending. A gift is never completed unless the provider confirms the very payment and the very total that was asked for.
+ * left pending. A gift that expired unpaid is still counted if the provider says it was paid within the grace period (a late approval).
+ * A gift is never completed unless the provider confirms the very payment and the very total that was asked for.
  */
 final class SettleContributionAction
 {
@@ -44,7 +46,7 @@ final class SettleContributionAction
         return DB::transaction(function () use ($dto): ?Contribution {
             $gift = $this->contributions->lockById($dto->contributionId);
 
-            if ($gift === null || $gift->status !== ContributionStatus::Pending || $gift->payment_method === PaymentMethod::Cash) {
+            if ($gift === null || $gift->payment_method === PaymentMethod::Cash || ! $this->canBeSettled($gift)) {
                 $this->reportPaidAfterFailure($gift, $dto);
 
                 return $gift;
@@ -58,6 +60,22 @@ final class SettleContributionAction
 
             return $gift;
         });
+    }
+
+    /**
+     * Whether the provider's word can still change this gift: a pending one, or one that expired unpaid and is still within the
+     * grace for a late approval (a giver may approve after we stopped waiting, and their money has moved).
+     */
+    private function canBeSettled(Contribution $gift): bool
+    {
+        if ($gift->status === ContributionStatus::Pending) {
+            return true;
+        }
+
+        return $gift->status === ContributionStatus::Failed
+            && $gift->failure_reason === ContributionFailureReason::Expired
+            && $gift->created_at !== null
+            && $gift->created_at->greaterThanOrEqualTo(now()->subHours((int) config('giving.late_payment_grace_hours')));
     }
 
     /**
@@ -85,6 +103,7 @@ final class SettleContributionAction
         }
 
         $gift->status = ContributionStatus::Completed;
+        $gift->failure_reason = null;
         $gift->payperlez_reference = $result->reference !== '' ? $result->reference : $gift->payperlez_reference;
         $this->contributions->save($gift);
 
@@ -102,7 +121,12 @@ final class SettleContributionAction
      */
     private function fail(Contribution $gift, SettleContributionDTO $dto): void
     {
+        if ($gift->status !== ContributionStatus::Pending) {
+            return;
+        }
+
         $gift->status = ContributionStatus::Failed;
+        $gift->failure_reason = ContributionFailureReason::Declined;
         $gift->payperlez_reference = $dto->result->reference !== '' ? $dto->result->reference : $gift->payperlez_reference;
         $this->contributions->save($gift);
     }

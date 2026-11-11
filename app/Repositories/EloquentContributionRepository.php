@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\DTOs\Contributions\ListContributionsDTO;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Contribution;
@@ -276,6 +277,23 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
             ->where('payment_method', PaymentMethod::Momo->value)
             ->where('status', ContributionStatus::Pending->value)
             ->where('created_at', '<=', $cutoff)
+            ->orderBy('created_at')
+            ->pluck('id');
+    }
+
+    /**
+     * The ids of the mobile money gifts that expired unpaid and were started at or after this moment, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function expiredDigitalIdsStartedSince(CarbonInterface $since): Collection
+    {
+        return Contribution::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->where('payment_method', PaymentMethod::Momo->value)
+            ->where('status', ContributionStatus::Failed->value)
+            ->where('failure_reason', ContributionFailureReason::Expired->value)
+            ->where('created_at', '>=', $since)
             ->orderBy('created_at')
             ->pluck('id');
     }

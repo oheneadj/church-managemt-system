@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Contracts\PaymentProvider;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\MomoNetwork;
 use App\Exceptions\PaymentRejectedException;
@@ -55,6 +56,7 @@ class StartContributionPaymentJob implements ShouldBeEncrypted, ShouldQueue
         } catch (PaymentRejectedException) {
             Log::warning('The provider refused to start a gift payment', ['contribution_id' => $gift->id, 'church_id' => $gift->church_id]);
             $gift->status = ContributionStatus::Failed;
+            $gift->failure_reason = ContributionFailureReason::Refused;
             $contributions->save($gift);
 
             return;

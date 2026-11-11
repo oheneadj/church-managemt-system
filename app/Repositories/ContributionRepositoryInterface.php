@@ -125,6 +125,14 @@ interface ContributionRepositoryInterface
     public function pendingDigitalIdsStartedBefore(CarbonInterface $cutoff): Collection;
 
     /**
+     * The ids of the mobile money gifts that expired unpaid and were started at or after this moment, oldest first: the ones a late
+     * approval could still reach.
+     *
+     * @return Collection<int, string>
+     */
+    public function expiredDigitalIdsStartedSince(CarbonInterface $since): Collection;
+
+    /**
      * Saves a change to a gift.
      */
     public function save(Contribution $contribution): Contribution;

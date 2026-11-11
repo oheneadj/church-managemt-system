@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Contracts\PaymentProvider;
 use App\DTOs\Payments\CollectionResult;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\MomoNetwork;
 use App\Enums\PaymentMethod;
@@ -226,7 +227,7 @@ describe('the payment job', function (): void {
 
         ($this->runJob)();
 
-        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Failed);
+        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Failed)->and($this->gift->fresh()->failure_reason)->toBe(ContributionFailureReason::Refused);
         Log::shouldHaveReceived('warning')->once()->withArgs(fn (string $m, array $c) => $c === ['contribution_id' => $this->gift->id, 'church_id' => $this->church->id]);
     });
 

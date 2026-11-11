@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Actions\Contributions\ExpireUnpaidContributionAction;
 use App\Actions\Contributions\SettleContributionAction;
 use App\Console\Commands\CheckPendingGifts;
+use App\Console\Commands\ExpireUnpaidGifts;
 use App\Contracts\PaymentProvider;
 use App\DTOs\Contributions\SettleContributionDTO;
 use App\DTOs\Payments\CollectionResult;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\ProviderPaymentStatus;
@@ -126,7 +129,7 @@ describe('a gift that did not go through', function (): void {
 
         $settled = settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Failed));
 
-        expect($settled->status)->toBe(ContributionStatus::Failed)->and(Contribution::query()->counted()->count())->toBe(0);
+        expect($settled->status)->toBe(ContributionStatus::Failed)->and($settled->failure_reason)->toBe(ContributionFailureReason::Declined)->and(Contribution::query()->counted()->count())->toBe(0);
         Event::assertNotDispatched(ContributionReceived::class);
     });
 
@@ -257,5 +260,96 @@ describe('the every-minute check', function (): void {
         $event = collect(app(Schedule::class)->events())->first(fn ($event): bool => str_contains((string) $event->command, 'giving:check-pending-gifts'));
 
         expect($event)->not->toBeNull()->and($event->expression)->toBe('* * * * *')->and(CheckPendingGifts::class)->toBeString();
+    });
+});
+
+describe('a gift nobody approved in time (D-073)', function (): void {
+    beforeEach(function (): void {
+        CarbonImmutable::setTestNow('2026-11-11 12:00:00');
+        Queue::fake();
+    });
+
+    afterEach(fn () => CarbonImmutable::setTestNow());
+
+    it('expires once it has waited the whole expiry, and only then', function (): void {
+        $this->gift->forceFill(['created_at' => now()->subMinutes(31)])->save();
+        $fresh = Contribution::factory()->pending()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'created_at' => now()->subMinutes(29)]);
+        $done = Contribution::factory()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'payment_method' => PaymentMethod::Momo, 'created_at' => now()->subHour()]);
+        $cash = Contribution::factory()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'created_at' => now()->subHour()]);
+
+        $this->artisan('giving:expire-unpaid-gifts')->assertSuccessful();
+
+        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Failed)->and($this->gift->fresh()->failure_reason)->toBe(ContributionFailureReason::Expired)
+            ->and($fresh->fresh()->status)->toBe(ContributionStatus::Pending)->and($done->fresh()->status)->toBe(ContributionStatus::Completed)->and($cash->fresh()->status)->toBe(ContributionStatus::Completed);
+    });
+
+    it('leaves a gift that was settled in the meantime alone, and a gift that is gone', function (): void {
+        $this->gift->update(['status' => ContributionStatus::Completed]);
+
+        $expired = app(ExpireUnpaidContributionAction::class)->execute($this->gift->id);
+
+        expect($expired->status)->toBe(ContributionStatus::Completed)->and($expired->failure_reason)->toBeNull()
+            ->and(app(ExpireUnpaidContributionAction::class)->execute('01ARZ3NDEKTSV4RRFFQ69G5FAV'))->toBeNull();
+    });
+
+    it('is run every minute', function (): void {
+        $event = collect(app(Schedule::class)->events())->first(fn ($event): bool => str_contains((string) $event->command, 'giving:expire-unpaid-gifts'));
+
+        expect($event)->not->toBeNull()->and($event->expression)->toBe('* * * * *')->and(ExpireUnpaidGifts::class)->toBeString();
+    });
+
+    it('is still counted if the giver approves late, within the day, and the receipt goes out once', function (): void {
+        Event::fake([ContributionReceived::class]);
+        $this->gift->forceFill(['created_at' => now()->subMinutes(40)])->save();
+        app(ExpireUnpaidContributionAction::class)->execute($this->gift->id);
+
+        $settled = settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Succeeded));
+        settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Succeeded));
+
+        expect($settled->status)->toBe(ContributionStatus::Completed)->and($settled->failure_reason)->toBeNull()->and(Contribution::query()->counted()->count())->toBe(1);
+        Event::assertDispatchedTimes(ContributionReceived::class, 1);
+    });
+
+    it('is not counted if it is approved after the day, and that is logged for a person to look into', function (): void {
+        Log::spy();
+        $this->gift->forceFill(['created_at' => now()->subHours(25), 'status' => ContributionStatus::Failed, 'failure_reason' => ContributionFailureReason::Expired])->save();
+
+        settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Succeeded));
+
+        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Failed);
+        Log::shouldHaveReceived('error')->once();
+    });
+
+    it('stays expired when the provider says it failed, and a declined gift is never revived by a late "paid"', function (): void {
+        $this->gift->update(['status' => ContributionStatus::Failed, 'failure_reason' => ContributionFailureReason::Expired]);
+        settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Failed));
+        expect($this->gift->fresh()->failure_reason)->toBe(ContributionFailureReason::Expired);
+
+        $this->gift->update(['failure_reason' => ContributionFailureReason::Declined]);
+        settle($this->gift, providerSays($this->gift, ProviderPaymentStatus::Succeeded));
+        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Failed);
+    });
+
+    it('is asked about by the every-minute check for a day, and not after', function (): void {
+        $recent = Contribution::factory()->failed()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'failure_reason' => ContributionFailureReason::Expired, 'created_at' => now()->subHours(3)]);
+        $old = Contribution::factory()->failed()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'failure_reason' => ContributionFailureReason::Expired, 'created_at' => now()->subHours(25)]);
+        $declined = Contribution::factory()->failed()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'failure_reason' => ContributionFailureReason::Declined, 'created_at' => now()->subHours(3)]);
+
+        $this->artisan('giving:check-pending-gifts')->assertSuccessful();
+
+        $queued = Queue::pushed(CheckContributionPaymentJob::class)->map(fn (CheckContributionPaymentJob $job): string => $job->contributionId)->all();
+        expect($queued)->toContain($recent->id)->not->toContain($old->id)->not->toContain($declined->id);
+    });
+
+    it('lets the job settle an expired gift, and skips a declined one', function (): void {
+        $this->gift->update(['status' => ContributionStatus::Failed, 'failure_reason' => ContributionFailureReason::Expired]);
+        runCheck($this->gift, providerSays($this->gift, ProviderPaymentStatus::Succeeded));
+        expect($this->gift->fresh()->status)->toBe(ContributionStatus::Completed);
+
+        $declined = Contribution::factory()->failed()->create(['church_id' => $this->church->id, 'fund_type_id' => $this->fund->id, 'failure_reason' => ContributionFailureReason::Declined]);
+        $provider = Mockery::mock(PaymentProvider::class);
+        $provider->shouldNotReceive('collectionStatus');
+        (new CheckContributionPaymentJob($declined->id))->handle(app(ContributionRepositoryInterface::class), $provider, app(SettleContributionAction::class));
+        expect(true)->toBeTrue();
     });
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Traits\BelongsToChurch;
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $payperlez_reference the provider's reference for the collection, once it has one
  * @property PaymentMethod $payment_method
  * @property ContributionStatus $status
+ * @property ContributionFailureReason|null $failure_reason why a mobile money gift failed
  * @property bool $is_voided
  * @property CarbonImmutable|null $voided_at
  * @property string|null $voided_by
@@ -68,6 +70,7 @@ class Contribution extends Model
         'total_paid',
         'payment_method',
         'status',
+        'failure_reason',
         'paystack_reference',
         'paystack_status',
         'payperlez_reference',
@@ -97,6 +100,7 @@ class Contribution extends Model
             'total_paid' => 'decimal:2',
             'payment_method' => PaymentMethod::class,
             'status' => ContributionStatus::class,
+            'failure_reason' => ContributionFailureReason::class,
             'giver_name' => 'encrypted',
             'is_voided' => 'boolean',
             'voided_at' => 'immutable_datetime',

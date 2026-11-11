@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Actions\Contributions\SettleContributionAction;
 use App\Contracts\PaymentProvider;
 use App\DTOs\Contributions\SettleContributionDTO;
+use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
 use App\Exceptions\PaymentRejectedException;
 use App\Repositories\ContributionRepositoryInterface;
@@ -18,7 +19,8 @@ use Throwable;
 /**
  * Asks the payment provider where one gift's payment stands and settles the gift with the answer (D-069 step d3c; agreement sections
  * 10 and 15: the polling fallback for a payment that confirms later). It takes the gift's id only, and the gift's id is the reference
- * the provider knows it by. It is safe to run again: a gift that is no longer pending is skipped, and settling counts a gift once.
+ * the provider knows it by. It also asks about a gift that expired unpaid, because a giver may approve late. It is safe to run again:
+ * a gift that is neither pending nor expired is skipped, and settling counts a gift once.
  * A provider that is busy is tried again; one that refuses the question is logged and the gift is left pending for the next check.
  */
 class CheckContributionPaymentJob implements ShouldQueue
@@ -44,7 +46,9 @@ class CheckContributionPaymentJob implements ShouldQueue
     {
         $gift = $contributions->find($this->contributionId);
 
-        if ($gift === null || $gift->status !== ContributionStatus::Pending) {
+        $waiting = $gift?->status === ContributionStatus::Pending || $gift?->failure_reason === ContributionFailureReason::Expired;
+
+        if ($gift === null || ! $waiting) {
             return;
         }
 
