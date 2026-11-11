@@ -428,6 +428,8 @@ One row per digital (MoMo/USSD) contribution that is automatically paid out to t
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
+**Created when the gift completes (D-069 step e1):** `gross_amount` is the gift (the giver paid the collection fee on top, so the church is owed the whole gift), `platform_fee` the fee charged at that moment (kept, so a later change to the rate never alters it), `requested_amount` = `gross_amount` − `platform_fee`, status `pending`. One row for each gift: `firstOrCreate` on the unique `contribution_id`. Sending it, retries and confirming are the payout job's work (e2, e3).
+
 **Indexes:** `contribution_id` (unique), `provider_reference` (unique where not null), `(church_id, status)` — for the stuck-funds view, `(status, created_at)` — for the retry and reconciliation jobs.
 
 ---

@@ -89,3 +89,12 @@ it('gives the limits and the fee as a percentage for the page to show', function
     config(['giving.collection_fee_rate' => '0.015']);
     expect($this->fees->collectionFeePercent())->toBe('1.50');
 });
+
+it('works out what the church is owed: the whole gift less the platform fee, to the pesewa', function (string $gift, string $owed): void {
+    expect($this->fees->requestedPayout(Money::ghs($gift))->amount)->toBe($owed);
+})->with([
+    'the floor' => ['1.00', '0.90'],
+    'GHS 100' => ['100.00', '99.00'],
+    'a tie' => ['10.50', '10.39'],
+    'the cap' => ['5000.00', '4990.00'],
+]);

@@ -8,13 +8,17 @@ use App\DTOs\Contributions\SettleContributionDTO;
 use App\Enums\AuditEvent;
 use App\Enums\ContributionFailureReason;
 use App\Enums\ContributionStatus;
+use App\Enums\DisbursementStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentProviderName;
 use App\Enums\ProviderPaymentStatus;
 use App\Events\ContributionReceived;
 use App\Models\Contribution;
 use App\Models\User;
 use App\Repositories\ContributionRepositoryInterface;
+use App\Repositories\DisbursementRepositoryInterface;
 use App\Services\AuditLogger;
+use App\Services\GivingFeeCalculator;
 use App\Services\PledgeProgressService;
 use App\ValueObjects\Money;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +26,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Turns the provider's final word on a mobile money gift into its outcome (D-053, D-069 step d3c). A paid gift becomes completed, so
- * it is counted everywhere, pays its pledge and gets its receipt, once however many times this runs: the gift row is locked and only
+ * it is counted everywhere, pays its pledge, gets its receipt and records the payout the church is owed, once however many times this runs: the gift row is locked and only
  * a pending gift is acted on. A failed payment makes it failed and nothing follows. Anything the provider has not finished with is
  * left pending. A gift that expired unpaid is still counted if the provider says it was paid within the grace period (a late approval).
  * A gift is never completed unless the provider confirms the very payment and the very total that was asked for.
@@ -36,6 +40,8 @@ final class SettleContributionAction
         private readonly ContributionRepositoryInterface $contributions,
         private readonly PledgeProgressService $pledgeProgress,
         private readonly AuditLogger $audit,
+        private readonly DisbursementRepositoryInterface $disbursements,
+        private readonly GivingFeeCalculator $fees,
     ) {}
 
     /**
@@ -108,12 +114,34 @@ final class SettleContributionAction
         $this->contributions->save($gift);
 
         $this->recordInHistory($gift);
+        $this->owePayout($gift);
 
         if ($gift->pledge_id !== null) {
             $this->pledgeProgress->refresh($gift->pledge_id);
         }
 
         ContributionReceived::dispatch($gift);
+    }
+
+    /**
+     * Records the payout the church is owed for this gift (D-018): the gift less the platform's fee, with the fee actually charged kept
+     * on the row, so a later change to the rate never alters it. The giver paid the collection fee on top, so the church is owed the
+     * whole gift less only our fee. Sending it is the payout job's work; a bank church's payout waits for its minimum (D-072).
+     */
+    private function owePayout(Contribution $gift): void
+    {
+        $amount = Money::ghs($gift->amount);
+
+        $this->disbursements->createForGift([
+            'church_id' => $gift->church_id,
+            'contribution_id' => $gift->id,
+            'gross_amount' => $amount->amount,
+            'platform_fee' => $this->fees->platformFee($amount)->amount,
+            'requested_amount' => $this->fees->requestedPayout($amount)->amount,
+            'status' => DisbursementStatus::Pending,
+            'provider' => PaymentProviderName::Payperlez,
+            'attempts' => 0,
+        ]);
     }
 
     /**

@@ -41,6 +41,15 @@ final class GivingFeeCalculator
     }
 
     /**
+     * What we ask the provider to send the church for a gift: the gift less the platform's fee. The church bears the provider's own
+     * payout charge, which comes out of this (D-018, D-072).
+     */
+    public function requestedPayout(Money $gift): Money
+    {
+        return Money::ghs(bcsub($gift->amount, $this->platformFee($gift)->amount, 2));
+    }
+
+    /**
      * What the giver is asked to pay in all: the gift and the collection fee.
      */
     public function totalToPay(Money $gift): Money
