@@ -41,3 +41,5 @@ Schedule::command('giving:expire-unpaid-gifts')->everyMinute()->timezone('UTC')-
 Schedule::command('giving:send-due-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:batch-bank-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:check-started-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
+// The daily check that collected gifts have been paid out and the figures add up (D-018). After the backup, before the nightly clean-ups.
+Schedule::command('giving:reconcile-payouts')->dailyAt('02:30')->timezone('UTC')->onOneServer();

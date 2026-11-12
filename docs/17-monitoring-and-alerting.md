@@ -476,3 +476,19 @@ When the first 20 churches are live and paying, add:
 - **PagerDuty or similar** — on-call rotation, escalation policies, alert deduplication
 
 Until then, structured logs + UptimeRobot + Slack webhook is sufficient.
+
+
+---
+
+## Church payouts (D-018, D-069 steps e2 to e5)
+
+Money the platform has taken for a church must reach the church. These log lines mean a person has to look; every one carries ids and counts only, never an amount, a name or a phone.
+
+| Log line (level) | Meaning | First action |
+|---|---|---|
+| `A church payout failed for good and needs a person` (critical) | A payout used up its attempts (`giving.payout_max_attempts`) | Find it by `disbursement_id`; read `failure_reason`; check the church's account and the provider; send again by setting the payout to pending once fixed |
+| `A paid payout does not match what the provider reported` (error) | The provider named another reference or amount | Compare with the provider's dashboard before doing anything |
+| `Church payouts have been unfinished for too long` (warning) | A started payout is over an hour old | Ask the provider |
+| `Payout reconciliation found problems` (critical) | The daily check found something; `counts` and `ids` say what: `missing_payout`, `stuck_payout`, `unbatched_bank_payouts`, `wrong_figures`, `batch_inconsistent` | Take the ids kind by kind; see docs/07 (Daily reconciliation) |
+| `A gift marked failed was reported paid by the provider` (error) | A giver's money moved for a gift we gave up on | Count it by hand once confirmed, and tell the church |
+| `Mobile money gifts have been pending for too long` (warning) | A gift is over an hour pending | Ask the provider |

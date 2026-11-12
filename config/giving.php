@@ -77,6 +77,14 @@ return [
     'payout_check_after_seconds' => 30,
     'payout_stale_after_minutes' => 60,
 
+    // The daily reconciliation of what was collected against what was paid out (D-018, D-069 step e5). A completed gift with no payout, and a
+    // payout still unfinished, are only a problem once they are this many minutes / hours old; a payout is checked for a fortnight after it
+    // was last changed; and at most this many ids of each kind are written to the log.
+    'reconcile_gift_grace_minutes' => 10,
+    'reconcile_stuck_after_hours' => 24,
+    'reconcile_lookback_days' => 14,
+    'reconcile_ids_logged' => 20,
+
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
     'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
 

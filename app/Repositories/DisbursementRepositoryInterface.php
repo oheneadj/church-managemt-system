@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Models\Disbursement;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Every query on the automatic payouts to churches lives behind this contract (D-018).
@@ -81,4 +82,39 @@ interface DisbursementRepositoryInterface
      * @return Collection<int, string>
      */
     public function startedIdsChangedBefore(CarbonInterface $cutoff): Collection;
+
+    /**
+     * The ids of the payouts that are still unfinished (pending, processing or failed) and were last changed at or before this moment,
+     * in every church, never a gift inside a batch (its batch is the payout that matters). Oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function unfinishedIdsChangedBefore(CarbonInterface $cutoff): Collection;
+
+    /**
+     * What each church has waiting to be batched: the total of its pending payouts that are in no batch and were last changed at or
+     * before this moment, as exact decimal strings by church id.
+     *
+     * @return array<string, numeric-string>
+     */
+    public function waitingTotalsByChurch(CarbonInterface $cutoff): array;
+
+    /**
+     * The payouts changed since this moment, with the gift each pays, read a few at a time, for the figures to be checked.
+     *
+     * @return LazyCollection<int, Disbursement>
+     */
+    public function changedSince(CarbonInterface $since): LazyCollection;
+
+    /**
+     * Whether any payout inside this batch is not paid.
+     */
+    public function hasUnpaidInBatch(string $batchId): bool;
+
+    /**
+     * The ids of the batches changed since this moment whose requested amount is not the total of the payouts inside them.
+     *
+     * @return list<string>
+     */
+    public function batchIdsNotEqualToTheirGifts(CarbonInterface $since): array;
 }

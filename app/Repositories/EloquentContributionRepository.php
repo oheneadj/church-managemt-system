@@ -299,6 +299,23 @@ class EloquentContributionRepository implements ContributionRepositoryInterface
     }
 
     /**
+     * The ids of the mobile money gifts that completed at or before this moment and have no payout record at all, in every church.
+     *
+     * @return Collection<int, string>
+     */
+    public function completedDigitalIdsWithoutPayout(CarbonInterface $before): Collection
+    {
+        return Contribution::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->where('payment_method', PaymentMethod::Momo->value)
+            ->where('status', ContributionStatus::Completed->value)
+            ->where('updated_at', '<=', $before)
+            ->whereNotIn('id', fn ($payouts) => $payouts->select('contribution_id')->from('disbursements')->whereNotNull('contribution_id'))
+            ->orderBy('updated_at')
+            ->pluck('id');
+    }
+
+    /**
      * Saves a change to a gift.
      */
     public function save(Contribution $contribution): Contribution

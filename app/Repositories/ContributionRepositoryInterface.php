@@ -133,6 +133,14 @@ interface ContributionRepositoryInterface
     public function expiredDigitalIdsStartedSince(CarbonInterface $since): Collection;
 
     /**
+     * The ids of the mobile money gifts that completed at or before this moment and have no payout record at all, in every church. There
+     * should never be any: completing a gift records the payout it is owed (D-069 step e1).
+     *
+     * @return Collection<int, string>
+     */
+    public function completedDigitalIdsWithoutPayout(CarbonInterface $before): Collection;
+
+    /**
      * Saves a change to a gift.
      */
     public function save(Contribution $contribution): Contribution;
