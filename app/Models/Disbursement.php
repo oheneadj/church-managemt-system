@@ -19,7 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property string $church_id
- * @property string $contribution_id
+ * @property string|null $contribution_id the gift this pays; empty for a bank batch, which pays several gifts at once (D-072)
+ * @property string|null $batch_id the bank batch this gift's payout was sent in, if any
  * @property string $gross_amount
  * @property string $platform_fee
  * @property string $requested_amount
@@ -45,6 +46,7 @@ class Disbursement extends Model
     protected $fillable = [
         'church_id',
         'contribution_id',
+        'batch_id',
         'gross_amount',
         'platform_fee',
         'requested_amount',

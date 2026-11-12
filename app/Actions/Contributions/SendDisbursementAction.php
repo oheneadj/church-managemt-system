@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\Log;
  * payout that crashed mid-call is found again and asked with the same key. A refusal for good marks it failed with the reason; failed
  * payouts are tried again, up to the attempts allowed, and then an alert is raised, because until it succeeds the church's money is
  * sitting with the platform. A payout is only marked paid when the provider names this very payout and the very amount asked.
- * A bank church's payouts are not sent here: they wait for their minimum (D-072).
+ * A bank church's own small payouts are not sent here: they wait to be put into a batch of at least the bank minimum (D-072), and the
+ * batch is sent like any other payout; when it is paid, every gift in it is paid with it. A payout that is inside a batch is never sent on
+ * its own.
  */
 final class SendDisbursementAction
 {
@@ -52,7 +54,7 @@ final class SendDisbursementAction
         $church = $this->churches->find($disbursement->church_id);
         $account = $church?->payoutAccount();
 
-        if ($church === null || $church->payoutStatus() !== 'verified' || $church->payout_method !== PayoutMethod::Momo || $account === null) {
+        if ($church === null || $church->payoutStatus() !== 'verified' || $account === null || ! $this->mayBeSentTo($disbursement, $church->payout_method)) {
             return $disbursement;
         }
 
@@ -76,12 +78,26 @@ final class SendDisbursementAction
     }
 
     /**
+     * Whether this payout may go to the church's account now. A gift's own payout goes only to a mobile money wallet: a bank church's
+     * small payouts wait for a batch of at least the bank minimum (D-072). A batch has no gift of its own and goes to whatever account the
+     * church has.
+     */
+    private function mayBeSentTo(Disbursement $disbursement, ?PayoutMethod $method): bool
+    {
+        return $disbursement->contribution_id === null || $method === PayoutMethod::Momo;
+    }
+
+    /**
      * Whether this payout is due now: pending; failed with attempts left and left alone long enough; or started but never given a
      * provider reference and left for long enough.
      */
     private function isDue(Disbursement $disbursement): bool
     {
         $changed = $disbursement->updated_at;
+
+        if ($disbursement->batch_id !== null) {
+            return false;
+        }
 
         return match ($disbursement->status) {
             DisbursementStatus::Pending => true,
@@ -166,8 +182,13 @@ final class SendDisbursementAction
             ? Money::ghs($result->received)->amount
             : ($result->fee === null ? null : bcsub(Money::ghs($disbursement->requested_amount)->amount, Money::ghs($result->fee)->amount, 2));
         $disbursement->paid_at = now();
+        $saved = $this->disbursements->save($disbursement);
 
-        return $this->disbursements->save($disbursement);
+        if ($saved->contribution_id === null) {
+            $this->disbursements->markBatchPaid($saved->id, now());
+        }
+
+        return $saved;
     }
 
     /**

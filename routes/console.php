@@ -39,3 +39,4 @@ Schedule::command('credits:check-pending-purchases')->everyMinute()->timezone('U
 Schedule::command('giving:check-pending-gifts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:expire-unpaid-gifts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
 Schedule::command('giving:send-due-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();
+Schedule::command('giving:batch-bank-payouts')->everyMinute()->timezone('UTC')->onOneServer()->withoutOverlapping();

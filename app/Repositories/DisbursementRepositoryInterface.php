@@ -44,4 +44,33 @@ interface DisbursementRepositoryInterface
      * @return Collection<int, string>
      */
     public function dueIds(CarbonInterface $now, int $maxAttempts, int $retryAfterMinutes, int $stuckAfterMinutes): Collection;
+
+    /**
+     * The ids of the churches that have payouts waiting to be put into a bank batch: a gift's own payout, still pending, not yet in
+     * a batch. Every church, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function churchIdsWithWaitingPayouts(): Collection;
+
+    /**
+     * The payouts of one church waiting for a bank batch, locked until the transaction ends, oldest first.
+     *
+     * @return Collection<int, Disbursement>
+     */
+    public function lockWaitingFor(string $churchId): Collection;
+
+    /**
+     * Makes the batch payout, with no gift of its own, and puts the given gift payouts into it, marking them as started. They are
+     * paid, or fail, with the batch.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @param  Collection<int, Disbursement>  $payouts
+     */
+    public function createBatch(array $attributes, Collection $payouts): Disbursement;
+
+    /**
+     * Marks every payout in a batch paid at this moment. Returns how many.
+     */
+    public function markBatchPaid(string $batchId, CarbonInterface $at): int;
 }
