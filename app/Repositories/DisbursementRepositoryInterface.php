@@ -73,4 +73,12 @@ interface DisbursementRepositoryInterface
      * Marks every payout in a batch paid at this moment. Returns how many.
      */
     public function markBatchPaid(string $batchId, CarbonInterface $at): int;
+
+    /**
+     * The ids of the payouts the provider has taken but not finished: processing, with a provider reference, sent on their own or as a
+     * batch (never a gift inside a batch), last changed at or before this moment. Every church, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function startedIdsChangedBefore(CarbonInterface $cutoff): Collection;
 }

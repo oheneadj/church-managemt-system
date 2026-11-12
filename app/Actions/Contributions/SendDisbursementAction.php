@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Actions\Contributions;
 
 use App\Contracts\DisbursementProvider;
-use App\DTOs\Payments\DisbursementResult;
 use App\Enums\DisbursementStatus;
 use App\Enums\PayoutMethod;
-use App\Enums\ProviderPaymentStatus;
 use App\Exceptions\PaymentRejectedException;
 use App\Models\Disbursement;
 use App\Repositories\ChurchRepositoryInterface;
 use App\Repositories\DisbursementRepositoryInterface;
+use App\Services\DisbursementOutcome;
 use App\ValueObjects\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +38,7 @@ final class SendDisbursementAction
         private readonly DisbursementRepositoryInterface $disbursements,
         private readonly ChurchRepositoryInterface $churches,
         private readonly DisbursementProvider $provider,
+        private readonly DisbursementOutcome $outcomes,
     ) {}
 
     /**
@@ -70,12 +70,12 @@ final class SendDisbursementAction
         }
 
         try {
-            $result = $this->provider->disburse($account, $claimed->requested_amount, $this->reference($claimed));
+            $result = $this->provider->disburse($account, $claimed->requested_amount, $this->outcomes->reference($claimed));
         } catch (PaymentRejectedException $e) {
-            return $this->fail($claimed, $e->getMessage());
+            return $this->outcomes->fail($claimed, $e->getMessage());
         }
 
-        return $this->record($claimed, $result);
+        return $this->outcomes->apply($claimed, $result);
     }
 
     /**
@@ -130,16 +130,6 @@ final class SendDisbursementAction
     }
 
     /**
-     * The reference and key the provider knows this attempt by: the payout's id and the attempt number. It is the same for a resend of
-     * the same attempt (so a crash never pays twice) and new for each fresh attempt after a failure. The provider allows at most 100
-     * letters, and an id and a number are far under that.
-     */
-    private function reference(Disbursement $disbursement): string
-    {
-        return $disbursement->id.'-'.$disbursement->attempts;
-    }
-
-    /**
      * Takes the payout under a lock and marks it as started, counting the attempt, before the provider is called. Returns null when it
      * is no longer due, because another worker took it.
      */
@@ -163,64 +153,5 @@ final class SendDisbursementAction
 
             return $this->disbursements->save($locked);
         });
-    }
-
-    /**
-     * Records the provider's answer: paid only if it names this payout and the amount asked; still working if it is not final; failed
-     * if it says so.
-     */
-    private function record(Disbursement $disbursement, DisbursementResult $result): Disbursement
-    {
-        $disbursement->provider_reference = $result->reference !== '' ? $result->reference : $disbursement->provider_reference;
-
-        return match ($result->status) {
-            ProviderPaymentStatus::Succeeded => $this->markPaid($disbursement, $result),
-            ProviderPaymentStatus::Failed => $this->fail($disbursement, 'The provider said the payout did not go through.'),
-            ProviderPaymentStatus::Pending, ProviderPaymentStatus::Unknown => $this->disbursements->save($disbursement),
-        };
-    }
-
-    /**
-     * Marks the payout paid, with what the provider charged and what the church received, unless the answer is not about this payout
-     * and this amount, in which case it is left started for a person to look into.
-     */
-    private function markPaid(Disbursement $disbursement, DisbursementResult $result): Disbursement
-    {
-        if ($result->clientReference !== $this->reference($disbursement) || bccomp(Money::ghs($result->amount)->amount, Money::ghs($disbursement->requested_amount)->amount, 2) !== 0) {
-            Log::error('A paid payout does not match what the provider reported', ['disbursement_id' => $disbursement->id, 'church_id' => $disbursement->church_id]);
-
-            return $this->disbursements->save($disbursement);
-        }
-
-        $disbursement->status = DisbursementStatus::Paid;
-        $disbursement->provider_fee = $result->fee === null ? null : Money::ghs($result->fee)->amount;
-        $disbursement->net_amount = $result->received !== null
-            ? Money::ghs($result->received)->amount
-            : ($result->fee === null ? null : bcsub(Money::ghs($disbursement->requested_amount)->amount, Money::ghs($result->fee)->amount, 2));
-        $disbursement->paid_at = now();
-        $saved = $this->disbursements->save($disbursement);
-
-        if ($saved->contribution_id === null) {
-            $this->disbursements->markBatchPaid($saved->id, now());
-        }
-
-        return $saved;
-    }
-
-    /**
-     * Marks the payout failed with the reason. When the attempts are used up an alert is raised (ids only), because the church's money is
-     * still with the platform.
-     */
-    private function fail(Disbursement $disbursement, string $reason): Disbursement
-    {
-        $disbursement->status = DisbursementStatus::Failed;
-        $disbursement->failure_reason = mb_substr($reason, 0, 255);
-        $saved = $this->disbursements->save($disbursement);
-
-        if ($saved->attempts >= (int) config('giving.payout_max_attempts')) {
-            Log::critical('A church payout failed for good and needs a person', ['disbursement_id' => $saved->id, 'church_id' => $saved->church_id, 'attempts' => $saved->attempts]);
-        }
-
-        return $saved;
     }
 }

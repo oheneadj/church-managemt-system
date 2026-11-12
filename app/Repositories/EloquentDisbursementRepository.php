@@ -136,4 +136,21 @@ class EloquentDisbursementRepository implements DisbursementRepositoryInterface
             ->where('batch_id', $batchId)
             ->update(['status' => DisbursementStatus::Paid->value, 'paid_at' => $at]);
     }
+
+    /**
+     * The ids of the payouts the provider has taken but not finished, last changed at or before this moment.
+     *
+     * @return Collection<int, string>
+     */
+    public function startedIdsChangedBefore(CarbonInterface $cutoff): Collection
+    {
+        return Disbursement::query()
+            ->withoutGlobalScope(ChurchScope::class)
+            ->whereNull('batch_id')
+            ->where('status', DisbursementStatus::Processing->value)
+            ->whereNotNull('provider_reference')
+            ->where('updated_at', '<=', $cutoff)
+            ->orderBy('updated_at')
+            ->pluck('id');
+    }
 }

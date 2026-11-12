@@ -72,6 +72,11 @@ return [
     'payout_retry_after_minutes' => 5,
     'payout_stuck_after_minutes' => 2,
 
+    // A payout the provider has taken but not finished (it has a provider reference and is still processing) is asked about every
+    // minute once it is this many seconds old, and reported in the log if it is still unfinished after the stale limit (D-069 step e4).
+    'payout_check_after_seconds' => 30,
+    'payout_stale_after_minutes' => 60,
+
     // A church that settles to a bank account is paid when its settled gifts reach this much (D-072).
     'bank_payout_minimum' => env('GIVING_BANK_PAYOUT_MINIMUM', '100.00'),
 
