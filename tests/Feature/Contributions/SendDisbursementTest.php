@@ -36,7 +36,7 @@ use Mockery\MockInterface;
 /** What the provider says about a payout. */
 function payoutSays(Disbursement $payout, ProviderPaymentStatus $status, ?string $amount = null, ?string $fee = '1.57', ?string $received = '97.43', ?string $clientReference = null): DisbursementResult
 {
-    return new DisbursementResult('pay-'.$payout->id, $clientReference ?? $payout->id, $status, $amount ?? $payout->requested_amount, $fee, $received);
+    return new DisbursementResult('pay-'.$payout->id, $clientReference ?? $payout->id.'-'.max(1, $payout->fresh()->attempts), $status, $amount ?? $payout->requested_amount, $fee, $received);
 }
 
 /** Fakes the provider: its balance, and what it does when asked to pay. */
@@ -81,7 +81,7 @@ describe('sending the money', function (): void {
         $provider = Mockery::mock(DisbursementProvider::class);
         $provider->shouldReceive('availableBalance')->andReturn('500.00');
         $provider->shouldReceive('disburse')->once()
-            ->with(Mockery::on(fn (PayoutAccount $a) => $a->holderName === 'GRACE ASSEMBLY' && $a->number === '+233244000111' && $a->network === MomoNetwork::Mtn), '99.00', $this->payout->id)
+            ->with(Mockery::on(fn (PayoutAccount $a) => $a->holderName === 'GRACE ASSEMBLY' && $a->number === '+233244000111' && $a->network === MomoNetwork::Mtn), '99.00', $this->payout->id.'-1')
             ->andReturn(payoutSays($this->payout, ProviderPaymentStatus::Succeeded));
         app()->instance(DisbursementProvider::class, $provider);
 
@@ -209,13 +209,33 @@ describe('when it fails', function (): void {
         expect(sendPayout($this->payout)->status)->toBe(DisbursementStatus::Failed);
 
         $this->travel(6)->minutes();
-        fakeProvider('500.00', payoutSays($this->payout, ProviderPaymentStatus::Succeeded));
+        fakeProvider('500.00', payoutSays($this->payout, ProviderPaymentStatus::Succeeded, null, '1.57', '97.43', $this->payout->id.'-3'));
         expect(sendPayout($this->payout)->status)->toBe(DisbursementStatus::Paid);
 
         $spent = Disbursement::factory()->create(['church_id' => $this->church->id, 'status' => DisbursementStatus::Failed, 'attempts' => 5]);
         $this->travel(1)->hours();
         fakeProvider('500.00');
         expect(sendPayout($spent)->attempts)->toBe(5);
+    });
+
+    it('is sent under a new reference after a failure, but under the same reference when a crashed attempt is sent again (so it never pays twice)', function (): void {
+        $references = new ArrayObject;
+        $provider = Mockery::mock(DisbursementProvider::class);
+        $provider->shouldReceive('availableBalance')->andReturn('500.00');
+        $provider->shouldReceive('disburse')->andReturnUsing(function (PayoutAccount $account, string $amount, string $reference) use ($references): DisbursementResult {
+            $references->append($reference);
+
+            return count($references) === 2 ? throw new PaymentProviderUnavailableException('down') : new DisbursementResult('', $reference, ProviderPaymentStatus::Failed, $amount, null, null);
+        });
+        app()->instance(DisbursementProvider::class, $provider);
+
+        sendPayout($this->payout);
+        $this->travel(6)->minutes();
+        expect(fn () => sendPayout($this->payout))->toThrow(PaymentProviderUnavailableException::class);
+        $this->travel(3)->minutes();
+        sendPayout($this->payout);
+
+        expect($references->getArrayCopy())->toBe([$this->payout->id.'-1', $this->payout->id.'-2', $this->payout->id.'-2']);
     });
 
     it('is left started when the provider cannot be reached, and picked up again after the stuck wait', function (): void {
@@ -228,7 +248,7 @@ describe('when it fails', function (): void {
 
         $this->travel(3)->minutes();
         fakeProvider('500.00', payoutSays($this->payout, ProviderPaymentStatus::Succeeded));
-        expect(sendPayout($this->payout)->status)->toBe(DisbursementStatus::Paid)->and($this->payout->fresh()->attempts)->toBe(2);
+        expect(sendPayout($this->payout)->status)->toBe(DisbursementStatus::Paid)->and($this->payout->fresh()->attempts)->toBe(1);
     });
 });
 

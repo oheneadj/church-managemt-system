@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Sends a church the money it is owed for one gift (D-018, D-069 step e2). It pays the requested amount to the church's verified mobile
- * money wallet, with the payout's own id as the provider's reference and key, so asking twice never pays twice. It only sends when
+ * money wallet, with the payout's id and attempt number as the provider's reference and key, so asking twice for the same attempt never
+ * pays twice, and a retry after a failure is a fresh attempt the provider will not answer with the old failure. It only sends when
  * the provider will still hold its minimum balance afterwards; otherwise the payout stays pending and is tried on the next round. The
  * payout is claimed under a lock and marked as started before the provider is called, so two workers never send the same one, and a
  * payout that crashed mid-call is found again and asked with the same key. A refusal for good marks it failed with the reason; failed
@@ -69,7 +70,7 @@ final class SendDisbursementAction
         }
 
         try {
-            $result = $this->provider->disburse($account, $claimed->requested_amount, $claimed->id);
+            $result = $this->provider->disburse($account, $claimed->requested_amount, $this->reference($claimed));
         } catch (PaymentRejectedException $e) {
             return $this->fail($claimed, $e->getMessage());
         }
@@ -129,6 +130,16 @@ final class SendDisbursementAction
     }
 
     /**
+     * The reference and key the provider knows this attempt by: the payout's id and the attempt number. It is the same for a resend of
+     * the same attempt (so a crash never pays twice) and new for each fresh attempt after a failure. The provider allows at most 100
+     * letters, and an id and a number are far under that.
+     */
+    private function reference(Disbursement $disbursement): string
+    {
+        return $disbursement->id.'-'.$disbursement->attempts;
+    }
+
+    /**
      * Takes the payout under a lock and marks it as started, counting the attempt, before the provider is called. Returns null when it
      * is no longer due, because another worker took it.
      */
@@ -141,8 +152,13 @@ final class SendDisbursementAction
                 return null;
             }
 
+            // A payout that crashed mid-call is sent again under the same attempt, so the provider's key is the same and it cannot pay twice. A
+            // payout that was refused or failed is a new attempt, so it gets a new reference: the provider would only repeat the old answer.
+            if ($locked->status !== DisbursementStatus::Processing) {
+                $locked->attempts++;
+            }
+
             $locked->status = DisbursementStatus::Processing;
-            $locked->attempts++;
             $locked->failure_reason = null;
 
             return $this->disbursements->save($locked);
@@ -170,7 +186,7 @@ final class SendDisbursementAction
      */
     private function markPaid(Disbursement $disbursement, DisbursementResult $result): Disbursement
     {
-        if ($result->clientReference !== $disbursement->id || bccomp(Money::ghs($result->amount)->amount, Money::ghs($disbursement->requested_amount)->amount, 2) !== 0) {
+        if ($result->clientReference !== $this->reference($disbursement) || bccomp(Money::ghs($result->amount)->amount, Money::ghs($disbursement->requested_amount)->amount, 2) !== 0) {
             Log::error('A paid payout does not match what the provider reported', ['disbursement_id' => $disbursement->id, 'church_id' => $disbursement->church_id]);
 
             return $this->disbursements->save($disbursement);

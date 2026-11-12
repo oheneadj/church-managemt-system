@@ -161,8 +161,8 @@ describe('sending a batch', function (): void {
             $provider->shouldNotReceive('disburse');
         } else {
             $provider->shouldReceive('disburse')->times($calls)
-                ->with(Mockery::on(fn (PayoutAccount $a) => $a->method === PayoutMethod::Bank && $a->bankCode === '058' && $a->number === '0123456789' && $a->holderName === 'GRACE ASSEMBLY'), $batch->requested_amount, $batch->id)
-                ->andReturn(new DisbursementResult('pay-'.$batch->id, $batch->id, $status, $batch->requested_amount, '1.67', '103.33'));
+                ->with(Mockery::on(fn (PayoutAccount $a) => $a->method === PayoutMethod::Bank && $a->bankCode === '058' && $a->number === '0123456789' && $a->holderName === 'GRACE ASSEMBLY'), $batch->requested_amount, $batch->id.'-1')
+                ->andReturn(new DisbursementResult('pay-'.$batch->id, $batch->id.'-1', $status, $batch->requested_amount, '1.67', '103.33'));
         }
         app()->instance(DisbursementProvider::class, $provider);
     }
@@ -233,8 +233,8 @@ describe('sending a batch', function (): void {
         $this->church->update(['payout_method' => PayoutMethod::Momo, 'payout_network' => MomoNetwork::Mtn, 'payout_bank_code' => null, 'payout_account_number' => '+233244000111']);
         $provider = Mockery::mock(DisbursementProvider::class);
         $provider->shouldReceive('availableBalance')->andReturn('5000.00');
-        $provider->shouldReceive('disburse')->once()->with(Mockery::on(fn (PayoutAccount $a) => $a->method === PayoutMethod::Momo), '105.00', $batch->id)
-            ->andReturn(new DisbursementResult('pay-1', $batch->id, ProviderPaymentStatus::Succeeded, '105.00', null, null));
+        $provider->shouldReceive('disburse')->once()->with(Mockery::on(fn (PayoutAccount $a) => $a->method === PayoutMethod::Momo), '105.00', $batch->id.'-1')
+            ->andReturn(new DisbursementResult('pay-1', $batch->id.'-1', ProviderPaymentStatus::Succeeded, '105.00', null, null));
         app()->instance(DisbursementProvider::class, $provider);
 
         expect(app(SendDisbursementAction::class)->execute($batch->id)->status)->toBe(DisbursementStatus::Paid);
