@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The emailed sign-in code limit for one email is now 3 a minute and 10 an hour (`limits.login_code_per_minute`, `login_code_per_hour`), for staff sign-in, staff password reset and the platform admin sign-in. The limit of 20 codes an hour from one internet address, the 20 password attempts a minute per address, the wrong-code lockouts and the 15-minute lockout are unchanged.
 - **Why:** The Product Owner said one code a minute is too small: someone on a poor network whose first code did not arrive, or who opened the wrong email, could not ask again for a minute. The hourly limit went up with it so the minute limit still means something. A code still costs a little, so the per-address and lockout limits stay as the guard against abuse. Three tests that held the old numbers were changed to the new ones (they still prove the limit, the `Retry-After`, and that an unknown email gets the same answer).
 - **Files:** config/limits.php, tests/Feature/StaffAuth/ (StaffLoginTest, StaffPasswordResetTest), tests/Feature/Platform/PlatformSignInTest.php, docs/ (08-api.md, 13-decision-log.md), CHANGELOG.md
-- **Commit:** pending
+- **Commit:** `2b9ced1` (2026-11-12)
 
 #### fix(giving): a retried payout uses a new provider reference, D-069 step e2 (2026-11-12)
 - **What:** A payout is sent to the provider under `{payout id}-{attempt}` as its reference and key (it was the payout's id alone). A resend of a crashed attempt keeps the same attempt number, so the same key, and cannot pay twice; a payout that was refused or failed is a new attempt with a new reference. The provider's answer is only accepted as paid if it names that attempt's reference.
