@@ -188,7 +188,7 @@ POST /api/v1/auth/login
 
 **Response `200`:** `{ "message": "Code sent", "expires_in": 600 }`: the password was right and a 6-digit code was emailed. **Errors:** `422` `{"message": "Invalid email or password"}` for an unknown email, a wrong password or a user with no password (one message for all, nothing is sent); `429` after 5 wrong passwords for an email (15-minute lockout).
 
-**Rate limits (D-054):** emailing a code is a cost-triggering action, so it has its own limit, counted only when a code is really sent (a mistyped password never uses it up): 1 code per email per minute and 5 per hour, 20 per IP per hour, each `429` with a `Retry-After`. Guessing passwords is limited to 20 attempts a minute per IP, and 5 wrong passwords lock that email for 15 minutes (`429`, `Retry-After: 900`). The limits are per church.
+**Rate limits (D-054):** emailing a code is a cost-triggering action, so it has its own limit, counted only when a code is really sent (a mistyped password never uses it up): 3 codes per email per minute and 10 per hour, 20 per IP per hour, each `429` with a `Retry-After`. (Raised from 1 a minute and 5 an hour on 12 Nov 2026: one a minute was too few for someone on a poor network whose first code did not arrive.) Guessing passwords is limited to 20 attempts a minute per IP, and 5 wrong passwords lock that email for 15 minutes (`429`, `Retry-After: 900`). The limits are per church.
 
 ### Sign in, step 2: emailed code
 ```
@@ -1546,7 +1546,7 @@ Served on the platform address (`yourapp.com`), not on a church's address, becau
 
 | Endpoint group | Limit |
 |---|---|
-| `POST /api/v1/auth/login` (D-054) | 20 attempts per minute per IP; 1 code per email per minute, 5 per hour, 20 per IP per hour (counted when a code is sent); 5 wrong passwords per email, then a 15-minute lockout |
+| `POST /api/v1/auth/login` (D-054) | 20 attempts per minute per IP; 3 codes per email per minute, 10 per hour, 20 per IP per hour (counted when a code is sent); 5 wrong passwords per email, then a 15-minute lockout |
 | `POST /api/v1/auth/login/verify` (D-054) | 5 wrong codes per email, then a 15-minute lockout; 10 calls per minute per IP |
 | `POST /api/v1/auth/password/forgot` and `/reset` (D-054) | same as `auth/login` |
 | `POST /api/v1/staff` | 20 invitations per hour per church |

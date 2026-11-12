@@ -83,8 +83,10 @@ describe('step 1: the password', function (): void {
         Queue::assertNothingPushed();
     });
 
-    it('limits how often a code can be asked for: once a minute for one email', function (): void {
-        platformPassword()->assertOk();
+    it('limits how often a code can be asked for: three a minute for one email', function (): void {
+        foreach (range(1, 3) as $ignored) {
+            platformPassword()->assertOk();
+        }
 
         platformPassword()->assertStatus(429)->assertHeader('Retry-After');
     });

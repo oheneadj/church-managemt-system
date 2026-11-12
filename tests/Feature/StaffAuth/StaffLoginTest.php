@@ -139,14 +139,20 @@ describe('step 1: the password', function (): void {
         staffPassword()->assertOk();
     });
 
-    it('allows one code a minute and five an hour for one email', function (): void {
-        staffPassword()->assertOk();
-        staffPassword()->assertStatus(429)->assertHeader('Retry-After');
-
-        foreach (range(1, 4) as $ignored) {
-            $this->travel(61)->seconds();
+    it('allows three codes a minute and ten an hour for one email', function (): void {
+        foreach (range(1, 3) as $ignored) {
             staffPassword()->assertOk();
         }
+        staffPassword()->assertStatus(429)->assertHeader('Retry-After');
+
+        foreach (range(1, 2) as $ignored) {
+            $this->travel(61)->seconds();
+            foreach (range(1, 3) as $again) {
+                staffPassword()->assertOk();
+            }
+        }
+        $this->travel(61)->seconds();
+        staffPassword()->assertOk();
         $this->travel(61)->seconds();
 
         staffPassword()->assertStatus(429);

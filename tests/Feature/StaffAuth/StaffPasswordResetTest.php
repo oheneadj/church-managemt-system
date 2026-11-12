@@ -85,10 +85,14 @@ describe('asking for a reset code', function (): void {
         Queue::assertPushed(SendEmailJob::class);
     });
 
-    it('limits codes to one a minute and five an hour per email, and the answer is the same for an unknown email', function (): void {
-        staffForgot()->assertOk();
+    it('limits codes to three a minute and ten an hour per email, and the answer is the same for an unknown email', function (): void {
+        foreach (range(1, 3) as $ignored) {
+            staffForgot()->assertOk();
+        }
         staffForgot()->assertStatus(429)->assertHeader('Retry-After');
-        staffForgot(['email' => 'nobody@example.com'])->assertOk();
+        foreach (range(1, 3) as $ignored) {
+            staffForgot(['email' => 'nobody@example.com'])->assertOk();
+        }
         staffForgot(['email' => 'nobody@example.com'])->assertStatus(429);
     });
 

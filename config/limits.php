@@ -15,10 +15,11 @@ return [
     'uploads_per_minute' => 20,
 
     // Staff sign-in by email (D-054). Emailing a code costs a little and can be abused, so it is limited apart from the
-    // password check: one code a minute and five an hour for one email, 20 an hour from one address. Guessing passwords
+    // password check: three codes a minute and ten an hour for one email, 20 an hour from one address (one a minute was too few for someone
+    // on a poor network, whose first code may not arrive). Guessing passwords
     // is limited per address, and checking an emailed code is limited like the text codes.
-    'login_code_per_minute' => 1,
-    'login_code_per_hour' => 5,
+    'login_code_per_minute' => 3,
+    'login_code_per_hour' => 10,
     'login_code_per_hour_per_ip' => 20,
     'login_attempts_per_minute_per_ip' => 20,
     'login_verify_per_minute_per_ip' => 10,
