@@ -23,7 +23,7 @@
 ### Authentication & Token Security
 
 ### TC-12-01 — Expired token rejected
-**Action:** Use a Sanctum token that is older than the configured expiry (e.g. 30 days)
+**Action:** Use a bearer token older than its expiry (8 hours, `otp.staff_token_hours`; set `expires_at` in the past in the test)
 **Expected:** `401 { "message": "Unauthenticated." }`
 
 ### TC-12-02 — Revoked token rejected
@@ -37,23 +37,28 @@
 **Action:** Base64-decode the Sanctum token (it is an opaque token, not a JWT)
 **Expected:** The token is an opaque random string — no church_id, user_id, or permissions embedded in it
 
-### TC-12-04 — OTP brute force lockout
-**Action:** Submit 5 incorrect OTPs for the same phone number in sequence
+### TC-12-04 — Sign-in brute force lockout (D-054)
+**Action:** (a) Submit 5 wrong passwords for the same staff email in sequence. (b) Separately, request a code, then submit 5 wrong codes.
 **Expected:**
-- After the 5th failure: `429 { "message": "Too many attempts. Try again in 15 minutes." }`
-- Further attempts for this phone (from any IP) return `429` for 15 minutes
-- After 15 minutes: fresh OTP can be requested
+- After the 5th failure: `429 { "message": "Too many attempts. Try again in 15 minutes." }` with `Retry-After: 900`
+- Further attempts for this email in this church (from any IP) return `429` for 15 minutes, even with the right password or code
+- Another email in the same church is not locked
+- After 15 minutes, or after `php artisan staff:reset-lockout <church> <email>`, the person can sign in again
 
-### TC-12-05 — OTP cannot be reused
+### TC-12-05 — A sign-in code cannot be reused
 **Action:**
-1. Request OTP, receive code `382910`
-2. Verify with `382910` (success — token issued)
+1. Sign in with the right password, receive the emailed code `382910`
+2. Verify with `382910` (success)
 3. Verify with `382910` again (same code)
-**Expected:** Second verification fails — OTP was deleted from Redis on first use
+**Expected:** Second verification fails with `422 "Invalid code"` — the code was deleted from Redis on first use. The same holds for a password reset code.
 
-### TC-12-06 — OTP rate limit
-**Action:** Request OTP for the same phone 4 times in under 1 minute
-**Expected:** After 3 requests, the 4th returns `429 { "message": "Please wait before requesting another OTP." }`
+### TC-12-06 — Emailed code rate limit
+**Action:** Ask for a sign-in code for the same email twice in under 1 minute, and then 6 times in an hour (waiting a minute between). Repeat with forgot password, for a real and an unknown email.
+**Expected:** The second request in a minute returns `429` with a `Retry-After` header; the 6th in an hour returns `429` (1 a minute and 5 an hour per email, 20 an hour per IP, D-054). The answer for a real and an unknown email is identical. Wrong passwords do not use these limits up. The same limits for text codes (sign-up, QR check-in) are in QA-03 and QA-05.
+
+### TC-12-06a — Staff sign-in does not reveal which accounts exist
+**Action:** Compare the status, body and response time of step 1 for a real email with a wrong password, an unknown email and an account with no password; and of forgot password for a real and an unknown email.
+**Expected:** The three step-1 answers are the same `422 "Invalid email or password"` with similar timing; the two forgot-password answers are the same `200`. A deactivated account is told so (`403`) only after the right password.
 
 ---
 
@@ -140,12 +145,17 @@
 ### TC-12-18 — Security headers present on all API responses
 **Action:** Make any API request and inspect the response headers
 **Expected:**
+These are the headers in `config/security.php`, sent by the `SecurityHeaders` middleware on every response, errors and the React page included (pinned by `SecurityHeadersTest`):
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: no-referrer`
-- `Content-Security-Policy: default-src 'none'` (API — no content served)
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains` (production only)
+- `X-XSS-Protection: 0` (modern browsers ignore the old filter; `0` switches off its known bugs, so `1; mode=block` would be wrong)
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains`, only over HTTPS (not over plain HTTP in local development)
+- `Content-Security-Policy` (D-056): JSON responses `default-src 'none'; frame-ancestors 'none'`; the React page `script-src 'self' 'nonce-...'` with no `unsafe-inline` or `unsafe-eval`, `object-src 'none'`, `frame-ancestors 'none'`; the nonce changes on every request and matches the page's script tags. `/docs/api` is exempt
+
+### TC-12-18b — The policy does not break the app
+**Action:** In Chrome, with the production build (Vite not running), sign in and open the dashboard, members, services and giving pages with the console open
+**Expected:** no `securitypolicyviolation` events and no CSP errors in the console; every page renders. Run it again whenever a script, font or image host is added
 
 ### TC-12-19 — Server version not disclosed
 **Action:** Inspect response headers
@@ -158,11 +168,11 @@
 ### Webhook Security
 
 ### TC-12-20 — Paystack webhook rejected without valid signature
-**Action:** POST to `/api/webhooks/paystack` without the `x-paystack-signature` header
+**Action:** POST to `/api/v1/webhooks/paystack` (cards, not built) or `/api/v1/webhooks/payperlez` (not built) without a valid signature header
 **Expected:** `401` — no processing, no job dispatched
 
 ### TC-12-21 — WhatsApp webhook rejected with wrong verify token
-**Action:** GET `/api/webhooks/whatsapp?hub.verify_token=wrong_token&hub.challenge=123`
+**Action:** GET `/api/v1/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=wrong_token&hub.challenge=123` on the platform address
 **Expected:** `403`
 
 ---

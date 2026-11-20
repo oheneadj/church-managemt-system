@@ -173,33 +173,32 @@ This middleware runs before all authenticated routes. If the subdomain doesn't m
 
 ---
 
-### Authentication — Sanctum + OTP
+### Authentication — Sanctum, password and emailed code
 
-**Staff authentication flow:**
+**Staff authentication flow (D-054, built):**
 
 ```
-1. POST /api/auth/otp/request  { phone: "0244123456" }
-   → Generates 6-digit OTP, stores hashed in cache (10 min TTL)
-   → Sends OTP via the active SmsProvider (PayPerlez by default, D-020)
+1. POST /api/v1/auth/login        { email, password }
+   → Checks the password; if right, generates a 6-digit code, stores it hashed in Redis (10 min TTL)
+   → Emails the code (Laravel Mail, `critical` queue)
 
-2. POST /api/auth/otp/verify   { phone: "0244123456", otp: "382910" }
-   → Verifies OTP hash
-   → Creates Sanctum personal access token
-   → Returns: { token, user, church, permissions[] }
+2. POST /api/v1/auth/login/verify { email, code }
+   → Verifies the code hash
+   → Browser: signs in by cookie session. Other clients: 8-hour Sanctum bearer token (D-027)
+   → Returns: { user, church } (and token for non-browser clients)
 
-3. All subsequent requests:
-   Authorization: Bearer <token>
-   → Middleware validates token + resolves church
+3. All subsequent requests: session cookie, or Authorization: Bearer <token>
+   → Middleware resolves the church first, then the user
 ```
 
-**Member authentication flow:** Identical, but returns a limited token scoped to member-only routes.
+**Member authentication flow:** phone number and SMS code only, no password. No member portal is built yet; the QR and WhatsApp check-ins use the same kind of code.
 
 **OTP security rules:**
 - 6 digits, numeric only
 - 10-minute expiry
 - Hashed with `bcrypt` before storage in Redis
 - Max 5 attempts per phone per window; 15-minute lockout after failure
-- Rate limited at the route level: 5 requests per phone per minute
+- Rate limited at the route level: 1 request per phone per minute and 5 per hour (D-025)
 
 ---
 
@@ -209,8 +208,8 @@ This middleware runs before all authenticated routes. If the subdomain doesn't m
 
 ```
 church-admin        → full access to their church
-pastor              → members (read), giving summaries, pastoral care, communications
-finance-secretary   → giving (full), members (read), reports (export)
+pastor              → members (read, add and edit), giving summaries, pastoral care, communications
+finance-secretary   → giving (full), members (read, list export), reports (view, export)
 department-head     → members in their department only
 youth-pastor        → youth members, youth milestones, youth attendance
 ```
@@ -239,10 +238,11 @@ All side effects that don't need to be synchronous are queued:
 | `SendSmsJob` (OTP) | `critical` | Highest (D-025) |
 | `SendSmsJob` (receipts, broadcasts) | `notifications` | Normal |
 | `SendWhatsAppJob` | `notifications` | Normal |
-| `SendEmailJob` | `notifications` | Low |
+| `SendEmailJob` (codes) | `critical` | Highest (D-025, D-062) |
+| `SendEmailJob` (invitations, exports) | `notifications` | Normal |
 | `ProcessPaystackWebhookJob` | `payments` | High |
 | `GenerateOfferingReportJob` | `reports` | Low |
-| `ExportMembersJob` | `exports` | Low |
+| `BuildExportJob` (member list and giving records CSV) | `exports` | Low |
 | `SendBirthdayAlertJob` | `scheduled` | Low |
 
 **Queue workers run as separate processes** managed by Coolify's process supervisor (Supervisor). If a job fails, it retries 3 times with exponential backoff. After 3 failures, it lands in the `failed_jobs` table and triggers a monitoring alert.
@@ -346,7 +346,7 @@ Member sends:  CHECKIN [service-code]
 
 **Purpose:** Staff invitation emails, export download links, system notifications (breach alerts, failed job alerts).
 
-**Laravel Mail abstraction:** Email is sent via `Mail::to()->send()`. The mail driver is configured in `.env`. Switching from Resend to a self-hosted SMTP (e.g. Postal) requires only updating `MAIL_*` environment variables — no code changes.
+**Laravel Mail abstraction:** Email is sent via `Mail::to()->send()` inside `SendEmailJob`, queued by `QueueEmailAction` (D-062). The mail driver is configured in `.env`. Switching from Resend to a self-hosted SMTP (e.g. Postal) requires only updating `MAIL_*` environment variables — no code changes.
 
 ```env
 # Resend (current)

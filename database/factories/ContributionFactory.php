@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\ContributionStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Church;
 use App\Models\Contribution;
@@ -24,12 +25,24 @@ class ContributionFactory extends Factory
         return [
             'church_id' => Church::factory(),
             'fund_type_id' => fn (array $attributes) => FundType::factory()->create(['church_id' => $attributes['church_id']])->getKey(),
+            'fund_name' => fn (array $attributes) => FundType::query()->withoutGlobalScopes()->whereKey($attributes['fund_type_id'])->value('name') ?? 'Tithe',
             'amount' => '200.00',
             'payment_method' => PaymentMethod::Cash,
+            'status' => ContributionStatus::Completed,
             'is_voided' => false,
             'recorded_by' => fn (array $attributes) => User::factory()->create(['church_id' => $attributes['church_id']])->getKey(),
             'contributed_at' => now(),
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(['status' => ContributionStatus::Pending, 'payment_method' => PaymentMethod::Momo]);
+    }
+
+    public function failed(): static
+    {
+        return $this->state(['status' => ContributionStatus::Failed, 'payment_method' => PaymentMethod::Momo]);
     }
 
     public function voided(string $reason = 'Entered in error'): static

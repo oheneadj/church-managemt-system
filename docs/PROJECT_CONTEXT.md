@@ -71,7 +71,7 @@ Ghana has ~71,000 registered churches. The vast majority still run on paper regi
 | Global state | Zustand v5 |
 | Server state | TanStack Query v5 |
 | Styling | Tailwind CSS v4 + shadcn/ui |
-| Auth — staff | Laravel Sanctum + Spatie Permission |
+| Auth — staff | Laravel Sanctum + Spatie Permission; email + password + emailed code (D-054) |
 | Auth — members | OTP via SMS/WhatsApp (no passwords) |
 | Payments | Paystack / PayPerlez / Moolre (provider abstraction) |
 | SMS | PayPerlez / Africa's Talking / Moolre (provider abstraction) |

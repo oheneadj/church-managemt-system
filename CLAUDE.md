@@ -6,7 +6,7 @@
 
 ## What This Project Is
 
-A **multi-tenant SaaS** for Ghanaian churches (100–800 members). Churches pay a monthly subscription. All churches share one database, isolated by `church_id`. The platform handles member management, attendance (including WhatsApp CHECKIN), digital giving via Paystack MoMo/card, and SMS/WhatsApp communications.
+A **multi-tenant SaaS** for Ghanaian churches (100–800 members). Churches pay a monthly subscription. All churches share one database, isolated by `church_id`. The platform handles member management, attendance (including WhatsApp CHECKIN), digital giving (MoMo through PayPerlez with automatic payout to the church, D-018; cards through Paystack), and SMS/WhatsApp communications.
 
 **Backend:** Laravel (latest stable) — REST API only. The only Blade view is the SPA shell (`resources/views/app.blade.php`); no Inertia.
 **Database:** PostgreSQL. **Dev:** native (no Docker). **Staging/production:** Docker via Coolify.
@@ -39,7 +39,7 @@ This test is a hard requirement in the Definition of Done. No exceptions.
 ### 3. All outbound network calls are queued — never inline
 ```php
 // Wrong:
-AfricasTalking::sms()->send([...]);
+app(SmsProvider::class)->send($message); // an SDK or provider call in the request
 
 // Right:
 SendSmsJob::dispatch($phone, $message)->onQueue('notifications');
@@ -47,15 +47,25 @@ SendSmsJob::dispatch($phone, $message)->onQueue('notifications');
 HTTP calls in a request lifecycle cause timeouts and slow responses.
 
 ### 4. No business logic in controllers
-Controllers are thin. They: validate (via Form Request), authorise (via Policy), call a Service, return a Resource. That's it.
+Controllers are thin and single-action. They: build a DTO from the validated Form Request, call one Action, return a Resource. Authorisation happens in the Form Request's `authorize()`, which asks a Policy. The layers are Controller → Form Request → DTO → Action → Service → Repository → Model (Universal §6, Laravel addendum §5, D-033).
 
 ### 5. No hard deletes. Ever.
 All models use `SoftDeletes`. Contributions use `is_voided` flag, not deletion. Void requires a reason.
 
 ### 6. All amounts are GHS, stored as `DECIMAL(12,2)`
-No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithmetic with PHP floats — use `bcmath` or `brick/math` (see D-017). Paystack requires pesewas in its API (`amount * 100`), but we store and display GHS.
+No cents, no kobo, no multi-currency. `200.00` = GHS 200. Never do money arithmetic with PHP floats — use `bcmath` or `brick/math` (see D-017). Money crossing a provider interface is a decimal string in GHS (D-020); the pesewas conversion (`amount * 100`) exists only inside the Paystack adapter.
 
 ### 7. `APP_DEBUG=false` in production. Always.
+
+### 8. Simple, Framework-First, No Hard-Coding
+Write simple code that anyone can read at a glance. This applies to every project and sits beside the other principles; it never replaces them.
+
+- **No hard-coding.** Do not scatter fixed values (limits, sizes, durations, names, URLs, rates, status text) through the code. Put them in config, an enum, a constant or a named value, and read them from there.
+- **Keep it simple and straightforward.** Prefer short, plain, obvious logic. Do not write complex logic; if a piece of code is hard to follow, break it into small named steps or find the simpler way.
+- **Framework first, then the language.** Use the framework's own tools before reaching for raw language features, and use the language's standard features before writing anything custom.
+- **Comments that help.** Write comments and docblocks that are well structured and clearly written, so a developer who has never seen the code understands what it does and why. Explain intent, not the obvious.
+- **Apply all of this together with the other principles** (layers, tests, types, security). Simplicity is never a reason to skip a rule, and a rule is never a reason to write something harder to understand than it needs to be.
+
 
 ---
 
@@ -66,8 +76,11 @@ app/
 ├── Console/Commands/       — Artisan commands (backup, prune, monitor)
 ├── Events/                 — Domain events (ContributionReceived, etc.)
 ├── Exceptions/             — Custom exception classes
+├── Actions/                — One class per user intent. execute(DTO). Owns the transaction.
+├── DTOs/                   — Typed input for one operation
+├── Repositories/           — Interface + Eloquent implementation per model
 ├── Http/
-│   ├── Controllers/        — Thin. One public method per action.
+│   ├── Controllers/        — Thin, single-action (__invoke).
 │   ├── Middleware/         — ResolveTenant, SecurityHeaders
 │   ├── Requests/           — Form Request validation classes
 │   └── Resources/          — API Resource serialisation classes
@@ -86,26 +99,33 @@ app/
 
 ## Key Patterns
 
-### Controller → Form Request → Service → Resource
+### Controller → Form Request → DTO → Action → Resource
 ```php
-public function store(StoreMemberRequest $request): JsonResponse
+// app/Http/Controllers/Api/V1/Members/StoreMemberController.php
+public function __invoke(StoreMemberRequest $request): JsonResponse
 {
-    $this->authorize('create', Member::class);
-    $member = $this->memberService->create($request->validated());
-    return new MemberResource($member);
+    $member = $this->action->execute(CreateMemberDTO::fromRequest($request));
+
+    return (new MemberResource($member))->response()->setStatusCode(201);
 }
 ```
 
-### Service Class
+### Action (one user intent, owns the transaction, fires events)
 ```php
-class MemberService
+final class CreateMemberAction
 {
-    public function create(array $data): Member
+    public function execute(CreateMemberDTO $dto): Member
     {
-        return Member::create($data); // church_id auto-set by BelongsToChurch
+        return DB::transaction(function () use ($dto): Member {
+            $member = $this->members->save(new Member($dto->attributes())); // church_id set by BelongsToChurch
+            MemberCreated::dispatch($member, $dto->actor);
+
+            return $member;
+        });
     }
 }
 ```
+Services hold rules shared by several Actions and never open a transaction. Queries live in a Repository (`MemberRepositoryInterface`), never in an Action, Service or Controller.
 
 ### Policy (always check church_id)
 ```php
@@ -132,11 +152,11 @@ public function update(User $user, Member $member): bool
 
 ## Authentication & Permissions
 
-**Auth:** Laravel Sanctum personal access tokens. OTP-only (no passwords). Phone number is the identity.
+**Auth:** Laravel Sanctum. Staff: email + password, then a 6-digit code emailed to them (D-054). Members and the check-ins: phone number + SMS code, no passwords.
 
 **Roles:** `church-admin`, `pastor`, `finance-secretary`, `department-head`, `youth-pastor`
 
-**Key permissions:** `members.view`, `members.edit`, `giving.summary`, `giving.record`, `giving.edit`, `giving.export`, `sms.send`, `reports.view`, `reports.export`
+**Key permissions:** `members.view`, `members.edit`, `members.export`, `members.data-export`, `giving.summary`, `giving.record`, `giving.edit`, `giving.export`, `sms.send`, `reports.view`, `reports.export`
 
 **Tenant resolution:** `ResolveTenant` middleware resolves the church from the subdomain (`grace-assembly.yourapp.com` → Church with slug `grace-assembly`). Sets `app('current.church')`. Returns 404 on unknown subdomain.
 
@@ -148,8 +168,8 @@ Six named queues, in priority order:
 
 | Queue | Used for | Workers |
 |---|---|---|
-| `critical` | OTP SMS, nothing else (D-025) | 1 |
-| `payments` | Paystack webhook processing | 2 (high priority) |
+| `critical` | Sign-in codes only: OTP SMS (D-025) and the emailed staff codes (D-054, D-062) | 1 |
+| `payments` | Payment webhooks, collection polling and church payouts (PayPerlez, Paystack) | 2 (high priority) |
 | `notifications` | SMS, WhatsApp, email sends | 2 |
 | `reports` | Report generation | 1 |
 | `exports` | CSV export jobs | 1 |
@@ -158,7 +178,7 @@ Six named queues, in priority order:
 Always specify the queue when dispatching:
 ```php
 SendSmsJob::dispatch(...)->onQueue('notifications');
-ProcessPaystackWebhookJob::dispatch(...)->onQueue('payments');
+ProcessPaymentWebhookJob::dispatch(...)->onQueue('payments'); // planned with the digital giving slice
 ```
 
 ---
@@ -167,13 +187,20 @@ ProcessPaystackWebhookJob::dispatch(...)->onQueue('payments');
 
 | Service | Config key | SDK |
 |---|---|---|
-| Paystack | `services.paystack.*` | Official PHP SDK |
-| Africa's Talking | `services.africastalking.*` | Official PHP SDK |
+| PayPerlez (SMS, MoMo collections, payouts) | `services.payperlez.*` | Laravel HTTP client behind `SmsProvider`, `PaymentProvider`, `DisbursementProvider` (D-020) |
+| Paystack (cards only, planned) | `services.paystack.*` | Official PHP SDK, behind `PaymentProvider` |
+| Africa's Talking (SMS fallback, planned) | `services.africastalking.*` | Official PHP SDK, behind `SmsProvider` |
 | Meta WhatsApp | `services.meta.*` | Laravel HTTP client (raw) |
 | Resend | `MAIL_*` in `.env` | Laravel Mail (SMTP) |
 | Cloudflare R2 | `filesystems.disks.r2` | `league/flysystem-aws-s3-v3` |
 
 Full integration details: `docs/14-integrations.md`
+
+---
+
+## Changelog
+
+Before every commit, add an entry to `CHANGELOG.md` under `Change record`. Each entry states **what** was done, **why** it was done, **which files** were affected, and **the commit** (add the hash right after committing). The short Added / Changed bullets stay as a summary.
 
 ---
 
@@ -211,10 +238,13 @@ php artisan migrate                 # Run pending migrations
 php artisan migrate:fresh --seed    # Reset + seed (dev/staging only)
 php artisan db:backup               # Manual backup
 
+# End-to-end tests (real Chrome against the running local sites; needs a `critical` queue worker, see playwright.config.ts)
+npm run e2e
+
 # Code quality
 ./vendor/bin/pint                   # Fix code style
 ./vendor/bin/pint --test            # Check without fixing
-./vendor/bin/phpstan analyse        # Static analysis
+./vendor/bin/phpstan analyse --memory-limit=1G   # Static analysis (the default 128M limit crashes the parallel workers; CI and `composer analyse` already pass the flag)
 
 # Queues
 php artisan queue:work redis --queue=payments,notifications
@@ -236,6 +266,10 @@ Use these instead of recalling framework APIs from memory (Universal agreement �
 - **Laravel Boost** (`laravel-boost`, in `.mcp.json`; run `php artisan boost:mcp`). Call `search-docs` before using any Laravel, Pest, Livewire or Tailwind API you are not certain about for the installed version. Call `database-schema` before writing a migration and `database-query` to inspect data. Use `last-error` and `read-log-entries` when debugging, and `record-rule` to save a project rule that every future session should follow. Claude Code asks you to approve this server the first time (`/mcp`).
 - **Context7** (`context7`, hosted at `https://mcp.context7.com/mcp`, added per developer with `claude mcp add --transport http --scope local context7 https://mcp.context7.com/mcp`). Use it for the React side that Boost does not cover: React Router 7, TanStack Query 5, Zod, React Hook Form, Vitest, shadcn/ui. State the version in the question. Send only generic library questions, never secrets or member data.
 - **Boost skills** live in `.claude/skills` (configured in `boost.json`, Claude Code only). Refresh them with `php artisan boost:update --no-discover` after upgrading Laravel packages.
+
+## UI Contract (mandatory)
+
+Before creating or changing anything a user sees, read `docs/design-system/CONTRACT.md` (D-070). In short: reuse the shared components in `resources/js/components/ui` and `components/form` and never build a one-off button, input, dialog, toast or skeleton; take colours, type and motion from the tokens in `resources/css/app.css`, never hard-coded values; build every state that applies (hover, focus-visible, active, disabled, loading, error, empty); every asynchronous action gives feedback within 100 ms, cannot run twice, and shows success only after the server confirms (money, permissions and deletions always wait); a failed form keeps what was typed; respect `prefers-reduced-motion`; meet WCAG 2.2 AA; write messages as in `docs/design-system/ux-writing.md`. Test loading, failure and keyboard use. When reporting UI work, name the components reused or made, the states built, the accessibility checks run, the tests and results, and any exception (written in the CHANGELOG entry). Never bypass the contract silently.
 
 ## What Not to Do
 
@@ -263,3 +297,5 @@ Everything is documented. When in doubt, read the relevant doc:
 - Security controls → `docs/15-security.md`
 - Integrations → `docs/14-integrations.md`
 - Definition of Done → `docs/10-definition-of-done.md`
+- Interaction, motion and feedback rules for the UI → `docs/design-system/CONTRACT.md`
+- Open work, waiting items and standing deviations from the agreement → `docs/19-open-items.md`

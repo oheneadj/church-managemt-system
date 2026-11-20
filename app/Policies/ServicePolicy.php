@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Enums\StaffPermission;
+use App\Models\Service;
+use App\Models\User;
+
+/**
+ * Who may see and change services. Every signed-in staff member may read them (QA-10); changing them, opening and
+ * closing check-in and recording attendance follow members.edit, which the church admin and the pastor hold.
+ */
+class ServicePolicy
+{
+    /**
+     * Whether the user may list services. Any signed-in staff member may.
+     */
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Whether the user may open this service. It must belong to the user's church.
+     */
+    public function view(User $user, Service $service): bool
+    {
+        return $user->church_id === $service->church_id;
+    }
+
+    /**
+     * Whether the user may add a service.
+     */
+    public function create(User $user): bool
+    {
+        return $user->hasPermissionTo(StaffPermission::MembersEdit);
+    }
+
+    /**
+     * Whether the user may change this service, or open or close it.
+     */
+    public function update(User $user, Service $service): bool
+    {
+        return $user->church_id === $service->church_id && $user->hasPermissionTo(StaffPermission::MembersEdit);
+    }
+
+    /**
+     * Whether the user may cancel this service (it is removed from the calendar but kept, soft-deleted).
+     */
+    public function cancel(User $user, Service $service): bool
+    {
+        return $this->update($user, $service);
+    }
+
+    /**
+     * Whether the user may see what this service received. It is a report of totals with no names in it, so the
+     * pastor may see it as well as the finance roles (giving.summary, QA-10).
+     */
+    public function viewOfferingReport(User $user, Service $service): bool
+    {
+        return $user->church_id === $service->church_id && $user->hasPermissionTo(StaffPermission::GivingSummary);
+    }
+
+    /**
+     * Whether the user may check people in to this service, or add a visitor to it. This is the same permission as
+     * changing the service, kept as its own ability so the two can be split later without touching the callers.
+     */
+    public function recordAttendance(User $user, Service $service): bool
+    {
+        return $this->update($user, $service);
+    }
+}

@@ -63,6 +63,7 @@ Every story in the backlog is measured against this list before it is marked com
 - [ ] No tests were deleted or commented out to make the suite pass
 
 ### API Documentation
+- [ ] `docs/openapi.json` regenerated (`php artisan scramble:export`) and committed
 - [ ] `08-api.md` updated with any new or changed endpoint
   - Method, URL, required permission
   - Request body with field types

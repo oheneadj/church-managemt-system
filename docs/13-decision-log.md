@@ -233,7 +233,7 @@ A "significant decision" is one that:
 ### D-012 — OTP-only authentication (no passwords)
 **Date:** October 2026
 **Decided by:** Lead Engineer + Product Owner
-**Status:** Active
+**Status:** Staff sign-in superseded by D-054 (email + password + emailed code). Members, QR check-in and the WhatsApp check-in still use phone and SMS codes, no passwords.
 
 **Decision:** All users (staff and members) authenticate via phone number + OTP sent by SMS. There are no passwords in the system.
 
@@ -471,7 +471,7 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-025 — OTP sends use a `critical` queue and cost-based rate limits
 **Date:** October 2026
 **Decided by:** Lead Engineer (following the Universal agreement, sections 16 and 18)
-**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`
+**Status:** Active — amends the queue list in `06-architecture.md` and the OTP limits in `08-api.md` and `15-security.md`. **Amended by D-062:** the `critical` queue also carries the emailed staff sign-in, reset and invitation codes.
 
 **Decision:**
 - A sixth queue, `critical`, carries OTP SMS so a slow broadcast can never delay a sign-in. It is listed first in the worker command.
@@ -524,13 +524,857 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 ### D-028 — Controller → Form Request → Service; no Action or Repository layers yet
 **Date:** October 2026
 **Decided by:** Lead Engineer (reconciling the Universal agreement §6 with `docs/09-engineering-principles.md`)
-**Status:** Active
+**Status:** Superseded by D-033
 
 **Decision:** Backend code is layered Controller → Form Request → Service → Model, as `docs/09-engineering-principles.md` specifies. Services own `DB::transaction()` boundaries and dispatch jobs and events. We do not add Action classes (one per operation) or Repository classes (all queries for a model) until a real need appears: an Action when one operation is triggered from several entry points, a Repository when a second data source exists. The layers, their duties and their prohibitions are written down in `ARCHITECTURE.md`.
 
 **Rationale:** The project documents name Services explicitly, `09` says interfaces are added only once there are two implementations, and the codebase is small. Extra layers now would be speculative (YAGNI). Eloquent scopes already cover repeated filters.
 
 **Revisit when:** a second client of the same operation appears (for example a CLI command and an endpoint doing the same thing) or a second storage backend is introduced.
+
+---
+
+### D-029 — One image with runtime roles, deployed as three Coolify Applications
+**Date:** October 2026
+**Decided by:** Lead Engineer (from Coolify and serversideup/php documentation)
+**Status:** Active
+
+**Decision:** `deploy/Dockerfile` builds one image on `serversideup/php` (pinned tag). `CONTAINER_ROLE` (`web`, `worker`, `scheduler`) selects the process at start-up. It is deployed as three Coolify Applications, not Docker Compose. Only `web` runs migrations and seeding, from the start script, which always runs `env:check` first. Telescope is registered only in the `local` environment so a `--no-dev` image boots. Logs go to stderr as JSON. Queue workers run under Supervisor inside the `worker` container.
+
+**Rationale:** Coolify does not support rolling updates for Compose applications, and the Dockerfile build pack has no start-command override, so roles must be chosen by environment variable. One image keeps web, worker and scheduler on identical code.
+
+**Revisit when:** Coolify documents rolling updates for Compose, or worker load needs more than one container.
+
+---
+
+### D-030 — Member numbers, change log and pastor edit rights
+**Date:** October 2026
+**Decided by:** Product Owner (answers given at Sprint 2 planning)
+**Status:** Active
+
+**Decision:**
+1. **Member number.** The church admin types a short prefix at onboarding, stored as `churches.member_number_prefix`. The number is `{prefix}-{sequence, at least 4 digits}`, for example `GRC-0042`. The sequence is `churches.member_number_seq`, incremented under a row lock inside the create transaction, so numbers are unique, gapless on success and never reused after a delete. Until a prefix is set, adding a member returns `422`.
+2. **Change log.** A new append-only `audit_logs` table records creates, updates and status changes on members, with the acting user (name snapshotted), old and new values, the request id and an optional reason. Encrypted fields (address, national id) are recorded by name only, never by value. Written by `AuditLogger` from the service layer, not from model observers, so the actor is always explicit.
+3. **Pastor.** The `pastor` role gets `members.edit` (add and edit members), as `docs/02` and `docs/03` specify. Only `church-admin` can deactivate members or export.
+
+**Rationale:** `docs/03` requires an audit trail on phone and status changes and `docs/02` requires a change log, but `docs/07` had no table for it. The seeder and `docs/06` disagreed with `docs/02` and `docs/03` about the pastor.
+
+**Revisit when:** a church needs a different number format, or audit rows need to be shown in the app (Sprint 5).
+
+---
+
+### D-031 — Who can see which members, and who can deactivate
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/03`; the youth rule was set by the Product Owner
+**Status:** Active
+
+**Decision:**
+1. **Directory visibility.** `church-admin`, `pastor` and `finance-secretary` see all members. `department-head` sees members of departments where they are `head_user_id`. `youth-pastor` sees youth members. Youth is defined by age (Product Owner, Sprint 2): younger than the church's `settings.youth_age_limit`, default 25 (`config/members.php`). A member with no date of birth falls back to the educational level: anything except `graduate`. The docs said "youth only" without defining it. A user with several of these roles sees the union. Enforced by `Member::scopeVisibleTo` and `MemberPolicy::view`.
+2. **Deactivation.** A new permission `members.deactivate`, held only by `church-admin`, is required to move a member to inactive, transferred, deceased or archived. `members.edit` is enough to move to prospect or active. This matches the `docs/03` table (pastors add and edit, only the admin deactivates).
+3. **Default directory.** With no status filter and no search, only prospects and active members are listed. Everything else is reachable by search or an explicit status.
+4. **Milestones.** A new permission `milestones.view`, held by `church-admin`, `pastor` and `youth-pastor`, controls whether Get Member includes milestones (docs/03: finance secretaries and department heads may not see them). Adding a milestone needs `members.edit`.
+5. **Deceased is read-only.** `MemberPolicy::update` refuses a deceased member (docs/03, Stage 4). A status change is still allowed so a mistake can be corrected.
+
+**Rationale:** `docs/03` states these rules in prose and a table, but `docs/08` only mentions `members.view` and `members.edit`.
+
+**Revisit when:** a church needs per-department editing rights.
+
+---
+
+### D-032 — Member photos: processed in the request, stored in the default disk
+**Date:** October 2026
+**Decided by:** Lead Engineer (reconciling `docs/08` with the "queue every outbound call" rule)
+**Status:** Active
+
+**Decision:** A member photo is validated, re-encoded to a 512 pixel JPEG and written to object storage during the upload request, using Laravel's image API (`intervention/image` ^4, GD). Writing to our own private R2 bucket is treated like a database write, not as a third-party API call, so it is not queued. The limits that make this safe are a 5 MB and 4096 pixel cap, a 20 per minute rate limit, and a fixed storage key per member so replacements leave nothing behind.
+
+**Rationale:** `docs/08` returns the new signed link in the upload response, which a queued job cannot do, and the rule against inline outbound calls exists for slow third-party services (SMS, payments), not our own storage. The file-upload pattern prefers a queue; if photo volume or size grows (for example batch imports), move processing to a job and return `202`.
+
+**Revisit when:** uploads are slow on the 3G target, or a bulk import of photos is built.
+
+---
+
+### D-033 — Follow the Universal layer stack in full: Actions, DTOs and Repositories
+**Date:** October 2026
+**Decided by:** Product Owner (instructed that the code must match the Universal agreement and the Laravel addendum exactly)
+**Status:** Active. Supersedes D-028.
+
+**Decision:** Backend code is layered Controller → Form Request → DTO → Action → Service → Repository → Model, as Universal section 6 and the Laravel addendum (sections 3, 5, 6, 7, 11 and 12) describe.
+- One `final` Action per user intent in `app/Actions`, with a single `execute(DTO)` method. It owns `DB::transaction()` and fires domain events. An Action never calls another Action.
+- Services in `app/Services` hold rules shared by several Actions and never own a transaction.
+- Every Eloquent model that Actions touch has a Repository interface and an Eloquent implementation in `app/Repositories`, bound in `RepositoryServiceProvider`. Controllers, Actions and Services do not query models directly.
+- Controllers are single-action (`__invoke`) and only build a DTO, call one Action and return a Resource. Form Requests authorise through a Policy.
+- Events are fired by Actions (`MemberCreated`, `MemberUpdated`, `MemberStatusChanged`); the audit line is written by a synchronous listener inside the transaction, so a rolled-back change leaves no history.
+- Unit tests for Actions and Services use mocked repositories and no database; Feature tests remain for every endpoint.
+
+**Rationale:** D-028 skipped these layers on YAGNI grounds, but the Universal agreement sits at the top of the precedence order and the project documents never explicitly removed them. The addendum's checklist requires Actions to own transactions and fire events, which the earlier Service-only code could not satisfy.
+
+**Revisit when:** a rule in the agreement is changed by the Product Owner.
+
+---
+
+### D-034 — Response labels, formatted money and a log of who views personal data
+**Date:** October 2026
+**Decided by:** Product Owner (instructed to match the Universal agreement and Laravel addendum exactly)
+**Status:** Active
+
+**Decision:**
+1. Every enum field in an API response is sent as its value plus a `{field}_label` sibling (addendum section 6).
+2. Money is shaped by the `Money` value object, the only place an amount becomes display text. Storage stays `DECIMAL(12,2)` and the raw API value stays a decimal string (D-017), which is the project's explicit override of the agreement's integer minor units; a `_formatted` sibling such as `"GHS 2,400.00"` is added beside it.
+3. Opening a member's full record fires `MemberViewed`, and a listener writes a `viewed` line to `audit_logs` naming the viewer and that the encrypted address was shown (agreement section 36: access to PII fields must be logged). The value is never copied into the log. List views do not return the address, so they are not logged.
+4. Resources nest other Resources for related records, and every list uses a `ResourceCollection` class (`MemberCollection`, `FamilyCollection`, `DepartmentCollection`).
+
+**Rationale:** The agreement and addendum require each of these. The view log costs one insert per profile open, which is small next to the compliance value.
+
+**Revisit when:** the member profile returns more personal fields, or view volume makes the log too large (then add a retention job, per the agreement's retention table).
+
+---
+
+### D-035 — The OpenAPI spec is generated by Scramble, committed, and checked in CI
+**Date:** October 2026
+**Decided by:** Product Owner (instructed to match the Universal agreement, section 35)
+**Status:** Active
+
+**Decision:** `dedoc/scramble` generates an OpenAPI 3.1 document from the routes, Form Requests, Resources and DTO-typed Actions. It is committed at `docs/openapi.json`. A Pest test and a CI step re-generate it and fail on any difference or on any type Scramble cannot work out (`--fail-on-unknown`), and a test checks that every `/api` route is in it. Routes behind `auth:sanctum` are documented as needing a bearer token and the rest as public. The interactive docs live at `/docs/api` behind the `tenant` middleware and the `viewApiDocs` gate: open in local development, otherwise only for staff with `church.settings`. The spec version is `1.0.0`, matching `/api/v1`, and a breaking change means a new version.
+
+**Rationale:** The agreement requires a committed spec, a CI check, interactive docs behind authentication in production, and says hand-written docs go stale. Generating it from code removes that risk. `docs/08-api.md` stays as the plain-language guide to the conventions.
+
+**Revisit when:** a second API version appears (add a second Scramble API), or contract tests with the React app are added.
+
+---
+
+### D-036 — How the member screens are built
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the React addendum and `docs/patterns/Pattern — State Management.md`
+**Status:** Active
+
+**Decision:**
+1. **Filters and the page number live in the URL** (`useMemberFilters`), so a refresh, the back button and a shared link show the same view. Unknown values in the URL are ignored.
+2. **Search runs when the user presses Search or Enter**, not on every key press, which is gentler on a slow connection and needs no timer.
+3. **Drop-downs are the browser's own `<select>`**, which is the easiest control on a cheap phone and fully accessible. The generated shadcn Select is not used.
+4. **Buttons are hidden by permission** (`useCan`) for a cleaner screen; the API still answers 403, which is what actually protects the data.
+5. **Money is never calculated in the browser.** `MoneyDisplay` shows the `_formatted` text the API sends.
+6. **Backend enums and permissions are mirrored** in `constants/enums.ts` and `constants/permissions.ts`, guarded by a backend test so they cannot drift.
+7. **UI parts come from the official shadcn registry** (`npx shadcn add`) and are formatted to the project style. `next-themes`, which the toast wrapper wanted, was dropped because the app has no theme switch.
+
+**Rationale:** Each point follows the React addendum (state in the right place, no business logic in components, no magic strings) and the agreement's accessibility and mobile-first rules.
+
+**Revisit when:** a theme switch is added, or a list gets long enough to need virtualisation.
+
+---
+
+### D-037 — How a church is started
+**Date:** October 2026
+**Decided by:** Product Owner (phone check and reserved names), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **The phone is proven before anything is created.** The person asks for a code on the platform host, then sends the church details with the code; the church and its first admin are created in one transaction only if the code is right. Nothing half-made is ever stored, and no one can hold a web address without owning a phone. (QA-03 TC-03-01 describes creating a "pending" church first; this order replaces it, so there is no pending state to clean up.)
+2. **Sign-up codes use the same rules as sign-in codes** (hashed, 10 minutes, 5 tries, 15-minute lockout) under their own scope. They are limited more tightly because they text a stranger: 1 a minute and 3 an hour per phone, 10 an hour per IP.
+3. **The web address** is typed or built from the church name. It is lowercase letters, numbers and single hyphens, 3 to 40 characters. Names kept for the platform (`www`, `api`, `admin`, `docs` and others in `config/onboarding.php`) are refused. A taken typed address returns free alternatives and does not use up the code. A deleted church's address stays taken.
+4. **The member number prefix** (2 to 6 letters) is asked at sign-up, as D-030 decided.
+5. **After creating the church the admin signs in on the new address with a new code**, because a session cookie belongs to one host (D-027). Handing a session from the platform host to the church host would need a one-time link; it is left out until it is wanted. (QA-03 TC-03-01 expects the admin to be signed in straight away.)
+6. **The sign-up code's text message is logged with no church**, so `message_logs.church_id` is now nullable. Rolling that migration back deletes those rows.
+7. **Left for later stories:** the bank or MoMo payout details and Paystack subaccount (story 4.1, QA-03 TC-03-05), inviting a second admin (story 5.15; the sign-up page only recommends it, as TC-03-06 allows), and a welcome email (the platform has no email sender yet).
+
+**Rationale:** The agreement requires provisioning to be atomic (section 34) and every cost-triggering endpoint to be separately rate limited (section 16). Proving the phone first keeps abusive sign-ups cheap to refuse.
+
+**Revisit when:** a one-time sign-in link is wanted, or churches can be started by the platform's own staff.
+
+---
+
+### D-038 — PayPerlez sends our SMS; we keep making our own codes
+**Date:** October 2026
+**Decided by:** Lead Engineer, from the PayPerlez SMS documentation
+**Status:** Active
+
+**Decision:**
+1. **`SMS_PRIMARY_PROVIDER=payperlez` sends every text through `POST /sms/messages`** (docs/14, section 7). The provider interface now takes the whole message and returns a receipt, so the message log keeps PayPerlez's reference and the safe parts of its reply.
+2. **Every message has one retry key**, made when the job is created and kept across retries, so a retry after a timeout can never send a second text.
+3. **Temporary failures retry; refusals do not.** A rate limit, a server error or a lost connection retries with backoff. Any other refusal (unapproved sender, no credit, bad request) fails the job at once and is logged with PayPerlez's error code and request id only.
+4. **Sign-in and sign-up codes stay ours.** PayPerlez's own OTP product is not used, so sign-in is not tied to one provider and the code rules (10 minutes, 5 tries, lockout) stay the same whichever provider sends the text.
+5. **The app refuses to start** with this provider unless the API key and an approved sender id are set (`env:check` and the provider binding both say so).
+
+**Rationale:** The agreement requires every provider to sit behind an interface, retries to be safe, and failures to be normalised at the driver boundary.
+
+**Revisit when:** PayPerlez publishes SMS delivery webhooks (replace polling), or a second SMS provider is added (Africa's Talking is the planned fallback).
+
+---
+
+### D-039 — Subject access, erasure and retention
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36, `docs/05-data-safety.md` and the audit-trail pattern
+**Status:** Active
+
+**Decision:**
+1. **Export:** `GET /members/{id}/data-export` returns everything held about one member as JSON. It needs `members.export` and is itself recorded in the change log.
+2. **Erasure anonymises, it does not delete.** `POST /members/{id}/erasure` (new permission `members.erase`, church admin only) replaces the name with `[deleted]`, removes every other identifying detail, deletes the photo file, strips the phone and text from messages sent to the person, clears milestone notes, releases a family they head, archives the member and soft-deletes the row. The member number stays as the record's identifier. Records that point to the member (giving, attendance) keep working.
+3. **The change history is masked, never removed.** This is the one allowed change to the append-only audit log: every value in the member's history becomes `[deleted]` while the lines and field names stay, then an `erased` line is added. This follows the audit-trail pattern.
+4. **Giving records need the same treatment when they are built.** Any snapshot of a member's name inside a contribution must be masked by the erasure service (Sprint 4); financial records themselves are kept for 7 years.
+5. **Retention is automatic:** message logs are deleted after 12 months and webhook payloads after 90 days by a daily `model:prune` job at 03:00 UTC (`config/retention.php`). Audit logs and money records are not pruned.
+6. **Not built yet:** consent records with history (`consents` table), church-wide CSV exports (stories 5.8 and 5.9), the 90-day purge after a church cancels, and anonymising visitor records (Sprint 3).
+
+**Rationale:** The agreement requires erasure to anonymise rather than hard-delete (section 36), history to stay append-only, and retention to be enforced by a job.
+
+**Revisit when:** giving or visitor records are built, or consent history is needed for WhatsApp broadcasts.
+
+---
+
+### D-040 — Sentry for error monitoring
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 27 (supersedes the "Sentry is v2" note in docs/17)
+**Status:** Active
+
+**Decision:** The Sentry Laravel SDK is installed and every unhandled exception is reported to it once `SENTRY_LARAVEL_DSN` is set. Outside development the app refuses to start without the DSN. Errors carry the staff id, church id and role only. Request bodies, cookies and SQL values are never sent. The React app is not instrumented yet.
+
+**Rationale:** The agreement requires a dedicated error monitor in production, not only log files. Doing it now costs a few lines and keeps the free tier enough for the first churches.
+
+**Revisit when:** the React app needs browser error reporting, or the free tier is outgrown.
+
+---
+
+### D-041 — Consent history for messages
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement section 36
+**Status:** Active
+
+**Decision:**
+1. A `consents` table keeps one row for every time a member agreed to receive texts or WhatsApp messages: purpose, time, privacy policy version and who recorded it. Withdrawing sets `withdrawn_at`; agreeing again adds a new row. The database allows only one open row per member and purpose.
+2. The rows are written by a listener on the member events, in the same transaction as the change, from the member's own `sms_opted_in` and `whatsapp_opted_in` choices. Erasing a member withdraws everything. The member's data export lists the history.
+3. **Decided by the Product Owner (28 Oct 2026): text messages stay on by default for a new member, WhatsApp stays off.** A church texting its own members is the normal relationship, and WhatsApp needs the member's explicit opt-in anyway (docs/05). Every default agreement is still recorded in the history with its time, policy version and the staff member who added the member, and the member can take it back at any time. The add-member screen should say plainly that the member will receive texts; that line is part of the Sprint 5 broadcast work. The agreement says a pre-ticked box is not valid consent, so this is a recorded, owner-accepted exception, to be revisited with the privacy policy text.
+4. Members who exist before this table have no rows until their choices next change; a backfill is not needed because nothing is in production.
+
+**Rationale:** The agreement requires consent to be recorded with a timestamp, purpose and policy version, and to be withdrawable with immediate effect.
+
+**Revisit when:** broadcasts are built (story 5.1, 5.2), or members can change their own choices (story 5.16).
+
+---
+
+### D-042 — Cancelling a church and purging its data
+**Date:** October 2026
+**Decided by:** Lead Engineer, from `docs/05-data-safety.md` and agreement section 34
+**Status:** Active
+
+**Decision:**
+1. Cancelling sets `churches.cancelled_at`. The church stays active for 90 days so its admin can export their data; `purged_at` records the purge. There is no settings page yet, so cancelling is the support command `church:cancel {slug}`; the self-service button comes with story 5.14.
+2. A daily command queues one `PurgeChurchJob` per church whose grace period is over. The job is unique per church, retries three times, and logs a critical line if it still fails, because personal data staying past its date needs a person.
+3. The purge reuses the single-member erasure for every member, then cleans staff, families, visitors, attendance visitor names and contribution notes, deletes messages and files, masks the whole change history, removes the church's own contact and payout details, soft-deletes the church and changes its slug to `{slug}-deleted-{id}` so the address can be used again.
+4. Money records stay for the 7-year rule. When Sprint 4 adds anything that holds a name or phone (receipt text, donor details), the purge repository must clear it too.
+5. The database part is one transaction; deleting files comes after and is safe to repeat, so a half-finished run is fixed by running it again.
+6. A church is not locked during the grace period. Making it read-only, and the 'your data will be deleted on…' notice, belong with billing (Sprint 5).
+
+**Rationale:** docs/05 promises exports for 90 days and a purge after that; the agreement requires atomic offboarding with a grace period, an export before deletion, and retention enforced by a job.
+
+**Revisit when:** billing exists (read-only grace period and reminders), or the church's export is built (stories 5.8, 5.9).
+
+---
+
+### D-043 — Incident response, circuit breaker and backups
+**Date:** October 2026
+**Decided by:** Lead Engineer, from agreement sections 26 and 37
+**Status:** Active
+
+**Decision:**
+1. Severity is P1 to P4 (`docs/18-incident-response.md`); the older P0 to P3 table in docs/17 points there. Nine runbooks live in `docs/runbooks/`, each with symptom, contain, diagnose, resolve and verify, and the alert table links to them.
+2. **The SMS provider has a circuit breaker.** After 5 failures in 2 minutes it opens for a minute, then lets one test message through. Held messages wait on the queue for up to 30 minutes; only real failures count against a message (three). `sms:pause` and `sms:resume` are the manual switch. A message the provider refuses for good does not count as the provider being down.
+3. **The daily database backup is built** (`db:backup`): encrypted for a public key so the server cannot read its own backups, sent to the separate bucket, 30 days kept, and the plain dump never kept. A missed backup is reported to Sentry.
+4. **Open items:** there is no general feature-flag system; each risky feature (broadcasts, payments) must ship with its own off switch like `sms:pause`. The runbooks and the full restore are written but not rehearsed, because there is no staging. Neither Coolify rollback nor the Docker commands have been tried.
+
+**Rationale:** The agreement requires severity levels, runbooks in the repository, circuit breakers on external providers, a tested backup and a post-mortem process before launch.
+
+**Revisit when:** staging exists (rehearse every runbook and the restore), or the second SMS provider is added (the circuit is per provider name).
+
+---
+
+### D-044 — How attendance is built (Sprint 3)
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/02 Module 3, docs/08, docs/14 section 3, QA-05 and QA-10
+**Status:** Active
+
+**Decision:**
+1. **Permissions follow docs/08 and QA-10:** every signed-in role may read services and attendance; creating and changing a service, opening and closing check-in and recording attendance need `members.edit` (church admin and pastor). No new permission is added. Where QA-05 names `/open` and `/close`, docs/08's single `PATCH /services/{id}/checkin` is used.
+2. **The check-in code is made by the system and is unique across all churches** (6 characters without look-alike letters), so one shared WhatsApp number and a QR code can tell which church and service is meant from the code alone. A clash is caught by the database's unique index and a new code is tried.
+3. **A forgotten open service is closed by an hourly command** after its day ends (24 hours), in every church.
+4. **Check-in is idempotent at the database:** one attendance row per member per service (the unique index), written with insert-or-ignore, so two check-ins at once leave one row.
+5. **Services have their date and times as the church's own calendar values** (a service is "Sunday 09:00" wherever it is), and `checked_in_at` is a UTC timestamp. Display conversion to the church's timezone happens only in the screens.
+6. **The live dashboard polls every 10 seconds** (TanStack Query `refetchInterval`) instead of using server push; it is simpler and enough for one screen, and the real-time pattern allows it.
+7. **Built in the attendance slice:** manual bulk check-in (answers 201 with counts, never an error for a repeat), visitor capture (matched by phone, counted once per service), the service headcount with a whole-percent rate, a member's attendance over 1 to 52 weeks, and the absent-members list. A deceased member cannot be checked in; an inactive one can. The absent list uses `reports.view`, counts only Sunday services that were actually held, and leaves out members who joined after the oldest of them. Visitors' names are shown only to staff who may edit members, and others see only members within their directory view.
+8. **QR check-in is built:** the screen shows a random code kept in the cache for 2 minutes (not a signed token: it carries no data and cannot be forged), refreshed every minute, with the church in its cache key. The member then enters their phone and a texted code, and is recorded with method `qr`. Texts are rate limited per phone and service and per IP address because they cost money.
+9. **Left for later slices, decided here so they follow one design:** the WhatsApp CHECKIN (a gateway interface, a signed webhook, de-duplication by Meta message id, a circuit breaker and a pause switch); and the absent-members list (computed on request from the last services of the configured types, instead of a stored alert).
+
+**Rationale:** The agreement requires a database guarantee for anything that must not be double-recorded, provider integrations behind interfaces with circuit breakers and a way to switch them off, and the simplest design that meets the docs.
+
+**Revisit when:** Meta approves the WhatsApp account (replace the mock with real calls), or a church needs live updates faster than 10 seconds.
+
+---
+
+### D-045 — How the WhatsApp CHECKIN is built (Sprint 3, story 3.3)
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/14 section 3, QA-05 TC-05-03 to TC-05-07 and TC-05-13, and the agreement sections 10, 11, 15, 34 and 37
+**Status:** Active (the Meta driver is untested against Meta until the account is approved, R2)
+
+**Decision:**
+1. **One webhook for every church, on the platform address.** `GET` answers Meta's check with `META_VERIFY_TOKEN`; `POST` is refused unless `X-Hub-Signature-256` is the HMAC-SHA256 of the raw body made with `META_APP_SECRET` (with no secret set, nothing passes). A valid post is kept encrypted in `webhook_logs`, queued on `notifications` and answered `200` at once; the work happens on a worker.
+2. **The sender is matched across churches, on purpose.** There is one shared WhatsApp number, so the church cannot come from the address. The two queries that look past the church scope (`findLivingByPhoneInAnyChurch`, `findByCheckinCode`, `findOpenInChurches`) are named for that, and the church is put in context only while the work runs (`TenantContext`, restored afterwards, even on an error). A code of another church, a deceased member, a switched-off church and an unknown number all get the same answer.
+3. **Which service:** a code names one service (codes are unique across churches, D-044). Without a code it is the service opened first in the member's church (`services.checkin_opened_at`, not moved by opening an open service again). A number in two churches that both have a service open must send a code.
+4. **No double check-in, three layers.** Meta's message id is stored in `handled_whatsapp_messages` in the same transaction as the attendance (the insert ignores a clash, so two deliveries at once cannot both win; the work rolls back with the id if it fails, so Meta's retry works); the unique row per member and service is the second guard; the job is safe to run again.
+5. **The provider is behind an interface.** `WhatsAppGateway` has a `log` driver (development only, refused in production) and a `meta` driver; `WHATSAPP_DRIVER` picks one. Answers go through `SendWhatsAppReplyJob`, logged in `message_logs`, behind a circuit breaker named `whatsapp`; `whatsapp:pause` holds the answers (check-ins still count) and `whatsapp:resume` sends them. A number on no church's list is logged without the number.
+6. **A first message is the member's agreement to WhatsApp** (docs/14, Opt-In): `whatsapp_opted_in` is set and a consent record written (D-041).
+7. **Cost control:** at most 5 answers a minute to one number; the check-in still counts.
+8. **No polling fallback, on purpose.** The agreement asks for one beside every webhook, but Meta has no way to list messages we missed; it resends for 24 hours and our handling is idempotent, and every payload is kept in `webhook_logs` so a failed one can be looked at and replayed.
+9. **Left out:** falling back to SMS when a WhatsApp answer fails (the check-in is saved and the answer is a courtesy); template messages (answers go out inside the 24-hour window the member opened by writing to us); a re-run command for failed webhook logs.
+
+**Rationale:** The agreement requires provider integrations behind an interface with a circuit breaker and a manual switch, webhooks that prove their sender and are idempotent, and tenant context set explicitly in background work. The simplest design that meets them keeps the controller thin and puts every rule in an Action.
+
+**Revisit when:** Meta approves the account (test the `meta` driver against a sandbox number; check the Graph API version in `META_GRAPH_VERSION`), or a church needs answers when WhatsApp is down (add the SMS fallback).
+
+---
+
+### D-046 — How Sprint 4 (giving) is built, and in what order
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/04, docs/08, QA-06, QA-07, QA-10 and D-018 to D-020
+**Status:** Active
+
+**Decision:**
+1. **Cash giving comes first; digital payments wait.** D-018 says a legal opinion on the Bank of Ghana position for receiving and forwarding third-party funds must be settled before Sprint 4 handles money, and PayPerlez's webhook event names are still unconfirmed. Everything that moves no money is built now, in this order: (a) fund types, (b) cash contributions with list, show and void, (c) pledges and their paid amount, (d) the Sunday offering report, (e) receipts by SMS, (f) the screens. Then the digital path: PayPerlez collection and automatic disbursement (D-018), and Paystack cards (D-020).
+2. **The story list is read through the later decisions.** Stories 4.1, 4.4 and 4.5 say "Paystack MoMo" and 4.8 says "Africa's Talking"; D-020 moved MoMo and payouts to PayPerlez, kept Paystack for cards only, and SMS already runs on PayPerlez (story 4.8 is done).
+3. **Who may see gifts.** docs/08 gave the list `giving.summary`, but QA-06 TC-06-18, QA-10 and docs/03 say a pastor (who has only `giving.summary`) must not see individual gifts. So a new read-only permission `giving.view` opens the list and a single gift (church admin and finance secretary have it; the pastor does not), `giving.record` records a gift, `giving.edit` voids one, and reports and totals need `giving.summary` (also the pastor). Seeing a gift is kept apart from recording it so that letting a pastor see named gifts never lets them record or void. **The owner's decision (Oct 2026):** a church that wants its pastor to see named gifts will grant `giving.view` to that person once per-person permissions exist (with staff management). Until then the pastor sees totals only, which is docs/04's default. Custom roles are not built; a role is a named bundle of existing permissions, so they can be added later without changing the checks.
+4. **Fund types:** every signed-in role may read them, only the church admin (`fund-types.manage`) may change them, and a church starts with seven defaults (`config/giving.php`). Names are unique per church ignoring capitals, held by a validation rule and by a unique index. A fund is switched off, never deleted. *(The screen is built: Giving funds, under Settings. A new fund is placed after the last; switching off asks first and says that past gifts stay on record; a change refreshes the fund pickers and the giving reports.)*
+
+**Rationale:** The agreement asks for the simplest working slice first, with money-moving code only after its open legal and provider questions are closed. Cash giving is also what most churches do every Sunday.
+
+**Revisit when:** the legal opinion and the PayPerlez event names are settled (start the digital slices), or staff management is built (grant `giving.view` per person).
+
+---
+
+### D-047 — How pledges work (Sprint 4, stories 4.9 and 4.10)
+**Date:** October 2026
+**Decided by:** Product Owner (the two rules marked), Lead Engineer (the rest), from docs/04 Pledge Tracking, docs/07, docs/08, QA-06 TC-06-14 to TC-06-16
+**Status:** Active
+
+**Decision:**
+1. **A gift names its pledge.** *(Product Owner.)* The gift carries a `pledge_id` that the finance secretary picks; nothing is linked by matching a member and a fund. The pledge must belong to this church, to the same member and to the same fund as the gift, and must not already be paid in full. This follows docs/04 and docs/08; QA-06 TC-06-15 ("a gift to the same fund updates the pledge") is changed to say the gift names the pledge.
+2. **Status rule.** *(Product Owner.)* A pledge is `fulfilled` as soon as `amount_paid` reaches `amount_pledged` (even after the target date). Otherwise it is `active` until its target date has passed; after the date it is `partial` if something was paid and `lapsed` if nothing was. A daily job (`pledges:refresh`, 04:00 UTC) moves pledges over when their date passes. A gift that is later paid in full revives a lapsed or partial pledge to fulfilled; voiding a gift can move a fulfilled pledge back.
+3. **`amount_paid` is recalculated, not counted up.** After a gift is recorded against a pledge or voided, the action recalculates the pledge as the sum of its gifts that are not voided, inside the same transaction, with the pledge row locked first. Recalculating cannot drift, undoes a void exactly, and two gifts at the same moment take turns. This replaces the "observer" in story 4.10: the agreement and the Laravel addendum keep side effects out of observers and in actions.
+4. **Who may see pledges.** A pledge names a member and an amount, so it is individual giving data like a gift (D-046): listing and reading need `giving.view`, creating needs `giving.record`, changing needs `giving.edit`. Campaign totals for the pastor come later through `giving.summary`. docs/08 gave the list `giving.summary`; this overrides it for the same reason as in D-046.
+5. **What can change.** A pledge's description, amount and target date can be changed (`giving.edit`); its member and fund cannot, because gifts are linked to them. There is no delete: a pledge that is no longer wanted is set to the amount already paid, which fulfils it. Every create and change is written to the change history.
+6. **Over-paying is allowed.** A pledge can receive more than it asked (`amount_outstanding` never goes below 0, progress stops at 100%). Only a pledge already paid in full refuses another gift.
+
+**Rationale:** The simplest design that cannot drift: one place computes the paid amount and status, from the gifts themselves. The two business rules were the owner's to set.
+
+**Revisit when:** a church wants pledge reminders (the scheduled `SendPledgeReminders` in docs/06) or campaign reports, which build on this.
+
+---
+
+### D-048 — Gifts with no service in the offering report, and fund names kept on the gift
+**Date:** October 2026
+**Decided by:** Product Owner (asked for both), Lead Engineer (the design)
+**Status:** Active
+
+**Decision:**
+1. **Gifts with no service are in the report.** Mobile money and card gifts arrive without a service, and cash can be recorded without one. The offering report now has a second block, `no_service`: the gifts given on the service's day with no service, by fund and payment method. "The day" is the church's own day in its timezone. They are reported with the **day's first service only** (earliest start time, services without a start time last, then lowest id), so a day with two services never counts one gift twice; `day_grand_total` is the service's own total plus these. The service's own `totals` still equal the gift list for that service.
+2. **A gift keeps the fund's name.** Agreement section 10 says a record of something that happened must snapshot what it refers to, and a fund can be renamed. `contributions.fund_name` is set when the gift is recorded; gift lists, single gifts and reports show it, never the fund's current name. Funds are still grouped by id for ordering, and a fund renamed in the middle of one service shows as two lines. Every future way of recording a gift (the digital payments) must set it too.
+3. **The column was added in three safe steps** (patterns: Zero-Downtime and Data Migrations): add it nullable; fill existing gifts in batches with `php artisan contributions:backfill-fund-names` (idempotent, uses the fund's current name, the best known for old gifts); then make it required. The last migration refuses to run while any gift has no name. On a live system run them in that order across two deploys; the backfill is a command, never a schema migration.
+
+**Rationale:** The simplest design that never counts a gift twice and never rewrites history. Pledges keep showing their fund's current name: a pledge is a standing commitment, not a record of an event.
+
+**Revisit when:** a church wants the no-service gifts of a day split across its services by hand, or a day with gifts but no service needs its own report.
+
+---
+
+### D-049 — Dates: shown and typed day first, and where they are limited
+**Date:** October 2026
+**Decided by:** Product Owner (day first; the three limits), Lead Engineer (the rest)
+**Status:** Active. **Point 1 (the typed day-first box) is superseded by D-066**; points 2 to 4 (the limits) still apply.
+
+**Decision:**
+1. **Day first everywhere a person types a date.** The browser's own date box shows the month first on many phones and computers and cannot be changed by the page, so the app uses its own `DateField`: a text box that shows `dd/mm/yyyy` as a hint, puts the slashes in as the person types, and refuses a date that is not real (31/02). The API and the stored values stay `YYYY-MM-DD`; `utils/dateText.ts` turns one into the other at the edge of the form. Dates shown on screen were already day first ("25 Oct 2026").
+2. **Limits.** Date of birth: not in the future, not before 1900. Member since: not in the future, not before the date of birth. Milestone: not in the future, not before the date of birth. Gift date: not in the future; no limit into the past *(owner)*. Pledge target date: today or later when made or changed to a new date. **Service date: 30 days back and 366 days ahead** *(owner)*, so a missed Sunday can be added and a wrong year (2062) is caught; an old service can still be renamed because only a changed date is checked. The numbers are in `config/attendance.php` and `config/members.php`, mirrored in `resources/js/constants/dates.ts`.
+3. **The server stays the judge.** The form shows each message at once, but the API enforces every limit, so another client cannot get around them.
+4. **A time bomb removed:** tests that used a fixed date inside a limit were changed to dates relative to today.
+
+**Rationale:** One date format for the whole app, whatever device it is opened on, and no date that is plainly a typing mistake. Not adding a calendar picker keeps the dependency count down; typing eight digits is quick on a phone's number pad.
+
+**Revisit when:** a church asks for a calendar picker, or for a different date style (the format is in one place).
+
+---
+
+### D-050 — Cancelling services and weekly schedules (Sprint 3 follow-up)
+**Date:** October 2026
+**Decided by:** Product Owner (weekly schedule, cancel), Lead Engineer (the rest)
+**Status:** Active. Built: cancel, the weekly schedule backend and its screens.
+
+**Decision:**
+1. **A service can be cancelled** (`DELETE /services/{id}`, `members.edit`): a **closed** service with **nothing recorded** (no check-in, no visitor, no gift, voided gifts included) is soft-deleted. Open check-in must be closed first, because members can check in by QR code or WhatsApp; the row is locked while it is checked. A cancelled service keeps its row, so a schedule never remakes that date.
+2. **Weekly schedules.** A church sets up a schedule once (name, type, weekday, start and end time, on or off). The system makes each week's service ahead of time, for the next 8 weeks (`config/attendance.php`), when the schedule is made or changed and again every day (`services:generate-scheduled`, 05:00 UTC). A date gets one service per schedule, ever: a unique index on (schedule, date) that counts cancelled services too. A service made by a schedule is an ordinary service in every other way.
+3. **Changing a schedule** changes its future services that have not been touched (not open, nothing recorded) and only the fields that still have the schedule's old value, so a service renamed by hand ("Easter Service") keeps its name. A new weekday moves those services to the new weekday. Turning a schedule off stops new services; ones already made stay and can be cancelled one by one (this keeps cancelled dates remembered and a schedule that is turned on again simple).
+4. **Who:** `members.edit` (church admin and pastor), the same as services.
+5. **Screens:** a "Weekly schedules" page (reached from the Services page) lists schedules with Change and Turn off / Turn on and sets new ones up; a "Cancel service" button on a service asks first and is disabled while check-in is open or people are checked in. A service made by a schedule is marked "Weekly". The key that protects setting a schedule up is built from `getRandomValues`, because `randomUUID` does not exist on plain-http pages such as local development.
+
+**Rationale:** The simplest design that gets a church off creating a service every week without losing control of a week that is different. Cancelled dates are remembered by the database, not by a flag.
+
+**Revisit when:** a church needs schedules other than weekly (monthly, or every other week), or wants a schedule to open check-in by itself at the start time.
+
+---
+
+### D-051 — Gift receipts by SMS, and how SMS credits are charged (Sprint 4, story 4.7)
+**Date:** October 2026
+**Decided by:** Lead Engineer, from docs/04 Giving Receipts, docs/02, QA-06 TC-06-02, QA-08 TC-08-03 to TC-08-06 and TC-08-12, docs/14 section 2, docs/12 Q9 and the agreement sections 10, 11 and 18
+**Status:** Active. Built: the credit handling and the receipts.
+
+**Decision:**
+1. **A church-paid text is paid for before it is sent, once, and given back if it fails for good.** Credits are a finite contested resource (agreement section 10), so a pre-check and a later deduction are not enough: two receipts could both pass the check on the last credit. Instead, just before sending, the job locks the church's row and takes the credits (a `consumption` line in `sms_credit_ledger`, with the running balance), or fails without sending when there are not enough. The ledger line points at the message log row, and a unique index allows one `consumption` and one `refund` line per message, so a retry never charges twice and a message is never refunded twice. When the job gives up for good, the credits are returned (a `refund` line). Texts that the platform pays for (sign-in and check-in codes) take no credits.
+2. **Parts are credits.** One credit is one part of a text: 160 characters in the GSM alphabet (153 per part when longer), or 70 (67 per part) when the text has any character outside it, such as the Twi letters ɔ and ɛ, or an emoji. The wording of our own messages uses plain characters (a hyphen, not a long dash) so they stay in the cheaper kind.
+3. **Who gets a receipt.** A gift has a receipt when it has a member, that member is not deceased, has a phone number and has not turned SMS off (`sms_opted_in`, D-041), the gift is not voided, and the church has enough credits. An anonymous gift has none. With too few credits no text is queued, a warning is logged with the church id only, and the person recording the gift sees no error (QA-08 TC-08-12); the email to the church admin comes with the credit screens in Sprint 5.
+4. **Cash receipts are on by default and a church can switch them off** (church setting `receipt_on_cash`, QA-08 TC-08-06; the recommendation in docs/12 Q9, which the owner may still change). Digital gifts will always get one.
+5. **The text** follows docs/04: church name, amount, fund and date, and the member's giving in the month, with the last line from the church. The month is the month of the gift, so a gift entered late for last month says last month's total. The words are in `config/giving.php`. docs/04's "send receipts later, by service" button is not built; receipts go out when the gift is recorded (QA-08 TC-08-03).
+6. **One receipt per gift, even if the work is repeated.** The gift records when its receipt was queued (`contributions.receipt_queued_at`), claimed in one statement in the same transaction that writes the message log row (agreement section 11, layer 5).
+7. **Built as an event.** Recording a gift fires `ContributionReceived`; a queued listener sends the receipt, so recording a gift never waits for it (docs/09, Async First).
+
+**Rationale:** The simplest design that cannot overspend a church's credits or charge a message twice, and that follows the docs' wording and QA cases.
+
+**Revisit when:** a church needs to send receipts for a whole service at once, the credit top-up flow arrives (Sprint 5), or the delivery status of texts is polled (DD-008) and undelivered texts should be refunded.
+
+---
+
+### D-052 — Check-in opens only on the service's own day
+**Date:** October 2026
+**Decided by:** Product Owner
+**Status:** Active — refines D-044 point 3 and QA-05 TC-05-02
+
+**Decision:** Check-in can be opened only for a service dated today in the church's own calendar (its timezone). A service weeks ahead, which weekly schedules now make, or long past cannot be opened; a missed service can still be given late attendance by hand (QA-05 TC-05-14). Closing is always allowed, asking to open a service that is already open changes nothing, and two services on the same day may both be open (TC-05-13). The hourly job still closes a service left open after its day. The screen disables "Open check-in" on another day and says why.
+
+**Alternatives considered:** one open service at a time (rejected: two overlapping services on a Sunday must both work, TC-05-13), and no limit (rejected: with eight scheduled services ahead, an open future service would take WhatsApp CHECKIN without a code).
+
+**Revisit when:** a church holds a service that spans midnight, or wants to open check-in the evening before.
+
+---
+
+### D-053 — A digital payment is a contribution row with a status
+**Date:** October 2026
+**Decided by:** Product Owner (chose this over a separate attempts table)
+**Status:** Active — amends D-018 and `07-data-model.md`
+
+**Decision:** `contributions` gets `status` (`ContributionStatus`: pending, completed, failed, default `completed`). Cash is `completed` when recorded. A MoMo or card payment creates its row `pending` when it starts, and the row's `id` is the reference sent to the provider (agreement section 11, layer 6). The provider's webhook or the polling fallback moves it to `completed` or `failed`. Only `completed`, non-voided gifts count in totals, reports, pledge sums, receipts and payouts; lists show them by default and show pending or failed ones only when `status` is asked for. The disbursement is created when a gift becomes `completed`, never before. A confirmation that arrives after a `failed` mark is honoured (the row moves to `completed`), because the money did arrive.
+
+**Rationale:** The agreement requires a polling fallback for anything still pending (section 10) and a database unique key against duplicates (section 11); both need a row to exist while the payment is in flight. QA-06, QA-07 and QA-14 already expected these states.
+
+**Alternatives considered:** A separate `payment_attempts` table. Rejected: it adds a table and a second place where a payment lives, for no gain at this scale.
+
+**Consequences:** One migration adds the column with a default of `completed` (safe on a live system) and an index on `(status, created_at)`. Every existing query that sums or lists gifts, the offering report, the pledge recalculation and the receipt listener must filter on `completed` when the digital slice is built.
+
+---
+
+### D-054 — Staff sign in with email, password and a code sent by email
+**Date:** October 2026
+**Decided by:** Product Owner (chose the agreement's rule over D-012 for staff, and chose an emailed second code)
+**Status:** Built (7 Nov 2026), complete: the email sender, the four endpoints, the sign-up fields, the React screens, QA-01 and QA-12 rewritten, the old phone and SMS staff endpoints removed (`otp:reset-lockout` became `staff:reset-lockout`), and `users.email` required. A church purge now writes the erased marker into the email and clears the password hash. Supersedes D-012 for staff; amends D-025, D-027 and D-037.
+
+**Decision:**
+1. **Staff identity is email + password.** The Universal agreement (section 16) says admin and staff authentication is always email and password. `users` gets `password` (hashed with Laravel's default hasher, never logged or returned), `email` becomes required and unique per church (while not deleted), and `email_verified_at` is set by the first successful code. `users.phone` stays as a contact number and for SMS notices; it is no longer the identity or the sign-in key.
+2. **Every staff sign-in has a second step: a 6-digit code emailed to the user.** `POST /auth/login` checks the password and, if right, emails the code; `POST /auth/login/verify` checks the code and then signs in (cookie for the web app, 8-hour bearer token for other clients, exactly as D-027). A wrong email or password is one generic `422` ("Invalid email or password") and sends nothing. The code follows the existing OTP rules: bcrypt hash in Redis keyed by church and a hash of the email, 10 minutes, single use, 5 wrong tries then a 15-minute lockout.
+3. **Password rules:** at least 12 characters, no composition rules. Five wrong passwords for an email lock it for 15 minutes. *(Amended 7 Nov 2026, Product Owner:)* the known-breach check is **not** done while the person waits, because Laravel's own check calls a third-party service from inside the request and the agreement forbids that. Instead, after a password is set (reset or sign-up) a queued, encrypted job checks it against the breach list (only the first five characters of its SHA-1 hash leave the server) and, if it was leaked, emails the person to choose another. The plaintext password is never put on a queue. *(Built 7 Nov 2026, part 3:)* a password is also limited to 72 bytes, because bcrypt silently ignores everything after byte 72 (checked in this Laravel), so a longer one would be weaker than it looks.
+4. **Forgotten password:** `POST /auth/password/forgot` (always `200`) emails a reset code; `POST /auth/password/reset` takes the code and the new password, ends every session and token of that user, and answers `204`. The same flow sets the first password for a staff member who has none.
+5. **Cost and abuse limits** (agreement section 16): emailing a code is limited to 3 per minute and 10 per hour per email (raised from 1 and 5 by the Product Owner on 12 Nov 2026, because one a minute was too few on a poor network) and 20 per hour per IP, separate from the verify and password limits. Codes are queued on the `critical` queue like SMS codes.
+6. **Starting a church (D-037):** the form also takes `admin_email` and a password. The phone is still proven by an SMS code before anything is created; the email is proven by the first sign-in code.
+7. **What does not change:** members, the QR check-in and the WhatsApp check-in keep phone and SMS codes with no passwords (agreement: customer-facing auth may use phone + OTP). Deactivating a user or changing their email or password still signs them out on the next request (`EnsureStaffIsCurrent`).
+8. **Prerequisite:** the platform has no email sender yet (D-037 point 7). The Resend driver behind Laravel Mail, and the `critical` queue for it, must be built before this ships.
+
+**Rationale:** The agreement ranks above project overrides and states the rule without exception for staff. A password plus an emailed code also removes the dependence of staff sign-in on the SMS provider being up (the circuit breaker in D-043 can pause SMS).
+
+**Alternatives considered:** Keep OTP-only as a recorded override (rejected by the Product Owner). Password only (rejected: the owner wants the second step). Emailed code only on a new device (rejected: needs device tracking).
+
+**Consequences:** New migration for `password` and `email_verified_at` and the unique email index; new login, reset and limiter code; QA-01 and QA-12 rewritten; the React login screen changes from phone to email, password, code. Nothing is in production, so no existing users need migrating; staff created before the change set their first password through the reset flow.
+
+---
+
+### D-055 — The staff permission matrix, and who may export what
+**Date:** October 2026
+**Decided by:** Product Owner (the two export rules marked), Lead Engineer (the rest, to remove conflicts between QA-10, docs/02, docs/03, docs/08 and the code)
+**Status:** Active. The export permissions are built. Staff management is built: list, invite, change of name, phone and role, deactivate or reactivate, and per-person extra permissions, with the last-admin rule for a role change and for deactivation. *(Product Owner, 7 Nov 2026:)* per-person permissions are extras on top of the role: "revoke" removes an extra granted earlier, and taking away something the role gives means changing the role (Spatie Permission has no deny; a deny list was considered and not chosen).
+
+**Decision:**
+1. **Member list export (`members.export`)** is held by the church admin and, by default, the finance secretary, and the church admin can grant or take it away per person once per-person permissions exist. *(Product Owner.)* This follows docs/02 and docs/03; QA-10 and D-030 said church admin only.
+2. **One member's full personal record (`members.data-export`)** is a separate permission, held by the church admin only, because the record includes the decrypted address and national ID number. *(Product Owner.)* `GET /members/{id}/data-export` now needs it. The member-list CSV never includes the national ID (QA-11 TC-11-10).
+3. **Pastor.** Adds and edits members, milestones and photos (`members.edit`, D-030), moves a member only between prospect and active, sees giving totals but not individual gifts (D-046), sends messages. Only the church admin deactivates, erases, exports a single record or changes settings.
+4. **The message log (`GET /messages`) needs `sms.send`** (church admin, pastor), not `members.view`, because it holds phone numbers and message text. docs/08 said `members.view`, which every role has; QA-10 said church admin and pastor.
+5. **The member growth report needs `reports.view`**, so the finance secretary may read it as well as the church admin and pastor (it is counts only). QA-10 had excluded the finance secretary.
+6. **Church settings:** any signed-in staff member may read them (nothing in them is secret); only `church.settings` (church admin) changes them.
+7. **Staff management** needs `staff.manage` (church admin; the one exception is the staff directory, `GET /staff/directory`, which gives only the ids and names of active staff to `members.edit`, the church admin and the pastor, so they can choose a department's head): list staff, invite (name, email, phone, role; an invitation code is emailed and the person sets a password through the reset flow, D-054), change name, phone and role, deactivate or reactivate, and grant or revoke single permissions on top of the role. A role or permission change applies on the user's next request (permissions are read on every request), so there is no token re-issue. The last active church admin cannot be deactivated or lose the role (`409`).
+8. **A deactivated user** who enters the right password is told `403` "Your account has been deactivated. Contact your church admin." and no code is sent. A wrong password stays the generic `422` (D-054).
+
+**Rationale:** The agreement requires one authorisation rule enforced on the server through policies, and no conflicting statements of it. Giving an export its own permission means the most sensitive export does not widen when a role is widened.
+
+**Revisit when:** staff management is built (point 7), or a church wants the pastor to see named gifts (`giving.view`, D-046).
+
+---
+
+### D-056 — A Content-Security-Policy on every response
+**Date:** October 2026
+**Decided by:** Product Owner (chose a strict policy now), Lead Engineer (the details)
+**Status:** Active. Built and checked in real Chrome against a production build.
+
+**Decision:**
+1. **The React page** is sent with `script-src 'self'` plus a per-request nonce (Laravel's `Vite::useCspNonce()`), no `unsafe-inline` or `unsafe-eval` for scripts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, images from the page itself, `data:`, `blob:` and the storage host taken from the R2 endpoint (signed photo links), and fonts and connections from the page itself.
+2. **Everything that is not a page** (JSON, files) gets `default-src 'none'; frame-ancestors 'none'`.
+3. **Styles may be inline** (`style-src 'self' 'unsafe-inline'`). The toast library adds a `<style>` element at run time with no nonce, and a nonce on `style-src` would make browsers ignore `unsafe-inline`. Strict scripts are the protection that matters against XSS.
+4. **The API documentation page (`/docs/api`) gets no policy**, because it loads a third-party viewer; it is staff-only outside local development (D-035).
+5. **Zod runs in `jitless` mode** (`z.config({ jitless: true })`), because its code generation uses `new Function`, which the policy forbids. Validation is unchanged.
+6. **While Vite's dev server runs**, its address is added to `script-src`, `style-src` and `connect-src` (HTTP and WebSocket) so hot reload works; this never applies in production.
+7. The policy lives in `config/security.php` and is built by `ContentSecurityPolicy`, sent by `ContentSecurityPolicyHeaders`. Violation reporting (`report-to`) is not set up yet; Sentry's CSP reporting can be added with the browser error monitoring (D-040).
+
+**Rationale:** The Laravel addendum (section 8) requires a CSP header and the agreement lists XSS in its OWASP review. A real-browser run found two problems unit tests could not (inline style elements and Zod's eval probe), both fixed before the policy shipped.
+
+**Alternatives considered:** Report-only first (rejected by the owner), and deferring the header (rejected).
+
+**Revisit when:** a third-party script or font host is added (it must be listed in `config/security.php`), or the toast library gains nonce support (then drop `unsafe-inline` from `style-src`).
+
+---
+
+### D-057 — How the record-a-gift screen is built (Sprint 4, story 4.14)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04, docs/08, QA-06, the React addendum and D-017, D-036, D-049
+**Status:** Active
+
+**Decision:**
+1. **A dialog on the Giving page**, opened by a "Record a gift" button shown only to staff with `giving.record`. The form is its own component inside the dialog, so each opening starts blank with a new idempotency key and nothing is reset by hand.
+2. **Who gave** is chosen with a member search (`MemberPicker`, reusable for the pledge page); leaving it empty records an anonymous gift. The picker asks the server for nothing until something is typed. It sits above the form because a search box is itself a form and forms cannot nest.
+3. **Fund, amount, day, optional service, optional notes.** The amount is checked exactly in whole pesewas (`moneyToPesewas`, text to `bigint`), never as a floating-point number, against the cash maximum mirrored from `config/giving.php` (D-017). The browser does no money arithmetic.
+4. **The day** is typed day first (D-049) and may not be in the future. A gift dated today is sent with no time, so the server records the moment it was entered; an earlier day is sent at noon UTC so it stays the same day in the church's calendar (Ghana is on UTC).
+5. **The service drop-down** lists the services dated on the chosen day (`GET /services?from=&to=`); a service picked for another day, before the date was changed, is dropped rather than sent.
+6. **The same key is sent again** when the same attempt is repeated after a failure, so a double click or a retry records one gift (docs/08, Idempotency); the server's field messages are shown beside the fields.
+7. **Left out on purpose:** choosing a pledge to pay (it comes with the pledge page, story 4.17) and mobile money or card (the digital slice).
+
+**Rationale:** The simplest screen that does what the finance secretary does every Sunday, with the rules in the schema and the server as the judge. A real-browser run caught a duplicate field id with the gift filter that no component test could.
+
+**Revisit when:** the pledge page is built (add the pledge choice), or a church wants to record a whole service's cash in one go.
+
+---
+
+### D-058 — The Sunday offering report page, and printing it (Sprint 4, story 4.16)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04 Sunday Offering Report, docs/08 and QA-06 TC-06-17
+**Status:** Active
+
+**Decision:**
+1. **A page at `/services/:id/offering`**, opened by an "Offering report" button on the service page for staff with `giving.summary` (church admin, finance secretary and pastor; the report holds totals and no giver's name). It shows a table for the gifts recorded at the service and, when the day's gifts with no service are counted with this service (D-048), a second table, then the total for the day.
+2. **Printing and PDF use the browser's own print window**, from a "Print or save as PDF" button. The app menu, header and the buttons are hidden when printing (`print:hidden`). No PDF library or server-side PDF is added, since "Save as PDF" is in every browser's print window and a library would be a dependency for the same result; a server PDF can be added if a church needs to email one.
+3. **The page formats no money.** The API had amounts by payment method as plain decimal strings only, so each `by_method` object gained a `by_method_formatted` sibling (adding a field keeps API v1 unchanged), and the page shows the API's own text. A payment method nobody used is left out of the table so it fits a phone; columns run cash, mobile money, card, USSD, as in docs/04.
+4. **The report refreshes with the gifts.** Its query sits under the services keys, which recording or voiding a gift already refresh.
+
+**Rationale:** The simplest page that gives the finance secretary the report in one click after a service, with the totals the server worked out and nothing added up in the browser (agreement sections 12 and 19).
+
+**Revisit when:** a church wants the report emailed or shared as a file (add a server PDF), or a report for a date range rather than one service (Sprint 5 reports).
+
+---
+
+### D-059 — How the pledges page is built (Sprint 4, story 4.17)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/04 Pledge Tracking, docs/08 Pledges, D-046, D-047, D-057 and QA-06 TC-06-14 to TC-06-16
+**Status:** Active
+
+**Decision:**
+1. **A page at `/pledges`** with a "Pledges" menu item for staff with `giving.view` (church admin and finance secretary; the pastor does not see individual pledges, D-047). Pledges are listed with those due soonest first, and the status and the fund filters and the page live in the address bar (D-036).
+2. **Each pledge shows its progress.** A labelled progress bar (a real `progressbar` with its percent in words), the status as a word with a colour behind it, and the paid, pledged and outstanding amounts exactly as the API formatted them. The browser adds up nothing.
+3. **Making and changing use one dialog.** "New pledge" (`giving.record`) needs the member (searched with the shared `MemberPicker`), the fund, what it is for, the amount and a target date of today or later. "Change" (`giving.edit`) shows the member and fund as words, because gifts are linked to them (D-047), and edits the description, amount and target date. A pledge saved again with its own old date is allowed even when that date has passed; moving it to another past date is not (docs/08). Everything missing is shown at once, including a missing member.
+4. **One amount check.** The gift form and the pledge form share `amountField`: exact whole-pesewa comparison against the largest amount, never a float (D-017). The status list is mirrored from the PHP enum and guarded by `FrontendEnumsTest`.
+5. **Left out on purpose:** a page for one pledge's gifts (the list already shows what is paid; the API has the gifts when a screen needs them), a delete (there is none: lower the amount to what was paid, D-047), and the pastor's campaign totals (Sprint 5 reports). Choosing the pledge a gift pays in the record-a-gift form is the next change (D-057).
+
+**Rationale:** The simplest screen that lets the finance secretary see who has promised what and how far each has got, built from the parts that already exist.
+
+**Revisit when:** the gift form gets its pledge choice, or churches ask for pledge reminders or campaign reports (D-047).
+
+---
+
+### D-060 — A gift names the pledge it pays, in the record-a-gift form
+**Date:** November 2026
+**Decided by:** Lead Engineer, from D-047 point 1 (the finance secretary picks the pledge; nothing is linked by matching), D-057 point 7 and `ValidPledgeForGift`
+**Status:** Active. Completes the part of story 4.14 that waited for the pledge page.
+
+**Decision:**
+1. **A "Pays a pledge (optional)" choice appears in the record-a-gift form** only once a member and a fund have been chosen and that member has a pledge to that fund that can still take a gift. It lists those pledges with what is still outstanding, as the API wrote it ("Building 2026 · GHS 700.00 outstanding"), and sends `pledge_id` with the gift. A pledge already paid in full (`fulfilled`) is not offered, because the server would refuse it.
+2. **It asks the server for the member's pledges to that fund** (`GET /pledges?member_id=&fund_type_id=`), nothing until both are chosen, and carries on without the field if the pledges cannot be read (for example a person with `giving.record` but not `giving.view`).
+3. **A stale choice is never sent.** A pledge chosen before the member or the fund was changed is dropped on submit unless it is still on offer, the same safeguard as the service choice (D-057).
+4. **Nothing is added up in the browser.** The server recalculates the pledge's paid amount, progress and status when the gift is saved (D-047), and the pledge list refreshes because recording a gift refreshes the pledge keys.
+
+**Rationale:** Without it a gift could not pay a pledge from the screen, so progress bars would never move for cash gifts, which is how most churches give.
+
+**Revisit when:** a church wants the form to suggest the only open pledge automatically, or to split one gift across two pledges.
+
+---
+
+### D-061 — The SMS credit balance in the header (Sprint 4, story 4.18)
+**Date:** November 2026
+**Decided by:** Product Owner (what Top up does now, and the warning limit), Lead Engineer (the rest), from docs/02, D-004 and D-051
+**Status:** Active
+
+**Decision:**
+1. **The balance is in the header on every page for every signed-in role**, because everyone's work sends texts (gift receipts, check-ins) and a balance is not sensitive. It is a whole number written with thousands separators; it is a count, not money.
+2. **It warns in words, not colour alone.** At or under **50 credits** *(Product Owner)* it shows "Running low" (announced to screen readers); at none it shows "None left" and says gift receipts and other texts are not sent (D-051). The limit is one named value (`LOW_SMS_CREDITS`) and is a hint on screen only; the server charges and refuses by the real balance.
+3. **The balance stays fresh.** The session holds the balance from sign-in, which goes stale as receipts use credits, so the header shows that value at once and asks the server again (the "who am I" call) every minute while the page is open, when the window comes back into focus, and after a gift is recorded. If the server cannot be reached the last known balance stays on screen.
+4. **Top up is a button for staff who manage the church** (`church.settings`, the church admin), and until buying credits exists (story 5.4, Sprint 5) it opens a notice saying so and that the platform team can add credits meanwhile *(Product Owner)*. No dead link. When 5.4 ships, the notice is replaced by the bundle choice and payment (TC-08-13).
+5. **Left out on purpose:** the email to the church admin when credits run low (D-051, with billing), a credit history screen, and any change to how credits are charged.
+
+**Rationale:** The simplest display that tells a finance secretary or an admin before receipts stop going out, without building the purchase early.
+
+**Revisit when:** story 5.4 is built (replace the notice), the plan allocations are set (docs/12 Q4), or churches want the limit per plan.
+
+---
+
+### D-062 — How email is sent (A2, the prerequisite of D-054)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from D-014, D-025, D-043, D-054, the agreement sections 3, 11, 15, 17, 18 and 37, and `patterns/Pattern — Email & Notifications.md`
+**Status:** Active. Built; the emails that use it come with D-054 and story 5.15.
+
+**Decision:**
+1. **Laravel's mailer is the provider abstraction.** It is already an interface, a driver chosen by `.env` and a manager (agreement section 15), and D-014 chose it so that switching host is a configuration change. No extra contract is added. The mailer stays **Resend by SMTP** (D-014); in this Laravel version the TLS choice is `MAIL_SCHEME` (`smtps` for port 465), and the older `MAIL_ENCRYPTION` in the first docs no longer exists. Laravel's documentation recommends an API driver (`resend/resend-php`) over SMTP when possible; that would add a package and is left as a possible later change.
+2. **Every email goes through one door:** `QueueEmailAction` writes a `queued` line in `message_logs` and queues `SendEmailJob` after the line is committed; the job sends with `Mail::to()->send()`. Never `Mail::queue()` (it would bypass the log and the circuit) and never a send inside a request. The job has the same safeguards as the SMS job: 3 tries with backoff 30, 120 and 300 seconds, a 30 second timeout, a 15 minute retry window, a `failed()` handler that marks the line `failed` and reports to Sentry, a circuit breaker named `email`, and `email:pause` and `email:resume` as the incident switch (D-043).
+3. **Sending twice is prevented by the log line:** the job does nothing for a line that is already `sent`. Email is at-least-once, not exactly-once: a worker that dies after the provider accepted a message but before the line says `sent` could send it twice. That is accepted for codes (each is single-use and expires) and is the only way a repeat can happen.
+4. **Codes are never stored.** The log keeps `redactedSummary()`, for example "Email with a sign-in code (the code is not stored)". The code is in the queued job's payload in Redis for the seconds it takes to send, as it is for SMS codes (D-025). No address or code is written to the application log.
+5. **Codes use the `critical` queue**; invitations and export links use `notifications`. Queue names are a `QueueName` enum in new code; the string literals in older code are left alone until they are touched.
+6. **One email template for the three code emails** (sign-in, password reset, invitation), a Markdown mailable so Laravel makes the HTML and plain-text versions, with its wording in `lang/en/emails.php` so it can be reviewed and later translated (DD-009). A code email has no button or link to click. The mail layout's header is overridden so an email can never load an image from another website: the framework's own header hotlinks a Laravel logo from laravel.com when the app is named "Laravel".
+7. **Deployed environments are checked.** `env:check` refuses `MAIL_MAILER` of `log` or `array`, an SMTP mailer with no host, username or password, and the placeholder sending address.
+8. **Left out on purpose:** bounce and complaint handling and a suppression list (they need a Resend webhook and are not needed until emails go to people who might bounce), notification preferences (every email built so far is transactional and cannot be switched off), and the deliverability set-up in DNS (SPF, DKIM, DMARC on a dedicated sending subdomain), which is outside the code and must be done before the first real email (`docs/19-open-items.md`, D11 and D12).
+
+**Rationale:** The simplest path that keeps the agreement's rules (queued, logged, safe to retry, with a circuit breaker and a switch), reuses the SMS job's proven shape, and adds no dependency. A real email sent through the real queue to a real SMTP server was received with both a plain-text and an HTML part and a stored `sent` line with the provider's message id.
+
+**Revisit when:** emails go to people other than staff (add bounce handling and preferences), volume justifies the Resend API driver, or a second language is needed.
+
+### D-063 — What the member growth report counts (story 5.7)
+**Date:** November 2026
+**Decided by:** Product Owner (what "new" and "lost" mean), Lead Engineer (the rest), from docs/02, docs/03 and QA-11
+**Status:** Active
+
+**Decision:**
+1. **"New" means became active.** *(Product Owner.)* A person is new in the month they became an active member: added as active, a prospect confirmed as a member (docs/03, stage 3), or a member who came back. A prospect is not counted until confirmed. The people who were only added to the list are not growth.
+2. **"Lost" means left active membership.** *(Product Owner: inactive, transferred, deceased, archived.)* The Lead Engineer also counts a move from active back to prospect, because the report shows the active total at each month's end and the figures must add up (new minus lost is then exactly the change in the active total). A status change that leaves the member active is neither.
+3. **Read from the member change history** (D-030, `audit_logs`), not from the member list, so it follows the same status rules. This month's active total is today's real count; earlier months are worked back from it. A member whose data was erased has no readable history (the values are masked) and is not in the earlier months.
+4. **Months** are calendar months in the church's own time zone, 1 to 24 (default 12). Anyone with `reports.view` (church admin, pastor, finance secretary) may read it; it is counts only (D-055 point 5).
+
+**Rationale:** "Net active member count over time" (docs/02) only makes sense if new and lost describe the same thing as the active count. Reading the history keeps one definition of "active" across the app.
+
+**Revisit when:** a church wants prospects or visitors in the same chart (add them as separate series), or members are moved in bulk (check the history still records each move).
+
+---
+
+### D-064 — How the member list export works (story 5.8)
+**Date:** November 2026
+**Decided by:** Product Owner (the link goes by email), Lead Engineer (the rest), from docs/05, docs/08, docs/14, QA-11 and D-039
+**Status:** Active
+
+**Decision:**
+1. **The download link goes by email.** *(Product Owner.)* docs/08 and QA-11 said SMS; docs/06 and docs/14 planned the export link for the email sender (D-062), which now exists. The email is queued on `notifications`, goes to the staff member who asked, and the message log keeps a summary, never the link. docs/08 and QA-11 are corrected.
+2. **`POST /exports/members` answers 202 and a worker builds the file.** A new `exports` table records every export (who, filters, rows, status), which is also the trail that personal data left the system. The job runs on the `exports` queue with tries, timeout, backoff and a `failed()` handler, and is safe to run twice.
+3. **The file is private and short-lived.** It is stored at `churches/{church_id}/exports/{export_id}/members-{date}.csv`; the link is signed and works for 1 hour; the file is deleted after 7 days by `exports:prune-files` (03:15 UTC) and the record stays (`config/exports.php`). A cancelled church's purge deletes the folder and forgets the filters.
+4. **What is in it:** the columns in QA-11 TC-11-10 plus `member_number` (a church knows people by `GRC-0042`, not by a ULID). Never the national ID, address, landmark or pastoral notes. It follows the member list's filters and its default (prospects and active members), and the viewer's own visibility.
+5. **A spreadsheet cannot be made to run a name.** A text starting with `=`, `+`, `-` or `@` gets a leading quote; the phone column, our own validated `+233` number, is left alone.
+6. **Limits:** 5 exports an hour for each staff member, with the message "You can export at most 5 times per hour."
+7. **Known limit:** the link is part of the queued email, so it sits in the queue for the few seconds before the email is sent, like a sign-in code. It lasts an hour and opens one private file.
+
+**Rationale:** Email costs nothing, opens on the computer where a CSV is used, and reuses the sender with its log, retries and circuit breaker. A short link and a short-lived file keep a list of people's contact details from lying about.
+
+8. **The giving records export (story 5.9) follows the same rules.** One job (`BuildExportJob`) and one builder contract serve both kinds. It needs `giving.export` (church admin, finance secretary), takes the gift list's filters, always includes voided gifts (flagged) so it can be audited, lists gifts oldest first with exact amounts, the church's own dates and the fund name the gift was recorded under, and never holds notes, the void reason or phone numbers. The 5-an-hour limit is shared between the two kinds.
+
+9. **The React buttons (built).** *Export list* on the Members page (`members.export`) and *Export gifts* on the Giving page (`giving.export`) ask for the file with the filters now on screen, so it holds what the list shows. Each asks first, because a file of people's private details is leaving the system: it says where the link goes (the staff member's own email), that it works for 1 hour and that the file is deleted after 7 days. The server's own words are shown, including the 5-an-hour limit. The button stays off while the request is on its way. The export has no `Idempotency-Key`: the hourly limit and the disabled button are what stop a double click from asking twice.
+
+**Revisit when:** a digital gift can be pending or failed (D-053: the giving export then lists completed gifts only), or a church needs very large exports (then stream to the file or split it).
+
+---
+
+### D-065 — Who a broadcast reaches and what it costs (story 5.1, part 1)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/02, docs/08, D-041, D-051, QA-08 TC-08-07 to TC-08-10 and QA-10
+**Status:** Active. Built: the estimate and the send.
+
+**Decision:**
+1. **Who is reached.** Members of one status (active unless another is asked for) and, optionally, of one department (the two filters docs/08 names), who have a phone number and have not turned SMS off (`sms_opted_in`, D-041). A deceased member is never reached, whatever status is asked for. A church cannot have two members with one phone number (the database allows one), so each person is texted once.
+2. **What it costs.** One credit is one part of the text for each person (D-051), counted by the same segmenter the sender uses. A text may use at most 4 parts (`config/messages.php`, `broadcast_max_parts`): a guard so one message cannot cost a church a great deal by accident. The number is mine, not from the docs, and is one line to change.
+3. **Text messages only for now.** `channel` must be `sms`; a WhatsApp broadcast needs the Meta account and approved templates (B4, D-045), so it is refused with a plain message until then.
+4. **A question before the send.** `POST /messages/broadcast/estimate` takes the same body as the send and answers `{recipients, parts_per_message, credits_needed, credit_balance, enough_credits}`, so the compose page can show the cost as the text is typed (QA-08 TC-08-08). It queues, logs and charges nothing. docs/08 did not have it.
+5. **Who may.** `sms.send` (church admin, pastor), as for the message log (D-055).
+
+**Rationale:** One place (`BroadcastEstimator`) answers "how many and how much", for the preview now and for the real send next, so they can never disagree.
+
+6. **The send (`POST /messages/broadcast`) answers 202 and a worker does the texting.** It needs an `Idempotency-Key` (a double click would cost money) and is limited to 10 broadcasts an hour for the church (docs/08). The request refuses a broadcast the church cannot pay for (QA-08 TC-08-09) or that would reach nobody; otherwise it records a `broadcasts` row (who sent what, the filter, the parts) and queues `SendBroadcastJob`. The job re-reads the audience as it is when it runs, so a member who turned SMS off in between is not texted, and makes a `queued` message log line (`message_type: broadcast`, tied to the broadcast) and an SMS job for each member, a batch at a time. It is safe to run twice or after a crash: a member with a line is skipped and the database allows one line for each member of a broadcast.
+7. **Credits are taken text by text, not reserved up front** (D-051): the SMS job takes one credit for each part just before sending, and gives them back if the text fails for good. The request's check is for the broadcast as estimated; if other texts use the credits before the worker finishes, the later texts of the broadcast fail with "too few credits" and show as failed in the message log, and nothing is overspent.
+8. **Left out on purpose:** a send-later time, a cancel button, per-plan recipient limits (Q4 is open), and a history screen of broadcasts (the message log shows every text).
+
+**Revisit when:** WhatsApp broadcasts open, plan limits on recipients are decided (Q4), a church needs to cancel a broadcast part-way, or the credits should be reserved up front.
+
+---
+
+### D-066 — Date fields use the browser's own date input (supersedes D-049 point 1)
+**Date:** November 2026
+**Decided by:** Product Owner
+**Status:** Active
+
+**Decision:**
+1. **Every field where a person picks a date is a native `<input type="date">`** (the date of birth on the add-member form is the example): member date of birth and "member since", a milestone's date, the date a gift was given, a pledge's target date, a service's date, and the From and To filters on the gift list. The person gets the calendar and the order of day, month and year that their phone or computer uses, the date is always real (the box will not hold 31 February), and the value is `YYYY-MM-DD`, which is exactly what the API takes, so nothing is converted or masked any more.
+2. **The limits are still ours (D-049 points 2 to 4).** They are checked by the same `dateBox` rule on the form, and the same numbers are given to the browser as `min` and `max` so its calendar does not offer a day the server would refuse: date of birth from 1900 to today, "member since", a milestone and a gift up to today, a new pledge from today, a service from 30 days back to 366 days ahead. A changed pledge keeps its own date whatever it is, so it has no `min`. The server remains the judge.
+3. **What went:** the text box that put slashes in as you typed, `utils/dateText.ts` and the `dd/mm/yyyy` hint. A hand-typed `25/12/2026` is no longer accepted, because the date input cannot produce it.
+4. **Known trade-off, accepted:** D-049 chose its own box because a native date input shows the month first on some devices (for example a phone set to US English). With this decision the order follows the device. Dates shown on screen as text stay day first ("25 Oct 2026").
+
+**Rationale:** The browser's date input is what people already know, works with a calendar and with the keyboard, is accessible, needs no code of ours to mask, and removes the conversion between text and the API's form, which was a place for mistakes.
+
+**Revisit when:** a church complains that dates appear month first on its phones (the date box is in one component, `DateField`).
+
+---
+
+### D-067 — The automatic text to absent members (story 3.13)
+**Date:** November 2026
+**Decided by:** Product Owner (off until switched on), Lead Engineer (the rest)
+**Status:** Active
+
+**Decision:**
+1. **Off until the church switches it on.** The church setting `absent_alert` (`true` or `false`) is `false` when the church has not chosen (`config/attendance.php`, `absent_alert_default`). A church admin changes it with `PUT /church/settings`, like the other settings.
+2. **Who is texted:** the people `GET /attendance/absent` lists (active members who missed each of the church's last `absence_threshold` held Sunday services, and who joined before the oldest of them), and only those who may be texted: SMS turned on and a phone number. One query builds both, so the text goes to the people the list shows.
+3. **Once for each stretch of absence.** A member is texted when they have no text of this kind since they were last checked in (or have never been checked in). They are texted again only after they have come back and then missed the same number again. A text that failed for good does not count, so the member is tried again the next day.
+4. **The church pays.** Each text is a church-paid SMS job (D-051) that takes one credit for each part. The daily job counts the church's credits as it queues, stops with the warning "Absence alerts stopped: insufficient credits" (church id only) when the next text could not be paid for, and the members left are tried the next day. It takes no credits itself.
+5. **How it runs.** `attendance:alert-absent` runs at 09:00 UTC every day (Ghana is on UTC, so 09:00 local) and queues one `SendAbsenceAlertsJob` on the `notifications` queue for each church that switched the text on and is active, not cancelled and not purged. Each text has a `queued` message log line of type `attendance_alert`.
+6. **The words** are in `config/attendance.php` (`absence_alert_message`, with `:name` and `:church`), in the plain alphabet so it costs the fewest credits. The name is the one the member likes to be called.
+
+**Rationale:** A pastor wants to reach someone who has gone quiet before the gap grows, but a text costs the church money and a member who is texted every day is annoyed, so it is off by default, goes once for each stretch, and never spends credits the church does not have.
+
+**Revisit when:** a church asks for its own wording, a different time of day, or a text for midweek services.
+
+---
+
+### D-068 — The recent activity feed (open item A9, docs/02 Module 6)
+**Date:** November 2026
+**Decided by:** Lead Engineer, from docs/02, D-030, D-046, D-055 and the privacy rules in docs/05. The choices of which events to show are mine and are one enum to change.
+**Status:** Active. Built: the endpoint; the home page feed follows.
+
+**Decision:**
+1. **`GET /activity` turns the change history (`audit_logs`) into plain sentences,** newest first, paged. It is worked out when asked and stores nothing new.
+2. **Who may read it:** `reports.view` (church admin, pastor, finance secretary). All three see every member (D-031), so no per-member filtering is needed.
+3. **Which lines, and who sees each.** Each kind of line is shown only to people who also hold the permission that guards what it is about, so the feed never tells anyone what they could not look up: a member added or moved to another status (`members.view`); a gift recorded or voided, and a pledge made (`giving.view`, so **not the pastor**, D-046); staff invited, deactivated or reactivated (`staff.manage`); church details or settings changed (`church.settings`). The page and its total count only what the person may see, so a total gives nothing away.
+4. **What a sentence holds:** a name, an amount and a fund, and who did it and when. Never the void reason, a status note, an email, a phone number, a member's name beside a gift, or the old and new values. A gift is "A gift of GHS 1,250.50 to Building Fund was recorded."; what the settings were changed to is not said.
+5. **Left out on purpose:** member edits, a record being viewed, exports, erasures, role changes and pledge edits. They are either too noisy for a home page or are security events that belong in the change history, not in a feed anyone with reports may read.
+6. **A person whose data was erased** is "A member", never the erased marker.
+7. **The words are in `lang/en/activity.php`** (DD-009), and the kinds, with their permissions, are one enum (`ActivityKind`), so adding a kind is one case and one sentence.
+
+**Rationale:** The change history already records who did what, with the right guard in each place; the feed only has to choose lines and say them plainly. Keeping the permission beside each kind in one enum means the privacy rule cannot drift from the list of lines.
+
+**Revisit when:** a church wants member edits or exports in the feed (they are in the history), a different set for the pastor, or the words in another language.
+
+---
+
+### D-069 — The platform admin side, SMS credit packages, and building digital payments (A3, A4, 5.4)
+**Date:** November 2026
+**Decided by:** Product Owner (points 1 to 4, 7 Nov 2026), Lead Engineer (points 5 to 8, defaults the Product Owner may change)
+**Status:** Active. Nothing built yet; this records the decisions and the order.
+
+**Decision:**
+1. **The platform has an admin side, run by the platform owner, not by any church.** It does not exist yet and is built now. The first thing on it is managing the **SMS credit packages** (bundles) that churches buy. It is separate from the church staff screens: a church admin can never reach it, and it can never reach a church's members or giving (docs/05: no master key into a church's data).
+2. **Packages are set by the Product Owner on that side**, not in code or config. A package has a name, a number of credits, a price in GHS, an active switch and a place in the list. This replaces "decide the prices and bundles now" (docs/12 Q4, C2): the numbers are entered by the owner when ready, and a church sees only the active ones.
+3. **Both payment paths are built now:** MoMo through PayPerlez with automatic payout to the church (D-018) and cards through Paystack with the subaccount split (D-020, A4). Churches also buy credit packages through the same two providers (QA-08 TC-08-13): that money is the platform's own revenue, so it has no payout and no split.
+4. **Settlement: a church's money is never held by the platform.** Each gift is settled to the church as soon as it is paid: PayPerlez payouts are sent at once, per gift, and Paystack splits the gift to the church's subaccount at charge time, so the funds sit with the providers in transit, never in a platform balance. *(Product Owner's statement of the model. The legal opinion on the Bank of Ghana position, open item B1, stays on the register: this decision does not replace it.)*
+5. **Platform admins are their own accounts,** in their own table with no church, created from the command line (never by self-sign-up) and signing in on the platform host with email, password and an emailed code, as D-054 does for staff, with their own sessions and limits. *(My default.)*
+6. **One provider layer for everything that moves money:** a `PaymentProvider` interface (collect, read status) and a `DisbursementProvider` interface (pay out, read balance, verify an account), with a PayPerlez driver and a Paystack driver behind them (D-020), money crossing as decimal strings in GHS, one webhook endpoint per provider with signature checks and stored payloads, and a scheduled polling fallback for anything still pending (agreement section 10).
+7. **Order of building, each its own commit:** (a) the platform admin foundation and package management; (b) the provider layer, the webhooks and the polling fallback; (c) buying credits, which is the simplest payment (no payout, no split) and proves (b); (d) a church's payout account setup and verification, `contributions.status`, the platform fee and the initiate-a-gift call (A3); (e) the automatic payout, its retries, alerts and daily reconciliation; (f) card giving with the Paystack subaccount (A4); (g) the screens for each. Every step that touches money has full test coverage (docs/10) and uses no floats (D-017).
+8. **Still open and not blocking:** the exact PayPerlez webhook event names (B2, polling covers it), the live fee schedule (B3, the screen says "plus a small processing fee"), the card fee and split design (B5, decided at step f), and written confirmation of immediate availability (B6).
+
+**Rationale:** Buying credits uses the same collection call as a gift but has no payout and no split, so it is the safest first use of the provider layer, and the owner's packages are what it sells.
+
+**Revisit when:** the legal opinion (B1) changes the model, a second platform admin is needed (roles on that side), or PayPerlez confirms its webhook events.
+
+---
+
+### D-070 — The interaction and motion design system is a mandatory contract
+**Date:** November 2026
+**Decided by:** Product Owner (the brief and the wish that it be enforced), Lead Engineer (how it is adapted and checked)
+**Status:** Active. The specification is written; the tokens, components and automated checks are built in steps (docs/design-system/README.md).
+
+**Decision:**
+1. **`docs/design-system/` is the contract for how every control behaves:** the interaction lifecycle, motion and interaction tokens, button, form and password behaviour, loading patterns, feedback, empty and error states, overlays, tables, upload, optimistic updates, destructive actions, accessibility (WCAG 2.2 AA) and writing. `CONTRACT.md` holds the mandatory rules; a feature that breaks one is not ready to release.
+2. **It is written for our stack, React 19 with Tailwind v4 and shadcn, not Vue.** The brief assumed Vue; the rules are the same and the examples are React (`Button loading`, `PasswordInput`, the shared `ui/` and `form/` components, Sonner, React Hook Form with Zod, Vitest, Playwright).
+3. **The primary font becomes DM Sans** (self-hosted variable font, metric-matched fallback) in place of Geist Variable, as the brief says. This is a visible change and is made in the tokens step, not before.
+4. **Enforcement is layered and honest about what exists.** Today: TypeScript, ESLint with `jsx-a11y`, Vitest and Playwright in CI. To build: axe in Playwright, a check against hard-coded colours and durations, screenshot checks of a component showcase, and required status checks on the protected branches (a repository setting the owner turns on). Taste (does a message read kindly) stays with a human reviewer and the acceptance checklist.
+5. **The rules reach coding agents through `CLAUDE.md`,** which every session reads. `AGENTS.md` is left alone because Laravel Boost regenerates it.
+6. **Build order, each its own commit:** (1) this specification and the rules; (2) tokens, font, `Button` loading, `PasswordInput`, reduced motion and tests; (3) the showcase page and the automated checks; (4) bring existing screens up to the contract as they are next touched.
+
+**Rationale:** Guidelines get forgotten. Shared components that own the behaviour, tests that prove it and checks that block a merge make the good experience the easy one, for people and for agents.
+
+**Revisit when:** a rule here blocks work it should not, the stack changes, or the owner turns on branch protection.
+
+---
+
+### D-071 — The visual identity is Heritage Green & Gold
+**Date:** November 2026
+**Decided by:** Product Owner (the palette, type, spacing, radius, elevation, motion and theme brief), Lead Engineer (how the brief is made to meet WCAG AA, and how it maps to the components)
+**Status:** Active. The tokens are built; the component-by-component visual standards and the showcase's foundations section follow.
+
+**Decision:**
+1. **The look is deep forest green `#183C35`, a muted champagne gold `#C3A46B` used sparingly, and warm neutrals** (page `#F7F5F0`, surface white, text `#26332F`), in DM Sans, with 8px controls, 12px surfaces, subtle borders instead of heavy shadows, and a matching dark theme (`#171D1C` page, `#222A28` surface, `#2B3531` elevated). It replaces the plain grey theme that came with the component library.
+2. **Three token layers** (primitive scales, semantic roles, component values), built as CSS custom properties and Tailwind theme values in `resources/css/app.css`. Components use the semantic layer only. Names follow shadcn's (`--background`, `--primary`...) so the existing components pick the new look up without being rewritten.
+3. **Where a brief colour cannot carry text, a darker or lighter step of the same scale does, and the brief's hex is kept for what it can do.** Measured: secondary text `#718079` is 3.8:1 (needs 4.5), muted `#98A29C` is 2.6:1, gold `#C3A46B` is 2.4:1, warning `#B77928` is 3.6:1 as text, and the success, error and information colours are 2.6 to 2.9:1 on the dark surface. So secondary text is neutral 600, muted grey and gold 400 are decoration only, readable gold is gold 700, the warning and error text colours are slightly darker (`#985C00`, `#B14545`), and dark-theme status colours are lightened. `#718079` is used as the field outline, where 3:1 is enough. **A field outline darker than the quiet divider is a change from the brief's "subtle borders", made because a field is found by its edge (WCAG 1.4.11).**
+4. **Motion values follow the brief:** fast 100, standard 150, moderate 200, slow 300 ms (and 80 ms for a press), replacing the first draft's 120, 180, 220 and 280.
+5. **Guarded by a test.** `designTokens.test.ts` reads the stylesheet and fails if a pinned brand hex moves, a text, ring, field-outline or status pairing falls below its limit in either theme, a scale is incomplete, or the type, radius, elevation, motion or reduced-motion tokens change.
+6. **Chart colours are brand-matched and validated** (added with the stat cards and charts): five hues from the brand families at chart strength, validated for separation and contrast in both themes (foundations.md, 5a). The reports' charts use them. **Not changed yet:** icon sizes are tidied as screens are touched, and a per-person theme choice is not built.
+
+**Rationale:** The brief is the identity; the measurements make sure it is also readable by everyone. Stating each adjustment keeps the brand colours from being quietly bent or quietly broken.
+
+**Revisit when:** the brand colours change, a pairing in the test needs a different step, the reports' palette is matched to the brand, or a theme switch is added.
+
+---
+
+### D-072 — Payout rates, and a church that settles to a bank waits for GHS 100
+**Date:** November 2026
+**Decided by:** Product Owner (the rates and the minimum, 10 Nov 2026; the choice of option 3), Lead Engineer (how it is built)
+**Status:** Active. Recorded now; built with D-069 steps d3 and e.
+
+**Decision:**
+1. **PayPerlez's charges are 1.99% on a collection and 1.59% on settlement** (the payout to the church); SMS is GHS 0.028 a message. The giver pays the collection charge on top of the gift (D-018); the church bears the settlement charge, taken from what we send. Both rates live in `config/giving.php`, not in code.
+2. **A bank settlement has a minimum of GHS 100.** A mobile money payout has no minimum stated.
+3. **The church chooses where it is paid, and knows the cost of each.** A church that settles to **mobile money** is paid for every gift at once (D-018, D-069 point 4). A church that settles to a **bank account** is paid when its settled gifts reach GHS 100, so small gifts wait in the provider account until then. This is a known, accepted exception to D-069 point 4 for bank churches only, and the church is told so when it picks a bank (the screen says "paid once your gifts reach GHS 100").
+4. **Fees round half-up to two places,** in one place (`GivingFeeCalculator`), on exact decimals (closes open item C1).
+5. **Held gifts are never lost or mixed:** each gift keeps its own `disbursements` row, so what is waiting for a church is always the sum of its unpaid rows, shown to the admin, and one bank payout covers several rows. The minimum is a setting (`giving.bank_payout_minimum`), not hard-coded.
+
+**Rationale:** Most gifts are under GHS 100, so paying a bank per gift is impossible; mobile money-only would leave banks out. Letting the church choose keeps both with the cost stated. The Product Owner chose this over the other two options.
+
+**Revisit when:** PayPerlez changes the bank minimum or its rates, or the legal opinion (B1) objects to holding a bank church's gifts.
+
+---
+
+### D-073 — Anyone can give from a public page, with no staff involved
+**Date:** November 2026
+**Decided by:** Product Owner (how giving works in a church; the channels, the service link, the giver and the limits, 10 Nov 2026), Lead Engineer (how it is built)
+**Status:** Active. Recorded now; built in steps after D-069 d3.
+
+**Decision:**
+1. **How giving really works in a church:** the offering is taken together and recorded by staff (cash); or people scan a QR code, dial USSD, or open a link to a page where they enter their own amount and pay. **Anyone at all can give, and they need nobody to enter it for them.** After each service the money that came in both ways is recorded together (the Sunday offering report, D-049). The staff-entered mobile money gift built in D-069 d3 (`POST /contributions/initiate`) stays for a staff member helping someone, but it is not the main way.
+2. **Channels, first the link and QR page.** Each church has a public giving page on its own address (`grace.yourapp.com/give`), with no sign-in; the church prints the QR code or shares the link. **USSD comes later** (D-019, its provider is unverified).
+3. **The church comes only from the page's address,** never from anything the giver types. The fund and the service must belong to that church, and the money goes only to that church's verified payout account. A church with no verified payout account has no giving page ("Giving is not available here yet"). A gift can never be sent to a different church from this page.
+4. **The service is linked automatically,** by the day and time in the church's own timezone: the service open for check-in today (the one opened first), otherwise of today's services whose start time has passed the one that started last; with none, the gift has no service and the offering report counts it with the day's first service (D-048). So the offering report adds cash and electronic together. Staff can move a gift to another service afterwards (**not built yet**).
+5. **The giver:** if the phone number matches a member of that church the gift is linked to them (they approve the payment on that phone, which shows they control it) and they get the receipt; otherwise it is anonymous, with an optional name. The page never says whether a number matched a member.
+6. **Protection from abuse** (the page can send a payment prompt to any phone, so it must not be usable to pester someone): one prompt per phone every 60 seconds (a rate limit, not a total, so a person on a bad network can keep trying); 100 prompts an hour per internet address (high, because a whole congregation shares the church wifi or one mobile network after a service); the same phone asking for the same amount to the same church while an earlier prompt is unpaid, within about 5 minutes, gets that gift sent again and not a new one; an unpaid prompt expires after 30 minutes and becomes failed, but is still asked about for a day, because a giver may approve late, and is counted if the provider then says it was paid; receipt texts go only for paid gifts, so nobody can drain a church's SMS credits; a hidden trap field catches bots; **no bot check for now**, added later if abuse is seen. Every number is in `config/limits.php`.
+7. **Order of building, each its own commit:** (g1) what the page needs to show (the church, its funds, whether giving is available); (g2) starting a public gift, with the limits, the trap field and the reuse of a repeated attempt; (g3) the automatic service link and the member match; (g4) expiring unpaid gifts, with settling and polling (D-069 d3c); (g5) the public React page and the QR code on the church's screens.
+
+**Rationale:** It is how giving is done in a church, and it is the only way a congregation can give without a staff member typing each gift. Making the limits a rate and not a total keeps it usable on a poor network.
+
+**Revisit when:** abuse is seen (add a bot check), the USSD provider is verified, or a church asks to take gifts for more than one church from one page.
+
+---
+
+
+
+---
+
+### D-074 — A staging (test) environment: what is relaxed, and its demo data
+**Date:** November 2026
+**Decided by:** Product Owner (asked for a test environment on Coolify), Lead Engineer (the rest)
+**Status:** Active. Built: the start check and the seeding. The first deploy is in `docs/runbooks/first-staging-deploy.md`.
+
+**Decision:**
+1. **A test site runs the production image with `APP_ENV=staging`,** on its own domain, database, Redis and storage bucket (docs/16). It is not a development machine: debug is off, the address is HTTPS, cookies are secure and the proxies are listed, exactly as in production.
+2. **The container's start check (`env:check`) is as strict as production, except for four settings a test site may legitimately lack,** which become warnings it prints and starts with: WhatsApp (the driver and its webhook secrets), the error monitor (`SENTRY_LARAVEL_DSN`) and the backup key (`BACKUP_GPG_RECIPIENT`). A WhatsApp driver that is switched on without its token is still a failure. Real email, a real SMS provider, object storage (the worker builds exports and the web app serves them, so they must share a bucket), the platform domain and HTTPS stay hard requirements. In production nothing is relaxed.
+3. **Demo data on a test site is explicit.** The seeder makes a demo church (`demo`), its church admin and a platform admin on `local` and `staging`, never in production. In local development the defaults in `config/demo.php` still apply. On staging there are **no defaults**: a guessable password on a public site is a hole, and the sign-in code is emailed, so each address must be a real inbox. The demo church needs `DEMO_ADMIN_EMAIL` and `DEMO_ADMIN_PASSWORD`; the platform admin needs `DEMO_PLATFORM_ADMIN_EMAIL` and `DEMO_PLATFORM_ADMIN_PASSWORD`; without both of a pair, that account is not made. The seeder runs on every deploy and only refreshes what it made, so a password changed on the test site is reset by the next deploy.
+4. **The Docker build needs the platform domain** (`VITE_TENANT_BASE_DOMAIN`, a build argument, which must equal `TENANT_BASE_DOMAIN`), because the browser app bakes it in. The build stops when it is missing.
+5. **No real people's data on a test site** (docs/16): demo and test data only.
+
+**Rationale:** A test site is only useful if it behaves like production, so the safety settings are not relaxed, only the integrations that need accounts a team may not have yet. Making demo sign-ins explicit means a deployed site never has a password nobody chose.
+
+**Revisit when:** a second test site is needed, or WhatsApp, the error monitor and the backup key are ready (then remove their warnings by setting them).
 
 ---
 
@@ -546,3 +1390,6 @@ Decisions that were intentionally not made yet, and when they need to be made.
 | DD-004 | Exact SMS credits per plan tier | Sprint 3 | Product Owner |
 | DD-005 | Exact GHS subscription prices | Sprint 4 | Product Owner |
 | DD-006 | Custom sender IDs for churches (v2 feature or not?) | Sprint 2 | Product Owner |
+| DD-007 | Sign the new admin in straight after sign-up (needs a one-time link between the platform host and the church host; today they sign in again) | When sign-up friction is measured | Product Owner |
+| DD-008 | Delivery status of text messages (PayPerlez documents no delivery webhooks; polling `GET /sms/messages/{reference}` is the option) | Sprint 4, story 4.8 | Lead Engineer |
+| DD-009 | Translating the screens (which languages: Twi, Ga, Ewe?) | Before the first non-English church signs up | Product Owner |

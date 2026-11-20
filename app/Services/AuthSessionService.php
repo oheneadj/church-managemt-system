@@ -15,9 +15,12 @@ use Laravel\Sanctum\NewAccessToken;
  */
 class AuthSessionService
 {
-    /** Session key holding a fingerprint of the phone number the session was opened with. */
-    public const PHONE_FINGERPRINT_KEY = 'auth.phone_fingerprint';
+    /** Session key holding a fingerprint of the email and password the session was opened with. */
+    public const CREDENTIALS_FINGERPRINT_KEY = 'auth.credentials_fingerprint';
 
+    /**
+     * Opens an expiring bearer-token session for a non-browser client.
+     */
     public function startTokenSession(User $user): NewAccessToken
     {
         $this->recordLogin($user);
@@ -25,6 +28,9 @@ class AuthSessionService
         return $user->createToken('staff', ['*'], now()->addHours((int) config('otp.staff_token_hours')));
     }
 
+    /**
+     * Signs the browser app in with a session cookie and a fresh session id.
+     */
     public function startBrowserSession(User $user, Session $session): void
     {
         $this->recordLogin($user);
@@ -32,9 +38,12 @@ class AuthSessionService
         Auth::guard('web')->login($user);
         // A fresh session id on sign-in stops anyone who planted an id earlier from riding the new session.
         $session->regenerate();
-        $session->put(self::PHONE_FINGERPRINT_KEY, self::fingerprint($user));
+        $session->put(self::CREDENTIALS_FINGERPRINT_KEY, self::fingerprint($user));
     }
 
+    /**
+     * Signs the browser app out and discards its session.
+     */
     public function endBrowserSession(Session $session): void
     {
         Auth::guard('web')->logout();
@@ -42,22 +51,29 @@ class AuthSessionService
     }
 
     /**
-     * True when the session was opened with a different phone number than the user has now.
+     * True when the session was opened with a different email or password than the user has now (D-054). A password
+     * reset ends every session this way, and so does an email change; the phone number does not matter.
      */
-    public function phoneChangedSinceSignIn(User $user, Session $session): bool
+    public function credentialsChangedSinceSignIn(User $user, Session $session): bool
     {
-        $opened = $session->get(self::PHONE_FINGERPRINT_KEY);
+        $opened = $session->get(self::CREDENTIALS_FINGERPRINT_KEY);
 
         return is_string($opened) && ! hash_equals($opened, self::fingerprint($user));
     }
 
+    /**
+     * Stamps the time of the staff member's last sign-in.
+     */
     private function recordLogin(User $user): void
     {
         $user->forceFill(['last_login_at' => now()])->save();
     }
 
+    /**
+     * A hash of the email and the password hash, used to notice when either changes under an open session.
+     */
     private static function fingerprint(User $user): string
     {
-        return hash('sha256', $user->phone);
+        return hash('sha256', $user->email.'|'.$user->password);
     }
 }

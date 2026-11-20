@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\Scope;
  */
 final class ChurchScope implements Scope
 {
+    /**
+     * Limits every query to the church of the current request.
+     */
     public function apply(Builder $builder, Model $model): void
     {
         if (app()->bound('current.church')) {

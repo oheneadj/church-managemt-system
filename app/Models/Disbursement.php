@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\DisbursementStatus;
 use App\Enums\PaymentProviderName;
 use App\Traits\BelongsToChurch;
+use Carbon\CarbonImmutable;
 use Database\Factories\DisbursementFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The automatic payout of one digital contribution to the church (D-018). Append-only financial record.
+ *
+ * @property string $id
+ * @property string $church_id
+ * @property string|null $contribution_id the gift this pays; empty for a bank batch, which pays several gifts at once (D-072)
+ * @property string|null $batch_id the bank batch this gift's payout was sent in, if any
+ * @property string $gross_amount
+ * @property string $platform_fee
+ * @property string $requested_amount
+ * @property string|null $provider_fee
+ * @property string|null $net_amount
+ * @property DisbursementStatus $status
+ * @property PaymentProviderName $provider
+ * @property string|null $provider_reference
+ * @property int $attempts
+ * @property string|null $failure_reason
+ * @property CarbonImmutable|null $paid_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 class Disbursement extends Model
 {
@@ -27,6 +46,7 @@ class Disbursement extends Model
     protected $fillable = [
         'church_id',
         'contribution_id',
+        'batch_id',
         'gross_amount',
         'platform_fee',
         'requested_amount',
@@ -41,6 +61,8 @@ class Disbursement extends Model
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -59,6 +81,8 @@ class Disbursement extends Model
     }
 
     /**
+     * The contribution this disbursement belongs to.
+     *
      * @return BelongsTo<Contribution, $this>
      */
     public function contribution(): BelongsTo

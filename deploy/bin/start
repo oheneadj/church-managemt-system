@@ -1,0 +1,47 @@
+#!/bin/sh
+# Container command for all three roles. Runs the environment check first, so a misconfigured release
+# stops here instead of failing on the first request, then starts the one process this role exists for.
+set -eu
+
+cd /var/www/html
+role="${CONTAINER_ROLE:-web}"
+echo "Starting the ${role} role"
+
+php artisan env:check
+
+case "$role" in
+    web)
+        # Migrate before this container takes traffic. Coolify keeps the old container running until this one
+        # is healthy, so migrations must stay backward compatible (docs/10, docs/16). The retries cover a
+        # database that is still starting; a genuinely failing migration gives up after about 30 seconds.
+        attempts=0
+        until php artisan migrate --force; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge 10 ]; then
+                echo "Migrations kept failing; not starting." >&2
+                exit 1
+            fi
+            echo "Migration attempt ${attempts} failed; retrying in 3 seconds." >&2
+            sleep 3
+        done
+
+        # Roles and permissions are re-synced on every deploy so a new permission ships with the release.
+        # The seeder is idempotent and never creates demo data outside local development.
+        php artisan db:seed --force
+
+        # Cache config, routes, views and events from the environment this container actually has.
+        php artisan optimize
+
+        exec /init
+        ;;
+    worker)
+        exec supervisord --nodaemon --configuration /etc/supervisor/supervisord.conf
+        ;;
+    scheduler)
+        exec php artisan schedule:work
+        ;;
+    *)
+        echo "Unknown CONTAINER_ROLE '${role}'. Expected web, worker or scheduler." >&2
+        exit 64
+        ;;
+esac

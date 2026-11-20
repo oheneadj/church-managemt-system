@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\DTOs\Payments\PayoutAccount;
 use App\Enums\ChurchPlan;
 use App\Enums\MomoNetwork;
 use App\Enums\PayoutMethod;
+use Carbon\CarbonImmutable;
 use Database\Factories\ChurchFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +19,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The tenant root: one row per church. Every other tenant-owned table points back here.
  *
+ * @property string $id
+ * @property string $slug
+ * @property array<string, mixed>|null $settings the church's own choices; a setting it never chose is not in it (see settingsWithDefaults)
  * @property ChurchPlan $plan
+ * @property PayoutMethod|null $payout_method
+ * @property MomoNetwork|null $payout_network
+ * @property string|null $payout_bank_code
+ * @property string|null $payout_account_number
+ * @property string|null $payout_account_name the holder's name as the provider named the account
+ * @property CarbonImmutable|null $payout_verified_at
+ * @property string|null $payout_check_error why the provider could not name the account
+ * @property CarbonImmutable|null $cancelled_at
+ * @property CarbonImmutable|null $purged_at
  */
 class Church extends Model
 {
@@ -43,18 +57,26 @@ class Church extends Model
         'paystack_subaccount_code',
         'payout_method',
         'payout_network',
+        'payout_bank_code',
         'payout_account_number',
         'payout_account_name',
         'payout_verified_at',
+        'payout_check_error',
         'sms_credits',
         'whatsapp_opted_in',
         'ussd_code',
         'timezone',
+        'member_number_prefix',
+        'member_number_seq',
         'settings',
         'is_active',
+        'cancelled_at',
+        'purged_at',
     ];
 
     /**
+     * The type each column is cast to: enums, dates, booleans and encrypted fields.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -67,13 +89,95 @@ class Church extends Model
             'payout_account_number' => 'encrypted',
             'payout_verified_at' => 'immutable_datetime',
             'sms_credits' => 'integer',
+            'member_number_seq' => 'integer',
             'whatsapp_opted_in' => 'boolean',
             'settings' => 'array',
             'is_active' => 'boolean',
+            'cancelled_at' => 'immutable_datetime',
+            'purged_at' => 'immutable_datetime',
         ];
     }
 
     /**
+     * The age below which a member counts as youth. The church's own setting wins over the default (D-031).
+     */
+    public function youthAgeLimit(): int
+    {
+        return max(1, (int) data_get($this->settings, 'youth_age_limit', config('members.youth_age_limit')));
+    }
+
+    /**
+     * How many services in a row a member must miss before they are listed as absent. The church's own setting wins.
+     */
+    public function absenceThreshold(): int
+    {
+        return (int) data_get($this->settings, 'absence_threshold', config('attendance.absence_threshold'));
+    }
+
+    /**
+     * Whether a recorded cash gift sends the member a receipt by SMS. On unless the church switched it off (QA-08 TC-08-06).
+     */
+    public function sendsCashReceipts(): bool
+    {
+        return (bool) data_get($this->settings, 'receipt_on_cash', config('giving.cash_receipts_default'));
+    }
+
+    /**
+     * Whether members who miss several services in a row are texted automatically. Off unless the church switched it on (D-067).
+     */
+    public function sendsAbsenceAlerts(): bool
+    {
+        return (bool) data_get($this->settings, 'absent_alert', config('attendance.absent_alert_default'));
+    }
+
+    /**
+     * The payout account as the provider takes it, or null when none is set.
+     */
+    public function payoutAccount(): ?PayoutAccount
+    {
+        if ($this->payout_method === null || $this->payout_account_number === null) {
+            return null;
+        }
+
+        return match ($this->payout_method) {
+            PayoutMethod::Momo => $this->payout_network === null ? null : PayoutAccount::momo($this->payout_account_name ?? '', $this->payout_account_number, $this->payout_network),
+            PayoutMethod::Bank => $this->payout_bank_code === null ? null : PayoutAccount::bank($this->payout_account_name ?? '', $this->payout_account_number, $this->payout_bank_code),
+        };
+    }
+
+    /**
+     * Where the payout account stands: not_set, checking (waiting for the provider), verified, or failed (the provider could
+     * not name it). Digital giving needs verified.
+     */
+    public function payoutStatus(): string
+    {
+        return match (true) {
+            $this->payout_method === null => 'not_set',
+            $this->payout_verified_at !== null => 'verified',
+            $this->payout_check_error !== null => 'failed',
+            default => 'checking',
+        };
+    }
+
+    /**
+     * Every church setting with the church's own choice or, where it has made none, the default. This is what the screens show
+     * and what the history compares against.
+     *
+     * @return array{youth_age_limit: int, absence_threshold: int, receipt_on_cash: bool, absent_alert: bool}
+     */
+    public function settingsWithDefaults(): array
+    {
+        return [
+            'youth_age_limit' => $this->youthAgeLimit(),
+            'absence_threshold' => $this->absenceThreshold(),
+            'receipt_on_cash' => $this->sendsCashReceipts(),
+            'absent_alert' => $this->sendsAbsenceAlerts(),
+        ];
+    }
+
+    /**
+     * The user records of this church.
+     *
      * @return HasMany<User, $this>
      */
     public function users(): HasMany
@@ -82,6 +186,8 @@ class Church extends Model
     }
 
     /**
+     * The member records of this church.
+     *
      * @return HasMany<Member, $this>
      */
     public function members(): HasMany

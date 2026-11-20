@@ -1,0 +1,44 @@
+# Keeps secrets, history and everything the running app does not need out of the build context.
+.git
+.github
+.claude
+.agents
+.codex
+.idea
+.vscode
+
+# Rebuilt inside the image
+node_modules
+vendor
+public/build
+public/hot
+bootstrap/cache/*.php
+
+# Local state and secrets
+.env
+.env.*
+!.env.example
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/*
+
+# Not needed at runtime
+tests
+docs
+patterns
+addendum
+decisions
+scripts
+*.md
+Universal*
+phpunit.xml
+phpstan.neon
+pint.json
+eslint.config.js
+.prettierrc.json
+.prettierignore
+.editorconfig
+.gitattributes
+components.json

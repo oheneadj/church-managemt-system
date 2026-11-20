@@ -10,6 +10,9 @@ use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
 
+/**
+ * Configures Telescope for local development: what it records and who may open it. It is not loaded in production.
+ */
 class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 {
     /**

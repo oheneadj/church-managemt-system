@@ -36,6 +36,12 @@ Data handling practices are disclosed in plain language in the Terms of Service 
 **Classification: Sensitive PII**
 **Retention: For the life of the church's subscription + 90-day grace period after cancellation**
 
+### Visitor Data (PII)
+- Name, optional phone number, how they heard of the church, and the services they came to
+- **Purpose:** so the church can welcome and follow up a first-time visitor (docs/02). Nothing else is collected.
+- **Classification:** Personal data. Shown only to staff who may edit members (church admin, pastor).
+- **Retention:** For the life of the church's subscription + the 90-day grace period; removed when a cancelled church is purged (D-042). A visitor who becomes a member is linked, not copied.
+
 ### Financial Data
 - Contribution amounts, dates, fund types, payment methods
 - Pledge records and status
@@ -58,7 +64,7 @@ Data handling practices are disclosed in plain language in the Terms of Service 
 - Session tokens (Sanctum personal access tokens)
 
 **Classification: Authentication credentials**
-**Retention: Session tokens invalidated on logout or after 30 days of inactivity**
+**Retention: A browser session ends on logout or after 8 hours of inactivity; a bearer token expires 8 hours after sign-in (D-027)**
 
 ### Communication Logs
 - SMS/WhatsApp message content, recipients, timestamps, delivery status
@@ -110,7 +116,7 @@ All traffic is HTTPS. Let's Encrypt wildcard certificate managed by Coolify. HTT
 ## Access Controls
 
 ### Authentication
-- Staff use phone number + OTP (no passwords — no password resets, no "forgot password" flows to attack)
+- Staff use email + password and a code emailed to them (D-054); passwords are hashed, at least 12 characters, and a reset ends every session
 - Members use phone number + OTP
 - OTPs are 6 digits, expire in 10 minutes, single-use
 - Failed OTP attempts: 5 allowed, then 15-minute lockout
@@ -160,9 +166,9 @@ A church must be able to leave the platform and take their data with them. We su
 
 **Format:** CSV, UTF-8 encoded (handles Ghanaian names with special characters correctly)
 
-**Processing:** Export jobs are queued (not synchronous — large churches may have thousands of records). Admin receives a download link via email/SMS when ready.
+**Processing:** Export jobs are queued (not synchronous — large churches may have thousands of records). Admin receives a download link by email when ready (D-064). The link works for 1 hour, the file is deleted after 7 days (`exports:prune-files`, `config/exports.php`), and each export is recorded in the `exports` table with who asked and when.
 
-**After cancellation:** Exports remain available for 90 days after subscription cancellation. After 90 days, the church's data is purged from the active database (financial records are archived separately per the 7-year retention rule).
+**After cancellation (built, D-042):** `php artisan church:cancel {slug}` starts a 90-day grace period (`config/retention.php`). The church keeps working during it, so its admin can export their data, and `church:reinstate {slug}` takes the cancellation back. A daily job (`churches:purge-cancelled`, 03:30 UTC) then queues a purge of every church whose grace period is over. The purge erases every member as a single erasure does, removes staff, family, visitor and attendance-visitor details, deletes the church's messages and stored files, masks its change history, removes its contact and payout details, soft-deletes it and frees its web address. Contributions, pledges and disbursements stay for the 7-year rule, with their free-text notes removed and no name left to link them to a person. The purge cannot be undone.
 
 ---
 
@@ -192,7 +198,8 @@ Ghana does not yet have comprehensive data protection legislation equivalent to 
 **Specific GDPR-aligned practices we follow:**
 - Data minimisation — we only collect what we need
 - Purpose limitation — member data is used for church management, not sold or used for marketing
-- Right to erasure — a member can request deletion of their record (except where financial retention rules apply)
+- Right to erasure — a member can request deletion of their record (except where financial retention rules apply). Built (D-039): the church admin erases a member's personal data; the record stays, archived and soft-deleted, so money and attendance records keep working.
+- Right to access — built (D-039): the church admin can export everything held about a member as JSON.
 - Consent — WhatsApp broadcast opt-in is explicit, not assumed
 
 ---

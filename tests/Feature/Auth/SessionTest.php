@@ -49,12 +49,28 @@ it('revokes every token when a staff member is deactivated', function (): void {
     expect($this->user->tokens()->count())->toBe(0);
 });
 
-it('revokes every token when a staff member changes phone number', function (): void {
+it('revokes every token when a staff member changes email (D-054)', function (): void {
+    $this->user->createToken('one');
+
+    $this->user->update(['email' => 'changed@example.com']);
+
+    expect($this->user->tokens()->count())->toBe(0);
+});
+
+it('revokes every token when a staff member changes password', function (): void {
+    $this->user->createToken('one');
+
+    $this->user->forceFill(['password' => 'a brand new passphrase'])->save();
+
+    expect($this->user->tokens()->count())->toBe(0);
+});
+
+it('keeps tokens when only the phone number changes, because it is only a contact number now', function (): void {
     $this->user->createToken('one');
 
     $this->user->update(['phone' => '+233200111222']);
 
-    expect($this->user->tokens()->count())->toBe(0);
+    expect($this->user->tokens()->count())->toBe(1);
 });
 
 it('keeps tokens when unrelated fields change', function (): void {

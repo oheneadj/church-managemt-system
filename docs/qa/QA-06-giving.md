@@ -8,12 +8,13 @@
 
 ## Setup
 
-- Test church with Paystack subaccount configured (test environment)
-- Finance secretary user with `giving.record` and `giving.edit` permissions
-- Pastor user with `giving.summary` only
+- Test church with a verified payout account and PayPerlez test keys for the MoMo cases (D-018); a Paystack subaccount only for card cases
+- Finance secretary user with `giving.view`, `giving.record`, `giving.edit` and `giving.summary` permissions
+- Pastor user with `giving.summary` only (no `giving.view`, D-046)
 - 10 members with phone numbers
-- Fund types: Tithe, Offering, Building Fund
-- Africa's Talking sandbox for SMS receipts
+- Fund types: Tithe, Sunday Offering, Building Fund (the church's seven defaults come from `config/giving.php`)
+- SMS receipts go through PayPerlez's test environment (D-038) or the `log` driver locally
+- Every `POST` that records a gift or pledge sends an `Idempotency-Key` header (docs/08); all paths are under `/api/v1`
 
 ---
 
@@ -22,7 +23,7 @@
 ### Cash Recording
 
 ### TC-06-01 — Record a cash contribution
-**Action:** `POST /api/contributions` with:
+**Action:** `POST /api/v1/contributions` with:
 ```json
 {
   "member_id": "{member_ulid}",
@@ -34,16 +35,17 @@
 }
 ```
 **Expected:**
-- Contribution created with ULID
-- `payment_method: cash`, `status: completed`
-- `paystack_reference` is null (no payment gateway involved)
+- Contribution created with ULID, `201`
+- `payment_method: cash`, `status: completed` from the start; no processing fee and no payment reference (docs/08, D-053)
+- `fund_name` holds the fund's name at that moment (D-048)
 - SMS receipt queued for delivery to member's phone
 
 ### TC-06-02 — Cash receipt SMS format
-**Expected SMS content:**
+**Expected SMS content** (docs/04 wording, D-051):
 ```
-Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026. 
-Thank you for your faithfulness! – Your Church Family
+Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026.
+Your total giving in October: GHS 150.00.
+Thank you for your faithfulness.
 ```
 - Amount formatted correctly (2 decimal places, GHS prefix)
 - Church name in message (not platform name)
@@ -52,9 +54,9 @@ Thank you for your faithfulness! – Your Church Family
 ### TC-06-03 — Record contribution without member (anonymous)
 **Action:** Submit contribution with no `member_id`
 **Expected:**
-- Contribution created with `member_id: null`, `is_anonymous: true`
+- Contribution created with `member_id: null`; the response shows `is_anonymous: true` (worked out from the missing member, not stored)
 - No SMS receipt attempted
-- Appears in Sunday offering report as "Anonymous"
+- Counted in the offering report's `anonymous_count`; the report holds totals only and never names a giver
 
 ### TC-06-04 — Validation: Amount must be positive
 **Action:** Submit `"amount": -50` or `"amount": 0`
@@ -68,42 +70,45 @@ Thank you for your faithfulness! – Your Church Family
 
 ### MoMo Payments
 
-### TC-06-06 — Initiate MoMo payment — MTN
-**Action:** `POST /api/contributions/momo` with:
+> **Not built yet.** The digital path waits for the legal opinion and PayPerlez's webhook event names (D-046). These cases describe the design in D-018, D-020 and D-053 and are run once it exists. Run them against PayPerlez's test environment; webhook and signature cases for cards are in QA-07.
+
+### TC-06-06 — Initiate MoMo payment
+**Action:** `POST /api/v1/contributions/initiate` with an `Idempotency-Key` and:
 ```json
 {
   "member_id": "{member_ulid}",
   "fund_type_id": "{offering_id}",
   "amount": 50.00,
-  "phone": "+233244000001",
-  "network": "mtn"
+  "payment_method": "momo",
+  "phone": "+233244000001"
 }
 ```
 **Expected:**
-- Paystack charge initiated
-- `contribution` record created with `status: pending`, `paystack_reference: "ref_xyz"`
-- Member receives a USSD MoMo prompt on their phone (test mode: simulated)
-- Pre-charge SMS sent: "Grace Assembly: Tap OK on the upcoming MoMo prompt to give GHS 50.00 as Offering. Thank you!"
+- `200` with `reference` (our ULID), `authorization_url: null`, `status: pending`
+- A `contributions` row exists with that id, `status: pending`, `payment_method: momo`, `payperlez_reference` set
+- PayPerlez receives the same id as its client reference and idempotency key
+- The member gets the MoMo prompt (test mode: simulated)
+- The pending gift is in no total, report, pledge sum or default gift list; `GET /contributions?status=pending` shows it
+- Sending the same request with the same `Idempotency-Key` returns the same `reference` and creates no second row
 
-### TC-06-07 — MoMo payment completed (webhook: charge.success)
-**Action:** Simulate `charge.success` webhook from Paystack for the reference in TC-06-06
+### TC-06-07 — MoMo payment succeeds
+**Action:** Deliver PayPerlez's success event for the reference in TC-06-06 (or let the polling job find it)
 **Expected:**
-- Contribution `status` updated to `completed`
-- `paid_at` timestamp set
-- `ContributionReceived` event fired
-- SMS receipt sent to member
-- Webhook stored in `webhook_logs`
+- `status` becomes `completed`; `processing_fee` and `total_paid` are filled in
+- `ContributionReceived` fires and the receipt SMS is sent
+- A `disbursements` row is created for the gift (D-018)
+- The payload is stored in `webhook_logs`; the gift now counts in totals
 
-### TC-06-08 — MoMo payment failed (webhook: charge.failed)
-**Action:** Simulate `charge.failed` webhook
+### TC-06-08 — MoMo payment fails or is abandoned
+**Action:** Deliver PayPerlez's failure event, or let a payment stay unpaid past the grace period so the polling job marks it
 **Expected:**
-- Contribution `status` updated to `failed`
-- No SMS receipt sent
-- Admin dashboard shows the failed contribution (for manual cash fallback)
+- `status` becomes `failed`; no receipt, no disbursement, nothing in any total
+- The failed gift is visible with `status=failed` so the finance secretary can record it as cash instead
+- A success event that arrives after the failure moves the row to `completed` (the money arrived, D-053)
 
-### TC-06-09 — Paystack webhook signature verification
-**Action:** Send a webhook with an invalid HMAC-SHA512 signature
-**Expected:** `401` — webhook is rejected without processing
+### TC-06-09 — Webhook signature verification
+**Action:** Send a PayPerlez webhook with an invalid `X-Payperlez-Signature`, and a card webhook with an invalid HMAC-SHA512 signature
+**Expected:** rejected (`401`) — webhook is rejected without processing
 
 ### TC-06-10 — Webhook idempotency (duplicate delivery)
 **Action:** Send the same `charge.success` webhook twice with the same reference
@@ -117,10 +122,10 @@ Thank you for your faithfulness! – Your Church Family
 ### Void / Correction
 
 ### TC-06-11 — Void a contribution
-**Action:** `PATCH /api/contributions/{id}/void` with `{ "reason": "Member requested reversal" }`
+**Action:** `PATCH /api/v1/contributions/{id}/void` with `{ "reason": "Member requested reversal" }`
 **Expected:**
 - `is_voided: true`, `voided_at` timestamp set, `void_reason` saved
-- `voided_by_user_id` set to the acting user's ID
+- `voided_by` set to the acting user's ID
 - Contribution still exists (no deletion)
 - Sunday offering report total EXCLUDES voided contributions
 - Original contribution SMS receipt is NOT retracted (no "unsend")
@@ -130,7 +135,7 @@ Thank you for your faithfulness! – Your Church Family
 **Expected:** `422 { "message": "This contribution has already been voided." }`
 
 ### TC-06-13 — Cannot delete a contribution
-**Action:** `DELETE /api/contributions/{id}`
+**Action:** `DELETE /api/v1/contributions/{id}`
 **Expected:** `405 Method Not Allowed` — no DELETE endpoint exists for contributions
 
 ---
@@ -138,23 +143,24 @@ Thank you for your faithfulness! – Your Church Family
 ### Pledge Tracking
 
 ### TC-06-14 — Create a pledge
-**Action:** `POST /api/pledges` with:
+**Action:** `POST /api/v1/pledges` with:
 ```json
 {
   "member_id": "{member_ulid}",
   "fund_type_id": "{building_fund_id}",
-  "pledged_amount": 1000.00,
-  "due_date": "2026-12-31"
+  "description": "Building Fund 2026 Pledge",
+  "amount_pledged": 1000.00,
+  "target_date": "2026-12-31"
 }
 ```
 **Expected:**
-- Pledge created with `amount_paid: 0`, `amount_outstanding: 1000.00`
+- Pledge created (`201`, `status: active`) with `amount_paid: "0.00"`, `amount_outstanding: "1000.00"`
 
 ### TC-06-15 — Pledge amount_paid updates when contribution is recorded
-**Action:** Record a GHS 300 contribution against the same fund type for this member
+**Action:** Record a GHS 300 contribution for this member and fund type, with `pledge_id` set to the pledge (D-047: the gift names its pledge; nothing is matched by guesswork)
 **Expected:**
-- `pledges.amount_paid` = 300.00 (updated by observer)
-- `amount_outstanding` = 700.00 (computed: pledged_amount - amount_paid)
+- `pledges.amount_paid` = 300.00 (recalculated from the gifts in the same transaction)
+- `amount_outstanding` = 700.00 (computed: amount_pledged - amount_paid)
 
 ### TC-06-16 — Pledge amount_paid reverts on contribution void
 **Action:** Void the GHS 300 contribution from TC-06-15
@@ -179,13 +185,43 @@ Total:          GHS 975.00
 Voided contribution does NOT appear in totals.
 
 ### TC-06-18 — Role restriction: Pastor sees summary only
-**Action:** As a user with `giving.summary` but NOT `giving.record` → `GET /api/contributions`
-**Expected:** `403` on the full list endpoint
+**Action:** As a user with `giving.summary` but NOT `giving.view` (the pastor, D-046) → `GET /api/v1/contributions` and `GET /api/v1/pledges`
+**Expected:** `403` on both list endpoints
 
-**Action:** `GET /api/reports/giving-trends`
+**Action:** `GET /api/v1/services/{id}/offering-report`
+**Expected:** `200` — totals only (no giver's name or id)
+
+**Action:** `GET /api/v1/reports/giving` (Sprint 5)
 **Expected:** `200` — summary data only (totals and trends, no individual records)
 
 ---
+
+### TC-06-19 — Offering report page (browser)
+**Action:** As a finance secretary, record a cash gift at today's service (Giving, Record a gift), open the service, then **Offering report**
+**Expected:**
+- The page shows the church, the service, the date, a table for the gifts at the service with a line for the fund, and the total for the day, all as the API wrote them
+- A payment method nobody used has no column; "1 gift, 1 anonymous" is correct
+- Voided gifts are not counted ("Voided gifts are not counted." is shown)
+- In the print window (or with print media emulated) the app menu, the header and the buttons are gone and only the report is left
+- At 375 px wide the table fits without the page scrolling sideways
+- A pastor (giving.summary only) sees the same page; a department head gets "This report was not found." and no link
+
+### TC-06-15b — Paying a pledge from the gift form (browser)
+**Action:** For a member with an Active GHS 800.00 pledge to the Building Fund, open **Giving, Record a gift**, choose that member and the Building Fund, and look at the form
+**Expected:**
+- A "Pays a pledge (optional)" choice appears and lists the pledge with its outstanding amount; it does not appear for an anonymous gift, before a fund is chosen, or when the member has no pledge to that fund; a pledge already paid in full is not listed
+- Recording a GHS 200 gift that names the pledge makes the pledge show "Paid GHS 200.00 of GHS 800.00", GHS 600.00 outstanding and 25% on the Pledges page
+- Changing the member or the fund after choosing a pledge does not send the old pledge
+
+### TC-06-20 — Pledges page (browser)
+**Action:** As a finance secretary, open **Pledges** from the menu, choose **New pledge**, search for a member, pick a fund, enter a description, an amount and a target date, and make the pledge
+**Expected:**
+- The pledge is in the list with its member, fund, due date, the status **Active**, a progress bar at 0% and "Paid GHS 0.00 of ..." as the server wrote it
+- With nothing filled in, the form shows every missing thing at once (member, fund, description, amount, date) and sends nothing
+- A target date in the past is refused before the server is asked; **Change** shows the member and fund as words and lets the amount, description and date be edited
+- Choosing a status or fund filter changes the address and returns to page 1; a status that does not exist in the address is ignored
+- A pastor does not see the Pledges menu item; a user with `giving.view` only sees no New pledge or Change buttons
+- At 375 px wide the page does not scroll sideways
 
 ## Pass / Fail Criteria
 

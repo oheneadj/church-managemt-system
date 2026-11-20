@@ -34,7 +34,9 @@ We handle three categories of sensitive data that make us a target:
 
 ### OTP Controls
 
-No passwords exist in this system. All authentication is OTP-based.
+**Staff** sign in with email and password, then a 6-digit code emailed to them (D-054, built). **Members, the QR check-in and the WhatsApp check-in** have no passwords and use phone and SMS codes. The code controls below apply to every code, SMS or email.
+
+Staff passwords: at least 12 characters and at most 72 (bcrypt ignores everything after byte 72), not the person's email, hashed with Laravel's hasher, never logged or returned; 5 wrong passwords for an email lock it for 15 minutes; a reset ends every session and token of that user. Whether a password was exposed in a public breach is checked **after** it is set, on a worker, never while the person waits (D-054, `docs/14` section 8).
 
 ```
 OTP length:       6 digits (1,000,000 possible values)
@@ -87,7 +89,7 @@ The church's web app is signed in with a Laravel session, not a token:
 - The session id is in an httpOnly, host-only cookie (`SESSION_DOMAIN=null`), so it is never readable by JavaScript and never sent to another church's subdomain.
 - 8 hours of inactivity (`SESSION_LIFETIME=480`), stored in Redis; a fresh session id is issued on sign-in.
 - Writes need a CSRF token (`/sanctum/csrf-cookie` then `X-XSRF-TOKEN`).
-- `EnsureStaffIsCurrent` signs a session out on the next request if the user was deactivated or their phone number changed.
+- `EnsureStaffIsCurrent` signs a session out on the next request if the user was deactivated or their email or password changed (the phone is only a contact number, D-054).
 - The tenant middleware runs before Sanctum so a user is never loaded without the church scope (tested).
 
 ### API Tokens (other clients)
@@ -96,17 +98,11 @@ Sanctum personal access tokens, for clients that are not the web app:
 
 - Generated with 64 bytes of random data (Laravel default: `Str::random(40)`)
 - Stored as SHA-256 hash in `personal_access_tokens` table (never plaintext)
-- Expiry: configurable per user type — staff tokens expire in 8 hours (renewed on active use), member portal tokens expire in 24 hours
+- Expiry: a staff token expires 8 hours after sign-in (`otp.staff_token_hours`) and is not renewed by use; the person signs in again. A member portal does not exist yet, so there is no member token
 - Revoked immediately on logout
 - All tokens for a user revoked immediately on phone number change
 
-```php
-// Token expiry check (in AuthenticateWithToken middleware)
-if ($token->created_at->diffInHours(now()) > 8) {
-    $token->delete();
-    return response()->json(['message' => 'Token expired'], 401);
-}
-```
+The expiry is set when the token is made (`createToken(..., now()->addHours(...))`) and Sanctum rejects an expired token with `401`; there is no custom middleware. `sanctum:prune-expired` removes old rows.
 
 ---
 
@@ -328,37 +324,24 @@ Collect only what the church needs. Fields that are optional in the data model m
 - **HSTS enabled.** `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 - **Wildcard SSL via Let's Encrypt.** Auto-renewed by Coolify.
 - **API responses include `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`.**
+- **A `Content-Security-Policy` on every response (D-056).** The React page may run only scripts that carry its per-request nonce (no inline script, no eval) and may not be framed; JSON responses allow nothing to load. Written in `config/security.php`, tested in `SecurityHeadersTest`, and checked in a real browser against a production build.
 
-```php
-// app/Http/Middleware/SecurityHeaders.php
-public function handle(Request $request, Closure $next): Response
-{
-    $response = $next($request);
-    $response->headers->set('X-Content-Type-Options', 'nosniff');
-    $response->headers->set('X-Frame-Options', 'DENY');
-    $response->headers->set('X-XSS-Protection', '0'); // Let browser defaults handle it
-    $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    return $response;
-}
-```
+The `SecurityHeaders` middleware (`app/Http/Middleware/SecurityHeaders.php`) sets these headers on every response, including errors and the React page. The header list and the HSTS value live in `config/security.php`; HSTS is sent only over HTTPS, because browsers ignore it over plain HTTP.
 
 ---
 
 ## Rate Limiting
 
-Configured in `RouteServiceProvider`:
+Named limiters are defined in `AppServiceProvider` (numbers in `config/limits.php`); the OTP ones are in D-025 and `08-api.md`:
 
 ```php
 RateLimiter::for('api', function (Request $request) {
     return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
 });
 
-RateLimiter::for('otp', function (Request $request) {
-    // Stricter limit on OTP requests to prevent SMS flooding
-    return [
-        Limit::perMinute(3)->by($request->input('phone')),
-        Limit::perHour(10)->by($request->input('phone')),
-    ];
+RateLimiter::for('onboarding-otp', function (Request $request) {
+    // Sending a code costs money, so this is separate from the verify limit (D-025).
+    // Real values live in config/limits.php: 1 a minute and 3 an hour per phone, 10 an hour per IP.
 });
 
 RateLimiter::for('exports', function (Request $request) {

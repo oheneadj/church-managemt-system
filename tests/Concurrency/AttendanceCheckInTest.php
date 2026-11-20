@@ -1,0 +1,251 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\SmsCredits\ReserveSmsCreditsAction;
+use App\DTOs\SmsCredits\SmsCreditChange;
+use App\Enums\CheckInMethod;
+use App\Models\AttendanceRecord;
+use App\Models\Church;
+use App\Models\Contribution;
+use App\Models\Member;
+use App\Models\MessageLog;
+use App\Models\Pledge;
+use App\Models\Service;
+use App\Models\ServiceSchedule;
+use App\Models\User;
+use App\Repositories\AttendanceRecordRepositoryInterface;
+use App\Repositories\ChurchRepositoryInterface;
+use App\Repositories\ContributionRepositoryInterface;
+use App\Repositories\HandledWhatsappMessageRepositoryInterface;
+use App\Repositories\PledgeRepositoryInterface;
+use App\Services\PledgeProgressService;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+
+/*
+|--------------------------------------------------------------------------
+| Two check-ins at once (agreement sections 10 and 11, layer 4)
+|--------------------------------------------------------------------------
+| The same member is checked in twice at the same moment, from two connections. Request A has written its row inside
+| a transaction that is still open. Request B must not slip a second row in: it has to wait for A, and when A commits
+| B's insert is ignored. The unique index in the database is what guarantees one row.
+*/
+
+beforeEach(function (): void {
+    config(['database.connections.pgsql_b' => config('database.connections.pgsql')]);
+});
+
+afterEach(function (): void {
+    while (DB::transactionLevel() > 0) {
+        DB::rollBack();
+    }
+    DB::purge('pgsql_b');
+});
+
+/** The row a check-in writes, for the second connection's plain insert. */
+function checkInRow(Service $service, Member $member): array
+{
+    return [
+        'id' => (string) Str::ulid(), 'church_id' => $service->church_id, 'service_id' => $service->id, 'member_id' => $member->id,
+        'method' => CheckInMethod::Whatsapp->value, 'checked_in_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+    ];
+}
+
+it('leaves one row when two requests check the same member in together', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $service = Service::factory()->open()->create(['church_id' => $church->id]);
+    $member = Member::factory()->create(['church_id' => $church->id]);
+
+    // Request A: writes its row and has not committed yet.
+    DB::beginTransaction();
+    $added = app(AttendanceRecordRepositoryInterface::class)->insertMembers($service, [$member->id], CheckInMethod::Manual, now());
+    expect($added)->toBe(1);
+
+    // Request B, on its own connection, has to wait for A: with a short wait it times out instead of inserting a second row.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($service, $member): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('attendance_records')->insertOrIgnore([checkInRow($service, $member)]);
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B's insert goes through the same statement and is ignored.
+    DB::commit();
+    $ignored = DB::connection('pgsql_b')->table('attendance_records')->insertOrIgnore([checkInRow($service, $member)]);
+
+    expect($ignored)->toBe(0)
+        ->and(AttendanceRecord::query()->withoutGlobalScopes()->where('service_id', $service->id)->where('member_id', $member->id)->count())->toBe(1);
+});
+
+it('handles a WhatsApp message once when Meta delivers it twice at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $messages = app(HandledWhatsappMessageRepositoryInterface::class);
+
+    // Delivery A claims the message and has not committed yet.
+    DB::beginTransaction();
+    expect($messages->claim('wamid.RACE'))->toBeTrue();
+
+    // Delivery B, on its own connection, has to wait for A instead of claiming the same id.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function (): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('handled_whatsapp_messages')->insertOrIgnore(['id' => (string) Str::ulid(), 'message_id' => 'wamid.RACE', 'created_at' => now()]);
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B's claim is ignored, so only A's delivery is handled.
+    DB::commit();
+
+    expect($messages->claim('wamid.RACE'))->toBeFalse()
+        ->and(DB::table('handled_whatsapp_messages')->where('message_id', 'wamid.RACE')->count())->toBe(1);
+});
+
+it('voids a gift once when two voids arrive at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $gift = Contribution::factory()->create(['church_id' => $church->id]);
+    $staff = User::factory()->create(['church_id' => $church->id]);
+    $contributions = app(ContributionRepositoryInterface::class);
+
+    // Void A: has locked the gift and marked it voided, and has not committed yet.
+    DB::beginTransaction();
+    $locked = $contributions->lockForUpdate($gift);
+    expect($locked->is_voided)->toBeFalse();
+    $contributions->markVoided($locked, $staff, 'First void', now());
+
+    // Void B, on its own connection, has to wait for A: with a short wait it times out instead of reading "not voided".
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($gift): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('contributions')->where('id', $gift->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B reads the committed row and sees it is already voided, so its check refuses.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->table('contributions')->where('id', $gift->id)->lockForUpdate()->first();
+
+    expect((bool) $seenByB->is_voided)->toBeTrue()->and($seenByB->void_reason)->toBe('First void');
+});
+
+it('adds up two gifts to one pledge when they are recorded at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $pledge = Pledge::factory()->create(['church_id' => $church->id, 'amount_pledged' => '1000.00']);
+    $progress = app(PledgeProgressService::class);
+    $gift = fn (string $amount) => Contribution::factory()->create(['church_id' => $church->id, 'fund_type_id' => $pledge->fund_type_id, 'member_id' => $pledge->member_id, 'pledge_id' => $pledge->id, 'amount' => $amount]);
+
+    // Gift A: has locked the pledge, saved its gift and recalculated, and has not committed yet.
+    DB::beginTransaction();
+    app(PledgeRepositoryInterface::class)->lockForUpdate($pledge->id);
+    $gift('300.00');
+    expect($progress->refresh($pledge->id)->amount_paid)->toBe('300.00');
+
+    // Gift B, on its own connection, has to wait for A at the pledge row, so it can never recalculate without seeing A.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($pledge): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. B now gets the lock and adds up from committed rows, which include A's gift.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->transaction(function () use ($pledge): array {
+        DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->lockForUpdate()->first();
+
+        return [
+            'paid' => DB::connection('pgsql_b')->table('contributions')->where('pledge_id', $pledge->id)->where('is_voided', false)->sum('amount'),
+            'saved' => DB::connection('pgsql_b')->table('pledges')->where('id', $pledge->id)->value('amount_paid'),
+        ];
+    });
+
+    expect((string) $seenByB['paid'])->toBe('300.00')->and((string) $seenByB['saved'])->toBe('300.00');
+});
+
+it('makes a scheduled service once when two runs reach the same date at the same moment', function (): void {
+    $church = Church::factory()->create();
+    app()->instance('current.church', $church);
+    $schedule = ServiceSchedule::factory()->create(['church_id' => $church->id]);
+    $row = fn (string $code): array => [
+        'id' => (string) Str::ulid(), 'church_id' => $church->id, 'service_schedule_id' => $schedule->id, 'name' => 'Sunday', 'type' => 'sunday',
+        'checkin_code' => $code, 'service_date' => '2026-11-08', 'is_open' => false, 'created_by' => $schedule->created_by, 'created_at' => now(), 'updated_at' => now(),
+    ];
+
+    // Run A: has made the service for 8 November and has not committed yet.
+    DB::beginTransaction();
+    DB::table('services')->insert($row('RUNAAA'));
+
+    // Run B, on its own connection, has to wait for A at the unique index instead of making a second one.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($row): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('services')->insert($row('RUNBBB'));
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. Now B's insert is refused as a duplicate, so only A's service exists.
+    DB::commit();
+    $refused = false;
+    try {
+        DB::connection('pgsql_b')->table('services')->insert($row('RUNBBB'));
+    } catch (QueryException $exception) {
+        $refused = str_contains($exception->getMessage(), 'services_schedule_date_unique');
+    }
+
+    expect($refused)->toBeTrue()->and(DB::table('services')->where('service_schedule_id', $schedule->id)->count())->toBe(1);
+});
+
+it('spends the last SMS credit once when two texts reach for it at the same moment', function (): void {
+    $church = Church::factory()->create(['sms_credits' => 1]);
+    app()->instance('current.church', $church);
+    $logs = MessageLog::factory()->count(2)->create(['church_id' => $church->id]);
+    $reserve = app(ReserveSmsCreditsAction::class);
+
+    // Text A: has the church row locked, has taken the last credit, and has not committed yet.
+    DB::beginTransaction();
+    app(ChurchRepositoryInterface::class)->lock($church->id);
+    $church->forceFill(['sms_credits' => 0])->save();
+
+    // Text B, on its own connection, has to wait for A at the church row, so it can never read the old balance of 1.
+    $blocked = false;
+    try {
+        DB::connection('pgsql_b')->transaction(function () use ($church): void {
+            DB::connection('pgsql_b')->statement("SET LOCAL lock_timeout = '300ms'");
+            DB::connection('pgsql_b')->table('churches')->where('id', $church->id)->lockForUpdate()->first();
+        });
+    } catch (QueryException $exception) {
+        $blocked = str_contains($exception->getMessage(), '55P03') || str_contains($exception->getMessage(), 'lock timeout');
+    }
+    expect($blocked)->toBeTrue();
+
+    // A commits. B now reads the committed balance of 0 and is refused.
+    DB::commit();
+    $seenByB = DB::connection('pgsql_b')->transaction(fn () => DB::connection('pgsql_b')->table('churches')->where('id', $church->id)->lockForUpdate()->value('sms_credits'));
+
+    expect($seenByB)->toBe(0)
+        ->and($reserve->execute(new SmsCreditChange($church->id, 1, $logs[1]->id)))->toBeFalse();
+});

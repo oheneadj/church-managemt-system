@@ -42,8 +42,11 @@ churches
         └── small_group_members (pivot, v2)
   └── message_logs
   └── webhook_logs
+  └── exports
+  └── broadcasts
   └── sms_credit_ledger
   └── visitor_records
+  └── audit_logs
 ```
 
 ---
@@ -57,7 +60,7 @@ The root tenant record. Every other table references this.
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
-| `name` | VARCHAR(255) | No | Full church name |
+| `name` | VARCHAR(255) | No | Full church name. The church admin can change it (`PUT /church`); the web address (`slug`) does not change with it. |
 | `slug` | VARCHAR(100) | No | Subdomain slug. Unique. Lowercase, hyphenated. |
 | `custom_domain` | VARCHAR(255) | Yes | e.g. `portal.graceassembly.org.gh`. Unique where set. |
 | `denomination` | VARCHAR(255) | Yes | e.g. "Assemblies of God", "Presbyterian" |
@@ -72,14 +75,18 @@ The root tenant record. Every other table references this.
 | `paystack_subaccount_code` | VARCHAR(100) | Yes | Set during onboarding. Used for card payments only (Paystack split). |
 | `payout_method` | VARCHAR(30) | Yes | `PayoutMethod`: momo, bank. Where automatic disbursements are sent. Null = digital giving not yet enabled. |
 | `payout_network` | VARCHAR(30) | Yes | `MomoNetwork`: mtn, telecel, at (PayPerlez's code for AirtelTigo). Set when `payout_method` = momo. |
+| `payout_bank_code` | VARCHAR(20) | Yes | The bank's code. Set when `payout_method` = bank. |
 | `payout_account_number` | VARCHAR(50) | Yes | `[encrypted]` MoMo number or bank account number |
 | `payout_account_name` | VARCHAR(255) | Yes | Account holder name as verified by the provider |
 | `payout_verified_at` | TIMESTAMP | Yes | Set when the provider confirms the account. Digital giving stays disabled until set. |
+| `payout_check_error` | VARCHAR(255) | Yes | Why the provider could not name the account. Cleared when the account changes or is named. |
 | `sms_credits` | INT(11) | No | Current credit balance. Default: 0 |
 | `whatsapp_opted_in` | BOOLEAN | No | Default: false. Set when Meta account connected. |
 | `ussd_code` | VARCHAR(10) | Yes | Unique 4-digit church code for USSD giving (e.g. `1042` → dial `*713*1042#`). Auto-generated on onboarding. |
 | `timezone` | VARCHAR(50) | No | Default: `Africa/Accra` |
-| `settings` | JSON | Yes | Configurable per-church settings (absence threshold, receipt preferences, etc.) |
+| `member_number_prefix` | VARCHAR(10) | Yes | Letters in front of every member number (the `GRC` in `GRC-0042`). Typed by the admin at onboarding. Null until set; adding a member fails until it is (D-030). |
+| `member_number_seq` | INT | No | Last member number handed out. Default: 0. Only incremented under a row lock, never reset, so a number is never reused (D-030). |
+| `settings` | JSON | Yes | The church's own settings, only the ones it chose: `youth_age_limit`, `absence_threshold`, `receipt_on_cash`, `absent_alert` (docs/08, Church Settings). A setting it never chose is not in the JSON and the default applies. |
 | `is_active` | BOOLEAN | No | Default: true. False = suspended. |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
@@ -97,14 +104,16 @@ Staff accounts. One user belongs to one church. Members are a separate table.
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
 | `name` | VARCHAR(255) | No | |
-| `phone` | VARCHAR(20) | No | Used for OTP login |
-| `email` | VARCHAR(255) | Yes | For system notifications |
+| `phone` | VARCHAR(20) | No | Contact number and SMS notices. No longer the sign-in key (D-054) |
+| `email` | VARCHAR(255) | No | The sign-in identity and where the sign-in and reset codes are sent (D-054) |
+| `password` | VARCHAR(255) | Yes | Hashed with Laravel's hasher; never returned or logged. Null until the user sets it through the reset flow (D-054) |
+| `email_verified_at` | TIMESTAMP | Yes | Set by the first successful emailed code |
 | `is_active` | BOOLEAN | No | Default: true |
 | `last_login_at` | TIMESTAMP | Yes | |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Indexes:** `(church_id, phone)` unique — no duplicate phone per church
+**Indexes:** `(church_id, phone)` unique — no duplicate phone per church; `(church_id, lower(email))` unique where `deleted_at` is null — the sign-in identity
 
 **Spatie tables (auto-created):** `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
 
@@ -123,7 +132,7 @@ The core entity. Represents every person the church knows about who has reached 
 | `middle_name` | VARCHAR(100) | Yes | |
 | `last_name` | VARCHAR(100) | No | |
 | `preferred_name` | VARCHAR(100) | Yes | "Known as" |
-| `gender` | VARCHAR(30) | No | `Gender`: male, female, other. |
+| `gender` | VARCHAR(30) | No | `Gender`: male, female. |
 | `date_of_birth` | DATE | Yes | |
 | `phone` | VARCHAR(20) | No | Primary — used for OTP |
 | `phone_secondary` | VARCHAR(20) | Yes | |
@@ -248,18 +257,39 @@ Every church service or event that attendance can be recorded for.
 | `church_id` | CHAR(26) | No | FK → churches |
 | `name` | VARCHAR(255) | No | e.g. "Sunday Morning Service", "Midweek Prayer" |
 | `type` | VARCHAR(30) | No | `ServiceType`: sunday, midweek, special, youth, children. |
-| `checkin_code` | VARCHAR(10) | Yes | Short code for WhatsApp CHECKIN. Unique per church. |
+| `checkin_code` | VARCHAR(10) | Yes | Short code for WhatsApp CHECKIN, made by the system (6 letters and numbers without look-alikes, `config/attendance.php`). Unique across ALL churches while the service is not deleted, because a member texts it to one shared WhatsApp number and the code alone identifies the service (D-044). |
 | `service_date` | DATE | No | |
 | `starts_at` | TIME | Yes | |
 | `ends_at` | TIME | Yes | |
 | `is_open` | BOOLEAN | No | Default: false. True = check-in active. |
+| `checkin_opened_at` | TIMESTAMP | Yes | When check-in was last opened (not moved by opening an open service again). A WhatsApp CHECKIN without a code goes to the service opened first (QA-05 TC-05-13). |
 | `headcount_override` | INT | Yes | Manual count (e.g. paper count) if digital check-in not used |
 | `notes` | TEXT | Yes | |
 | `created_by` | CHAR(26) | No | FK → users |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, service_date)`, `(church_id, checkin_code)` — unique
+**Index:** `(church_id, service_date)`; `checkin_code` — unique where `deleted_at` is null
+
+---
+
+### `service_schedules`
+
+A weekly pattern that makes services ahead of time (D-050).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `name` | VARCHAR(255) | No | The name the services get |
+| `type` | VARCHAR(30) | No | `ServiceType` |
+| `weekday` | VARCHAR(10) | No | `Weekday`: sunday ... saturday |
+| `starts_at`, `ends_at` | TIME | Yes | The times the services get |
+| `is_active` | BOOLEAN | No | Default true. Off = no new services |
+| `created_by` | CHAR(26) | No | FK → users; the services it makes are created by this user |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, is_active)`. `services.service_schedule_id` (nullable FK) points back to the schedule that made a service; a unique index on `(service_schedule_id, service_date)` where the schedule id is not null counts cancelled (soft-deleted) services too.
 
 ---
 
@@ -272,13 +302,14 @@ One row per member per service.
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
 | `service_id` | CHAR(26) | No | FK → services |
-| `member_id` | CHAR(26) | Yes | Null = anonymous (visitor walk-in) |
+| `member_id` | CHAR(26) | Yes | Null = a visitor or anonymous walk-in |
+| `visitor_record_id` | CHAR(26) | Yes | FK → visitor_records. Set for a captured visitor, so a visitor is counted once per service. |
 | `visitor_name` | VARCHAR(255) | Yes | For non-member attendees |
 | `method` | VARCHAR(30) | No | `CheckInMethod`: manual, whatsapp, qr, biometric. How they checked in |
 | `checked_in_at` | TIMESTAMP | No | |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, service_id, member_id)` — unique (prevents double check-in)
+**Index:** `(church_id, service_id, member_id)` — unique (prevents double check-in); `(church_id, service_id, visitor_record_id)` — unique (a visitor is counted once per service). A null never collides in either.
 
 ---
 
@@ -297,7 +328,7 @@ Configurable per church. Controls the categories contributions can be assigned t
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, is_active)`
+**Index:** `(church_id, is_active)`; unique `(church_id, lower(name))` where `deleted_at` is null, so a church cannot have two funds with the same name whatever the capitals.
 
 ---
 
@@ -312,11 +343,14 @@ Every giving transaction — MoMo, card, or cash.
 | `member_id` | CHAR(26) | Yes | Null = anonymous or visitor |
 | `service_id` | CHAR(26) | Yes | Service at which it was given |
 | `fund_type_id` | CHAR(26) | No | FK → fund_types |
+| `fund_name` | VARCHAR(100) | No | The fund's name when the gift was recorded (a snapshot, agreement section 10). A fund can be renamed; the gift, its receipt and the reports keep the name it was given to (D-048). |
 | `pledge_id` | CHAR(26) | Yes | FK → pledges. Set if fulfilling a pledge. |
 | `amount` | DECIMAL(12,2) | No | GHS. The **gift amount** the church is credited with (what the giver chose). Excludes the processing fee. |
 | `processing_fee` | DECIMAL(12,2) | Yes | GHS collection fee the giver paid on top (D-018). Null for cash and until the provider reports it. |
 | `total_paid` | DECIMAL(12,2) | Yes | GHS the giver actually paid: `amount + processing_fee`. Null for cash. |
 | `payment_method` | VARCHAR(30) | No | `PaymentMethod`: momo, card, cash, ussd. |
+| `status` | VARCHAR(30) | No | `ContributionStatus`: pending, completed, failed. Default: `completed`. Cash is `completed` when recorded. A digital gift is created `pending` when the payment starts (its `id` is the reference sent to the provider) and moves to `completed` or `failed` when the provider confirms, by webhook or by the polling fallback. Pending and failed gifts are left out of every total, list (unless asked for), pledge sum, receipt and payout (D-053). **Settling (D-069 d3c):** a check every minute (`giving:check-pending-gifts`) settles a pending gift with the provider's answer, once, only when the answer names this gift and the total asked for. |
+| `failure_reason` | VARCHAR(30) | Yes | `ContributionFailureReason`: expired, declined, refused. Why a mobile money gift is `failed`: nobody approved the prompt in time (`giving.unpaid_expiry_minutes`, 30), the provider said the payment did not go through, or the provider refused to start it. Null otherwise. An **expired** gift is still asked about for `giving.late_payment_grace_hours` (24) and counted if the provider then says it was paid. |
 | `paystack_reference` | VARCHAR(100) | Yes | Unique Paystack transaction ref. Null for non-Paystack payments. |
 | `paystack_status` | VARCHAR(50) | Yes | `success`, `failed`. Null for non-Paystack payments. |
 | `payperlez_reference` | VARCHAR(100) | Yes | Unique PayPerlez transaction ref. Null unless processed via PayPerlez. |
@@ -325,9 +359,12 @@ Every giving transaction — MoMo, card, or cash.
 | `voided_at` | TIMESTAMP | Yes | |
 | `voided_by` | CHAR(26) | Yes | FK → users |
 | `void_reason` | TEXT | Yes | |
-| `recorded_by` | CHAR(26) | No | FK → users |
+| `recorded_by` | CHAR(26) | Yes | FK → users. Empty for a gift given on the public giving page (D-073): there is no staff member. |
 | `notes` | TEXT | Yes | |
+| `giver_name` | TEXT | Yes | `[encrypted]` The name a giver typed on the public giving page (D-073). Optional. |
+| `payer_phone_hash` | CHAR(64) | Yes | A keyed (HMAC) hash of the phone paid from, never the number (D-073). Lets a repeated attempt be recognised and a member matched. Indexed with `church_id` and `status`. |
 | `contributed_at` | TIMESTAMP | No | When the giving occurred |
+| `receipt_queued_at` | TIMESTAMP | Yes | When the receipt text was queued. Set in one statement that finds it empty, so a gift gets one receipt even if the work runs twice (D-051). Null if no receipt was queued. |
 | `created_at` | TIMESTAMP | No | When the record was created |
 | `updated_at` | TIMESTAMP | No | |
 
@@ -335,6 +372,7 @@ Every giving transaction — MoMo, card, or cash.
 - `paystack_reference` — unique (where not null) — idempotency
 - `payperlez_reference` — unique (where not null) — idempotency for PayPerlez webhooks
 - `ussd_reference` — unique (where not null) — idempotency for USSD webhooks
+- `(status, created_at)` — for the polling job that checks payments still pending
 - `(church_id, member_id)` — for member giving history
 - `(church_id, service_id)` — for service offering reports
 - `(church_id, contributed_at)` — for date-range financial reports
@@ -361,7 +399,7 @@ Commitments from members to give a specific amount by a target date.
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
 
-**Computed:** `amount_outstanding = amount_pledged - amount_paid` — calculated in application, not stored.
+**Computed:** `amount_outstanding = amount_pledged - amount_paid` (never below 0) and `progress_percent` (0 to 100) — calculated in application, not stored. `amount_paid` and `status` are worked out from the pledge's gifts that are not voided, every time one is recorded or voided, and by the daily `pledges:refresh` job (D-047). A gift points to its pledge with `contributions.pledge_id`, which is indexed.
 
 **Index:** `(church_id, member_id, status)`, `(church_id, target_date)`
 
@@ -375,7 +413,8 @@ One row per digital (MoMo/USSD) contribution that is automatically paid out to t
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
 | `church_id` | CHAR(26) | No | FK → churches |
-| `contribution_id` | CHAR(26) | No | FK → contributions. **Unique** — one payout per contribution (idempotency). |
+| `contribution_id` | CHAR(26) | Yes | FK → contributions. **Unique** — one payout per contribution (idempotency). Empty only for a bank batch (D-072), which pays several gifts at once. |
+| `batch_id` | CHAR(26) | Yes | FK → disbursements. The bank batch this gift's payout was sent in, if any (D-072). Indexed. |
 | `gross_amount` | DECIMAL(12,2) | No | GHS collected |
 | `platform_fee` | DECIMAL(12,2) | No | GHS kept by the platform |
 | `requested_amount` | DECIMAL(12,2) | No | GHS we ask the provider to send: `gross_amount − platform_fee`. The provider deducts its own fee from this (the church bears it). |
@@ -389,6 +428,8 @@ One row per digital (MoMo/USSD) contribution that is automatically paid out to t
 | `paid_at` | TIMESTAMP | Yes | |
 | `created_at` | TIMESTAMP | No | |
 | `updated_at` | TIMESTAMP | No | |
+
+**Created when the gift completes (D-069 step e1):** `gross_amount` is the gift (the giver paid the collection fee on top, so the church is owed the whole gift), `platform_fee` the fee charged at that moment (kept, so a later change to the rate never alters it), `requested_amount` = `gross_amount` − `platform_fee`, status `pending`. One row for each gift: `firstOrCreate` on the unique `contribution_id`. **Sending (step e2):** `SendDisbursementJob` (queue `payments`, queued when the gift completes, and every minute by `giving:send-due-payouts` for any that are due) sends a mobile money church its `requested_amount` through PayPerlez with the payout's `id` and attempt number (`{id}-{attempts}`) as the provider reference and key, only if the provider keeps its minimum balance of GHS 1.00 afterwards. The row is claimed under a lock and moved to `processing`, counting the attempt, before the provider is called, so it is sent once. It becomes `paid` (with `provider_fee`, `net_amount`, `paid_at`) only when the provider names this payout and the amount asked; `failed` (with the reason) when refused; a failed payout is tried again after 5 minutes up to 5 attempts in all (`giving.payout_*`), then a critical alert is logged. A `processing` payout with no provider reference after 2 minutes is sent again under the **same** attempt and key, so a crash can never pay twice; a payout that failed is a **new** attempt with a new reference, because the provider would only repeat the old failure for the old one. **Bank batches (step e3, D-072):** a gift's own payout goes only to a mobile money wallet. For a bank church the waiting payouts (pending, in no batch) are put into one **batch** by `giving:batch-bank-payouts` (every minute) once their `requested_amount` adds up to `giving.bank_payout_minimum` (GHS 100): the batch is a row of its own with `contribution_id` empty (the unique index allows it) holding the sums, each gift's own row gets `batch_id` pointing at it and moves to `processing`, and the batch is sent like any payout (the bank account, the batch's `id` as the reference). When the batch is paid every gift in it is paid with it (`paid_at`); the batch row carries the provider's fee and the net amount. A gift of a batch is never sent on its own, and a gift is in at most one batch (the rows are locked while the batch is made). **Confirming (step e4):** a payout the provider has taken but not finished (`processing`, with a provider reference, not a gift inside a batch) is asked about every minute (`giving:check-started-payouts`, `CheckDisbursementJob`, `giving.payout_check_after_seconds`) with `GET /disbursements/{reference}` and the answer goes through the same rules as when it was sent (`DisbursementOutcome`): paid only when the provider names this attempt and the amount asked, failed when it says so (then a new attempt, and the alert on the last), left alone when not final. A payout unfinished after 60 minutes is reported in the log. **Daily reconciliation (step e5):** `giving:reconcile-payouts` (02:30 UTC) checks every church for what should never happen and logs ids only (never an amount or a name): a completed mobile money gift older than 10 minutes with no payout record (`missing_payout`); a payout pending, processing or failed for over 24 hours, a batch counted and not the gifts inside it (`stuck_payout`); a bank church whose waiting payouts have been over `giving.bank_payout_minimum` for over a day without a batch (`unbatched_bank_payouts`); a payout changed in the last 14 days whose figures do not add up: requested ≠ gross − platform fee, a paid payout's net ≠ requested − provider fee, the gross not the gift's amount, or a batch not the total of its gifts (`wrong_figures`); a paid batch with a gift not paid (`batch_inconsistent`). A critical log line (counts and the first 20 ids of each kind) when anything is found, an info line when not; the command ends in failure when anything is found.
 
 **Indexes:** `contribution_id` (unique), `provider_reference` (unique where not null), `(church_id, status)` — for the stuck-funds view, `(status, created_at)` — for the retry and reconciliation jobs.
 
@@ -418,16 +459,39 @@ First-time visitors who haven't yet become members.
 
 ---
 
+### `consents`
+
+Every time a member agreed to receive a kind of message (agreement section 36). Written by the application whenever a member's `sms_opted_in` or `whatsapp_opted_in` choice changes (D-041).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `member_id` | CHAR(26) | No | FK → members |
+| `purpose` | VARCHAR(30) | No | `ConsentPurpose`: sms, whatsapp. |
+| `consented_at` | TIMESTAMP | No | When the agreement was recorded. |
+| `withdrawn_at` | TIMESTAMP | Yes | Set when the member takes it back. A later agreement is a new row. |
+| `policy_version` | VARCHAR(20) | No | The privacy policy version in force (`config/privacy.php`). |
+| `recorded_by` | CHAR(26) | Yes | FK → users: the staff member who recorded it. |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+**Indexes:** `(church_id, member_id, purpose)`; unique `(member_id, purpose)` where `withdrawn_at` is null, so a member has at most one open agreement per purpose.
+
+---
+
 ### `message_logs`
+
+> Email (D-062): a line is written `queued` when the email is queued, then `sent` with the mail provider's message id in `provider_reference`, or `failed`. `recipient_email` holds the address and `content` holds a summary with any code left out, never the email itself. `recipient_type` is `user` for staff and `applicant` for someone starting a church.
 
 Every outbound SMS, WhatsApp, or email sent by the system.
 
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `id` | CHAR(26) | No | ULID PK |
-| `church_id` | CHAR(26) | No | FK → churches |
+| `church_id` | CHAR(26) | Yes | FK → churches. Null only for a platform message sent before a church exists (the sign-up code); church screens never see those rows (D-037). |
+| `broadcast_id` | CHAR(26) | Yes | The broadcast this text is part of (D-065). A unique index on (`broadcast_id`, `recipient_id`) allows one line for each member of a broadcast. |
 | `channel` | VARCHAR(30) | No | `MessageChannel`: sms, whatsapp, email. |
-| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor. |
+| `recipient_type` | VARCHAR(30) | No | `RecipientType`: member, user, visitor, applicant (a person starting a church), unknown (a WhatsApp number on no church's list; its phone number is not stored). |
 | `recipient_id` | CHAR(26) | Yes | FK to the relevant table |
 | `recipient_phone` | VARCHAR(20) | Yes | |
 | `recipient_email` | VARCHAR(255) | Yes | |
@@ -445,6 +509,49 @@ Every outbound SMS, WhatsApp, or email sent by the system.
 
 ---
 
+### `exports`
+
+One row for each CSV export a staff member asked for (D-064). It is the trail that personal data was exported, by whom and when.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `requested_by` | CHAR(26) | No | FK → users: who asked |
+| `type` | VARCHAR(30) | No | `ExportType`: members, contributions. |
+| `status` | VARCHAR(30) | No | `ExportStatus`: queued, processing, completed, failed. Default: `queued` |
+| `filters` | JSON | Yes | The filters sent, as sent. Forgotten when a cancelled church is purged (a search can hold a name). |
+| `row_count` | INT | Yes | Rows in the file, set when it is ready |
+| `file_path` | VARCHAR(500) | Yes | The private storage path, never a link. Null once the file is deleted. |
+| `completed_at` | TIMESTAMP | Yes | |
+| `file_deleted_at` | TIMESTAMP | Yes | When the nightly clean-up deleted the file; the row stays |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, requested_by, created_at)`, `(status, completed_at)`
+
+---
+
+### `broadcasts`
+
+One message a staff member sent to many members (D-065). The record of who sent what, to whom (by filter) and how it went; each text it produces is a `message_logs` line with its id.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `sent_by` | CHAR(26) | No | FK → users: who sent it |
+| `channel` | VARCHAR(30) | No | `MessageChannel`: sms for now |
+| `message` | TEXT | No | The text sent. Replaced by the erased marker when a cancelled church is purged (a message can name people). |
+| `filters` | JSON | Yes | The recipient filter as sent. Forgotten at a purge. |
+| `parts_per_message` | SMALLINT | No | SMS parts (credits) for each person |
+| `recipient_count` | INT | Yes | How many members were texted, set once all texts are queued |
+| `status` | VARCHAR(30) | No | `BroadcastStatus`: queued, sending, dispatched, failed. Default: `queued` |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, created_at)`
+
+---
+
 ### `sms_credit_ledger`
 
 Audit trail for every SMS credit movement (allocation, consumption, top-up).
@@ -456,11 +563,36 @@ Audit trail for every SMS credit movement (allocation, consumption, top-up).
 | `type` | VARCHAR(30) | No | `CreditLedgerType`: allocation, topup, consumption, refund. |
 | `credits` | INT | No | Positive = credits added, negative = credits consumed |
 | `balance_after` | INT | No | Running balance after this transaction |
-| `reference_id` | CHAR(26) | Yes | Related model ID (message_log, contribution, etc.) |
+| `reference_id` | CHAR(26) | Yes | Related model ID. For a consumption or refund line it is the `message_logs` row the credits were taken for. |
 | `note` | VARCHAR(255) | Yes | |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(church_id, created_at)`
+**Index:** `(church_id, created_at)`. Unique `(reference_id)` where `type = 'consumption'`, and unique `(reference_id)` where `type = 'refund'`: a message is charged once and refunded at most once (D-051). Unique `(reference_id)` where `type = 'topup'`: a purchase adds its credits once (D-069); for a top-up line `reference_id` is the `sms_credit_purchases` row.
+
+---
+
+### `sms_credit_purchases`
+
+A church's purchase of an SMS credit package (D-069, story 5.4). Created `pending` when the payment starts; its `id` is the reference sent to the payment provider. The credits and the price are copied from the package when it is bought. Soft deleted, never removed.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK, also the provider's client reference |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `sms_package_id` | CHAR(26) | No | FK → sms_packages |
+| `user_id` | CHAR(26) | No | FK → users: who started it |
+| `credits` | INT | No | Copied from the package |
+| `amount` | DECIMAL(12,2) | No | Copied price in GHS. The provider's own fee is on top |
+| `network` | VARCHAR(30) | No | `MomoNetwork` |
+| `phone` | TEXT | No | `[encrypted]` The number the payment prompt goes to |
+| `status` | VARCHAR(30) | No | `SmsCreditPurchaseStatus`: pending, completed, failed. Default pending |
+| `provider_reference` | VARCHAR(100) | Yes | The provider's own id |
+| `provider_fee` | DECIMAL(12,2) | Yes | What the provider charged on top, once known |
+| `failure_reason` | VARCHAR(255) | Yes | |
+| `completed_at` | TIMESTAMP | Yes | |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | | |
+
+**Index:** `(church_id, created_at)`, `(status, created_at)`. **Settling:** a pending purchase is asked about every minute (`credits:check-pending-purchases`, queue `payments`). It completes only when the provider says paid for this purchase's reference and exactly its amount; the credits are added and one `topup` ledger line written, once.
 
 ---
 
@@ -473,15 +605,86 @@ Raw incoming webhook payloads. Never lose a webhook event.
 | `id` | CHAR(26) | No | ULID PK |
 | `source` | VARCHAR(30) | No | `WebhookSource`: paystack, payperlez, meta_whatsapp. (Add `moolre` only if USSD is built, D-019.) |
 | `event` | VARCHAR(100) | No | e.g. `charge.success` |
+| `event_id` | VARCHAR(100) | Yes | The provider's own id for the event. Null when the provider sends none. Unique with `source`: a resent event is stored once (agreement section 11, layers 4 and 5). |
 | `payload` | TEXT | No | `[encrypted]` Raw JSON payload |
 | `processed` | BOOLEAN | No | Default: false |
 | `processed_at` | TIMESTAMP | Yes | |
 | `error` | TEXT | Yes | Set if processing failed |
 | `created_at` | TIMESTAMP | No | |
 
-**Index:** `(source, event, processed)`, `(created_at)` — for pruning
+**Index:** `(source, event, processed)`, `(created_at)` — for pruning. Unique `(source, event_id)`.
 
 **Retention:** 90 days (pruned by scheduled command)
+
+---
+
+### `handled_whatsapp_messages`
+
+Meta's id for each WhatsApp CHECKIN message already handled, so a repeat delivery is recognised (agreement section 11, layer 5; D-045). Not tenant-scoped: it is written before the church is known. Holds no personal data.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `message_id` | VARCHAR(100) | No | Meta's message id (`wamid...`). Unique: the guarantee when two deliveries race. |
+| `created_at` | TIMESTAMP | No | |
+
+**Index:** `(created_at)` for pruning. **Retention:** 90 days (`model:prune`), far longer than the 24 hours Meta retries for.
+
+---
+
+### `audit_logs`
+
+Append-only change history (`patterns/Pattern — Audit Trails.md`, D-030). Written once, never updated or deleted, so it has no `updated_at` and no `deleted_at`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `church_id` | CHAR(26) | No | FK → churches |
+| `auditable_type` | VARCHAR | No | Model class, for example `App\Models\Member` |
+| `auditable_id` | CHAR(26) | No | ULID of the changed record |
+| `event` | VARCHAR(30) | No | `AuditEvent`: created, updated, status_changed, viewed. |
+| `old_values` | JSONB | Yes | Previous values of the changed fields. Null for a create. Encrypted fields are never copied here. |
+| `new_values` | JSONB | Yes | New values of the changed fields |
+| `changed_fields` | JSONB | Yes | Names of the fields that changed |
+| `actor_id` | CHAR(26) | Yes | FK → users. Null for a system change. |
+| `actor_name` | VARCHAR(255) | Yes | Snapshot of the name at the time, not a join |
+| `request_id` | VARCHAR(64) | Yes | Same id as `X-Request-ID` and the application log |
+| `reason` | TEXT | Yes | For example the note on a status change |
+| `created_at` | TIMESTAMP | No | |
+
+**Indexes:** `(auditable_type, auditable_id)`, `(church_id, created_at)`, `(actor_id, created_at)`
+
+---
+
+### `platform_admins`
+
+The platform owner's own accounts, apart from every church (D-069). There is no `church_id` and no tenant scope; a church's staff are in `users`. An account is switched off with `is_active`, never deleted.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `name` | VARCHAR(255) | No | |
+| `email` | VARCHAR(255) | No | Unique, always lowercase |
+| `password` | VARCHAR(255) | No | Hashed. Set from the command line (`platform:create-admin`), never through the app |
+| `is_active` | BOOLEAN | No | Default true. A switched-off account cannot sign in |
+| `last_login_at` | TIMESTAMP | Yes | |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+### `sms_packages`
+
+The SMS credit bundles a church can buy (D-069). They belong to the platform, so there is no `church_id`. A package is switched off with `is_active`, never deleted, because purchases will point at it.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | CHAR(26) | No | ULID PK |
+| `name` | VARCHAR(100) | No | Unique whatever its capitals (unique index on `lower(name)`) |
+| `credits` | INT UNSIGNED | No | How many credits one purchase adds. One credit is one part of a text (D-051) |
+| `price` | DECIMAL(12,2) | No | GHS, exact (D-017) |
+| `is_active` | BOOLEAN | No | Default true. A church sees only active packages |
+| `sort_order` | SMALLINT UNSIGNED | No | Default 0. Lowest first |
+| `created_at`, `updated_at` | TIMESTAMP | No | |
+
+**Index:** `(is_active, sort_order)`.
 
 ---
 
@@ -531,7 +734,8 @@ Migrations must be run in this order to satisfy foreign key constraints:
 15. `message_logs`
 16. `sms_credit_ledger`
 17. `webhook_logs`
-18. Spatie permission tables (via `php artisan vendor:publish`)
+18. `audit_logs` (after `users`; added in Sprint 2)
+19. Spatie permission tables (via `php artisan vendor:publish`)
 
 ---
 

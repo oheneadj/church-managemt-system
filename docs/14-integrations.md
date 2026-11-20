@@ -13,7 +13,7 @@
 | Africa's Talking | SMS (OTP, receipts, broadcasts) — fallback | API key | Official PHP SDK |
 | Moolre | USSD giving (`*713#`), SMS | API key + webhook secret | Raw HTTP via Laravel HTTP client |
 | Meta Business API | WhatsApp (CHECKIN, broadcasts, receipts) | Bearer token | Raw HTTP via Laravel HTTP client |
-| Resend | Transactional email | API key (SMTP) | Laravel Mail (SMTP) |
+| Resend | Transactional email | API key (SMTP) | Laravel Mail (SMTP), through `QueueEmailAction` and `SendEmailJob` (D-062) |
 | Cloudflare R2 | File storage (photos, exports) | Access key + secret | `league/flysystem-aws-s3-v3` |
 
 **Provider toggles** — at least one SMS provider and at least one payment provider must be active at all times. See Decision 11 in `decisions/product-and-architecture-decisions.md` for the full provider interface pattern and `.env` toggle keys.
@@ -40,7 +40,7 @@ Authorization: Bearer {PAYSTACK_SECRET_KEY}
   "business_name": "Grace Assembly International",
   "settlement_bank": "058",          // bank code (from Paystack bank list)
   "account_number": "0123456789",
-  "percentage_charge": 80            // church receives 80%, platform keeps 20% (example)
+  "percentage_charge": 99            // church receives 99%, platform keeps 1% (an example shape only)
 }
 ```
 
@@ -48,7 +48,7 @@ Response: `{ "data": { "subaccount_code": "ACCT_abc123xyz" } }`
 
 Store `subaccount_code` on the `churches` record. Every subsequent payment for this church uses this code.
 
-**Important:** The `percentage_charge` is what the *church* receives. So if the platform keeps 2%, set `percentage_charge: 98`.
+**Important:** The `percentage_charge` is what the *church* receives. So if the platform keeps 1%, set `percentage_charge: 99`. The real card split, and whether the GHS 10.00 cap and GHS 0.10 floor that apply to MoMo (D-018) can also apply to cards, are decided when cards are built; verify the subaccount parameters against Paystack's current docs then.
 
 ### MoMo Charge Flow
 
@@ -227,6 +227,8 @@ class SendSmsJob implements ShouldQueue
 
 ### Credit Management
 
+> **What is built (D-051).** The code sketches below are the original design; the real handling differs so that credits can never be overspent or charged twice. A church-paid text has a `message_logs` row made when it is queued. Just before sending, a job middleware locks the church's row and takes the credits (one per part, counted by `SmsSegmenter`), writing a `consumption` line in `sms_credit_ledger` that points at the log row, or fails the job without sending when the balance is too low. A unique index allows one `consumption` and one `refund` line per message, so a retry never charges twice; when the job gives up for good the credits are returned (a `refund` line). Texts the platform pays for (sign-in and check-in codes) take no credits.
+
 ```php
 private function deductCredits(string $churchId, string $cost): void
 {
@@ -307,7 +309,9 @@ Redis::del("otp:{$phone}"); // Single-use
 - Verified Meta Business Account
 - WhatsApp Business Phone Number
 - Approved message templates for all outbound messages
-- Webhook registered at `/api/webhooks/whatsapp`
+- Webhook registered at `https://{platform domain}/api/v1/webhooks/whatsapp`, with `META_VERIFY_TOKEN` as its verify token. The app secret (`META_APP_SECRET`) signs every post; the credentials are `META_ACCESS_TOKEN` and `META_PHONE_NUMBER_ID` (`config/services.php`).
+
+> **What is built (D-045).** The sketches below are the original design. The real code differs in these ways, all from the agreement: the webhook checks `X-Hub-Signature-256` before reading anything; the controller keeps the payload and queues a job (`ReceiveWhatsAppWebhookAction`, `ProcessWhatsAppWebhookJob`); the command is parsed by `CheckinCommandParser`; the member is found across churches (one shared number) and the church is set as context only while the work runs (`TenantContext`); a service code is unique across churches; the message id is stored in the same transaction as the attendance; sending goes through the `WhatsAppGateway` interface (`log` driver now, `meta` once the account is approved) in `SendWhatsAppReplyJob`, behind a circuit breaker with `whatsapp:pause` and `whatsapp:resume`. The Meta driver was written from this document and has never talked to Meta: try it against a sandbox number first.
 
 ### Webhook Setup
 
@@ -462,7 +466,9 @@ Meta requires that members opt in to receive WhatsApp messages. The opt-in is re
 | Error | Response |
 |---|---|
 | Member phone not found | Reply: "We couldn't find your number..." |
-| No open service | Reply: "No service is currently open..." |
+| No open service | Reply: "No service is currently open for check-in." |
+| Our answer is refused by Meta for good (for example the 24-hour window closed) | Logged as `failed` in `message_logs`; not retried. The check-in itself is already saved. |
+| Meta is down or slow | The answer is retried for 30 minutes; after 5 failures in 2 minutes the circuit opens (`config/resilience.php`) |
 | Template rejected by Meta | Fall back to SMS via Africa's Talking |
 | Meta API rate limit (1,000 messages/second) | Queue with rate limiting (100/second to be safe) |
 | Webhook delivery failure | Meta retries for 24 hours. Our processing is idempotent. |
@@ -471,64 +477,87 @@ Meta requires that members opt in to receive WhatsApp messages. The opt-in is re
 
 ## 4. Resend (Email)
 
+> **Built (D-062).** The sender is in place; the emails that use it (staff sign-in, password reset, staff invitation) arrive with D-054 and story 5.15.
+
 ### What It Does
-- Staff invitation emails
-- Export download links
-- System alerts (to platform admin — not churches)
+- Sign-in, password reset and staff invitation codes (D-054)
+- Export download links (D-064): the member list export emails the staff member a signed link that works for 1 hour; the log keeps a summary, never the link
+- System alerts to the platform admin, not churches
+
+### How it is built
+
+Laravel's own mailer is the abstraction (an interface, a driver chosen by `.env`, and a manager), so there is no extra contract: switching from Resend to another SMTP host is an `.env` change and a worker restart (D-014). The rest follows the SMS pattern:
+
+1. A caller builds an `OutboundEmail` (the church, the address, a `Mailable`, what it is, the text to log) and gives it to `QueueEmailAction`.
+2. The action writes a **`queued` line in `message_logs`** (channel `email`, the address, and the text with any secret left out) and queues `SendEmailJob` on the queue the caller chose, **after the line is committed**. Codes go on `critical` (D-025); anything else on `notifications`. Nothing is sent inside a request.
+3. The job sends with `Mail::to(...)->send(...)`, behind a **circuit breaker** (`email`) that can also be paused by hand (`email:pause`, `email:resume`). It records `sent` with the mail provider's message id. It retries 3 times (30, 120 and 300 seconds), times out at 30 seconds, and gives up after 15 minutes (`config/resilience.php`). It checks the log line first, so a repeated run sends nothing twice.
+4. On permanent failure the line becomes `failed` and the exception is reported to Sentry, because a code that never arrives locks a person out. See the [email runbook](runbooks/email-provider-down.md).
+
+The wording of each email lives in `lang/en/emails.php`. Emails are Markdown mailables, so Laravel makes the HTML and the plain-text version from one template. The mail layout's header is overridden (`resources/views/vendor/mail/html/header.blade.php`) so an email never loads an image from another website. A code email has no button and no link to click.
 
 ### Setup
 
-Resend is configured as a standard SMTP driver in Laravel:
+Resend by SMTP. In this Laravel version the TLS choice is `MAIL_SCHEME` (the old `MAIL_ENCRYPTION` no longer exists): `smtps` means TLS from the first byte, which is what port 465 needs.
 
 ```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.resend.com
 MAIL_PORT=465
+MAIL_SCHEME=smtps
 MAIL_USERNAME=resend
 MAIL_PASSWORD=re_xxxxxxxxxxxx
-MAIL_ENCRYPTION=ssl
-MAIL_FROM_ADDRESS=noreply@yourapp.com
+MAIL_FROM_ADDRESS=noreply@mail.yourapp.com
 MAIL_FROM_NAME="YourApp"
 ```
 
+`php artisan env:check` fails a deployed environment that still has `MAIL_MAILER=log` or `array`, has no SMTP host, username or password, or has the placeholder sending address. Laravel's docs recommend an API driver (`resend/resend-php`) over SMTP when possible; SMTP was chosen in D-014 to avoid a dependency, and the API driver is a possible later change (D-062).
+
+### Before the first real email (deliverability)
+
+These are outside the code and block a real send (`docs/19-open-items.md`, D11):
+
+- A dedicated sending subdomain for transactional email (for example `mail.yourapp.com`), not the root domain.
+- **SPF**, **DKIM** (Resend gives the records) and **DMARC** (start with `p=none` and watch the reports) in DNS for that subdomain.
+- The domain verified in the Resend account, and a sending address on it in `MAIL_FROM_ADDRESS`.
+
+### Not built yet
+
+- **Bounce and complaint handling**: a Resend webhook, and a suppression list checked before every send (`patterns/Pattern — Email & Notifications.md`, sections 4 and 7). Until then a bad address is only seen as a failed line in `message_logs` (`docs/19-open-items.md`, D12).
+- Marketing email. There is none, and it would need its own sending domain.
+
 ### Switching to Own SMTP
 
-When email volume justifies a self-hosted SMTP (e.g. Postal):
+When email volume justifies a self-hosted SMTP (e.g. Postal), change `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME` and `MAIL_PASSWORD`. No code changes. No migration. Restart queue workers for the new config to take effect.
 
+### Testing
+
+Email is faked in tests (`Mail::fake()`), never sent. Locally the log mailer writes the email, plain text and HTML, to `storage/logs/laravel.log`; to see one as a person would, point `MAIL_HOST` at a mail catcher such as Mailpit.
+
+---
+
+## 8. Have I Been Pwned (password breach check)
+
+> **Built (D-054, part 3).** A third-party call, so it only ever runs on a worker.
+
+### What It Does
+After a staff member sets a password (reset, and later sign-up), a queued job checks whether it appears in a public list of passwords exposed in data breaches. If it does, the person is emailed to choose another.
+
+### How it is built
+- `PasswordBreachChecker` is the contract; `PwnedPasswordsChecker` is the driver, bound in `ProviderServiceProvider`.
+- It uses the **k-anonymity range API**: only the **first five characters of the password's SHA-1 hash** are sent (`GET https://api.pwnedpasswords.com/range/{prefix}`), and the answer is every hash ending that shares them, so the list never learns the password. The request asks for padding, which adds fake entries with a count of zero; they are ignored.
+- `PasswordBreachScheduler` queues `CheckPasswordBreachJob` after the password change is committed. The job is **encrypted on the queue** (`ShouldBeEncrypted`) because it carries the unsalted SHA-1 the list needs; the plaintext password is never on a queue. It also carries the stored password hash, so it does nothing if the person has chosen another password since.
+- It runs on `notifications`, with 3 tries and backoff of 60, 300 and 900 seconds, a 30 second timeout, a circuit breaker named `pwned-passwords`, and a `failed()` handler that reports to Sentry. An error is thrown, not hidden, so the queue retries.
+- **It can never lock anyone out.** The password is accepted when it is set. If the list is unreachable after the retries, the failure is reported and the password stays.
+
+### Config
 ```env
-MAIL_MAILER=smtp
-MAIL_HOST=mail.yourapp.com
-MAIL_PORT=587
-MAIL_USERNAME=noreply@yourapp.com
-MAIL_PASSWORD=xxxx
-MAIL_ENCRYPTION=tls
+PWNED_PASSWORDS_URL=https://api.pwnedpasswords.com/range
+PWNED_PASSWORDS_TIMEOUT=5
 ```
+Both have defaults and normally need no change.
 
-No code changes. No migration. Restart queue workers for the new config to take effect.
-
-### Email Classes
-
-```php
-// app/Mail/StaffInvitationMail.php
-class StaffInvitationMail extends Mailable
-{
-    public function envelope(): Envelope
-    {
-        return new Envelope(subject: "You've been invited to {$this->church->name}");
-    }
-
-    public function content(): Content
-    {
-        return new Content(view: 'emails.staff-invitation', with: [
-            'church'  => $this->church,
-            'inviter' => $this->inviter,
-            'loginUrl' => config('app.url') . "/{$this->church->slug}",
-        ]);
-    }
-}
-```
-
-All emails are dispatched via `Mail::to(...)->queue(...)` — never `send()`.
+### Testing
+`Http::fake()`; no test calls the real service.
 
 ---
 
@@ -566,28 +595,25 @@ churches/{church_id}/exports/{export_id}/members-{date}.csv
 
 ### Uploading a Photo
 
+`MemberPhotoService::store()` uses Laravel's image API (`Image::fromUpload()`, powered by `intervention/image` ^4 and the GD extension, with `exif` for rotation). It never stores the upload as received: it applies the camera rotation, crops to a 512 pixel square, encodes as JPEG at quality 82, and writes to the default disk, which is `r2` outside local development.
+
 ```php
-public function uploadPhoto(Member $member, UploadedFile $file): string
-{
-    $path = "churches/{$member->church_id}/members/{$member->id}/photo.jpg";
-
-    // No visibility argument: R2 has no object ACLs. The bucket is private and access is by signed URL only.
-    Storage::disk('r2')->put($path, file_get_contents($file->getRealPath()));
-
-    $member->update(['photo_url' => $path]);
-    return $path;
-}
+Image::fromUpload($file)->orient()->cover(512, 512)->toJpg()->quality(82)
+    ->storeAs("churches/{$member->church_id}/members/{$member->getKey()}", 'photo.jpg');
 ```
+
+Re-encoding drops EXIF (GPS positions) and anything hidden in the file, as `patterns/Pattern — File Uploads & Media.md` requires. R2 has no object ACLs, so there is no visibility argument: the bucket is private and access is by signed URL only. The key is fixed per member, so a new photo replaces the old one.
+
+The upload is processed inside the request, not on the queue: the file is capped at 5 MB and 4096 pixels, the endpoint is limited to 20 a minute, and the response has to carry the new signed link. Writing to object storage is treated like writing to the database, not as a third-party API call (D-032).
 
 ### Signed URLs (Time-Limited Access)
 
 Photos are private. Return a signed URL on every API response — valid for 1 hour:
 
 ```php
-// In MemberResource
-'photo_url' => $this->photo_url
-    ? Storage::disk('r2')->temporaryUrl($this->photo_url, now()->addHour())
-    : null,
+// In MemberResource and MemberSummaryResource, through MemberPhotoService::url()
+'photo_url' => app(MemberPhotoService::class)->url($this->photo_url),
+// which is Storage::temporaryUrl($path, now()->addMinutes(60)), or null when there is no photo
 ```
 
 ### Cost Estimate
@@ -611,7 +637,7 @@ All integrations have a corresponding health check. See [`17-monitoring-and-aler
 | Paystack | Last webhook received within 60 min during business hours | No `charge.success` in 60 min on a Sunday |
 | Africa's Talking | Message log `failed` rate | > 10% failure rate in a 15-min window |
 | Meta WhatsApp | CHECKIN response time | No CHECKIN response within 30s of receipt |
-| Resend | Bounce rate | > 5% bounce rate on any send batch |
+| Resend | Bounce rate (needs the bounce webhook, not built) and `failed` email lines in `message_logs` | > 5% bounce rate on any send batch; any email `failed` after its retries (reported to Sentry) |
 | Cloudflare R2 | Upload success rate | Any R2 upload failure in production |
 
 ---
@@ -889,27 +915,30 @@ PAYMENT_PROVIDER_PAYPERLEZ=true
 
 ### SMS Send
 
-```php
-// app/Services/Sms/PayPerlez SmsProvider.php
-class PayPerlezSmsProvider implements SmsProvider
-{
-    public function send(string $phone, string $message): void
-    {
-        Http::withHeader('X-API-Key', config('services.payperlez.api_key'))
-            ->post(config('services.payperlez.base_url') . '/messaging/sms', [
-                'to'      => $phone,
-                'message' => $message,
-            ])
-            ->throw(); // throws on 4xx/5xx — job's retry handles it
-    }
-}
+Verified against `biz.payperlez.org/docs/sms` and its endpoint pages (28 Oct 2026). Implemented in `App\Services\Sms\PayperlezSmsProvider`.
+
+```
+POST https://api.payperlez.org/api/v1/sms/messages
+X-API-Key: {PAYPERLEZ_API_KEY}            (scope sms:send)
+Idempotency-Key: sms-{ulid}               (required, 8-100 chars: letters, digits . _ : -)
+{ "sender_id": "{approved sender UUID}", "recipient": "0244123456", "message": "..." }
 ```
 
-> **Note:** Confirm the exact endpoint path and request body against PayPerlez docs before Sprint 1. The shape above follows their documented pattern; the specific field names may differ.
+- **Reply `202`:** `data.reference`, `data.status` (`queued`, `processing`, `submitted`, `delivered`, `undeliverable`, `failed`, `unknown`), `segments_per_recipient`, `credits`, `encoding` (`GSM-7` or `UTF-16`), `is_test`, `idempotent_replay`, and `meta.request_id`. A `202` means *queued*, not delivered.
+- **Errors:** `{ success: false, error: { code, message, fields }, meta: { request_id } }`. `400` bad or missing Idempotency-Key, `401` bad key, `403` missing scope or live approval, `409` retry conflict or unapproved sender, `422` validation or not enough credit, `429` rate limit. The docs list no `error.code` values and no 5xx behaviour.
+- **Our handling:** `429`, `5xx` and connection failures are temporary, so the job retries (3 tries, backoff). Any other failure is a `SmsRejectedException`: the job fails at once and the message log records it. The log line holds the status, error code and request id, never the phone or text.
+- **Retry safety:** each job makes one `Idempotency-Key` when it is created and keeps it across retries, so a retry after a timeout replays the original and never sends twice. If an outcome is unknown, PayPerlez keeps the credits reserved and does not resend by itself.
+- **Recipient:** a Ghana number is sent in local form (`0244123456`), as the docs show; other numbers stay international.
+- **Billing:** 160 characters in the first segment, 153 in each later one, at most 10 segments. SMS credits are separate from the GHS balance. `GET /sms/balance` (scope `sms:balance:read`) returns `available_credits`, `reserved_credits`, `spent_credits`, `price_per_segment`.
+- **What the message log keeps:** `provider_reference` and `provider_response` (status, segments, credits, encoding, `is_test`, `idempotent_replay`, `request_id`); the recipient and text are left out.
+- **Needs from the PayPerlez workspace:** an API key with `sms:send`, and a sender id that is registered and approved for the environment (test or live). Integration keys cannot register sender ids or buy credits.
+- **Not documented, so not built:** SMS delivery webhooks (the webhooks guide lists no SMS events), rate limits and sender id format rules. Delivery status can be read with `GET /sms/messages/{reference}`; a poller for it belongs with Sprint 4 story 4.8.
 
 ### OTP via PayPerlez
 
-PayPerlez has a native OTP endpoint — use it instead of building our own via plain SMS:
+> **Decision (D-038):** staff sign-in codes and sign-up codes are made by us (hashed in the cache, 10 minutes, 5 tries, lockout) and sent as ordinary SMS through the provider interface. PayPerlez's OTP product (`POST /sms/otp/challenges`, 5-minute expiry, 60-second cooldown) would tie sign-in to one provider and has no published price, so it is not used. The text below is kept as the reference for it.
+
+PayPerlez has a native OTP endpoint:
 
 ```php
 // Send OTP
@@ -950,7 +979,7 @@ Headers: X-API-Key, Content-Type: application/json,
 // `fee` is the combined total fee and can be null until the collection settles.
 ```
 
-Read status with `GET /api/v1/collections/{reference}` (refreshes provider status) or `GET /api/v1/status?client_reference=...`. The API key needs the `payments:collect` scope. There are **no fee, commission or split parameters** on collections, which is why the platform fee is applied by us at disbursement time (D-018).
+Status reading is built against `GET /api/v1/status?client_reference=...` (the `collections/{reference}` form needs the provider's own reference, which we may not have yet); the exact shape of the status response is not yet verified against the live service, so the driver treats any unrecognised status as `unknown`. Read status with `GET /api/v1/collections/{reference}` (refreshes provider status) or `GET /api/v1/status?client_reference=...`. The API key needs the `payments:collect` scope. There are **no fee, commission or split parameters** on collections, which is why the platform fee is applied by us at disbursement time (D-018).
 
 **Workspace setting: use managed balance, not instant settlement.** Per PayPerlez's OpenAPI notes, managed balance keeps the GHS credit in our business balance, while instant settlement reserves and queues a payout to a single approved destination. We pay many different churches from our own code, so the workspace must be set to managed balance. Routing is captured when each collection is created, so set it before creating live collections.
 
@@ -1002,7 +1031,7 @@ if (Contribution::where('payperlez_reference', $reference)->exists()) {
 }
 ```
 
-> **Not yet confirmed:** the public docs do not list the event names (`payment.success` / `payment.failed` above are our placeholders) or the payload shape. Each event has an `id` (`event.id`); store it for idempotency. Webhook deliveries retry six times per cycle with a new timestamp and signature but the same event ID and body. Return `2xx` once the event is durably stored (and also for a duplicate you already accepted). Get the real event names from the workspace webhook settings or the API reference (`/docs/api/`) before Sprint 4.
+> **Built (D-069 b3):** the signature check, the raw encrypted log and the duplicate drop by event id are in place; the event-to-gift step comes with steps d and e. **Not yet confirmed:** the public docs do not list the event names (`payment.success` / `payment.failed` above are our placeholders) or the payload shape. Each event has an `id` (`event.id`); store it for idempotency. Webhook deliveries retry six times per cycle with a new timestamp and signature but the same event ID and body. Return `2xx` once the event is durably stored (and also for a duplicate you already accepted). Get the real event names from the workspace webhook settings or the API reference (`/docs/api/`) before Sprint 4.
 >
 > **Do not trust the webhook alone.** Collection status `unknown` and late webhooks are possible, so pair the webhook with a scheduled poll of `GET /api/v1/collections/{reference}` for anything still `pending`/`processing`/`unknown` after a short grace period.
 
@@ -1087,3 +1116,16 @@ All integration credentials are environment variables managed by Coolify. They a
 - Stored encrypted at rest by Coolify
 
 **Rotation procedure:** See [`16-deployment-and-ops.md`](./16-deployment-and-ops.md).
+
+
+---
+
+## PayPerlez published rates (10 November 2026)
+
+From PayPerlez's public pricing, given by the Product Owner: **collections 1.99%** (mobile money, cards and USDT), **disbursements 1.59%**, **SMS GHS 0.028 per message**. Not yet in code: the fee estimate shown to a giver (D-018) and the church's payout fee (the 1.59% is taken from what we send, so the church bears it) will read these from `config/giving.php` when the initiate-a-gift step (D-069 d3) is built. The Product Owner confirmed that 1.99% is what is charged on a collection and 1.59% on settlement (the payout to the church). No minimum fee is stated, and the SMS price is the published one, which may change with volume.
+
+**Bank settlement minimum (Product Owner, 10 Nov 2026):** a payout to a bank account must be at least **GHS 100**. A mobile money payout has no minimum stated. Decided in **D-072**: the church chooses. A mobile money church is paid per gift; a bank church is paid when its settled gifts reach GHS 100 (`giving.bank_payout_minimum`), so small gifts wait, and the church is told when it picks a bank.
+
+**A live test with PayPerlez is planned (open item B7).** Until it is done the PayPerlez code is built from their documentation and tested against a fake provider. The test should settle: the webhook events, whether a prompt can be re-sent, the real fees and minimums, the account-name check, the prompt's lifetime and the payout timing. Write the answers here and in the docs they change (08-api, 04, D-018, D-072) as they are learned.
+
+**Payouts as built (D-069 step e2):** the request to `POST /disbursements` carries `{payout id}-{attempt}` as `client_reference` and `payout-{payout id}-{attempt}` as `Idempotency-Key`: the same for a resend of one attempt (so it returns the same payout and cannot pay twice) and new for each attempt after a failure (the provider repeats its old answer for an old key). The balance is read from `GET /account-balance` (`available_balance`) and a payout is sent only when `available_balance − requested_amount ≥ 1.00` (`giving.payout_minimum_balance`). Every part of the answer is checked against our own record before a payout is marked paid. To confirm in the live test (B7): the field names of the answer, how long a payout stays `pending`, and what a refused account looks like.

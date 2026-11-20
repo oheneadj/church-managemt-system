@@ -18,7 +18,7 @@
 
 | # | Plan | Scope | Key Risks Covered |
 |---|---|---|---|
-| QA-01 | [Authentication](QA-01-authentication.md) | OTP flow, lockout, token expiry | R9 (data breach), D-012 (OTP-only auth) |
+| QA-01 | [Authentication](QA-01-authentication.md) | Staff email + password + emailed code (D-054), SMS codes for members, lockout, token expiry | R9 (data breach), D-012, D-054 |
 | QA-02 | [Multi-Tenancy Isolation](QA-02-multi-tenancy.md) | Cross-church data leakage | R9, D-007 (single DB) |
 | QA-03 | [Church Onboarding](QA-03-onboarding.md) | Signup, slug, Paystack subaccount | R5 (admin turnover) |
 | QA-04 | [Member Management](QA-04-members.md) | CRUD, lifecycle, search, photo | Sprint 2 exit criteria |
@@ -32,6 +32,7 @@
 | QA-12 | [Data Safety & Security](QA-12-security.md) | Encryption, headers, rate limits, OWASP | R9 (breach) |
 | QA-13 | [Performance](QA-13-performance.md) | Response times, 3G simulation, N+1 queries | R7 (connectivity) |
 | QA-14 | [End-to-End: Sunday Service](QA-14-e2e-sunday.md) | Full Sunday flow from open to report | Launch gate |
+| QA-15 | [Payouts and Platform Fee](QA-15-payouts.md) | Fee clamp, automatic payout, retries, minimum balance, limits (not built yet) | D-018, financial integrity |
 
 ---
 
@@ -45,7 +46,7 @@
 
 **Rule:** Destructive tests (delete, void, deactivate) run on local or staging only. Never on production.
 
-**Provider note (Oct 2026, D-018 / D-020):** several plans (QA-06, QA-07, QA-08, QA-09) were written when Paystack and Africa's Talking were the only providers. MoMo collections, payouts, SMS and OTP now run on PayPerlez, so run those cases against the PayPerlez **test** environment. Paystack cases (QA-07) apply to card payments only. Payout and fee-calculation cases (disbursement success, retry, minimum balance, platform fee clamp) still need to be added.
+**Provider note (Oct 2026, D-018 / D-020):** several plans (QA-06, QA-07, QA-08, QA-09) were written when Paystack and Africa's Talking were the only providers. MoMo collections, payouts, SMS and OTP now run on PayPerlez, so run those cases against the PayPerlez **test** environment. Paystack cases (QA-07) apply to card payments only. Payout and fee-calculation cases are in QA-15.
 
 ---
 

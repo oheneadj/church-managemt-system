@@ -103,7 +103,7 @@ DRY · KISS · YAGNI · Tests · Typed · Enums · Reusable · External IDs only
 
 **After every successfully implemented and verified unit of work:**
 
-1. Add the `CHANGELOG.md` entry first
+1. Add the `CHANGELOG.md` entry first. Every entry says **what** was done, **why** it was done, **which files** it touched, and **the commit** (the hash is added right after the commit is made)
 2. Create a git commit covering that implementation and its changelog entry (Conventional Commits format — see Section 25)
 3. Never batch unrelated work into one commit
 4. Make the commit even for small changes — it makes reverting safe
@@ -186,6 +186,17 @@ This is non-negotiable and applies to every project, every session, every featur
 - **Formatter must run** — run the project formatter on every changed file before committing
 - **One responsibility per unit** — every class, function, component, and module does exactly one thing
 - **Layers must be respected** — controllers/views never contain business logic; business logic never reaches the presentation layer directly
+- **Simple, framework-first, no hard-coding** — see Section 3b; no hard-coded values, no complex logic, framework before language, clear comments and docblocks
+
+## 3b. Simple, Framework-First, No Hard-Coding
+
+Write simple code that anyone can read at a glance. This applies to every project and sits beside the other principles; it never replaces them.
+
+- **No hard-coding.** Do not scatter fixed values (limits, sizes, durations, names, URLs, rates, status text) through the code. Put them in config, an enum, a constant or a named value, and read them from there.
+- **Keep it simple and straightforward.** Prefer short, plain, obvious logic. Do not write complex logic; if a piece of code is hard to follow, break it into small named steps or find the simpler way.
+- **Framework first, then the language.** Use the framework's own tools before reaching for raw language features, and use the language's standard features before writing anything custom.
+- **Comments that help.** Write comments and docblocks that are well structured and clearly written, so a developer who has never seen the code understands what it does and why. Explain intent, not the obvious.
+- **Apply all of this together with the other principles** (layers, tests, types, security). Simplicity is never a reason to skip a rule, and a rule is never a reason to write something harder to understand than it needs to be.
 
 ## 4. Code Conventions
 
@@ -1141,6 +1152,7 @@ Run through every item before marking any task, feature, or PR as done. If the a
 - [ ] YAGNI — nothing built beyond what the current task requires?
 - [ ] Single responsibility — every class, method, and component does exactly one thing?
 - [ ] Layers respected — no business logic in controllers/views; no HTTP knowledge in services?
+- [ ] Simple and straightforward — no hard-coded values, no complex logic, framework used before the language, comments and docblocks clear (Section 3b)?
 
 **Code Quality**
 

@@ -28,7 +28,7 @@ We ship in three major versions. Each version is a coherent, shippable product â
 |---|---|---|
 | Register a new church | Super Admin / Self-serve | Church name, denomination, location, contact captured. Subdomain auto-assigned. Admin account created. Welcome email sent. |
 | Configure church profile | Church Admin | Logo, address, service times, contact info editable. Changes reflect on church portal immediately. |
-| Invite staff members | Church Admin | Admin enters name, phone, role. System sends OTP-based invitation. Staff sets up account on first login. |
+| Invite staff members | Church Admin | Admin enters name, email, phone, role. System emails an invitation code; the person sets their password with it (D-054, D-055). |
 | Manage subscription plan | Church Admin | Admin can view current plan, SMS credit balance, and link to upgrade. Plan stored as `starter`, `growth`, or `pro`. |
 
 **Out of scope for v1:** Custom domain mapping, multi-branch setup, billing portal.
@@ -46,6 +46,7 @@ We ship in three major versions. Each version is a coherent, shippable product â
 | Edit a member record | Church Admin | All fields editable. Change log maintained. |
 | Mark a member as inactive | Church Admin | Inactive members excluded from default views but remain in DB. Reactivatable. |
 | Upload member photo | Church Admin | Photo stored in Cloudflare R2. Displayed on profile and directory. |
+| Export one member's data / erase a member's personal data | Church Admin | JSON export of everything held (`members.data-export`, church admin only); erasure removes personal details but keeps the record (`members.erase`, D-039). |
 | Export member list | Church Admin, Finance Secretary | CSV export of filtered member list. `members.export` permission required. |
 
 **Out of scope for v1:** Biometric enrollment, member self-service profile editing.
@@ -124,7 +125,7 @@ No member is excluded. Staff check-in is the universal fallback.
 
 | Story | Role | Acceptance Criteria |
 |---|---|---|
-| Staff login | All staff roles | Phone number + OTP via SMS. Token-based session (Sanctum). Session expires after inactivity. |
+| Staff login | All staff roles | Email + password, then a code emailed to them (D-054). Cookie session in the browser (Sanctum), 8-hour bearer token for other clients. Expires after inactivity. |
 | Member login | Member | Phone number + OTP via SMS or WhatsApp. Limited portal: own profile, own giving history, check-in. |
 | Role assignment | Church Admin | Admin assigns roles to staff. Roles: `church-admin`, `pastor`, `finance-secretary`, `department-head`, `youth-pastor`. |
 | Granular permission override | Church Admin | Admin can grant or revoke specific permissions on top of role defaults. Powered by Spatie Laravel Permission. |

@@ -14,6 +14,15 @@
 
 ---
 
+## How v1 differs from these cases (D-037)
+
+- **TC-03-01:** the phone is proven *before* the church exists, so there is no `pending_onboarding` church. After creating it the admin signs in on the new address with a new code instead of being signed in straight away. The field is `admin_phone`, and the sign-up page is on the platform host.
+- **TC-03-02:** the error is `422` on `slug` with free alternatives such as `grace-assembly-gh`.
+- **TC-03-05, TC-07-01:** the Paystack subaccount and payout details come with story 4.1, not sign-up.
+- **TC-03-06:** the sign-up result recommends a second admin; inviting one is story 5.15.
+
+---
+
 ## Test Cases
 
 ### TC-03-01 — Successful church signup
@@ -47,7 +56,7 @@
 **Action:** Complete onboarding including bank account details
 **Expected:**
 - `churches.paystack_subaccount_code` is populated (format: `ACCT_*`)
-- Test a payment to verify split routing works (GHS 100 → church receives GHS 80 if fee is 20%)
+- Test a card payment to verify split routing works (the split percentage is set when cards are built, D-018)
 - If Paystack subaccount creation fails, church is flagged: `onboarding_status: paystack_pending`, and giving is disabled until resolved
 
 ### TC-03-06 — Two admin accounts required
@@ -64,7 +73,7 @@
 ### TC-03-08 — Church settings are pre-populated with defaults
 **Action:** After onboarding, check church settings page
 **Expected:**
-- Default fund types are seeded: Tithe, Offering, Building Fund, Missions, Special Offering
+- Default fund types are seeded from `config/giving.php`: Tithe, Sunday Offering, Building Fund, Benevolence, Missions, Special Offering, Other (docs/04, D-046)
 - Cash receipt SMS is enabled by default
 - WhatsApp CHECKIN is disabled (pending Meta setup)
 

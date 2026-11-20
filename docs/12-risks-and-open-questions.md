@@ -190,6 +190,8 @@ Each risk is rated on two axes:
 
 ## Open Questions
 
+> The work list that connects these questions to decisions and code is `19-open-items.md`.
+
 Items we need an answer to before the work they affect can begin. Sorted by sprint dependency.
 
 ---
@@ -270,7 +272,7 @@ Items we need an answer to before the work they affect can begin. Sorted by spri
 
 ### Q9 — Do we send contribution receipts for cash by default, or is it opt-in per church?
 **Needed by:** Sprint 4 (ContributionReceived listener logic)
-**Status:** Open
+**Status:** Built as recommended (default on, `receipt_on_cash` per church, D-051); the Product Owner may still change the default
 **Context:** Sending SMS receipts for every cash contribution consumes SMS credits. A church with 200 cash offerings per Sunday will burn through credits fast. Should this be on by default or configurable?
 **Recommendation:** Configurable per church, default ON. Shown clearly in onboarding.
 **Owner:** Product Owner

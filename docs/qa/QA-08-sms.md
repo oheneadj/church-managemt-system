@@ -48,7 +48,8 @@
 - Message content:
   ```
   Grace Assembly: GHS 150.00 received (Tithe) on 25 Oct 2026.
-  Thank you for your faithfulness! – Your Church Family
+  Your total giving in October: GHS 150.00.
+  Thank you for your faithfulness.
   ```
 - `message_logs` record created with `type: contribution_receipt`, `status: sent`
 - 1 SMS credit deducted from church's balance
@@ -78,23 +79,23 @@
 ### Broadcast Messages
 
 ### TC-08-07 — Send broadcast to all active members
-**Action:** `POST /api/communications/broadcast` with:
+**Action:** `POST /api/v1/messages/broadcast` (with an `Idempotency-Key`) with:
 ```json
 {
-  "message": "Service this Sunday starts at 9am. Bring a friend! – Pastor Emmanuel",
-  "recipient_type": "all_active",
+  "message": "Service this Sunday starts at 9am. Bring a friend! - Pastor Emmanuel",
   "channel": "sms"
 }
 ```
 **Expected:**
-- Credit check: church has enough credits for the recipient count
-- `SendSmsJob` dispatched for each recipient (or batch job)
-- Each recipient gets one SMS
-- `message_logs` row created for each send
-- Total credits deducted = number of recipients × parts per message
+- `202 { "queued": true, "broadcast_id": "...", "estimated_recipients": 48, "estimated_credit_cost": 48, "current_credit_balance": 50 }`; a `broadcasts` row records who sent what
+- Credit check at the request: the church has enough credits for the recipients times the parts
+- A worker queues one `SendSmsJob` for each member who is active, has a phone and has SMS on (a deceased member never); each has a `message_logs` row (`message_type: broadcast`, `broadcast_id`)
+- Each recipient gets one SMS; running the worker twice sends nothing twice
+- Credits are taken text by text just before each is sent (one for each part), and given back if a text fails for good; total = recipients x parts
+- The same `Idempotency-Key` again sends nothing more
 
 ### TC-08-08 — Broadcast preview shows credit estimate
-**Action:** On the broadcast compose page, enter a message and select recipients before sending
+**Action:** On the broadcast compose page, enter a message and select recipients before sending (the page calls `POST /messages/broadcast/estimate`, D-065; nothing is sent or charged)
 **Expected:**
 - UI shows: "This message will be sent to 48 members and use approximately 48 SMS credits. You have 50 credits remaining."
 - Count updates as message length changes (multi-part threshold at 160 chars)
@@ -103,7 +104,8 @@
 **Action:** Try to send a broadcast to 60 members when the church has 30 credits
 **Expected:**
 - `422 { "message": "Insufficient SMS credits. You need 60 credits, you have 30. Purchase more credits to proceed." }`
-- Link to top-up flow shown in error
+- Nothing is recorded or queued; no credits are taken
+- Link to top-up flow shown in the error (the top-up arrives with story 5.4)
 
 ### TC-08-10 — Broadcast filtered by department
 **Action:** Send broadcast to members in the "Youth" department only
@@ -131,10 +133,13 @@
 - Admin notified via email
 - No error is shown to the end user triggering the contribution
 
-### TC-08-13 — SMS credit top-up via Paystack
-**Action:** Purchase a "Bundle 50" SMS top-up via the Paystack payment flow
+### TC-08-13 — SMS credit top-up via PayPerlez MoMo (D-069)
+**Action:** As the church admin, buy a "Bundle 50" package: `POST /sms-credits/purchases` with a MoMo number and network, then approve the prompt on the phone
 **Expected:**
-- Paystack payment completes
+- The call answers `202` with a `pending` purchase and no credits yet
+- PayPerlez confirms the payment (checked every minute) and the purchase becomes `completed`
+- Only the exact package price counts; a failed payment leaves the purchase `failed` and adds nothing
+- Calling again with the same Idempotency-Key starts no second purchase
 - `sms_credit_ledger` row created: `type: topup`, `credits: +50`
 - `churches.sms_credits` increases by 50
 - Admin sees updated balance in settings page
@@ -155,6 +160,15 @@
 - Error logged — no unhandled exception propagates
 
 ---
+
+### TC-08-16 — Credit balance in the header (browser)
+**Action:** Sign in as a church admin, then as a finance secretary, and look at the header on any page. Set the church's credits to 1,250, then 50, then 51, then 0 and reload
+**Expected:**
+- "SMS credits" and the balance, written with thousands separators ("1,250"), are in the header for both roles
+- At 1,250 and at 51 there is no warning; at 50 and under it says **Running low** in words; at 0 it says **None left** and that gift receipts and other texts are not sent
+- Record a gift for a member with a phone and SMS on: the balance goes down by the receipt's credits within a minute, without a reload
+- The church admin sees a **Top up** button that opens a notice saying buying credits is coming soon, with one **Got it** button; the finance secretary sees no Top up button
+- At 375 px wide the header wraps and the page does not scroll sideways
 
 ## Pass / Fail Criteria
 

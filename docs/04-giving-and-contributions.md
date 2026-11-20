@@ -122,11 +122,12 @@ Fund types are configurable per church. The system ships with sensible defaults;
 - Tithe
 - Sunday Offering
 - Building Fund
-- Pledge (links to a specific pledge record)
 - Benevolence
 - Missions
 - Special Offering
 - Other
+
+"Pledge" is not a fund: a gift that pays a pledge is linked to the pledge record itself with `pledge_id` (D-047). The list lives in `config/giving.php`.
 
 ---
 
@@ -140,8 +141,8 @@ Every contribution — whether MoMo, card, or cash — creates a single `contrib
 | `church_id` | Foreign key | Multi-tenancy scoping |
 | `member_id` | Foreign key (nullable) | Null = anonymous or visitor |
 | `service_id` | Foreign key (nullable) | Which service it was given at |
-| `amount` | Decimal (10, 2) | Always in GHS |
-| `fund_type` | Enum / FK | Tithe, Offering, Pledge, etc. |
+| `amount` | Decimal (12, 2) | Always in GHS (D-017) |
+| `fund_type_id` | Foreign key | The fund (Tithe, Sunday Offering, etc.); the fund's name at that moment is kept in `fund_name` (D-048) |
 | `payment_method` | Enum | `momo`, `card`, `cash`, `ussd` |
 | `paystack_reference` | String (nullable) | For Paystack MoMo/card; null otherwise |
 | `payperlez_reference` | String (nullable) | For PayPerlez collections; null otherwise |
@@ -175,7 +176,7 @@ As contributions linked to a pledge are recorded, the system tracks:
 - Outstanding balance
 - Progress percentage
 
-When the outstanding balance reaches zero before the target date, the pledge status auto-updates to `fulfilled`.
+When the outstanding balance reaches zero, the pledge status updates to `fulfilled` (even after the target date). After the target date an unpaid pledge becomes `partial` if something was paid and `lapsed` if nothing was; until then it is `active`. A gift names the pledge it pays, and the paid amount is added up again from the gifts that are not voided every time a gift is recorded or voided (D-047).
 
 **Pledge reports:**
 - Per-member pledge status
@@ -242,26 +243,28 @@ Transactions:   42
 Anonymous:       7
 ```
 
-Exportable as PDF. Shareable directly from the system.
+Printable from the report page, and savable as a PDF from the browser's print window (D-058). The app menu is left off the paper.
 
 ---
 
 ## Giving Receipts
 
-Every recorded contribution triggers an automatic confirmation to the member:
+Every recorded contribution triggers an automatic confirmation to the member (built, D-051):
 
-**SMS format:**
+**SMS format** (the words are in `config/giving.php`):
 ```
 Grace Assembly: GHS 200.00 received (Tithe) on 12 Oct 2026.
-Your total giving this month: GHS 450.00.
-Thank you for your faithfulness. — Grace Assembly Intl
+Your total giving in October: GHS 450.00.
+Thank you for your faithfulness.
 ```
+The church name is the platform's record of the church's own name; the fund is the name the gift was given to; the date and month are the church's own calendar; the total is the member's giving in the month of the gift (this gift included, voided gifts left out). The text uses plain characters only (a hyphen, no long dash) so it stays in the cheaper kind of SMS.
 
 **Rules:**
-- Receipts go out for MoMo/card immediately on Paystack webhook confirmation
-- Receipts for cash are sent when the admin clicks "Send receipts" (batch, per service) or on individual record save (configurable)
-- Anonymous contributions do not generate a receipt
-- SMS credit is consumed per receipt — churches are aware of this through the credit dashboard
+- Receipts for digital gifts go out when the payment is confirmed (when digital giving is built); the same event, `ContributionReceived`, carries both
+- Receipts for cash go out when the gift is recorded, unless the church switched `receipt_on_cash` off in its settings (on by default, QA-08 TC-08-06). The idea of a "Send receipts" button for a whole service is not built
+- No receipt for an anonymous gift, a voided gift, or a member who has died, has no phone or has turned SMS off
+- SMS credit is consumed per part of the text (D-051); with too few credits no text is sent, a warning is logged and the person recording the gift sees no error
+- One receipt per gift, even if the work is repeated
 
 ---
 

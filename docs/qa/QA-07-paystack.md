@@ -4,6 +4,8 @@
 **Sprint:** 4
 **Risk:** R10 (Paystack API changes), D-009 (Paystack decision)
 
+> **Cards only (D-020).** MoMo runs on PayPerlez (QA-06). A card payment follows D-053: a `pending` contribution is created when it starts and `charge.success` or `charge.failed` moves it to `completed` or `failed`, so where a case below says a job "creates a contribution" it now means it completes the pending one. The subaccount, `onboarding_status` and 80/20 split wording are replaced by the payout and fee design in D-018 (the split percentage is set when cards are built). The plan is rewritten then.
+
 > Run this plan in the Paystack **test environment** only. Never use live keys during QA.
 
 ---
@@ -37,11 +39,11 @@
 - No charge initiated with Paystack
 
 ### TC-07-03 — Subaccount percentage split
-**Action:** Initiate a GHS 100 test payment for a church with an 80% split (church gets 80%, platform keeps 20%)
+**Action:** Initiate a GHS 100 test payment for a church with the configured split (this plan assumes a 99% / 1% example until the card split is decided)
 **Expected:**
-- Paystack charge is created with `subaccount: "ACCT_*"` and `percentage_charge: 80`
-- On `charge.success`: church's Paystack balance receives GHS 80.00
-- Platform account balance receives GHS 20.00
+- Paystack charge is created with `subaccount: "ACCT_*"` and `percentage_charge: 99`
+- On `charge.success`: church's Paystack balance receives GHS 99.00
+- Platform account balance receives GHS 1.00
 - (Verify in Paystack test dashboard — split settlement visible in transaction details)
 
 ---

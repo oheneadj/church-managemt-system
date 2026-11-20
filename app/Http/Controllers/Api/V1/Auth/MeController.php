@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Auth\ShowCurrentStaffAction;
+use App\DTOs\Auth\ShowCurrentStaffDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ChurchResource;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\CurrentStaffResource;
 use Illuminate\Http\Request;
 
 /**
@@ -15,9 +16,16 @@ use Illuminate\Http\Request;
  */
 class MeController extends Controller
 {
-    public function __invoke(Request $request): UserResource
+    /**
+     * Takes the show current staff action.
+     */
+    public function __construct(private readonly ShowCurrentStaffAction $action) {}
+
+    /**
+     * Runs ShowCurrentStaffAction for this request and returns the CurrentStaffResource.
+     */
+    public function __invoke(Request $request): CurrentStaffResource
     {
-        return (new UserResource($request->user()))
-            ->additional(['church' => new ChurchResource(app('current.church'))]);
+        return new CurrentStaffResource($this->action->execute(ShowCurrentStaffDTO::fromRequest($request)));
     }
 }

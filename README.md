@@ -29,7 +29,7 @@ A multi-tenant SaaS platform for mid-size churches in Ghana. Covers member manag
 |---|---|
 | Backend | Laravel (latest stable) — REST API |
 | Frontend | React 19 SPA in `resources/js` (same repo) — Vite, TypeScript, React Router v7, Zustand, TanStack Query v5, Tailwind CSS v4, shadcn/ui |
-| Auth | Laravel Sanctum — OTP-only (no passwords) |
+| Auth | Laravel Sanctum — staff: email + password + emailed code (D-054); members: phone + SMS code, no passwords |
 | Permissions | Spatie Laravel Permission |
 | Database | PostgreSQL |
 | Cache & Queues | Redis |
@@ -175,6 +175,8 @@ docs/
 ├── 15-security.md              — Security controls & threat model
 ├── 16-deployment-and-ops.md    — Deployment & ops runbooks
 ├── 17-monitoring-and-alerting.md — Monitoring & on-call guide
+├── 18-incident-response.md     — Severity levels & incident process
+├── 19-open-items.md            — Decided-not-built work, waiting items, open questions
 ├── qa/                         — QA test plans & tracker
 └── reference/                  — Onboarding guide & post-mortems
 ```
@@ -187,7 +189,7 @@ The full decision log is in [docs/13-decision-log.md](docs/13-decision-log.md). 
 
 - **SaaS only** — no self-hosted option in v1 or v2
 - **Single-database multi-tenancy** — `church_id` on every table, global scopes
-- **OTP-only auth** — no passwords; 6-digit SMS code, 10-minute expiry
+- **Staff auth** — email + password + a 6-digit code emailed to them (D-054); members and check-ins use phone and SMS codes, no passwords
 - **GHS only** — all amounts in Ghana Cedis, no currency conversion
 - **PayPerlez** for MoMo collections and automatic church payouts, platform fee deducted per transaction (D-018); **Paystack** for cards only
 - **PayPerlez** for SMS and OTP (Africa's Talking as fallback); **Meta Business API** for WhatsApp

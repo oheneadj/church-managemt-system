@@ -11,7 +11,6 @@ enum Gender: string
 {
     case Male = 'male';
     case Female = 'female';
-    case Other = 'other';
 
     /**
      * Human-readable text for screens and messages.
@@ -21,7 +20,6 @@ enum Gender: string
         return match ($this) {
             self::Male => 'Male',
             self::Female => 'Female',
-            self::Other => 'Other',
         };
     }
 }

@@ -1,0 +1,132 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories;
+
+use App\DTOs\Services\ListServicesDTO;
+use App\Enums\Weekday;
+use App\Models\Service;
+use App\Models\ServiceSchedule;
+use Carbon\CarbonInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+
+/**
+ * Every query on services lives behind this contract.
+ */
+interface ServiceRepositoryInterface
+{
+    /**
+     * One page of services, newest first, each with its attendance count.
+     *
+     * @return LengthAwarePaginator<int, Service>
+     */
+    public function paginate(ListServicesDTO $filters): LengthAwarePaginator;
+
+    /**
+     * Adds a service and reloads its database defaults.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): Service;
+
+    /**
+     * Saves a changed service.
+     */
+    public function save(Service $service): Service;
+
+    /**
+     * The service with its attendance count loaded.
+     */
+    public function withAttendanceCount(Service $service): Service;
+
+    /**
+     * The service of the current church with this id, if there is one.
+     */
+    public function find(string $id): ?Service;
+
+    /**
+     * Whether any church, including a deleted service, already uses this check-in code. The code is unique across
+     * all churches, so this deliberately looks past the church scope.
+     */
+    public function checkinCodeExists(string $code): bool;
+
+    /**
+     * The services held from the first date to the last (both included), newest first, each with its count of check-ins in
+     * `attendance_records_count`. A service counts as held when something was recorded for it: a check-in, or a paper headcount.
+     *
+     * @return Collection<int, Service>
+     */
+    public function heldBetween(CarbonInterface $from, CarbonInterface $to): Collection;
+
+    /**
+     * The church's first service on this calendar date: the earliest start time, services with no start time last, then
+     * the lowest id. Gifts with no service are reported with it (D-048).
+     */
+    public function firstOnDate(CarbonInterface $date): ?Service;
+
+    /**
+     * The service a gift given at this moment belongs to, the moment being in the church's own time. The service open for check-in
+     * today wins (the one opened first, as WhatsApp check-in chooses); otherwise, of today's services with a start time that has
+     * already passed, the one that started last. A service with no start time that is not open is never chosen, and nothing is
+     * chosen when no service has started yet today.
+     */
+    public function servingAt(CarbonInterface $localMoment): ?Service;
+
+    /**
+     * The dates (YYYY-MM-DD) on which this schedule already has a service from the first date to the last, cancelled
+     * services included, so a cancelled date is never made again.
+     *
+     * @return array<int, string>
+     */
+    public function scheduledDates(ServiceSchedule $schedule, CarbonInterface $from, CarbonInterface $to): array;
+
+    /**
+     * Changes one field on the schedule's future services that nobody has touched (not open, nothing recorded) and
+     * whose field still has the old value, so a service edited by hand keeps its edit. Returns how many changed.
+     */
+    public function changeUntouchedFuture(ServiceSchedule $schedule, string $field, mixed $old, mixed $new, CarbonInterface $from): int;
+
+    /**
+     * Moves the schedule's untouched future services to the new weekday: each goes to the first day on or after its
+     * date that is that weekday. A service whose new date the schedule already has (even a cancelled one) stays where
+     * it is. Returns how many were moved.
+     */
+    public function moveUntouchedFutureToWeekday(ServiceSchedule $schedule, Weekday $weekday, CarbonInterface $from): int;
+
+    /**
+     * Reads the service again with its row locked until the transaction ends, so a cancel and a check-in cannot cross.
+     */
+    public function lockForUpdate(Service $service): Service;
+
+    /**
+     * Whether anything is recorded at the service: a check-in (member or visitor) or a gift, voided ones included.
+     */
+    public function hasRecords(Service $service): bool;
+
+    /**
+     * Removes the service from the calendar. The row is kept (soft-deleted), and its check-in code becomes free again.
+     */
+    public function delete(Service $service): void;
+
+    /**
+     * The service that uses this check-in code, in any church. The code is unique across churches (D-044), so a
+     * member's WhatsApp message with a code names one service. This deliberately looks past the church scope.
+     */
+    public function findByCheckinCode(string $code): ?Service;
+
+    /**
+     * The services open for check-in in these churches, the one opened first at the top (QA-05 TC-05-13). This
+     * deliberately looks past the church scope, because it is asked before a church is in context.
+     *
+     * @param  array<int, string>  $churchIds
+     * @return Collection<int, Service>
+     */
+    public function findOpenInChurches(array $churchIds): Collection;
+
+    /**
+     * Closes every open service whose day ended before the cutoff, in every church. Returns how many were closed.
+     */
+    public function closeOpenServicesEndedBefore(CarbonInterface $cutoff): int;
+}

@@ -18,13 +18,13 @@
 ## Test Cases
 
 ### TC-05-01 — Create a service
-**Action:** `POST /api/services` with `{ "name": "Sunday Morning Service", "service_date": "2026-10-25", "service_time": "09:00" }`
+**Action:** `POST /api/v1/services` with `{ "name": "Sunday Morning Service", "type": "sunday", "service_date": "2026-10-25", "starts_at": "09:00" }`
 **Expected:**
 - Service created with `is_open: false`
-- `checkin_code` auto-generated (4–6 uppercase alphanumeric, e.g. `GRA7F`)
+- `checkin_code` made by the system (6 letters and numbers without look-alikes, e.g. `GRA7F2`, D-044); a code sent in the body is ignored
 
 ### TC-05-02 — Open a service for check-in
-**Action:** `PATCH /api/services/{id}/open`
+**Action:** `PATCH /api/v1/services/{id}/checkin` with `{ "is_open": true }` (one endpoint opens and closes, D-044; the service must be dated today, TC-05-18)
 **Expected:**
 - `is_open: true`
 - Live check-in dashboard shows 0 attendees
@@ -74,25 +74,26 @@
 - Confirmation shown in browser
 
 ### TC-05-10 — Close a service
-**Action:** `PATCH /api/services/{id}/close`
+**Action:** `PATCH /api/v1/services/{id}/checkin` with `{ "is_open": false }`
 **Expected:**
 - `is_open: false`
 - CHECKIN messages sent after close: member gets "No service is currently open" reply
 - Attendance report is now final and shows correct totals
 
 ### TC-05-11 — Attendance report for a service
-**Action:** `GET /api/services/{id}/attendance`
+**Action:** `GET /api/v1/services/{id}/attendance`
 **Expected:**
 - Returns list of attendees with check-in method (whatsapp / manual / qr) and time
-- Summary: total checked in, total members, attendance rate %
-- Visitors (non-members) listed separately
+- `summary`: `total`, `members`, `visitors`, `by_method`, `active_members` and `attendance_rate` (whole percent, members only)
+- Visitors' names are shown only to staff who may edit members (church admin, pastor); other roles see only the members in their directory view
 
-### TC-05-12 — Absence alert (3+ consecutive absences)
-**Action:** A member misses 3 consecutive Sunday services (simulate by NOT adding them to 3 service attendance records)
+### TC-05-12 — Absent members (3+ consecutive absences)
+**Action:** A member misses 3 consecutive Sunday services (simulate by NOT adding them to 3 service attendance records), then `GET /api/v1/attendance/absent?consecutive=3` as a user with `reports.view`
 **Expected:**
-- Alert job fires after the 3rd missed service (scheduled, runs after service close)
-- Alert appears in admin dashboard: "Emmanuel Asante has missed the last 3 services"
-- No SMS sent automatically (alert is in-app only in MVP — SMS is a settings option)
+- The member is listed with `member_number`, `full_name`, `phone` and `last_attended_at`
+- The list is worked out when asked, so there is no alert job and no stored alert (D-044 point 9)
+- Only Sunday services that someone was checked in to count; a member who joined after the oldest of those services is left out; `consecutive` outside 2 to 12 is `422`
+- No SMS is sent: the automatic text to absent members is Sprint 5 (docs/08, List Absent Members)
 
 ### TC-05-13 — Multi-service Sunday (two services, same day)
 **Action:** Create two services on the same Sunday (7am and 9am), both open at different times
@@ -104,8 +105,35 @@
 ### TC-05-14 — Offline resilience (manual entry after the fact)
 **Action:** Close a service, then try to add a manual attendance record for a member who was present but not recorded
 **Expected:**
-- Admin can add a late attendance record to a closed service (with a note)
+- A user with `members.edit` (church admin, pastor) can add a late attendance record to a closed service with `POST /api/v1/services/{id}/attendance`; it answers `201` (docs/08). There is no note field in v1
 - Record is added; report updates
+- This is the rule QA-14 E2E-12 follows too: a closed service still accepts a hand-recorded person
+
+### TC-05-15 — Weekly schedule makes the services
+**Action:** `POST /api/v1/service-schedules` with name "Sunday Morning Service", weekday `sunday`, 09:00 to 11:30
+**Expected:**
+- Eight services are made, one on each of the next eight Sundays (today counts if it is a Sunday), closed, each with its own check-in code
+- Running `services:generate-scheduled` again makes nothing; a week later it makes exactly one more
+
+### TC-05-16 — Cancel a service; a schedule never remakes it
+**Action:** Cancel a scheduled service with `DELETE /api/v1/services/{id}`, then run `services:generate-scheduled`
+**Expected:**
+- `204`; the service is off the list and its check-in code is free
+- The date is not made again
+- Cancelling a service that is open, or has a check-in or a gift, is `409` and nothing changes
+
+### TC-05-17 — Changing a schedule
+**Action:** Rename the schedule, change its times, then change its weekday
+**Expected:**
+- Future services nobody has touched get the new name and times, and move to the new weekday
+- A service renamed by hand keeps its name; one that is open or has a check-in or gift is left alone; past services never change
+
+### TC-05-18 — Check-in opens only on the service's day
+**Action:** `PATCH /api/v1/services/{id}/checkin` with `{ "is_open": true }` for a service dated tomorrow, then for one dated yesterday, then for one dated today
+**Expected:**
+- Tomorrow and yesterday: `409` "Check-in can only be opened on the day of the service."; the service stays closed
+- Today: `200`, `is_open: true`; a second service on the same day can be opened too (TC-05-13)
+- Closing any service is always `200`
 
 ---
 

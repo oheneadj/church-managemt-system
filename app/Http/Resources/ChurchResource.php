@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ChurchResource extends JsonResource
 {
     /**
+     * Shapes the church for the API.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -25,6 +27,7 @@ class ChurchResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'plan' => $this->plan->value,
+            'plan_label' => $this->plan->label(),
             'sms_credits' => $this->sms_credits,
         ];
     }

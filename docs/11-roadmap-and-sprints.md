@@ -66,7 +66,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 2.5 | `MemberResource` — full serialisation | Backend | 2 | Including conditional `giving_summary` |
 | 2.6 | `StoreMemberRequest` + `UpdateMemberRequest` | Backend | 1 | |
 | 2.7 | Family grouping endpoints (create family, link members) | Backend | 2 | |
-| 2.8 | Department endpoints (list, create, assign members) | Backend | 2 | |
+| 2.8 | Department endpoints (list, create, assign members) | Backend | 2 | The screen is built too: `/departments` for staff with `members.edit`, reached from the Members page and from Settings: add, change (name, what it does) and retire or bring back; retiring asks first and members already in it stay in it. Members are placed in departments on the member form. The head is chosen from the church's active staff (`GET /staff/directory`) and named on the list; saving without changing the head never sends it |
 | 2.9 | Member milestone endpoints | Backend | 1 | |
 | 2.10 | Member directory page (React) — list with search + filters | Frontend | 4 | Phone-first layout |
 | 2.11 | Member profile page (React) — full record view | Frontend | 3 | Tabbed: Profile / Giving / Attendance |
@@ -96,7 +96,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 3.10 | Manual attendance entry (React) — bulk mark members present | Frontend | 3 | Search-as-you-type member select |
 | 3.11 | QR code display page (React) — shown at church entrance | Frontend | 2 | Large QR, auto-refresh, no nav chrome |
 | 3.12 | Attendance report page (React) | Frontend | 2 | |
-| 3.13 | Absent members alert job (3+ consecutive absences) | Backend | 2 | Queued, configurable threshold |
+| 3.13 | Absent members alert job (3+ consecutive absences) | Backend | 2 | Queued, configurable threshold. Screen built: `/attendance/absent` (members who have gone absent with a phone link and when they were last at church; the number of services is a choice, default the church setting), reached from a dashboard card and a link on the attendance report. Built (D-067): off until the church switches it on, once for each stretch of absence |
 
 **Sprint 3 exit criteria:** A service can be created, opened for check-in, and members can check in via WhatsApp CHECKIN command. Manual bulk entry works. A report shows who attended.
 
@@ -110,7 +110,7 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | # | Story | Owner | Points | Notes |
 |---|---|---|---|---|
 | 4.1 | Paystack subaccount creation during church onboarding | Backend | 3 | API call, store `subaccount_code` |
-| 4.2 | `FundType` CRUD endpoints | Backend | 1 | Seed default fund types |
+| 4.2 | `FundType` CRUD endpoints | Backend | 1 | Seed default fund types. The screen is built too: `/settings/funds` for the church admin (`fund-types.manage`), reached from Settings: add, change (name, what it is for, place in the list) and switch off or on; switching off asks first |
 | 4.3 | Cash contribution recording endpoint | Backend | 2 | |
 | 4.4 | MoMo / card payment initiation (Paystack charge) | Backend | 3 | |
 | 4.5 | Paystack webhook handler (`charge.success`, `charge.failed`) | Backend | 4 | Signature verify + idempotency + job |
@@ -121,12 +121,12 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 | 4.10 | Pledge `amount_paid` observer (update on contribution save) | Backend | 2 | |
 | 4.11 | Contribution void endpoint | Backend | 1 | |
 | 4.12 | Sunday offering report endpoint | Backend | 2 | |
-| 4.13 | Contribution list + filters page (React) | Frontend | 3 | |
-| 4.14 | Record cash contribution form (React) | Frontend | 2 | Member search, fund type select |
+| 4.13 | Contribution list + filters page (React) | Frontend | 3 | Done: filters in the address, void with a reason (`giving.edit`), menu item for `giving.view` |
+| 4.14 | Record cash contribution form (React) | Frontend | 2 | Done: a dialog on the Giving page (member search or anonymous, fund, amount, day, optional service, notes); D-057 |
 | 4.15 | Initiate MoMo payment flow (React) | Frontend | 3 | Paystack inline / redirect |
-| 4.16 | Sunday offering report page (React) — printable | Frontend | 2 | |
-| 4.17 | Pledge management page (React) | Frontend | 2 | |
-| 4.18 | SMS credit balance display + top-up link | Frontend | 1 | In settings or header |
+| 4.16 | Sunday offering report page (React) — printable | Frontend | 2 | Done: `/services/:id/offering`, opened from the service page; print or save as PDF from the browser; D-058 |
+| 4.17 | Pledge management page (React) | Frontend | 2 | Done: `/pledges` with filters, progress, New pledge and Change dialogs; D-059 |
+| 4.18 | SMS credit balance display + top-up link | Frontend | 1 | Done: in the header for everyone, a low-credit warning at 50, and a Top up button that says buying is coming (Sprint 5, story 5.4); D-061 |
 
 **Sprint 4 exit criteria:** A finance secretary can record cash contributions, initiate MoMo payments, view the Sunday offering report, and track pledges. Members receive SMS receipts. Paystack subaccount is live and receiving split payouts.
 
@@ -139,21 +139,21 @@ Q4 2026          Q1 2027              Q2 2027             Q3 2027
 
 | # | Story | Owner | Points | Notes |
 |---|---|---|---|---|
-| 5.1 | SMS broadcast endpoint | Backend | 2 | Filter-based recipient selection, credit check |
+| 5.1 | SMS broadcast endpoint | Backend | 2 | Filter-based recipient selection, credit check. Done: `POST /messages/broadcast/estimate` and `POST /messages/broadcast` (D-065): 202, a `broadcasts` record, one text for each member made by a worker, credits taken text by text |
 | 5.2 | WhatsApp broadcast endpoint | Backend | 2 | Opted-in members only |
-| 5.3 | Message log endpoint | Backend | 1 | |
+| 5.3 | Message log endpoint | Backend | 1 | Done: `GET /messages` for `sms.send`, filters channel, type and dates; sign-in and check-in codes are left out |
 | 5.4 | SMS top-up endpoint (Paystack payment → credit ledger) | Backend | 2 | |
-| 5.5 | Attendance trends report endpoint | Backend | 1 | |
-| 5.6 | Giving trends report endpoint | Backend | 1 | |
-| 5.7 | Member growth report endpoint | Backend | 1 | |
-| 5.8 | Export members (CSV, async, SMS download link) | Backend | 2 | |
-| 5.9 | Export contributions (CSV, async) | Backend | 1 | |
-| 5.10 | Dashboard home page (React) — role-specific summary cards | Frontend | 4 | |
-| 5.11 | Broadcast compose page (React) — SMS + WhatsApp | Frontend | 3 | Recipient preview + credit estimate |
-| 5.12 | Message log page (React) | Frontend | 2 | |
-| 5.13 | Reports page (React) — attendance + giving charts | Frontend | 3 | |
-| 5.14 | Settings page (React) — church profile, service defaults, comms prefs | Frontend | 2 | |
-| 5.15 | Role management page (React) — invite staff, assign roles | Frontend | 2 | |
+| 5.5 | Attendance trends report endpoint | Backend | 1 | Done: `GET /reports/attendance`, by week (default) or by service; weeks 1 to 52 |
+| 5.6 | Giving trends report endpoint | Backend | 1 | Done: `GET /reports/giving`, monthly with a split by fund and a summary against the months before; totals only |
+| 5.7 | Member growth report endpoint | Backend | 1 | Done: `GET /reports/members`, monthly new, lost, net and active total, read from the change history (D-063) |
+| 5.8 | Export members (CSV, async, emailed download link) | Backend | 2 | Done: `POST /exports/members`, built on the `exports` queue, 1-hour signed link by email (D-064) |
+| 5.9 | Export contributions (CSV, async) | Backend | 1 | Done: `POST /exports/contributions`, same worker, private file and emailed 1-hour link as the member export (D-064) |
+| 5.10 | Dashboard home page (React) — role-specific summary cards | Frontend | 4 | Done: four cards (the members who have gone absent too), each a link to the page behind it. Active members for every role; the last service's attendance for `reports.view`; this month's giving for `giving.summary`. A card a role may not read is not drawn. Below them, for `reports.view`, the recent activity in plain sentences (`GET /activity`, D-068), each kind shown only to roles that may see what it is about |
+| 5.11 | Broadcast compose page (React) — SMS + WhatsApp | Frontend | 3 | Recipient preview + credit estimate. Done for SMS: `/messages/new` (a New broadcast button on the Messages page): audience by member status and department, the cost worked out by the server as the message is typed, a question before sending; WhatsApp waits for Meta (B4) |
+| 5.12 | Message log page (React) | Frontend | 2 | Done: `/messages` for staff with `sms.send`, filters by how it was sent, kind and dates in the address |
+| 5.13 | Reports page (React) — attendance + giving charts | Frontend | 3 | Done (attendance, member growth and giving): `/reports` (menu link for `reports.view`) with the attendance tab: average, highest and lowest, a column chart by week or by service over 4 to 52 weeks, and a table view of the same figures. The giving tab (`giving.summary`): the period against the months before and a stacked column chart by month with a block for each fund, by period and fund, with a table view. The member growth tab (`reports.view`): active members today, new, lost and net for the period, and a chart with new above a baseline and lost below it, with a table view. The export buttons are built too: Export list on the Members page and Export gifts on the Giving page |
+| 5.14 | Settings page (React) — church profile, service defaults, comms prefs | Frontend | 2 | Backend done: `GET` and `PUT /church/settings` (youth age limit, absence threshold, cash receipts) and `GET` and `PUT /church` (name, denomination, address, city, region, phone, email). The page is built (`/settings`: church details and preferences, for the church admin); the logo upload is still to build |
+| 5.15 | Role management page (React) — invite staff, assign roles | Frontend | 2 | Done: `/staff` for the church admin (menu link shown only with `staff.manage`): invite, change name, phone and role, deactivate (asks first) and reactivate; extra permissions are given and taken away from the Permissions button on each person: what their role gives is ticked and fixed, only the extras change, and only a change is sent |
 | 5.16 | Member portal (React) — OTP login, own profile + giving history | Frontend | 3 | Separate layout |
 | 5.17 | Error pages (401, 403, 404, 500) | Frontend | 1 | |
 | 5.18 | Performance audit — fix any endpoint > 500ms | Full-stack | 3 | Query optimisation |
@@ -239,8 +239,29 @@ Blocked: [anything blocking me / none]
 
 ## Current Sprint
 
-> **Sprint 1** — Foundation
-> Start: TBD (when scaffold begins)
-> End: TBD + 14 days
+> **Sprint 4** — Giving & Contributions
+> Started: 2026-10-28 · Updated: 2026-11-07
+> Sprint 3 (Attendance) is complete. The order of work for Sprint 4 is in D-046: cash giving first, digital payments after the legal and provider questions in D-018 are closed.
+
+| Done | Stories |
+|---|---|
+| Backend | 4.2 fund types (list, create, change, switch off; seven defaults for a new church), 4.8 `SendSmsJob` (done in Sprint 1, on PayPerlez) |
+| | 4.3 cash contributions (record, list, show; `giving.view` added), 4.11 void, the `Idempotency-Key` for writes that record money |
+| | 4.9 pledges (make, list, read, change), 4.10 the paid amount and status that follow the gifts and voids (recalculated, D-047), the daily `pledges:refresh` job |
+| | 4.12 Sunday offering report (by fund and payment method, voided gifts left out; gifts with no service reported with the day's first service; fund names kept on the gift, D-048) |
+| | 4.7 receipts (the `ContributionReceived` event and a queued listener that texts the member), and SMS credits charged for church-paid texts (D-051) |
+| Frontend | 4.13 gift list with filters and void, 4.14 record a cash gift (D-057), 4.16 offering report page (D-058), 4.17 pledges page (D-059) |
+| | The pledge a gift pays can be chosen in the record-a-gift form (D-060) |
+| | 4.18 SMS credit balance in the header (D-061) |
+| Next | The cash slice of Sprint 4 is finished. What is left waits on the legal opinion and PayPerlez's event names: 4.1, 4.4, 4.5, 4.6 and 4.15 (see `19-open-items.md`) |
+| Waiting | 4.1, 4.4, 4.5, 4.6: digital payments and the payout (legal opinion, PayPerlez event names, Paystack account) |
+
+> **Sprint 3** — Attendance (finished). The design is in D-044 and D-045. Added later: weekly service schedules and cancelling a service (D-050, screens included).
+
+| Done | Stories |
+|---|---|
+| Backend | 3.1 services, 3.2 manual bulk check-in, 3.3 WhatsApp CHECKIN (D-045; the Meta driver is built from the docs and not yet tried against Meta), 3.4 QR check-in, 3.5 idempotent check-in, 3.6 visitor capture, 3.7 attendance reports (per service and per member), 3.13 absent members (computed on request) |
+| Frontend | 3.8 services list and create, 3.9 live check-in (polls every 10 seconds), 3.10 manual check-in with member search, 3.11 QR display page and the page a member lands on, 3.12 attendance report (the Attendance tab) |
+| Still open | Nothing in the sprint. Waiting on the Meta account: try the `meta` driver against a sandbox number (R2) |
 
 Update this section at the start of each sprint.

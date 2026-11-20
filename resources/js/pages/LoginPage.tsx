@@ -1,171 +1,147 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm, type FieldValues, type Path, type UseFormSetError } from 'react-hook-form';
-import { Navigate, useNavigate } from 'react-router';
+import { useForm } from 'react-hook-form';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { z } from 'zod';
+import { AuthCard } from '@/components/auth/AuthCard';
+import { PasswordField } from '@/components/form/PasswordField';
+import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { ErrorNotice } from '@/components/ui/ErrorNotice';
+import { OTP_LENGTH } from '@/constants/onboarding';
 import { ROUTES } from '@/constants/routes';
 import { useSignIn } from '@/hooks/useSignIn';
-import { ApiError } from '@/services/ApiError';
+import { plainErrorMessage } from '@/lib/plainErrorMessage';
+import { showFieldErrors } from '@/lib/showFieldErrors';
 import { useAuthStore } from '@/stores/useAuthStore';
 
-const phoneSchema = z.object({
-    phone: z
-        .string()
-        .trim()
-        .regex(/^\+?[\d\s-]{9,16}$/, 'Enter a valid phone number'),
+const credentialsSchema = z.object({
+    email: z.string().trim().toLowerCase().max(255).pipe(z.email('Enter a valid email address')),
+    password: z.string().min(1, 'Enter your password'),
 });
 
 const codeSchema = z.object({
-    otp: z
+    code: z
         .string()
         .trim()
-        .regex(/^\d{6}$/, 'Enter the 6-digit code'),
+        .regex(new RegExp(`^\\d{${OTP_LENGTH}}$`), `Enter the ${OTP_LENGTH}-digit code`),
 });
 
-type PhoneValues = z.infer<typeof phoneSchema>;
+type CredentialsValues = z.infer<typeof credentialsSchema>;
 type CodeValues = z.infer<typeof codeSchema>;
 
 /**
- * Passwordless staff sign-in: phone number first, then the 6-digit code sent by SMS.
- * The phone number stays in component state only; it is never put in the URL.
+ * Staff sign-in (D-054): email and password first, then the 6-digit code emailed to them.
+ * The email stays in component state only; it is never put in the URL, and the password is not kept after step 1.
  */
 export function LoginPage() {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
-    const { requestCode, verifyCode } = useSignIn();
-    const [phone, setPhone] = useState<string | null>(null);
+    const { checkPassword, verifyCode } = useSignIn();
+    const [email, setEmail] = useState<string | null>(null);
 
-    const phoneForm = useForm<PhoneValues>({ resolver: zodResolver(phoneSchema), defaultValues: { phone: '' } });
-    const codeForm = useForm<CodeValues>({ resolver: zodResolver(codeSchema), defaultValues: { otp: '' } });
+    const credentialsForm = useForm<CredentialsValues>({
+        resolver: zodResolver(credentialsSchema),
+        defaultValues: { email: '', password: '' },
+    });
+    const codeForm = useForm<CodeValues>({ resolver: zodResolver(codeSchema), defaultValues: { code: '' } });
 
     if (user) {
         return <Navigate to={ROUTES.DASHBOARD} replace />;
     }
 
-    const sendCode = phoneForm.handleSubmit((values) => {
-        requestCode.mutate(values.phone, {
-            onSuccess: () => setPhone(values.phone),
-            onError: (error) => showFieldErrors(error, phoneForm.setError, ['phone']),
+    const sendCode = credentialsForm.handleSubmit((values) => {
+        checkPassword.mutate(values, {
+            onSuccess: () => {
+                setEmail(values.email);
+                credentialsForm.resetField('password');
+            },
+            onError: (error) => showFieldErrors(error, credentialsForm.setError, ['email', 'password']),
         });
     });
 
     const checkCode = codeForm.handleSubmit((values) => {
-        if (phone === null) {
+        if (email === null) {
             return;
         }
 
         verifyCode.mutate(
-            { phone, otp: values.otp },
+            { email, code: values.code },
             {
                 onSuccess: () => void navigate(ROUTES.DASHBOARD, { replace: true }),
-                onError: (error) => showFieldErrors(error, codeForm.setError, ['otp']),
+                onError: (error) => showFieldErrors(error, codeForm.setError, ['code']),
             },
         );
     });
 
-    const failure = (phone === null ? requestCode.error : verifyCode.error) as ApiError | null;
+    const changeAccount = () => {
+        verifyCode.reset();
+        codeForm.reset();
+        setEmail(null);
+    };
+
+    const failure = email === null ? checkPassword.error : verifyCode.error;
+    const failureMessage = plainErrorMessage(failure);
 
     return (
-        <main className="flex min-h-svh items-center justify-center p-4">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle>Sign in</CardTitle>
-                    <CardDescription>
-                        {phone === null ? 'Enter your phone number and we will text you a code.' : 'Enter the 6-digit code we sent you.'}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {phone === null ? (
-                        <form onSubmit={sendCode} noValidate className="flex flex-col gap-4">
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="phone">Phone number</Label>
-                                <Input
-                                    id="phone"
-                                    type="tel"
-                                    inputMode="tel"
-                                    autoComplete="tel"
-                                    placeholder="024 123 4567"
-                                    aria-required="true"
-                                    aria-invalid={phoneForm.formState.errors.phone ? true : undefined}
-                                    aria-describedby="phone-error"
-                                    {...phoneForm.register('phone')}
-                                />
-                                <FieldError id="phone-error" message={phoneForm.formState.errors.phone?.message} />
-                            </div>
-                            <ServerError error={failure} />
-                            <Button type="submit" disabled={requestCode.isPending}>
-                                {requestCode.isPending ? 'Sending…' : 'Send code'}
-                            </Button>
-                        </form>
-                    ) : (
-                        <form onSubmit={checkCode} noValidate className="flex flex-col gap-4">
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="otp">Code</Label>
-                                <Input
-                                    id="otp"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="one-time-code"
-                                    maxLength={6}
-                                    aria-required="true"
-                                    aria-invalid={codeForm.formState.errors.otp ? true : undefined}
-                                    aria-describedby="otp-error"
-                                    {...codeForm.register('otp')}
-                                />
-                                <FieldError id="otp-error" message={codeForm.formState.errors.otp?.message} />
-                            </div>
-                            <ServerError error={failure} />
-                            <Button type="submit" disabled={verifyCode.isPending}>
-                                {verifyCode.isPending ? 'Checking…' : 'Sign in'}
-                            </Button>
-                            <Button type="button" variant="ghost" onClick={() => setPhone(null)}>
-                                Use a different number
-                            </Button>
-                        </form>
-                    )}
-                </CardContent>
-            </Card>
-        </main>
+        <AuthCard
+            title="Sign in"
+            description={
+                email === null ? 'Enter your email and password.' : `We emailed a ${OTP_LENGTH}-digit code to ${email}. Enter it below.`
+            }
+        >
+            {email === null ? (
+                <form onSubmit={sendCode} noValidate className="flex flex-col gap-4">
+                    <TextField
+                        id="email"
+                        label="Email address"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="username"
+                        required
+                        error={credentialsForm.formState.errors.email?.message}
+                        {...credentialsForm.register('email')}
+                    />
+                    <PasswordField
+                        id="password"
+                        label="Password"
+                        autoComplete="current-password"
+                        required
+                        error={credentialsForm.formState.errors.password?.message}
+                        {...credentialsForm.register('password')}
+                    />
+                    {failureMessage !== null && <ErrorNotice message={failureMessage} />}
+                    <Button type="submit" disabled={checkPassword.isPending}>
+                        {checkPassword.isPending ? 'Checking…' : 'Continue'}
+                    </Button>
+                    <Button asChild variant="link">
+                        <Link to={ROUTES.FORGOT_PASSWORD}>Forgot your password?</Link>
+                    </Button>
+                    <Button asChild variant="link">
+                        <Link to={ROUTES.CHOOSE_PASSWORD}>Have an invitation code?</Link>
+                    </Button>
+                </form>
+            ) : (
+                <form onSubmit={checkCode} noValidate className="flex flex-col gap-4">
+                    <TextField
+                        id="code"
+                        label="Code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={OTP_LENGTH}
+                        required
+                        error={codeForm.formState.errors.code?.message}
+                        {...codeForm.register('code')}
+                    />
+                    {failureMessage !== null && <ErrorNotice message={failureMessage} />}
+                    <Button type="submit" disabled={verifyCode.isPending}>
+                        {verifyCode.isPending ? 'Checking…' : 'Sign in'}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={changeAccount}>
+                        Use a different account
+                    </Button>
+                </form>
+            )}
+        </AuthCard>
     );
-}
-
-function FieldError({ id, message }: { id: string; message: string | undefined }) {
-    return (
-        <p id={id} role="alert" className="min-h-4 text-sm text-destructive">
-            {message}
-        </p>
-    );
-}
-
-function ServerError({ error }: { error: ApiError | null }) {
-    if (error === null || Object.keys(error.fieldErrors).length > 0) {
-        return null;
-    }
-
-    return (
-        <p role="alert" className="text-sm text-destructive">
-            {error.message}
-        </p>
-    );
-}
-
-/**
- * Puts the server's validation messages next to the form fields they belong to.
- */
-function showFieldErrors<T extends FieldValues>(error: Error, setError: UseFormSetError<T>, fields: readonly Path<T>[]): void {
-    if (!(error instanceof ApiError)) {
-        return;
-    }
-
-    for (const field of fields) {
-        const message = error.fieldErrors[field]?.[0];
-
-        if (message !== undefined) {
-            setError(field, { message });
-        }
-    }
 }

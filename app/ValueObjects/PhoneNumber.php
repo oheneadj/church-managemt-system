@@ -12,6 +12,12 @@ use Stringable;
  */
 final readonly class PhoneNumber implements Stringable
 {
+    /** International form: a plus, a country digit 1-9, then 7 to 14 more digits. The one place this rule is written. */
+    public const E164_PATTERN = '/^\+[1-9]\d{7,14}$/';
+
+    /**
+     * Holds an already validated international number.
+     */
     private function __construct(public string $e164) {}
 
     /**
@@ -27,9 +33,12 @@ final readonly class PhoneNumber implements Stringable
             $digits = '+'.$digits;
         }
 
-        return preg_match('/^\+[1-9]\d{7,14}$/', $digits) === 1 ? new self($digits) : null;
+        return preg_match(self::E164_PATTERN, $digits) === 1 ? new self($digits) : null;
     }
 
+    /**
+     * The number in international form.
+     */
     public function __toString(): string
     {
         return $this->e164;

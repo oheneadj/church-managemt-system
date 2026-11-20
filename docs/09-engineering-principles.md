@@ -29,14 +29,17 @@ app/
 ├── Events/                # Domain events (ContributionReceived, MemberCheckedIn)
 ├── Exceptions/            # Custom exception classes + Handler overrides
 ├── Http/
-│   ├── Controllers/Api/   # One controller per resource, thin
+│   ├── Controllers/Api/   # Single-action controllers (__invoke), thin
 │   ├── Middleware/        # ResolveTenant, etc.
 │   ├── Requests/          # Form Request classes — all validation here
 │   └── Resources/         # API Resource classes — all serialisation here
 ├── Jobs/                  # Queued jobs (SendSmsJob, ProcessPaystackWebhookJob)
 ├── Listeners/             # Event listeners
 ├── Mail/                  # Mailable classes
+├── Actions/               # One class per user intent (CreateMemberAction)
+├── DTOs/                  # Typed input for one operation
 ├── Models/                # Eloquent models
+├── Repositories/          # Repository interfaces + Eloquent implementations
 ├── Notifications/         # Laravel Notifications (multi-channel)
 ├── Policies/              # Authorisation — one Policy per model
 ├── Services/              # Business logic classes (ContributionService, etc.)
@@ -46,23 +49,24 @@ app/
 
 ### Controller Rules
 
-Controllers are thin. A controller method does exactly four things in order:
+Controllers are thin and single-action. A controller does exactly three things, in this order:
 
-1. Authorise (`$this->authorize(...)`)
-2. Validate (via Form Request — already done before the method runs)
-3. Call a Service
-4. Return a Resource response
+1. Build a DTO from the Form Request (`CreateContributionDTO::fromRequest($request)`)
+2. Call one Action
+3. Return a Resource response
+
+Authorisation is not in the controller: the Form Request's `authorize()` asks a Policy (`return $this->user()->can('create', Contribution::class)`), so an unauthorised request is refused before any input is read.
 
 ```php
 // Good
-public function store(StoreContributionRequest $request): JsonResponse
+public function __invoke(StoreContributionRequest $request): JsonResponse
 {
-    $this->authorize('create', Contribution::class);
-    $contribution = $this->contributionService->record($request->validated());
+    $contribution = $this->action->execute(RecordContributionDTO::fromRequest($request));
+
     return ContributionResource::make($contribution)->response()->setStatusCode(201);
 }
 
-// Bad — business logic in the controller
+// Bad: business logic in the controller
 public function store(Request $request): JsonResponse
 {
     $data = $request->validate([...]);
@@ -72,18 +76,27 @@ public function store(Request $request): JsonResponse
 }
 ```
 
-### Service Classes
+### Actions, Services and Repositories
 
-All non-trivial business logic lives in a Service class. Services are plain PHP classes (no interface required until you have two implementations). They are injected via the constructor and resolved from the container.
+An **Action** is one user intent (`RecordContributionAction`): a `final` class with a single public `execute(DTO)` method. It owns `DB::transaction()` and fires the domain event. An Action is called from controllers, jobs and commands, and never from another Action.
+
+A **Service** holds rules that several Actions share. It never opens a transaction.
+
+A **Repository** holds every query for one model, behind an interface (`ContributionRepositoryInterface`, implemented by `EloquentContributionRepository` and bound in `RepositoryServiceProvider`). Actions and Services depend on the interface, so unit tests swap in a mock.
 
 ```php
-class ContributionService
+final class RecordContributionAction
 {
-    public function record(array $data): Contribution
+    public function __construct(private readonly ContributionRepositoryInterface $contributions) {}
+
+    public function execute(RecordContributionDTO $dto): Contribution
     {
-        $contribution = Contribution::create($data);
-        event(new ContributionReceived($contribution));
-        return $contribution;
+        return DB::transaction(function () use ($dto): Contribution {
+            $contribution = $this->contributions->create($dto->attributes());
+            ContributionReceived::dispatch($contribution);
+
+            return $contribution;
+        });
     }
 }
 ```
@@ -134,6 +147,8 @@ class MemberResource extends JsonResource
 
 ### React 19 (Frontend)
 
+The app lives in `resources/js` (D-022); the paths below are relative to it, and `ARCHITECTURE.md` has the current list.
+
 ```
 src/
 ├── assets/
@@ -157,6 +172,8 @@ src/
 **No direct `axios` calls in components.** All API calls go through a typed service in `src/services/`. Components call the service via a TanStack Query hook; the service calls axios.
 
 **TypeScript everywhere.** No `.jsx` files — all components are `.tsx`. All API response shapes have a type in `src/types/`. No `any`.
+
+**Backend enums are mirrored, never retyped.** Each PHP enum and the permission list has a mirror in `src/constants/enums.ts` and `src/constants/permissions.ts` (D-017, D-036). `FrontendEnumsTest` fails when a mirror drifts from its PHP enum, so a new enum value is added in PHP and the mirror in the same change.
 
 **Server state lives in TanStack Query, not Zustand.** Zustand holds UI and auth state only. Anything that comes from the API (members, contributions, services) is fetched and cached by TanStack Query hooks.
 
@@ -230,7 +247,8 @@ interface DisbursementProvider
     /** Pay $budgetGhs (the most we will spend, provider fee included) to the church's payout account. */
     public function disburse(PayoutAccount $account, string $budgetGhs, string $clientReference): DisbursementResult;
 
-    public function disbursementStatus(string $clientReference): DisbursementResult;
+    /** Poll a payout by the provider's own reference (PayPerlez reads payouts at GET /disbursements/{reference}). */
+    public function disbursementStatus(string $providerReference): DisbursementResult;
 
     /** Available balance as a decimal string; the payout job checks it (minimum GHS 1.00 must remain). */
     public function availableBalance(): string;
@@ -239,6 +257,8 @@ interface DisbursementProvider
     public function verifyAccount(PayoutAccount $account): string;
 }
 ```
+
+Built in D-069 step b1: the webhook methods (`verifyWebhook`, `extractReference`) are left off the interface for now and arrive with the webhook endpoints (step b3). `PAYMENT_MOMO_PROVIDER` chooses the driver; a name with no driver throws rather than falling back.
 
 `CollectionResult` and `DisbursementResult` are immutable value objects: provider reference, a normalised status enum (`pending`, `succeeded`, `failed`, `unknown`; anything unrecognised maps to `unknown` and is polled, never assumed), the provider fee as a decimal string or null, and the amount delivered. Provider-specific response shapes and error codes never leave the adapter.
 

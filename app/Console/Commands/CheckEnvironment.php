@@ -18,12 +18,19 @@ class CheckEnvironment extends Command
 
     protected $description = 'Fail loudly if required production settings are missing or unsafe';
 
+    /**
+     * Runs the environment check and fails the command when a required setting is missing or unsafe.
+     */
     public function handle(Repository $config): int
     {
         $problems = EnvironmentCheck::problems($config);
 
         foreach ($problems as $problem) {
             $this->error($problem);
+        }
+
+        foreach (EnvironmentCheck::warnings($config) as $warning) {
+            $this->warn($warning);
         }
 
         if ($problems === []) {

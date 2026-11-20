@@ -50,4 +50,13 @@ enum EducationalLevel: string
             self::Graduate => 'Graduate',
         };
     }
+
+    /**
+     * Whether this level counts as youth for the youth pastor's view of the directory (D-031):
+     * everything from creche to tertiary. Graduates are adults.
+     */
+    public function isYouth(): bool
+    {
+        return $this !== self::Graduate;
+    }
 }

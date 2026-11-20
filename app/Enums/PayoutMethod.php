@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 /**
- * The allowed payout method values, stored as a plain string column (D-017).
+ * Where a church's automatic payouts are sent (D-018, `churches.payout_method`): a mobile money wallet or a bank account.
  */
 enum PayoutMethod: string
 {
@@ -18,8 +18,8 @@ enum PayoutMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Momo => 'Mobile Money',
-            self::Bank => 'Bank',
+            self::Momo => 'Mobile money',
+            self::Bank => 'Bank account',
         };
     }
 }

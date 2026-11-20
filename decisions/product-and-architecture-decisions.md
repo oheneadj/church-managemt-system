@@ -54,6 +54,7 @@ When a church or denomination asks for a "standalone" or "self-hosted" version, 
 | Components | shadcn/ui (Radix UI primitives) | Accessible, owned in codebase, fully customisable |
 | Auth (staff) | Laravel Sanctum + Spatie Permission | Token-based SPA auth + granular roles |
 | Auth (members) | OTP via SMS/WhatsApp — no passwords | Members shouldn't need to remember passwords |
+| Auth (staff) | Email + password + a code emailed to them (D-054) | The Universal agreement requires email + password for staff; the emailed code is the owner's second step |
 | Payments | Paystack / PayPerlez / Moolre (provider abstraction) | See Decision 11 |
 | SMS | PayPerlez / Africa's Talking / Moolre (provider abstraction) | See Decision 11 |
 | WhatsApp | Meta Business API | CHECKIN command, broadcasts, automated reports |
