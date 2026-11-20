@@ -147,7 +147,7 @@ CLOUDFLARE_R2_BACKUP_BUCKET=chms-backups
 Only on `web` (it serves browsers and receives webhooks):
 
 ```env
-TENANCY_BASE_DOMAIN=yourapp.com
+TENANT_BASE_DOMAIN=yourapp.com                 # also VITE_TENANT_BASE_DOMAIN as a Docker build argument (D-074)
 SESSION_DRIVER=redis
 SESSION_DOMAIN=                    # leave empty: cookies stay host-only per church (D-027)
 SESSION_SECURE_COOKIE=true

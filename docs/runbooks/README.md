@@ -13,6 +13,7 @@ Commands are run from the application folder on the server (in Coolify: the appl
 | [WhatsApp down](whatsapp-provider-down.md) | Members get no answer to CHECKIN, Meta cannot reach the webhook, or the circuit opened |
 | [Payment provider errors](payment-provider-errors.md) | Giving fails or confirmations stop (from Sprint 4) |
 | [Disk space critical](disk-space-critical.md) | The disk alert fires |
+| [First staging (test) deploy](first-staging-deploy.md) | You are standing up the test site on Coolify for the first time |
 | [Deployment rollback](deployment-rollback.md) | A deploy made things worse |
 | [Data breach first response](data-breach-first-response.md) | Anyone may have seen or taken data they should not |
 | [Restore from backup](restore-from-backup.md) | Data is lost or damaged |

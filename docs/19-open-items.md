@@ -53,7 +53,7 @@ Decisions live in `13-decision-log.md`; risks and product questions live in `12-
 | # | Gap | Source |
 |---|---|---|
 | D1 | No general feature-flag system; each risky feature (broadcasts, payments) needs its own off switch like `sms:pause` | D-043 |
-| D2 | The runbooks and the full database restore have not been rehearsed (no staging yet); Coolify rollback untried | D-043 |
+| D2 | The runbooks and the full database restore have not been rehearsed (the staging site is being stood up now: `docs/runbooks/first-staging-deploy.md`, D-074); Coolify rollback untried | D-043 |
 | D3 | The React app is not instrumented for error reporting; CSP violation reporting (`report-to`) is not set up | D-040, D-056 |
 | D4 | The credit-low email to the church admin, the read-only grace period and "your data will be deleted on…" notice | D-051, D-042 (with billing, Sprint 5) |
 | D5 | Church-wide CSV exports, the 90-day purge notice and the self-service cancel button | D-039, D-042 |
