@@ -19,6 +19,22 @@ RUN npm ci
 COPY vite.config.ts tsconfig.json ./
 COPY resources ./resources
 COPY public ./public
+
+# Vite reads these when it builds, so they are baked into the app and must be given as build arguments (Coolify: set each
+# as an environment variable and tick "Build Variable"). VITE_TENANT_BASE_DOMAIN is how the browser knows it is on the
+# platform's own address (sign-up and the platform admin screens) and not on a church's. It must equal TENANT_BASE_DOMAIN.
+# The build stops here when it is missing, because an app that misreads its own address would only fail in the browser.
+ARG VITE_TENANT_BASE_DOMAIN
+ARG VITE_APP_NAME=CHMS
+ARG VITE_SENTRY_DSN=
+ARG VITE_SENTRY_ENVIRONMENT=
+ARG VITE_SENTRY_RELEASE=
+ENV VITE_TENANT_BASE_DOMAIN=${VITE_TENANT_BASE_DOMAIN} \
+    VITE_APP_NAME=${VITE_APP_NAME} \
+    VITE_SENTRY_DSN=${VITE_SENTRY_DSN} \
+    VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT} \
+    VITE_SENTRY_RELEASE=${VITE_SENTRY_RELEASE}
+RUN test -n "${VITE_TENANT_BASE_DOMAIN}" || { echo "Build argument VITE_TENANT_BASE_DOMAIN is not set." >&2; exit 1; }
 RUN npm run build
 
 # --- 2. PHP dependencies and the optimised autoloader ----------------------------------------------------

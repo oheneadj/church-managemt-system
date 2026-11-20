@@ -157,6 +157,8 @@ jobs:
           load: true
           push: false
           tags: chms:ci
+          # The build needs the platform domain; this one is only for the check, so any real-looking domain will do.
+          build-args: VITE_TENANT_BASE_DOMAIN=ci.example.test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
