@@ -129,3 +129,60 @@ it('never prints a mail secret in its messages', function (): void {
 
     expect(implode(' ', $problems))->not->toContain('re_secret');
 });
+
+describe('a staging (test) environment', function (): void {
+    /** The four settings a test site may legitimately lack: WhatsApp, the error monitor and the backup key. */
+    function stagingWithoutOptionalIntegrations(array $overrides = []): Repository
+    {
+        return goodConfig(array_replace_recursive([
+            'app' => ['env' => 'staging'],
+            'services' => ['whatsapp' => ['driver' => 'log'], 'meta' => ['verify_token' => '', 'app_secret' => '']],
+            'sentry' => ['dsn' => ''],
+            'backup' => ['gpg_recipient' => ''],
+        ], $overrides));
+    }
+
+    it('starts without WhatsApp, an error monitor or a backup key, and says plainly what is missing', function (): void {
+        $config = stagingWithoutOptionalIntegrations();
+
+        expect(EnvironmentCheck::problems($config))->toBe([])
+            ->and(EnvironmentCheck::warnings($config))->toBe([
+                'WHATSAPP_DRIVER must not be "log" outside development.',
+                'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.',
+                'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.',
+                'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.',
+            ]);
+    });
+
+    it('is as strict as production about everything else', function (): void {
+        $problems = EnvironmentCheck::problems(stagingWithoutOptionalIntegrations([
+            'app' => ['debug' => true, 'url' => 'http://staging.example.com'],
+            'tenancy' => ['base_domain' => 'localhost'],
+            'session' => ['domain' => '.example.com', 'secure' => false],
+            'trustedproxy' => ['proxies' => ['*']],
+            'services' => ['sms' => ['primary' => 'log']],
+            'filesystems' => ['default' => 'local'],
+            'mail' => ['default' => 'log'],
+        ]));
+
+        expect($problems)->toContain('APP_DEBUG must be false.')
+            ->toContain('APP_URL must start with https://.')
+            ->toContain('TENANT_BASE_DOMAIN must be set to the real platform domain.')
+            ->toContain('SMS_PRIMARY_PROVIDER must not be "log" outside development.')
+            ->toContain('FILESYSTEM_DISK must be an object-storage disk (r2), not "local".')
+            ->toContain('MAIL_MAILER must not be "log" or "array" outside development.')
+            ->toContain('SESSION_DOMAIN must be empty, so session cookies stay on one church subdomain.');
+    });
+
+    it('still refuses a WhatsApp driver that is switched on but has no token', function (): void {
+        $problems = EnvironmentCheck::problems(stagingWithoutOptionalIntegrations(['services' => ['whatsapp' => ['driver' => 'meta'], 'meta' => ['access_token' => '']]]));
+
+        expect($problems)->toBe(['META_ACCESS_TOKEN and META_PHONE_NUMBER_ID must be set when WHATSAPP_DRIVER is "meta".']);
+    });
+
+    it('lets production keep treating those four settings as failures, with no warnings', function (): void {
+        $config = goodConfig(['app' => ['env' => 'production'], 'sentry' => ['dsn' => ''], 'backup' => ['gpg_recipient' => '']]);
+
+        expect(EnvironmentCheck::problems($config))->toHaveCount(2)->and(EnvironmentCheck::warnings($config))->toBe([]);
+    });
+});

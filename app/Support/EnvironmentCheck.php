@@ -24,13 +24,36 @@ final class EnvironmentCheck
     ];
 
     /**
-     * Lists what is wrong with the environment, or nothing when it is safe to run.
+     * Lists what is wrong with the environment, or nothing when it is safe to run. These stop the container from starting.
      *
      * @return list<string>
      */
     public static function problems(Repository $config): array
     {
+        return self::evaluate($config)['problems'];
+    }
+
+    /**
+     * Lists what a test (staging) environment is missing but may start without: WhatsApp, the error monitor and the backup key.
+     * In production the same settings are problems, so this is always empty there. A warning never stops the container.
+     *
+     * @return list<string>
+     */
+    public static function warnings(Repository $config): array
+    {
+        return self::evaluate($config)['warnings'];
+    }
+
+    /**
+     * Checks everything once. The settings in `$optional` are warnings in a staging environment and problems anywhere else, so
+     * a test site can be stood up without every integration while production stays exactly as strict as before.
+     *
+     * @return array{problems: list<string>, warnings: list<string>}
+     */
+    private static function evaluate(Repository $config): array
+    {
         $problems = [];
+        $optional = [];
 
         foreach (self::REQUIRED as $key => $variable) {
             if (blank($config->get($key))) {
@@ -73,7 +96,7 @@ final class EnvironmentCheck
         }
 
         if ($config->get('services.whatsapp.driver') === 'log') {
-            $problems[] = 'WHATSAPP_DRIVER must not be "log" outside development.';
+            $optional[] = 'WHATSAPP_DRIVER must not be "log" outside development.';
         }
 
         if ($config->get('services.whatsapp.driver') === 'meta' && (blank($config->get('services.meta.access_token')) || blank($config->get('services.meta.phone_number_id')))) {
@@ -81,7 +104,7 @@ final class EnvironmentCheck
         }
 
         if (blank($config->get('services.meta.verify_token')) || blank($config->get('services.meta.app_secret'))) {
-            $problems[] = 'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.';
+            $optional[] = 'META_VERIFY_TOKEN and META_APP_SECRET must be set, so WhatsApp webhooks can be verified.';
         }
 
         if (in_array($config->get('mail.default'), ['log', 'array'], true)) {
@@ -97,17 +120,19 @@ final class EnvironmentCheck
         }
 
         if (blank($config->get('backup.gpg_recipient'))) {
-            $problems[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
+            $optional[] = 'BACKUP_GPG_RECIPIENT must be set, so the daily database backup can be encrypted.';
         }
 
         if (blank($config->get('sentry.dsn'))) {
-            $problems[] = 'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.';
+            $optional[] = 'SENTRY_LARAVEL_DSN must be set, so errors reach the error monitor.';
         }
 
         if ($config->get('filesystems.default') === 'local') {
             $problems[] = 'FILESYSTEM_DISK must be an object-storage disk (r2), not "local".';
         }
 
-        return $problems;
+        $staging = $config->get('app.env') === 'staging';
+
+        return $staging ? ['problems' => $problems, 'warnings' => $optional] : ['problems' => [...$problems, ...$optional], 'warnings' => []];
     }
 }

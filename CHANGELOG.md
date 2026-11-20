@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### feat(deploy): a staging (test) profile for the start check, D-074 (2026-11-20)
+- **What:** `php artisan env:check`, which every container runs before it starts, now knows a `staging` environment. It is exactly as strict as production except for four settings a test site may lack (the WhatsApp driver, the WhatsApp webhook secrets, the error monitor DSN and the backup key): those become warnings it prints, and the container still starts. A WhatsApp driver that is switched on without its token is still a failure, and real email, a real SMS provider, object storage, HTTPS, secure cookies, the proxy list, the empty session domain and the platform domain all stay hard requirements. In production nothing changes. Decision D-074 records this.
+- **Why:** The check was written for production alone, so a first test deploy would have refused to start until a WhatsApp account, a Sentry project and a backup key existed. Relaxing only those four keeps the test site honest about everything that affects safety or sign-in.
+- **Files:** app/Support/EnvironmentCheck.php, app/Console/Commands/CheckEnvironment.php, tests/Feature/Operations/EnvironmentCheckTest.php, docs/13-decision-log.md (D-074), CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### fix(deploy): the Docker build now receives the platform domain (2026-11-20)
 - **What:** The front-end stage of `deploy/Dockerfile` now takes build arguments (`VITE_TENANT_BASE_DOMAIN`, `VITE_APP_NAME`, `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT`, `VITE_SENTRY_RELEASE`) and stops with a clear message when `VITE_TENANT_BASE_DOMAIN` is missing. CI passes a placeholder domain so its image build still passes.
 - **Why:** The app decides whether it is on the platform's own address (sign-up, the platform admin screens) or a church's from `VITE_TENANT_BASE_DOMAIN`, and Vite bakes that into the bundle when it builds. The Dockerfile passed nothing, so a deployed build would have mistaken every address for a church's and the platform side would never have worked. Checked by building with and without the variable: the domain appears in the bundle only when given.

@@ -1360,6 +1360,24 @@ Collections are resolved by payment method (`PAYMENT_MOMO_PROVIDER`, `PAYMENT_CA
 
 ---
 
+### D-074 — A staging (test) environment: what is relaxed, and its demo data
+**Date:** November 2026
+**Decided by:** Product Owner (asked for a test environment on Coolify), Lead Engineer (the rest)
+**Status:** Active. Built: the start check and the seeding. The first deploy is in `docs/runbooks/first-staging-deploy.md`.
+
+**Decision:**
+1. **A test site runs the production image with `APP_ENV=staging`,** on its own domain, database, Redis and storage bucket (docs/16). It is not a development machine: debug is off, the address is HTTPS, cookies are secure and the proxies are listed, exactly as in production.
+2. **The container's start check (`env:check`) is as strict as production, except for four settings a test site may legitimately lack,** which become warnings it prints and starts with: WhatsApp (the driver and its webhook secrets), the error monitor (`SENTRY_LARAVEL_DSN`) and the backup key (`BACKUP_GPG_RECIPIENT`). A WhatsApp driver that is switched on without its token is still a failure. Real email, a real SMS provider, object storage (the worker builds exports and the web app serves them, so they must share a bucket), the platform domain and HTTPS stay hard requirements. In production nothing is relaxed.
+3. **Demo data on a test site is explicit.** The seeder makes a demo church (`demo`), its church admin and a platform admin on `local` and `staging`, never in production. In local development the defaults in `config/demo.php` still apply. On staging there are **no defaults**: a guessable password on a public site is a hole, and the sign-in code is emailed, so each address must be a real inbox. The demo church needs `DEMO_ADMIN_EMAIL` and `DEMO_ADMIN_PASSWORD`; the platform admin needs `DEMO_PLATFORM_ADMIN_EMAIL` and `DEMO_PLATFORM_ADMIN_PASSWORD`; without both of a pair, that account is not made. The seeder runs on every deploy and only refreshes what it made, so a password changed on the test site is reset by the next deploy.
+4. **The Docker build needs the platform domain** (`VITE_TENANT_BASE_DOMAIN`, a build argument, which must equal `TENANT_BASE_DOMAIN`), because the browser app bakes it in. The build stops when it is missing.
+5. **No real people's data on a test site** (docs/16): demo and test data only.
+
+**Rationale:** A test site is only useful if it behaves like production, so the safety settings are not relaxed, only the integrations that need accounts a team may not have yet. Making demo sign-ins explicit means a deployed site never has a password nobody chose.
+
+**Revisit when:** a second test site is needed, or WhatsApp, the error monitor and the backup key are ready (then remove their warnings by setting them).
+
+---
+
 ## Deferred Decisions
 
 Decisions that were intentionally not made yet, and when they need to be made.

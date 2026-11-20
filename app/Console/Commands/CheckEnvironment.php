@@ -29,6 +29,10 @@ class CheckEnvironment extends Command
             $this->error($problem);
         }
 
+        foreach (EnvironmentCheck::warnings($config) as $warning) {
+            $this->warn($warning);
+        }
+
         if ($problems === []) {
             $this->info('Environment looks good.');
         }
