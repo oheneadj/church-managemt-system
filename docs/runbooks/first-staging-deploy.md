@@ -78,7 +78,7 @@ In the **Domains** field of `chms-web` enter both addresses, separated by a comm
 https://test.example.com,https://demo.test.example.com
 ```
 
-Coolify gets a certificate for each by itself. This is the certain way to start. A single wildcard (`*.test.example.com`) so that every new church works at once needs a wildcard certificate by DNS challenge and is **not documented by Coolify**: leave it until this deploy works, then try it as the last step (docs/16, Wildcard routing).
+Coolify gets a certificate for each by itself. This is the certain way to start. Churches other than `demo` need the **wildcard certificate** and routing, which you add once the site is healthy: see "Wildcard routing and SSL" in docs/16 (proven on staging with Hostinger DNS; it needs a DNS provider Lego supports, the proxy's second `letsencrypt-dns` resolver, and the manual tenant labels on `chms-web`).
 
 ## 6. Environment variables (all three applications)
 

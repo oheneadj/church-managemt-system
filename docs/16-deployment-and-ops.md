@@ -166,10 +166,14 @@ The worker also needs the provider keys it calls (SMS, WhatsApp, Paystack, mail)
 
 Churches live on `<slug>.yourapp.com`, so the `web` app must answer every subdomain, with a wildcard certificate.
 
-1. In Cloudflare, add `A` records for `yourapp.com` and `*.yourapp.com` pointing at the server.
-2. A wildcard certificate needs the Let's Encrypt **DNS challenge**. Configure Traefik (Coolify's proxy) with the Cloudflare DNS provider and a scoped API token, following Coolify's wildcard certificate documentation.
-3. Coolify documents editing container labels with a `HostRegexp` rule. Use that for the `web` app so one router matches `yourapp.com` and every subdomain. A wildcard in the Domains field is **not documented**; verify it on staging before relying on it.
-4. Unknown subdomains are answered by the app with a 404 (`ResolveTenant`).
+Proven on the first staging deploy (nxgmachines.com, Hostinger DNS, Traefik v3.7.16 in Coolify v4.7.6):
+
+1. In the DNS provider add `A` records for `@` and `*` pointing at the server.
+2. A wildcard certificate needs the Let's Encrypt **DNS challenge**. Any DNS provider supported by Lego works (Cloudflare, Hostinger, Hetzner and others), not only Cloudflare. In **Servers, Proxy, Configuration** add the provider's token under `environment:` and a **second** resolver, `letsencrypt-dns` (flags `acme.dnschallenge=true`, `acme.dnschallenge.provider=<lego code>`, `acme.storage=/traefik/acme-dns.json`). It is a second resolver so other sites on the same Coolify server keep the HTTP challenge on `letsencrypt`; Coolify's own guide changes the shared one. Then **Restart Proxy**, which interrupts every site on the server for a few seconds.
+3. **Hostinger needs patience.** Its nameservers are slow to show the TXT record, and the default 60 seconds failed ("time limit exceeded"). Setting `HOSTINGER_PROPAGATION_TIMEOUT=600` and `HOSTINGER_POLLING_INTERVAL=10` made it succeed. Do not restart the proxy repeatedly while waiting: Let's Encrypt allows about five failures an hour.
+4. In **Proxy, Dynamic Configurations** add a file (`wildcard-<domain>.yaml`) with a priority-1 router for `HostRegexp` of the domain, `certResolver: letsencrypt-dns` and `tls.domains` main plus the `*.` SAN, pointing at an empty placeholder service. It only requests the certificate.
+5. On `chms-web` set **Label management** to manual and add Coolify's tenant labels (`HostRegexp` routers for http and https, `tls.certresolver=letsencrypt-dns`, service port 8080). The explicit Domains field stays for the root and `demo`. "Reset To Defaults" restores the generated labels.
+6. Unknown subdomains are answered by the app (`ResolveTenant`). Before step 5 they show Traefik's "no available server" from the placeholder.
 
 ### Scheduled tasks
 
@@ -195,11 +199,11 @@ Every worker uses `--max-time=3600` so it recycles hourly, and `stopwaitsecs=120
 These were read from documentation but not yet proven, because no Docker build has run yet:
 
 - The image builds on the ARM server (CI builds amd64 only).
-- `*.yourapp.com` routes to `chms-web` using the label approach above.
+- ~~`*.yourapp.com` routes to `chms-web` using the label approach above.~~ Proven on staging (see Wildcard routing and SSL).
 - Coolify accepts `chms-worker` and `chms-scheduler` with no domain and no port.
 - Coolify's stop timeout is at least the Supervisor `stopwaitsecs` (120s), so a stopping worker is not killed mid-job.
-- The base image's entrypoint runs cleanly with our `CMD`.
-- The 120s health `start-period` covers the first migration.
+- ~~The base image's entrypoint runs cleanly with our `CMD`.~~ It did not at first (the nginx config was never built); fixed in `deploy/bin/start`, proven on staging.
+- ~~The 120s health `start-period` covers the first migration.~~ Proven on staging (healthy after the first start-period).
 - Staging sign-in needs a real SMS adapter, which is not written yet.
 
 ---
