@@ -32,7 +32,11 @@ case "$role" in
         # Cache config, routes, views and events from the environment this container actually has.
         php artisan optimize
 
-        exec /init
+        # Hand over to the base image's own entrypoint with "/init" as the command. The base image builds its nginx
+        # config at start-up (script 10-init-webserver-config), but only when the command it is given is "/init",
+        # "php-fpm" or "frankenphp". This container's own command is this script, so that step was skipped on the first
+        # entry and nginx found no /etc/nginx/nginx.conf. Running the entrypoint again with "/init" builds it.
+        exec docker-php-serversideup-entrypoint /init
         ;;
     worker)
         exec supervisord --nodaemon --configuration /etc/supervisor/supervisord.conf
