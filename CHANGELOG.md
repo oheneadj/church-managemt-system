@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** `tests/TestCase.php` points Vite at a private dev-server marker file in the system temp folder before every test. A test that needs another state still sets its own with `Vite::useHotFile()`.
 - **Why:** CI's backend job failed 3 tests (a church sign-up page, the security headers page and the app shell) with "Vite manifest not found": they render the app's HTML page, which needs either a built front end or a dev-server marker. The backend job builds neither. On a developer machine the dev server and a build were both present, so the tests passed, which hid it. Checked by hiding `public/hot` and `public/build` here: without the change the same 3 tests fail (58 of 61 pass), with it all 61 pass. The full suite (2,293 tests), PHPStan and Pint pass.
 - **Files:** tests/TestCase.php, CHANGELOG.md
-- **Commit:** (added after committing)
+- **Commit:** `1ebbdb8` (2026-11-23)
 
 #### fix(ci): Vitest can start in CI (2026-11-23)
 - **What:** The "Tests (Vitest)" step in `.github/workflows/ci.yml` sets `LARAVEL_BYPASS_ENV_CHECK=1`. The production build step keeps the check.
