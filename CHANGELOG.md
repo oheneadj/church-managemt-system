@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** The "Tests (Vitest)" step in `.github/workflows/ci.yml` sets `LARAVEL_BYPASS_ENV_CHECK=1`. The production build step keeps the check.
 - **Why:** The Frontend job failed at Vitest on every run ("You should not run the Vite HMR server in CI environments"): Vitest loads `vite.config.ts`, and the Laravel Vite plugin refuses to start in CI. Reproduced here with `CI=true`: it crashes without the flag and runs with it (130 test files, 1,168 tests pass). The failure also hid the steps after it, so the frontend job has never been fully green in CI.
 - **Files:** .github/workflows/ci.yml, CHANGELOG.md
-- **Commit:** (added after committing)
+- **Commit:** `04962c6` (2026-11-23)
 
 #### fix(deps): Laravel 13.43 for the security advisory, and a test helper that survives it (2026-11-23)
 - **What:** `laravel/framework` goes from 13.39.0 to 13.43.0 (with the packages Composer moved alongside it, in `composer.lock`). The test helper `withoutDatabaseTransactions()` in `tests/Pest.php` now makes a partial mock of the database, so only `transaction` is faked and every other method is real.
