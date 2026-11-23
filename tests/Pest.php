@@ -81,10 +81,14 @@ function unitLink(string $departmentId = '01deptunit'): MemberDepartment
     ]);
 }
 
-/** Runs DB::transaction callbacks straight through, so an Action can be tested without a database. */
+/**
+ * Runs DB::transaction callbacks straight through, so an Action can be tested without a database.
+ * A partial mock, so every other database method still works: Laravel's own test teardown calls getConnections() on the
+ * database manager, and a plain mock would reject that.
+ */
 function withoutDatabaseTransactions(): void
 {
-    DB::shouldReceive('transaction')->andReturnUsing(fn (Closure $callback) => $callback());
+    DB::partialMock()->shouldReceive('transaction')->andReturnUsing(fn (Closure $callback) => $callback());
 }
 
 /*

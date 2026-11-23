@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### fix(deps): Laravel 13.43 for the security advisory, and a test helper that survives it (2026-11-23)
+- **What:** `laravel/framework` goes from 13.39.0 to 13.43.0 (with the packages Composer moved alongside it, in `composer.lock`). The test helper `withoutDatabaseTransactions()` in `tests/Pest.php` now makes a partial mock of the database, so only `transaction` is faked and every other method is real.
+- **Why:** CI's `composer audit` failed on a new low-severity advisory (CVE-2026-128083, "Task Output Injection - Concurrency Process", affects 13.0.0 to below 13.40.0), and a failing audit blocks the automatic staging deploy. The new framework's test teardown calls `getConnections()` on the database manager, which the old helper's bare mock rejected, so 22 unit tests went "risky"; the partial mock keeps the real method. Checked: the full backend suite passes (2,293 tests), PHPStan and Pint are clean, `composer audit` reports no advisories, and the committed OpenAPI spec is unchanged.
+- **Files:** composer.lock, tests/Pest.php, CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### docs(deploy): the wildcard certificate and routing, proven on staging (2026-11-23)
 - **What:** `docs/16` now describes the wildcard setup that worked on the first staging deploy: the DNS-challenge resolver added beside Coolify's own (so other sites on the same server are untouched), Hostinger's longer propagation wait (`HOSTINGER_PROPAGATION_TIMEOUT=600`; the default 60 seconds failed), the dynamic file that requests the certificate and the manual tenant labels on `chms-web`. Three "verify on the first staging deploy" items were struck through as proven. The runbook points to it instead of calling the wildcard untried.
 - **Why:** New churches get their own `<slug>.nxgmachines.com` address with no per-church work, which only works with a wildcard certificate and a catch-all route. It was set up by hand in Coolify, so the knowledge lives only in the docs.
