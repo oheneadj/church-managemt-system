@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### fix(tests): page tests no longer depend on what is built or running locally (2026-11-23)
+- **What:** `tests/TestCase.php` points Vite at a private dev-server marker file in the system temp folder before every test. A test that needs another state still sets its own with `Vite::useHotFile()`.
+- **Why:** CI's backend job failed 3 tests (a church sign-up page, the security headers page and the app shell) with "Vite manifest not found": they render the app's HTML page, which needs either a built front end or a dev-server marker. The backend job builds neither. On a developer machine the dev server and a build were both present, so the tests passed, which hid it. Checked by hiding `public/hot` and `public/build` here: without the change the same 3 tests fail (58 of 61 pass), with it all 61 pass. The full suite (2,293 tests), PHPStan and Pint pass.
+- **Files:** tests/TestCase.php, CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### fix(ci): Vitest can start in CI (2026-11-23)
 - **What:** The "Tests (Vitest)" step in `.github/workflows/ci.yml` sets `LARAVEL_BYPASS_ENV_CHECK=1`. The production build step keeps the check.
 - **Why:** The Frontend job failed at Vitest on every run ("You should not run the Vite HMR server in CI environments"): Vitest loads `vite.config.ts`, and the Laravel Vite plugin refuses to start in CI. Reproduced here with `CI=true`: it crashes without the flag and runs with it (130 test files, 1,168 tests pass). The failure also hid the steps after it, so the frontend job has never been fully green in CI.
