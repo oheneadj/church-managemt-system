@@ -121,8 +121,12 @@ jobs:
       - name: Lint and formatting
         run: npm run lint:check
 
+      # Vitest loads vite.config.ts, and the Laravel Vite plugin refuses to start its dev server when it sees CI. Tests never
+      # serve assets, so the check is switched off for this step only; the production build below keeps it on.
       - name: Tests (Vitest)
         run: npm test
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: '1'
 
       - name: Production build
         run: npm run build

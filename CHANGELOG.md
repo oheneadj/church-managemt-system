@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### fix(ci): Vitest can start in CI (2026-11-23)
+- **What:** The "Tests (Vitest)" step in `.github/workflows/ci.yml` sets `LARAVEL_BYPASS_ENV_CHECK=1`. The production build step keeps the check.
+- **Why:** The Frontend job failed at Vitest on every run ("You should not run the Vite HMR server in CI environments"): Vitest loads `vite.config.ts`, and the Laravel Vite plugin refuses to start in CI. Reproduced here with `CI=true`: it crashes without the flag and runs with it (130 test files, 1,168 tests pass). The failure also hid the steps after it, so the frontend job has never been fully green in CI.
+- **Files:** .github/workflows/ci.yml, CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### fix(deps): Laravel 13.43 for the security advisory, and a test helper that survives it (2026-11-23)
 - **What:** `laravel/framework` goes from 13.39.0 to 13.43.0 (with the packages Composer moved alongside it, in `composer.lock`). The test helper `withoutDatabaseTransactions()` in `tests/Pest.php` now makes a partial mock of the database, so only `transaction` is faked and every other method is real.
 - **Why:** CI's `composer audit` failed on a new low-severity advisory (CVE-2026-128083, "Task Output Injection - Concurrency Process", affects 13.0.0 to below 13.40.0), and a failing audit blocks the automatic staging deploy. The new framework's test teardown calls `getConnections()` on the database manager, which the old helper's bare mock rejected, so 22 unit tests went "risky"; the partial mock keeps the real method. Checked: the full backend suite passes (2,293 tests), PHPStan and Pint are clean, `composer audit` reports no advisories, and the committed OpenAPI spec is unchanged.
