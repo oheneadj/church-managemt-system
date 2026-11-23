@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** `docs/runbooks/first-staging-deploy.md` now says: storage is required because the health check writes to it; the branch is set under Git Source after the application exists; the port is set under Edit Networking (Coolify guesses 3000); the worker and scheduler are made by cloning, with the Domains field cleared; `REDIS_USERNAME=default`; the database host is the resource's internal ID; the email from-address must be on a domain verified in Resend (a subdomain is a separate domain). A short list of the mistakes made on the first deploy was added.
 - **Why:** The first deploy on Coolify found each of these. The runbook is the document the next deploy follows, and the first version was written without having run it.
 - **Files:** docs/runbooks/first-staging-deploy.md, CHANGELOG.md
-- **Commit:** (added after committing)
+- **Commit:** `34cc61a` (2026-11-23)
 
 #### fix(deploy): the web container builds its nginx config before starting (2026-11-23)
 - **What:** `deploy/bin/start` now ends the web role with `exec docker-php-serversideup-entrypoint /init` instead of `exec /init`.
