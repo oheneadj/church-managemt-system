@@ -19,7 +19,7 @@ Every commit is listed here with **what** was done, **why**, **which files** it 
 - **What:** `docs/16` now describes the wildcard setup that worked on the first staging deploy: the DNS-challenge resolver added beside Coolify's own (so other sites on the same server are untouched), Hostinger's longer propagation wait (`HOSTINGER_PROPAGATION_TIMEOUT=600`; the default 60 seconds failed), the dynamic file that requests the certificate and the manual tenant labels on `chms-web`. Three "verify on the first staging deploy" items were struck through as proven. The runbook points to it instead of calling the wildcard untried.
 - **Why:** New churches get their own `<slug>.nxgmachines.com` address with no per-church work, which only works with a wildcard certificate and a catch-all route. It was set up by hand in Coolify, so the knowledge lives only in the docs.
 - **Files:** docs/16-deployment-and-ops.md, docs/runbooks/first-staging-deploy.md, CHANGELOG.md
-- **Commit:** (added after committing)
+- **Commit:** `e7c310d` (2026-11-23)
 
 #### docs(deploy): the staging runbook, corrected from the first real deploy (2026-11-23)
 - **What:** `docs/runbooks/first-staging-deploy.md` now says: storage is required because the health check writes to it; the branch is set under Git Source after the application exists; the port is set under Edit Networking (Coolify guesses 3000); the worker and scheduler are made by cloning, with the Domains field cleared; `REDIS_USERNAME=default`; the database host is the resource's internal ID; the email from-address must be on a domain verified in Resend (a subdomain is a separate domain). A short list of the mistakes made on the first deploy was added.
