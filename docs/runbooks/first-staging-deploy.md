@@ -17,6 +17,8 @@ Throughout, `test.example.com` stands for the domain you choose. Replace it ever
 
 Not needed yet (the site starts with a warning for each): WhatsApp (Meta), an error monitor (Sentry) and a database backup key.
 
+**Storage is not optional.** `GET /api/health` writes a test file to the storage bucket, so a web container with no working bucket never becomes healthy and Coolify rolls it back. Have the R2 bucket and token ready before the first deploy.
+
 ## 1. Choose the names and set DNS
 
 - **Platform address:** `test.example.com` (sign-up page and the platform admin side at `/admin`).
@@ -48,14 +50,14 @@ Create each one from the same Git repository and branch, with the **Dockerfile**
 
 | Setting | `chms-web` | `chms-worker` | `chms-scheduler` |
 |---|---|---|---|
-| Branch | `staging` (or the branch you are testing) | same | same |
+| Branch (set in **Git Source** after the application is created; the first screen cannot change it) | `staging` | same | same |
 | Base Directory | `/` | `/` | `/` |
 | Dockerfile Location | `/deploy/Dockerfile` | same | same |
 | `CONTAINER_ROLE` | `web` | `worker` | `scheduler` |
-| Ports Exposes | `8080` | none | none |
+| Exposed ports (General, **Internal access, Edit Networking**; Coolify guesses 3000 because the Dockerfile has no EXPOSE) | `8080` | not used | not used |
 | Domains | see step 5 | **none** | **none** |
 
-Leave health checks to the image: Coolify uses the image's own `HEALTHCHECK` when it has one, and this image does.
+Leave health checks to the image: Coolify uses the image's own `HEALTHCHECK` when it has one, and this image does (Coolify's log says "Using the custom healthcheck from the Dockerfile"). Create `chms-web` first. Make the other two by cloning (**Resource Operations, Clone**), then change the name and `CONTAINER_ROLE`, and **clear the Domains field**: Coolify gives every clone a temporary `sslip.io` address.
 
 ### Build variables (important)
 
@@ -93,14 +95,15 @@ TENANT_BASE_DOMAIN=test.example.com
 
 # --- Database and Redis (use the container names from step 2) ---
 DB_CONNECTION=pgsql
-DB_HOST=<postgres container name>
+DB_HOST=<the Postgres resource's internal host: its ID, the text between @ and : in its internal URL>
 DB_PORT=5432
 DB_DATABASE=<database name>
 DB_USERNAME=<user>
 DB_PASSWORD=<password>
 REDIS_HOST=<redis container name>
 REDIS_PORT=6379
-REDIS_PASSWORD=<only if you set one>
+REDIS_USERNAME=default
+REDIS_PASSWORD=<the Redis password from its Coolify page>
 QUEUE_CONNECTION=redis
 CACHE_STORE=redis
 SESSION_DRIVER=redis
@@ -129,7 +132,7 @@ MAIL_PORT=465
 MAIL_SCHEME=smtps
 MAIL_USERNAME=resend
 MAIL_PASSWORD=<the Resend API key>
-MAIL_FROM_ADDRESS=<an address on a domain you have set up with Resend>
+MAIL_FROM_ADDRESS=<an address on a domain verified in Resend, for example mail@nxgmachines.com. Resend treats every subdomain as its own domain, so verifying the root does not cover mail.<root>. Set the SAME value on all three applications: the worker is the one that sends>
 MAIL_FROM_NAME=CHMS
 
 # --- SMS, MoMo and payouts: PayPerlez (test environment) ---
@@ -181,6 +184,14 @@ Tick these in `docs/16-deployment-and-ops.md` ("Verify on the first staging depl
 - Coolify's stop timeout is at least 120 seconds, so a stopping worker is not killed mid-job.
 - The image's start-up works with the base image's entrypoint.
 - The 120-second health `start-period` covers the first migration.
+
+## Mistakes made on the first deploy (so they are not repeated)
+
+- **Password authentication failed:** a copy slip in `DB_PASSWORD`. Use the copy icon on the database page, no quotes or spaces.
+- **`nginx.conf` missing:** fixed in `deploy/bin/start` (the base image only builds the nginx config when its command is `/init`).
+- **Health check failing with the bucket unset:** see the storage note above.
+- **Sign-in code never arrives, Resend says the from address is not allowed:** the from-address domain is not verified in Resend (see `MAIL_FROM_ADDRESS`).
+- Changing any variable needs a redeploy or restart of that application. Do it on all three when the variable is shared.
 
 ## If something goes wrong
 

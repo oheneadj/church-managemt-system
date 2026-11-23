@@ -15,6 +15,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Every commit is listed here with **what** was done, **why**, **which files** it touched and **the commit**, newest first. The bullets under Added and Changed below are the short summary of the same work. Rule for every new entry: write the entry before the commit, then add the commit hash to it right after (the small commit that only fills in a hash is not listed).
 
+#### docs(deploy): the staging runbook, corrected from the first real deploy (2026-11-23)
+- **What:** `docs/runbooks/first-staging-deploy.md` now says: storage is required because the health check writes to it; the branch is set under Git Source after the application exists; the port is set under Edit Networking (Coolify guesses 3000); the worker and scheduler are made by cloning, with the Domains field cleared; `REDIS_USERNAME=default`; the database host is the resource's internal ID; the email from-address must be on a domain verified in Resend (a subdomain is a separate domain). A short list of the mistakes made on the first deploy was added.
+- **Why:** The first deploy on Coolify found each of these. The runbook is the document the next deploy follows, and the first version was written without having run it.
+- **Files:** docs/runbooks/first-staging-deploy.md, CHANGELOG.md
+- **Commit:** (added after committing)
+
 #### fix(deploy): the web container builds its nginx config before starting (2026-11-23)
 - **What:** `deploy/bin/start` now ends the web role with `exec docker-php-serversideup-entrypoint /init` instead of `exec /init`.
 - **Why:** The first real deploy on Coolify got as far as the migrations, then nginx failed forever with "open() /etc/nginx/nginx.conf failed". The base image (serversideup/php v5.0.5) builds that file at start-up in its entrypoint script `10-init-webserver-config.sh`, and that script does nothing unless the container's command is `/init`, `php-fpm` or `frankenphp` (checked in the base image's own entrypoint at tag v5.0.5). Our command is `start`, so the step was skipped and `/init` then ran with no nginx config. Handing over through the base entrypoint with `/init` as the command lets it build the config. Not testable on the development machine (no Docker), so the next staging deploy is the test.
